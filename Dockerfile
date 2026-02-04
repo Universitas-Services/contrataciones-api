@@ -59,8 +59,8 @@ COPY --from=build --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=build --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=build --chown=nestjs:nodejs /app/package*.json ./
 
-# Copy templates for docx generation
-COPY --from=build --chown=nestjs:nodejs /app/templates ./templates
+# Copy templates for docx generation (commented - folder doesn't exist yet)
+# COPY --from=build --chown=nestjs:nodejs /app/templates ./templates
 
 # Switch to non-root user
 USER nestjs
