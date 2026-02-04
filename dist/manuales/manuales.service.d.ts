@@ -1,0 +1,46 @@
+import { PrismaService } from '../database/prisma.service';
+import { StorageService } from '../storage/storage.service';
+export declare class ManualesService {
+    private prisma;
+    private storage;
+    constructor(prisma: PrismaService, storage: StorageService);
+    generarManual(enteId: string, tipoManual: string | undefined, descripcion: string | undefined, userId: string): Promise<{
+        id: string;
+        url: string;
+        fileName: string;
+        version: number;
+        generatedAt: Date;
+        tipoManual: string;
+        titulo: string;
+    }>;
+    private validarDatosCompletos;
+    private getNextVersion;
+    findAll(enteId: string): Promise<{
+        id: string;
+        createdAt: Date;
+        createdBy: string | null;
+        tipoManual: string;
+        tituloManual: string;
+        descripcion: string | null;
+        urlArchivo: string;
+        versionDocumento: number;
+    }[]>;
+    findOne(id: string, enteId: string): Promise<{
+        id: string;
+        enteId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        createdBy: string | null;
+        updatedBy: string | null;
+        tipoManual: string;
+        tituloManual: string;
+        descripcion: string | null;
+        urlArchivo: string;
+        versionDocumento: number;
+    }>;
+    download(id: string, enteId: string): Promise<{
+        url: string;
+        fileName: string;
+    }>;
+}

@@ -1,0 +1,915 @@
+// ============================================================================
+// PRISMA SCHEMA - SISTEMA DE CONTRATACIONES PÚBLICAS MULTI-TENANT
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum RolUsuario {
+  UNIVERSITAS        // Super admin del sistema
+  SUPERVISOR         // Supervisa múltiples Entes asignados
+  ADMIN_ENTE         // Administrador del Ente
+  EJECUTOR           // Crea y edita documentos
+  VISUALIZADOR       // Solo lectura
+}
+
+enum TipoPersona {
+  NATURAL
+  JURIDICA
+}
+
+enum TipoEntidadJuridica {
+  EMPRESA_PRIVADA
+  COOPERATIVA
+  FUNDACION
+  ASOCIACION_CIVIL
+  CONSORCIO
+}
+
+enum AreaEspecialidad {
+  OBRAS
+  BIENES
+  SERVICIOS
+  CONSULTORIA
+}
+
+enum NivelContratacion {
+  BASICO
+  INTERMEDIO
+  AVANZADO
+  EXPERTO
+}
+
+enum EstatusValidacion {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  EN_REVISION
+}
+
+enum TipoContratacion {
+  OBRAS
+  BIENES
+  SERVICIOS
+  MIXTO
+}
+
+enum ModalidadSeleccion {
+  LICITACION_PUBLICA
+  CONCURSO_CERRADO
+  CONSULTA_PRECIOS
+  ADJUDICACION_DIRECTA
+}
+
+enum EstatusProceso {
+  BORRADOR
+  EN_PREPARACION
+  PUBLICADO
+  EN_EVALUACION
+  ADJUDICADO
+  CONTRATADO
+  ANULADO
+}
+
+enum TipoDocumento {
+  PLIEGO_CONDICIONES
+  ACTA_APERTURA
+  ACTA_ADJUDICACION
+  CONTRATO
+  ADDENDUM
+  ORDEN_COMPRA
+  ACTA_RECEPCION
+}
+
+enum TipoDocumentoProveedor {
+  RIF
+  REGISTRO_MERCANTIL
+  ESTADOS_FINANCIEROS
+  REFERENCIAS_BANCARIAS
+  CERTIFICADO_SOLVENCIA_LABORAL
+  LICENCIA_MUNICIPAL
+  RNC
+}
+
+enum TipoMiembro {
+  TITULAR
+  SUPLENTE
+  COORDINADOR
+  SECRETARIO
+}
+
+enum AreaRepresentacion {
+  JURIDICA
+  TECNICA
+  FINANCIERA
+  ADMINISTRATIVA
+}
+
+enum TipoGarantia {
+  FIEL_CUMPLIMIENTO
+  ANTICIPO
+  BUENA_INVERSION_ANTICIPO
+}
+
+enum AccionAuditoria {
+  CREATE
+  UPDATE
+  DELETE
+  VIEW
+}
+
+// ============================================================================
+// CAPA 1: MULTI-TENANCY Y AUTENTICACIÓN
+// ============================================================================
+
+// Super Admin - Propietario del sistema
+model Universitas {
+  id                String    @id @default(uuid())
+  nombre            String
+  email             String    @unique
+  passwordHash      String
+  
+  // Auditoría
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+  
+  // Relaciones
+  entes             EntePublico[]
+  
+  @@index([email])
+}
+
+// Tenant - Organización independiente (Alcaldía, Empresa, etc.)
+model EntePublico {
+  id                            String    @id @default(uuid())
+  universitasId                 String
+  
+  // Información básica
+  nombre                        String
+  rif                           String    @unique
+  siglas                        String?
+  logoUrl                       String?
+  direccionFiscal               String?
+  
+  // Ubicación
+  estado                        String?
+  municipio                     String?
+  parroquia                     String?
+  
+  // Unidades organizativas
+  nombreUnidadAdminFinanciera   String?
+  nombreUnidadTecnologia        String?
+  nombreUnidadContratante       String?
+  organoAdscripcion             String?
+  
+  // Auditoría
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+  deletedAt                     DateTime?
+  createdBy                     String?
+  updatedBy                     String?
+  
+  // Relaciones
+  universitas                   Universitas @relation(fields: [universitasId], references: [id])
+  usuarios                      Usuario[]
+  supervisores                  EnteSupervisor[] // Supervisores externos (auditoría)
+  supervisoresAsignados         SupervisorAsignacion[] @relation("EntesSupervisados") // Supervisores usuarios internos
+  maximasAutoridades            MaximaAutoridad[]
+  comisiones                    ComisionContrataciones[]
+  unidadesUsuarias              UnidadUsuaria[]
+  unidadesContratantes          UnidadContratante[]
+  proveedores                   Proveedor[]
+  expedientes                   ExpedienteContratacion[]
+  manuales                      ManualGenerado[]
+  
+  @@index([universitasId])
+  @@index([rif])
+}
+
+// Usuario del sistema (multi-rol)
+model Usuario {
+  id                String        @id @default(uuid())
+  enteId            String?       // Null si es Universitas
+  
+  // Autenticación
+  email             String        @unique
+  passwordHash      String
+  
+  // Información personal
+  nombre            String
+  apellido          String
+  
+  // Rol y permisos
+  rol               RolUsuario
+  activo            Boolean       @default(true)
+  
+  // Auditoría
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+  
+  // Relaciones
+  ente              EntePublico?  @relation(fields: [enteId], references: [id])
+  entesAsignados    SupervisorAsignacion[] @relation("SupervisorAsignaciones") // Solo para rol SUPERVISOR
+  sesionesEdicion   SessionEdicion[]
+  auditLogs         AuditLog[]
+  
+  @@index([enteId, rol])
+  @@index([email])
+}
+
+// Supervisor - Organización auditora externa
+model Supervisor {
+  id                String    @id @default(uuid())
+  
+  // Información básica
+  nombre            String
+  rif               String    @unique
+  email             String    @unique
+  telefono          String?
+  direccion         String?
+  
+  // Auditoría
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+  
+  // Relaciones (temporal con Entes)
+  entesAsignados    EnteSupervisor[]
+  
+  @@index([rif])
+  @@index([email])
+}
+
+// Relación temporal entre Supervisor y Ente (muchos a muchos con fechas)
+model EnteSupervisor {
+  id                String    @id @default(uuid())
+  enteId            String
+  supervisorId      String
+  
+  // Control temporal
+  fechaInicio       DateTime
+  fechaFin          DateTime?
+  activo            Boolean   @default(true)
+  
+  // Auditoría
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  createdBy         String?
+  updatedBy         String?
+  
+  // Relaciones
+  ente              EntePublico @relation(fields: [enteId], references: [id])
+  supervisor        Supervisor  @relation(fields: [supervisorId], references: [id])
+  
+  @@unique([enteId, supervisorId, fechaInicio])
+  @@index([enteId, activo])
+  @@index([supervisorId, activo])
+}
+
+// Asignación de Entes a Supervisores (Usuarios con rol SUPERVISOR)
+model SupervisorAsignacion {
+  id                String      @id @default(uuid())
+  supervisorId      String      // Usuario con rol SUPERVISOR
+  enteId            String      // Ente que puede visualizar
+  
+  // Auditoría
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  createdBy         String?     // UNIVERSITAS que asignó
+  updatedBy         String?
+  
+  // Relaciones
+  supervisor        Usuario     @relation("SupervisorAsignaciones", fields: [supervisorId], references: [id], onDelete: Cascade)
+  ente              EntePublico @relation("EntesSupervisados", fields: [enteId], references: [id], onDelete: Cascade)
+  
+  @@unique([supervisorId, enteId]) // Un supervisor no puede tener el mismo ente duplicado
+  @@index([supervisorId])
+  @@index([enteId])
+}
+
+// ============================================================================
+// CAPA 2: DOMINIO DE CONTRATACIONES
+// ============================================================================
+
+// Máxima Autoridad del Ente (quien firma los contratos)
+model MaximaAutoridad {
+  id                                      String    @id @default(uuid())
+  enteId                                  String
+  
+  // Autoridad principal
+  nombreCompleto                          String
+  cedula                                  String
+  cargoOficial                            String
+  datosDesignacion                        String?
+  leyesAtribucionesSuscribir              String?
+  
+  // Control de delegación
+  esDelegado                              Boolean   @default(false)
+  vigente                                 Boolean   @default(true)
+  
+  // Datos del delegado (si aplica)
+  nombreCompletoDelegado                  String?
+  cedulaDelegado                          String?
+  cargoOficialDelegado                    String?
+  datosDesignacionDelegado                String?
+  leyesAtribucionesSuscribirDelegado      String?
+  
+  // Auditoría
+  createdAt                               DateTime  @default(now())
+  updatedAt                               DateTime  @updatedAt
+  deletedAt                               DateTime?
+  createdBy                               String?
+  updatedBy                               String?
+  version                                 Int       @default(1)
+  
+  // Relaciones
+  ente                                    EntePublico @relation(fields: [enteId], references: [id])
+  expedientes                             ExpedienteContratacion[]
+  
+  @@index([enteId, vigente])
+  @@index([cedula])
+}
+
+// Comisión de Contrataciones
+model ComisionContrataciones {
+  id                        String    @id @default(uuid())
+  enteId                    String
+  
+  denominacion              String
+  datosDesignacion          String?
+  tieneCertificado          Boolean   @default(false)
+  
+  // Auditoría
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  deletedAt                 DateTime?
+  createdBy                 String?
+  updatedBy                 String?
+  version                   Int       @default(1)
+  
+  // Relaciones
+  ente                      EntePublico @relation(fields: [enteId], references: [id])
+  miembros                  MiembroComision[]
+  expedientes               ExpedienteContratacion[]
+  
+  @@index([enteId])
+}
+
+// Miembros de la Comisión
+model MiembroComision {
+  id                    String              @id @default(uuid())
+  comisionId            String
+  
+  nombreCompleto        String
+  cedula                String
+  tipoMiembro           TipoMiembro
+  areaRepresentacion    AreaRepresentacion
+  
+  // Auditoría
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  deletedAt             DateTime?
+  
+  // Relaciones
+  comision              ComisionContrataciones @relation(fields: [comisionId], references: [id], onDelete: Cascade)
+  
+  @@index([comisionId])
+}
+
+// Unidad Usuaria (departamento que solicita)
+model UnidadUsuaria {
+  id                            String    @id @default(uuid())
+  enteId                        String
+  
+  nombre                        String
+  nombreResponsable             String
+  cargoResponsable              String
+  
+  // Auditoría
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+  deletedAt                     DateTime?
+  createdBy                     String?
+  updatedBy                     String?
+  
+  // Relaciones
+  ente                          EntePublico @relation(fields: [enteId], references: [id])
+  expedientes                   ExpedienteContratacion[]
+  
+  @@index([enteId])
+}
+
+// Unidad Contratante (departamento de compras)
+model UnidadContratante {
+  id                    String    @id @default(uuid())
+  enteId                String
+  
+  nombre                String
+  nombreResponsable     String
+  cargoResponsable      String
+  activa                Boolean   @default(true)
+  
+  // Auditoría
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  deletedAt             DateTime?
+  createdBy             String?
+  updatedBy             String?
+  
+  // Relaciones
+  ente                  EntePublico @relation(fields: [enteId], references: [id])
+  
+  @@index([enteId, activa])
+}
+
+// Proveedor (empresa que participa en licitaciones)
+model Proveedor {
+  id                                String                  @id @default(uuid())
+  enteId                            String
+  
+  // Información básica
+  correo                            String
+  nombre                            String
+  rif                               String
+  tipoPersona                       TipoPersona
+  tipoEntidadJuridica               TipoEntidadJuridica?
+  
+  // Ubicación
+  estado                            String?
+  municipio                         String?
+  parroquia                         String?
+  direccionFiscal                   String?
+  telefono                          String?
+  
+  // Representante legal
+  nombreRepLegal                    String?
+  cedulaRepLegal                    String?
+  
+  // Validaciones y certificaciones
+  registroRnc                       Boolean                 @default(false)
+  solvenciaLaboral                  Boolean                 @default(false)
+  licenciaFuncionamientoMunicipal   Boolean                 @default(false)
+  
+  // Actividad comercial
+  actividadComercial                String?
+  areaEspecialidad                  AreaEspecialidad?
+  anosExperiencia                   Int?
+  
+  // Datos financieros
+  fechaEstadoFinanciero             DateTime?
+  patrimonioReportado               Decimal?                @db.Decimal(15, 2)
+  nivelContratacion                 NivelContratacion?
+  
+  // Estado de validación
+  estatusValidacion                 EstatusValidacion       @default(PENDIENTE)
+  fechaRegistro                     DateTime                @default(now())
+  
+  // Auditoría
+  createdAt                         DateTime                @default(now())
+  updatedAt                         DateTime                @updatedAt
+  deletedAt                         DateTime?
+  createdBy                         String?
+  updatedBy                         String?
+  version                           Int                     @default(1)
+  
+  // Relaciones
+  ente                              EntePublico             @relation(fields: [enteId], references: [id])
+  documentos                        DocumentoProveedor[]
+  adquisicionesPliego               AdquirentePliego[]
+  ofertas                           OfertaPresentada[]
+  
+  @@index([enteId, estatusValidacion])
+  @@index([rif])
+}
+
+// Documentos del proveedor
+model DocumentoProveedor {
+  id                    String                      @id @default(uuid())
+  proveedorId           String
+  
+  tipoDocumento         TipoDocumentoProveedor
+  urlArchivo            String
+  observaciones         String?
+  fechaCarga            DateTime                    @default(now())
+  
+  // Auditoría
+  createdAt             DateTime                    @default(now())
+  updatedAt             DateTime                    @updatedAt
+  deletedAt             DateTime?
+  
+  // Relaciones
+  proveedor             Proveedor                   @relation(fields: [proveedorId], references: [id], onDelete: Cascade)
+  
+  @@index([proveedorId])
+}
+
+// Expediente de contratación (proceso principal)
+model ExpedienteContratacion {
+  id                        String                  @id @default(uuid())
+  enteId                    String
+  comisionId                String
+  unidadUsuariaId           String
+  autoridadId               String
+  
+  // Descripción del proceso
+  descripcionObjeto         String
+  codigoNomenclatura        String
+  tipoContratacion          TipoContratacion
+  
+  // Montos
+  montoEstimadoBs           Decimal                 @db.Decimal(15, 2)
+  montoEstimadoDolar        Decimal?                @db.Decimal(15, 2)
+  valorUcauBase             Decimal?                @db.Decimal(10, 4)
+  
+  // Configuración
+  modalidadSeleccion        ModalidadSeleccion
+  estatusProceso            EstatusProceso          @default(BORRADOR)
+  
+  // Auditoría
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
+  deletedAt                 DateTime?
+  createdBy                 String?
+  updatedBy                 String?
+  version                   Int                     @default(1)
+  
+  // Relaciones
+  ente                      EntePublico             @relation(fields: [enteId], references: [id])
+  comision                  ComisionContrataciones  @relation(fields: [comisionId], references: [id])
+  unidadUsuaria             UnidadUsuaria           @relation(fields: [unidadUsuariaId], references: [id])
+  autoridad                 MaximaAutoridad         @relation(fields: [autoridadId], references: [id])
+  
+  fasePreparatoria          FasePreparatoria?
+  cronograma                CronogramaExpediente?
+  partidasPresupuestarias   PartidaPresupuestaria[]
+  adquirientesPliego        AdquirentePliego[]
+  ofertas                   OfertaPresentada[]
+  adjudicacion              Adjudicacion?
+  documentosGenerados       DocumentoGenerado[]
+  
+  @@index([enteId, estatusProceso])
+  @@index([codigoNomenclatura])
+}
+
+// Fase preparatoria del expediente
+model FasePreparatoria {
+  id                                String                  @id @default(uuid())
+  expedienteId                      String                  @unique
+  
+  detallesTecnicosCalidad           String?
+  alcanceCantidadesObra             String?
+  justificacionVentajas             String?
+  origenCrsRegistro                 Boolean                 @default(false)
+  diasValidezOferta                 Int?
+  autoridadAclaratorias             String?
+  normativaLegal                    String?
+  diasVigenciaGarantiaExtension     Int?
+  objetivosEspecificosLlamado       String?
+  direccionRetiroPliego             String?
+  horarioRetiroPliego               String?
+  costoPliegoBs                     Decimal?                @db.Decimal(10, 2)
+  bancoPagoPliego                   String?
+  cuentaPagoPliego                  String?
+  titularPagoPliego                 String?
+  condicionPluranual                String?
+  viabilidadContratoMarco           String?
+  
+  // Auditoría
+  createdAt                         DateTime                @default(now())
+  updatedAt                         DateTime                @updatedAt
+  deletedAt                         DateTime?
+  createdBy                         String?
+  updatedBy                         String?
+  version                           Int                     @default(1)
+  
+  // Relaciones
+  expediente                        ExpedienteContratacion  @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  
+  @@index([expedienteId])
+}
+
+// Cronograma del expediente
+model CronogramaExpediente {
+  id                                String                  @id @default(uuid())
+  expedienteId                      String                  @unique
+  
+  fechaLlamadoParticipar            DateTime?
+  fechaInicioDisponibilidadPliego   DateTime?
+  fechaFinDisponibilidadPliego      DateTime?
+  fechaSolicitudAclaratorias        DateTime?
+  fechaRespuestaAclaratorias        DateTime?
+  fechaModificacionPliego           DateTime?
+  fechaActoRecepcionAperturaSobres  DateTime?
+  fechaLimiteEvaluacion             DateTime?
+  fechaLimiteAdjudicacion           DateTime?
+  fechaLimiteNotificacion           DateTime?
+  fechaLimiteGarantias              DateTime?
+  fechaLimiteFirmaContrato          DateTime?
+  
+  // Auditoría
+  createdAt                         DateTime                @default(now())
+  updatedAt                         DateTime                @updatedAt
+  deletedAt                         DateTime?
+  createdBy                         String?
+  updatedBy                         String?
+  version                           Int                     @default(1)
+  
+  // Relaciones
+  expediente                        ExpedienteContratacion  @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  
+  @@index([expedienteId])
+}
+
+// Partida presupuestaria (items del pliego)
+model PartidaPresupuestaria {
+  id                        String                  @id @default(uuid())
+  expedienteId              String
+  
+  descripcionItem           String
+  codigoPartida             String
+  unidadMedida              String
+  cantidadRequerida         Decimal                 @db.Decimal(12, 4)
+  precioUnitarioEstimado    Decimal                 @db.Decimal(15, 2)
+  montoTotalRenglon         Decimal                 @db.Decimal(15, 2)
+  
+  // Auditoría
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
+  deletedAt                 DateTime?
+  createdBy                 String?
+  updatedBy                 String?
+  
+  // Relaciones
+  expediente                ExpedienteContratacion  @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  
+  @@index([expedienteId])
+}
+
+// Registro de quien adquirió el pliego
+model AdquirentePliego {
+  id                    String                  @id @default(uuid())
+  expedienteId          String
+  proveedorId           String
+  
+  fechaAdquisicion      DateTime
+  nombreContactoRetiro  String
+  datosPagoPliego       String?
+  
+  // Auditoría
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  deletedAt             DateTime?
+  
+  // Relaciones
+  expediente            ExpedienteContratacion  @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  proveedor             Proveedor               @relation(fields: [proveedorId], references: [id])
+  
+  @@index([expedienteId])
+  @@index([proveedorId])
+}
+
+// Ofertas presentadas por proveedores
+model OfertaPresentada {
+  id                            String                  @id @default(uuid())
+  expedienteId                  String
+  proveedorId                   String
+  
+  fechaPresentacion             DateTime
+  nombreRepLegalActo            String
+  cedulaRepLegalActo            String
+  datosRegistroMercantilTexto   String?
+  numeroSobresEntregados        Int
+  montoOfertaBs                 Decimal                 @db.Decimal(15, 2)
+  presentoGarantiaOferta        Boolean                 @default(false)
+  
+  // Auditoría
+  createdAt                     DateTime                @default(now())
+  updatedAt                     DateTime                @updatedAt
+  deletedAt                     DateTime?
+  createdBy                     String?
+  updatedBy                     String?
+  version                       Int                     @default(1)
+  
+  // Relaciones
+  expediente                    ExpedienteContratacion  @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  proveedor                     Proveedor               @relation(fields: [proveedorId], references: [id])
+  evaluacion                    EvaluacionResultados?
+  adjudicacion                  Adjudicacion?
+  
+  @@index([expedienteId])
+  @@index([proveedorId])
+}
+
+// Evaluación de ofertas
+model EvaluacionResultados {
+  id                            String              @id @default(uuid())
+  ofertaId                      String              @unique
+  
+  cumpleRecaudosLegales         Boolean
+  cumpleOfertaTecnica           Boolean
+  puntajeTecnicoObtenido        Decimal             @db.Decimal(5, 2)
+  puntajeEconomicoObtenido      Decimal             @db.Decimal(5, 2)
+  porcentajeVan                 Decimal?            @db.Decimal(5, 2)
+  puntajeTotalFinal             Decimal             @db.Decimal(5, 2)
+  posicionPrelacion             Int
+  observaciones                 String?
+  
+  // Auditoría
+  createdAt                     DateTime            @default(now())
+  updatedAt                     DateTime            @updatedAt
+  deletedAt                     DateTime?
+  createdBy                     String?
+  updatedBy                     String?
+  
+  // Relaciones
+  oferta                        OfertaPresentada    @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  
+  @@index([ofertaId])
+}
+
+// Adjudicación
+model Adjudicacion {
+  id                        String                  @id @default(uuid())
+  expedienteId              String                  @unique
+  ofertaGanadoraId          String                  @unique
+  
+  fechaActoAdjudicacion     DateTime
+  montoAdjudicadoBs         Decimal                 @db.Decimal(15, 2)
+  criteriosSeleccionTexto   String?
+  
+  // Auditoría
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
+  deletedAt                 DateTime?
+  createdBy                 String?
+  updatedBy                 String?
+  version                   Int                     @default(1)
+  
+  // Relaciones
+  expediente                ExpedienteContratacion  @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  ofertaGanadora            OfertaPresentada        @relation(fields: [ofertaGanadoraId], references: [id])
+  contrato                  ContratoFormalizado?
+  
+  @@index([expedienteId])
+}
+
+// Contrato formalizado
+model ContratoFormalizado {
+  id                        String          @id @default(uuid())
+  adjudicacionId            String          @unique
+  supervisorId              String?
+  
+  numeroContratoFisico      String
+  fechaFirmaContrato        DateTime
+  fechaInicioVigencia       DateTime
+  fechaFinVigencia          DateTime
+  plazoEjecucionDias        Int
+  montoContratoTotal        Decimal         @db.Decimal(15, 2)
+  porcentajeAnticipoOtorgado Decimal?       @db.Decimal(5, 2)
+  
+  // Auditoría
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+  deletedAt                 DateTime?
+  createdBy                 String?
+  updatedBy                 String?
+  version                   Int             @default(1)
+  
+  // Relaciones
+  adjudicacion              Adjudicacion    @relation(fields: [adjudicacionId], references: [id], onDelete: Cascade)
+  garantias                 GarantiaContrato[]
+  
+  @@index([adjudicacionId])
+  @@index([numeroContratoFisico])
+}
+
+// Garantías del contrato
+model GarantiaContrato {
+  id                            String              @id @default(uuid())
+  contratoId                    String
+  
+  tipoGarantia                  TipoGarantia
+  montoGarantia                 Decimal             @db.Decimal(15, 2)
+  porcentajeAplicado            Decimal             @db.Decimal(5, 2)
+  fechaEmision                  DateTime
+  fechaVencimiento              DateTime
+  nombreInstitucionFinanciera   String
+  
+  // Auditoría
+  createdAt                     DateTime            @default(now())
+  updatedAt                     DateTime            @updatedAt
+  deletedAt                     DateTime?
+  
+  // Relaciones
+  contrato                      ContratoFormalizado @relation(fields: [contratoId], references: [id], onDelete: Cascade)
+  
+  @@index([contratoId])
+}
+
+// ============================================================================
+// CAPA 3: DOCUMENTOS Y AUDITORÍA
+// ============================================================================
+
+// Documentos generados (PDFs, DOCX)
+model DocumentoGenerado {
+  id                    String                  @id @default(uuid())
+  expedienteId          String
+  
+  tipoDocumento         TipoDocumento
+  urlArchivo            String
+  fechaGeneracion       DateTime                @default(now())
+  versionDocumento      Int                     @default(1)
+  
+  // Auditoría
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  deletedAt             DateTime?
+  createdBy             String?
+  
+  // Relaciones
+  expediente            ExpedienteContratacion  @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  sesionesEdicion       SessionEdicion[]
+  
+  @@index([expedienteId, tipoDocumento])
+}
+
+// Manual generado por el Ente
+model ManualGenerado {
+  id                    String          @id @default(uuid())
+  enteId                String
+  
+  tipoManual            String          // 'GENERAL', 'LEGAL', 'OPERATIVO'
+  tituloManual          String
+  descripcion           String?
+  urlArchivo            String
+  versionDocumento      Int             @default(1)
+  
+  // Auditoría
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  deletedAt             DateTime?
+  createdBy             String?
+  updatedBy             String?
+  
+  // Relaciones
+  ente                  EntePublico     @relation(fields: [enteId], references: [id])
+  
+  @@index([enteId, tipoManual])
+  @@index([createdAt])
+}
+
+// Sesiones de edición colaborativa
+model SessionEdicion {
+  id                    String              @id @default(uuid())
+  documentoId           String
+  usuarioId             String
+  
+  bloqueado             Boolean             @default(false)
+  ultimaActividad       DateTime            @updatedAt
+  
+  // Auditoría
+  createdAt             DateTime            @default(now())
+  
+  // Relaciones
+  documento             DocumentoGenerado   @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+  usuario               Usuario             @relation(fields: [usuarioId], references: [id])
+  
+  @@index([documentoId, bloqueado])
+  @@index([usuarioId])
+}
+
+
+// Log de auditoría global
+model AuditLog {
+  id                    String              @id @default(uuid())
+  enteId                String?
+  usuarioId             String?
+  
+  tabla                 String
+  registroId            String
+  accion                AccionAuditoria
+  cambios               Json                // Almacena el diff de cambios
+  ipAddress             String?
+  userAgent             String?
+  
+  createdAt             DateTime            @default(now())
+  
+  // Relaciones
+  usuario               Usuario?            @relation(fields: [usuarioId], references: [id])
+  
+  @@index([tabla, registroId])
+  @@index([enteId, createdAt])
+  @@index([usuarioId])
+}

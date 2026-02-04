@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: contrataciones-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-contrataciones_db}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - contrataciones-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # NestJS Application (Production)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: contrataciones-api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-contrataciones_db}
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - contrataciones-network
+    volumes:
+      # Persist uploaded files/generated documents
+      - app_uploads:/app/uploads
+      - app_generated:/app/generated
+
+networks:
+  contrataciones-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  app_uploads:
+    driver: local
+  app_generated:
+    driver: local

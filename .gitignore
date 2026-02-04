@@ -1,0 +1,199 @@
+# ============================================================================
+# DEPENDENCIES
+# ============================================================================
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ============================================================================
+# BUILD & COMPILED
+# ============================================================================
+dist/
+build/
+*.js.map
+*.d.ts.map
+
+# ============================================================================
+# ENVIRONMENT VARIABLES
+# ============================================================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+*.env
+
+# IMPORTANT: Keep examples
+!.env.example
+!.env.docker.example
+
+# ============================================================================
+# TESTING
+# ============================================================================
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+playwright-report/
+junit.xml
+
+# ============================================================================
+# IDE & EDITORS
+# ============================================================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# ============================================================================
+# OPERATING SYSTEM
+# ============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*
+
+# ============================================================================
+# LOGS
+# ============================================================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ============================================================================
+# PRISMA
+# ============================================================================
+# Keep schema and migrations folder structure
+# But ignore specific migration SQL files in development
+prisma/dev.db
+prisma/*.db
+prisma/*.db-journal
+
+# ============================================================================
+# DOCKER
+# ============================================================================
+# Keep Dockerfile and docker-compose files
+# But ignore local docker volumes
+docker-compose.override.yml
+.dockerignore.bak
+
+# ============================================================================
+# UPLOADS & GENERATED FILES
+# ============================================================================
+uploads/
+generated/
+temp/
+tmp/
+*.tmp
+
+# DOCX templates are needed, so keep templates/ folder
+# templates/
+
+# ============================================================================
+# HUSKY
+# ============================================================================
+# Keep hook scripts but ignore husky internal files
+.husky/_
+
+# ============================================================================
+# CACHE & TEMPORARY
+# ============================================================================
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.vscode-test
+
+# ============================================================================
+# MISCELLANEOUS
+# ============================================================================
+*.seed
+*.pid
+*.pid.lock
+.eslintcache
+.stylelintcache
+.npm
+.yarn-integrity
+.pnp.*
+
+# ============================================================================
+# NESTJS SPECIFIC
+# ============================================================================
+# Nest CLI
+.nest-cli.json.backup
+
+# Swagger generated files (if auto-generated)
+# api-docs.json
+
+# ============================================================================
+# CI/CD SECRETS (NEVER COMMIT)
+# ============================================================================
+# GitHub secrets should NEVER be in repo
+# .github/secrets/
+
+# ============================================================================
+# BACKUP FILES
+# ============================================================================
+*.bak
+*.backup
+*.old
+*~
+
+# ============================================================================
+# ARTIFACTS & REPORTS
+# ============================================================================
+# Keep .github/workflows but ignore artifacts
+.github/.artifacts/
+
+# ============================================================================
+# LOCAL CONFIGURATION
+# ============================================================================
+.local/
+local.json
+config.local.js

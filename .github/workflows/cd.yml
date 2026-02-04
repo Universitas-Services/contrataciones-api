@@ -1,0 +1,70 @@
+name: CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev'
+    environment:
+      name: staging
+      url: https://staging-contrataciones-api.onrender.com
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🚀 Trigger Render Deploy (Staging)
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}
+        run: |
+          echo "Deploying to Staging..."
+          curl -X POST "$RENDER_DEPLOY_HOOK"
+      
+      - name: ✅ Deployment triggered
+        run: echo "Staging deployment triggered successfully!"
+
+  deploy-production:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://contrataciones-api.onrender.com
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: ⏳ Wait for CI to pass
+        uses: lewagon/wait-on-check-action@v1.3.1
+        with:
+          ref: ${{ github.sha }}
+          check-name: '🏗️ Build'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+      
+      - name: 🚀 Trigger Render Deploy (Production)
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_PRODUCTION }}
+        run: |
+          echo "Deploying to Production..."
+          curl -X POST "$RENDER_DEPLOY_HOOK"
+      
+      - name: ✅ Deployment triggered
+        run: echo "Production deployment triggered successfully!"
+      
+      - name: 📝 Create deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** main" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** Production" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Author:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://contrataciones-api.onrender.com" >> $GITHUB_STEP_SUMMARY

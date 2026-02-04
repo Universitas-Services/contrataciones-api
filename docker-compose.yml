@@ -1,0 +1,23 @@
+﻿services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: contrataciones_db_nest
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: contrataciones_db
+      POSTGRES_USER: nestjs_user
+      POSTGRES_PASSWORD: nestjs_password_2024
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - nestjs-network
+
+networks:
+  nestjs-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
