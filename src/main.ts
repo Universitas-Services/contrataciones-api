@@ -40,18 +40,18 @@ async function bootstrap() {
     .setTitle('Sistema de Contrataciones Públicas - API')
     .setDescription(
       '## 🏛️ API REST para la gestión de contrataciones públicas\n\n' +
-      '### 🔐 Roles del Sistema:\n' +
-      '- **UNIVERSITAS**: Super administrador del sistema\n' +
-      '- **SUPERVISOR**: Supervisa múltiples Entes asignados (solo lectura)\n' +
-      '- **ADMIN_ENTE**: Administrador de un Ente Público\n' +
-      '- **EJECUTOR**: Usuario operador del Ente\n' +
-      '- **VISUALIZADOR**: Usuario de solo lectura\n\n' +
-      '### 🚀 Cómo usar:\n' +
-      '1. Autenticarse en `/auth/login`\n' +
-      '2. Copiar el `access_token` recibido\n' +
-      '3. Hacer clic en "Authorize" y pegar el token\n' +
-      '4. ¡Listo! Ya puedes usar todos los endpoints\n\n' +
-      '### 📚 Documentación completa en GitHub'
+        '### 🔐 Roles del Sistema:\n' +
+        '- **UNIVERSITAS**: Super administrador del sistema\n' +
+        '- **SUPERVISOR**: Supervisa múltiples Entes asignados (solo lectura)\n' +
+        '- **ADMIN_ENTE**: Administrador de un Ente Público\n' +
+        '- **EJECUTOR**: Usuario operador del Ente\n' +
+        '- **VISUALIZADOR**: Usuario de solo lectura\n\n' +
+        '### 🚀 Cómo usar:\n' +
+        '1. Autenticarse en `/auth/login`\n' +
+        '2. Copiar el `access_token` recibido\n' +
+        '3. Hacer clic en "Authorize" y pegar el token\n' +
+        '4. ¡Listo! Ya puedes usar todos los endpoints\n\n' +
+        '### 📚 Documentación completa en GitHub',
     )
     .setVersion('1.0')
     .addBearerAuth(

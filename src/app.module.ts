@@ -28,4 +28,4 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

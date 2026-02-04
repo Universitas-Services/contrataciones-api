@@ -3,8 +3,8 @@ import { EntesService } from './entes.service';
 import { EntesController } from './entes.controller';
 
 @Module({
-    controllers: [EntesController],
-    providers: [EntesService],
-    exports: [EntesService],
+  controllers: [EntesController],
+  providers: [EntesService],
+  exports: [EntesService],
 })
-export class EntesModule { }
+export class EntesModule {}

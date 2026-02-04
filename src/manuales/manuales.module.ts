@@ -3,8 +3,8 @@ import { ManualesController } from './manuales.controller';
 import { ManualesService } from './manuales.service';
 
 @Module({
-    controllers: [ManualesController],
-    providers: [ManualesService],
-    exports: [ManualesService],
+  controllers: [ManualesController],
+  providers: [ManualesService],
+  exports: [ManualesService],
 })
-export class ManualesModule { }
+export class ManualesModule {}
