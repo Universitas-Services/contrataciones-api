@@ -26,10 +26,7 @@ export class AuthService {
         where: { email },
       });
 
-      if (
-        universitas &&
-        (await bcrypt.compare(password, universitas.passwordHash))
-      ) {
+      if (universitas && (await bcrypt.compare(password, universitas.passwordHash))) {
         const payload = {
           sub: universitas.id,
           email: universitas.email,

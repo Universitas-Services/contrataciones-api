@@ -26,10 +26,7 @@ describe('SupervisoresService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SupervisoresService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [SupervisoresService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     service = module.get<SupervisoresService>(SupervisoresService);
@@ -70,9 +67,7 @@ describe('SupervisoresService', () => {
       expect(result.email).toBe(createDto.email);
       expect(result.rol).toBe('SUPERVISOR');
       expect(mockPrismaService.usuario.create).toHaveBeenCalled();
-      expect(
-        mockPrismaService.supervisorAsignacion.createMany,
-      ).toHaveBeenCalledWith({
+      expect(mockPrismaService.supervisorAsignacion.createMany).toHaveBeenCalledWith({
         data: expect.arrayContaining([
           expect.objectContaining({
             enteId: 'ente-1',
@@ -99,9 +94,7 @@ describe('SupervisoresService', () => {
         id: 'existing-user',
       });
 
-      await expect(service.create(createDto, 'admin-id')).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.create(createDto, 'admin-id')).rejects.toThrow(ConflictException);
       await expect(service.create(createDto, 'admin-id')).rejects.toThrow(
         'El email ya está registrado',
       );
@@ -184,12 +177,8 @@ describe('SupervisoresService', () => {
     it('debe lanzar NotFoundException si supervisor no existe', async () => {
       mockPrismaService.usuario.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne('invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(service.findOne('invalid-id')).rejects.toThrow(
-        'Supervisor no encontrado',
-      );
+      await expect(service.findOne('invalid-id')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('invalid-id')).rejects.toThrow('Supervisor no encontrado');
     });
   });
 
@@ -210,23 +199,15 @@ describe('SupervisoresService', () => {
         count: 2,
       });
 
-      const result = await service.asignarEntes(
-        'supervisor-uuid',
-        dto,
-        'admin-id',
-      );
+      const result = await service.asignarEntes('supervisor-uuid', dto, 'admin-id');
 
-      expect(
-        mockPrismaService.supervisorAsignacion.deleteMany,
-      ).toHaveBeenCalledWith({
+      expect(mockPrismaService.supervisorAsignacion.deleteMany).toHaveBeenCalledWith({
         where: {
           supervisorId: 'supervisor-uuid',
           enteId: { in: dto.removerEntes },
         },
       });
-      expect(
-        mockPrismaService.supervisorAsignacion.createMany,
-      ).toHaveBeenCalled();
+      expect(mockPrismaService.supervisorAsignacion.createMany).toHaveBeenCalled();
     });
   });
 

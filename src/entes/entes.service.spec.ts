@@ -26,10 +26,7 @@ describe('EntesService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        EntesService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [EntesService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     service = module.get<EntesService>(EntesService);
@@ -67,17 +64,13 @@ describe('EntesService', () => {
         { id: 'ente-2', nombre: 'Ministerio B' },
       ];
 
-      mockPrismaService.supervisorAsignacion.findMany.mockResolvedValue(
-        mockAsignaciones,
-      );
+      mockPrismaService.supervisorAsignacion.findMany.mockResolvedValue(mockAsignaciones);
       mockPrismaService.entePublico.findMany.mockResolvedValue(mockEntes);
 
       const result = await service.findAll(mockUser);
 
       expect(result).toEqual(mockEntes);
-      expect(
-        mockPrismaService.supervisorAsignacion.findMany,
-      ).toHaveBeenCalledWith({
+      expect(mockPrismaService.supervisorAsignacion.findMany).toHaveBeenCalledWith({
         where: { supervisorId: mockUser.id },
         select: { enteId: true },
       });
@@ -125,12 +118,8 @@ describe('EntesService', () => {
     it('debe lanzar NotFoundException si Ente no existe', async () => {
       mockPrismaService.entePublico.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne('invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(service.findOne('invalid-id')).rejects.toThrow(
-        'Ente no encontrado',
-      );
+      await expect(service.findOne('invalid-id')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('invalid-id')).rejects.toThrow('Ente no encontrado');
     });
   });
 
@@ -165,9 +154,7 @@ describe('EntesService', () => {
     it('debe lanzar NotFoundException si Ente no existe', async () => {
       mockPrismaService.entePublico.findUnique.mockResolvedValue(null);
 
-      await expect(service.remove('invalid-id', 'user-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.remove('invalid-id', 'user-id')).rejects.toThrow(NotFoundException);
     });
   });
 });

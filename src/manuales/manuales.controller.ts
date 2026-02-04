@@ -9,13 +9,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ManualesService } from './manuales.service';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -54,8 +48,7 @@ export class ManualesController {
   @Get()
   @ApiOperation({
     summary: 'Listar manuales',
-    description:
-      'Obtiene todos los manuales del Ente o de los Entes asignados (SUPERVISOR)',
+    description: 'Obtiene todos los manuales del Ente o de los Entes asignados (SUPERVISOR)',
   })
   @ApiResponse({ status: 200, description: 'Lista de manuales' })
   findAll(@CurrentUser() user: any) {

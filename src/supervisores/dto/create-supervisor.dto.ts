@@ -1,11 +1,4 @@
-import {
-  IsString,
-  IsEmail,
-  IsArray,
-  MinLength,
-  IsOptional,
-  ArrayMinSize,
-} from 'class-validator';
+import { IsString, IsEmail, IsArray, MinLength, IsOptional, ArrayMinSize } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSupervisorDto {

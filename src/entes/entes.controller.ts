@@ -1,20 +1,6 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { EntesService } from './entes.service';
 import { CreateEnteDto } from './dto/create-ente.dto';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -43,8 +29,7 @@ export class EntesController {
   @Get()
   @ApiOperation({
     summary: 'Listar Entes',
-    description:
-      'UNIVERSITAS ve todos, SUPERVISOR ve asignados, otros ven solo el suyo',
+    description: 'UNIVERSITAS ve todos, SUPERVISOR ve asignados, otros ven solo el suyo',
   })
   @ApiResponse({ status: 200, description: 'Lista de Entes según permisos' })
   findAll(@CurrentUser() user: any) {

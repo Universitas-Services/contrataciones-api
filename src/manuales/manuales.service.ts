@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import PizZip from 'pizzip';
@@ -36,11 +32,7 @@ export class ManualesService {
     this.validarDatosCompletos(ente);
 
     // 3. Cargar plantilla base
-    const templatePath = path.join(
-      __dirname,
-      'templates',
-      'manual-ente-base.docx',
-    );
+    const templatePath = path.join(__dirname, 'templates', 'manual-ente-base.docx');
 
     if (!fs.existsSync(templatePath)) {
       throw new BadRequestException(
@@ -65,10 +57,8 @@ export class ManualesService {
       siglas_ente: ente.siglas || 'N/A',
       nom_unidad_admin_financiera:
         ente.nombreUnidadAdminFinanciera || 'Dirección de Administración',
-      nom_unidad_contratante:
-        ente.nombreUnidadContratante || 'Unidad de Contrataciones',
-      nom_unidad_tecnologia:
-        ente.nombreUnidadTecnologia || 'Dirección de Tecnología',
+      nom_unidad_contratante: ente.nombreUnidadContratante || 'Unidad de Contrataciones',
+      nom_unidad_tecnologia: ente.nombreUnidadTecnologia || 'Dirección de Tecnología',
 
       // Datos adicionales
       fecha_generacion: now.toLocaleDateString('es-VE', {
@@ -113,8 +103,7 @@ export class ManualesService {
         urlArchivo: fileUrl,
         tituloManual: `Manual ${tipoManual} - ${ente.siglas || ente.nombre}`,
         descripcion:
-          descripcion ||
-          `Manual ${tipoManual} generado automáticamente para ${ente.nombre}`,
+          descripcion || `Manual ${tipoManual} generado automáticamente para ${ente.nombre}`,
         versionDocumento: nextVersion,
         createdBy: userId,
       },
@@ -137,10 +126,8 @@ export class ManualesService {
     if (!ente.nombre) camposFaltantes.push('Nombre del Ente');
     if (!ente.nombreUnidadAdminFinanciera)
       camposFaltantes.push('Nombre de Unidad Administrativa y Financiera');
-    if (!ente.nombreUnidadContratante)
-      camposFaltantes.push('Nombre de Unidad Contratante');
-    if (!ente.nombreUnidadTecnologia)
-      camposFaltantes.push('Nombre de Unidad de Tecnología');
+    if (!ente.nombreUnidadContratante) camposFaltantes.push('Nombre de Unidad Contratante');
+    if (!ente.nombreUnidadTecnologia) camposFaltantes.push('Nombre de Unidad de Tecnología');
 
     if (camposFaltantes.length > 0) {
       throw new BadRequestException(
@@ -150,10 +137,7 @@ export class ManualesService {
     }
   }
 
-  private async getNextVersion(
-    enteId: string,
-    tipoManual: string,
-  ): Promise<number> {
+  private async getNextVersion(enteId: string, tipoManual: string): Promise<number> {
     const lastManual = await this.prisma.manualGenerado.findFirst({
       where: { enteId, tipoManual, deletedAt: null },
       orderBy: { versionDocumento: 'desc' },

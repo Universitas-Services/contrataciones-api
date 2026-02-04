@@ -139,11 +139,7 @@ export class SupervisoresService {
     };
   }
 
-  async asignarEntes(
-    supervisorId: string,
-    dto: AsignarEntesDto,
-    updatedBy: string,
-  ) {
+  async asignarEntes(supervisorId: string, dto: AsignarEntesDto, updatedBy: string) {
     // Verificar que el supervisor exista
     const supervisor = await this.prisma.usuario.findFirst({
       where: {
@@ -176,9 +172,7 @@ export class SupervisoresService {
         });
 
         if (entes.length !== dto.agregarEntes.length) {
-          throw new BadRequestException(
-            'Algunos Entes especificados no existen',
-          );
+          throw new BadRequestException('Algunos Entes especificados no existen');
         }
 
         // Crear asignaciones (ignora duplicados)
@@ -235,10 +229,7 @@ export class SupervisoresService {
   }
 
   // Método auxiliar para verificar si un supervisor tiene acceso a un Ente
-  async tieneAccesoAEnte(
-    supervisorId: string,
-    enteId: string,
-  ): Promise<boolean> {
+  async tieneAccesoAEnte(supervisorId: string, enteId: string): Promise<boolean> {
     const asignacion = await this.prisma.supervisorAsignacion.findUnique({
       where: {
         supervisorId_enteId: {

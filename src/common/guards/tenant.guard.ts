@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  CanActivate,
-  ExecutionContext,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { RequestWithUser } from '../types/request-with-user.type';
 
@@ -25,8 +20,7 @@ export class TenantGuard implements CanActivate {
     }
 
     // Obtener enteId del parámetro, body o query
-    const enteId =
-      request.params?.enteId || request.body?.enteId || request.query?.enteId;
+    const enteId = request.params?.enteId || request.body?.enteId || request.query?.enteId;
 
     // Si no se especifica enteId, usar el del usuario
     if (!enteId) {
@@ -55,9 +49,7 @@ export class TenantGuard implements CanActivate {
 
     // Otros roles: Verificar que pertenezcan al ente
     if (user.enteId !== enteId) {
-      throw new ForbiddenException(
-        'No tienes permiso para acceder a este Ente',
-      );
+      throw new ForbiddenException('No tienes permiso para acceder a este Ente');
     }
 
     request.tenantId = enteId;

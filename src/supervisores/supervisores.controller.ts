@@ -11,13 +11,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { SupervisoresService } from './supervisores.service';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -58,8 +52,7 @@ export class SupervisoresController {
   @Get(':id')
   @ApiOperation({
     summary: 'Ver supervisor',
-    description:
-      'Obtiene los detalles de un supervisor específico incluyendo sus Entes asignados',
+    description: 'Obtiene los detalles de un supervisor específico incluyendo sus Entes asignados',
   })
   @ApiParam({ name: 'id', description: 'ID del supervisor' })
   @ApiResponse({ status: 200, description: 'Detalles del supervisor' })
