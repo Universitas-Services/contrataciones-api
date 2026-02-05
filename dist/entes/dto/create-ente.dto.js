@@ -20,6 +20,10 @@ class CreateEnteDto {
     estado;
     municipio;
     parroquia;
+    emailContacto;
+    password;
+    nombreAdmin;
+    apellidoAdmin;
 }
 exports.CreateEnteDto = CreateEnteDto;
 __decorate([
@@ -63,4 +67,24 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateEnteDto.prototype, "parroquia", void 0);
+__decorate([
+    (0, class_validator_1.IsEmail)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateEnteDto.prototype, "emailContacto", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(6),
+    __metadata("design:type", String)
+], CreateEnteDto.prototype, "password", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateEnteDto.prototype, "nombreAdmin", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateEnteDto.prototype, "apellidoAdmin", void 0);
 //# sourceMappingURL=create-ente.dto.js.map

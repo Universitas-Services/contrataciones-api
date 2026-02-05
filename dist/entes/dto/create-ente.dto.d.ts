@@ -7,4 +7,8 @@ export declare class CreateEnteDto {
     estado?: string;
     municipio?: string;
     parroquia?: string;
+    emailContacto: string;
+    password: string;
+    nombreAdmin: string;
+    apellidoAdmin: string;
 }

@@ -20,7 +20,7 @@ exports.LoginDto = LoginDto;
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Email del usuario registrado en el sistema',
-        example: 'admin@universitas.gob.ve'
+        example: 'admin@universitas.gob.ve',
     }),
     (0, class_validator_1.IsEmail)(),
     (0, class_validator_1.IsNotEmpty)(),
@@ -30,7 +30,7 @@ __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Contraseña del usuario (mínimo 6 caracteres)',
         example: 'universitas123',
-        minLength: 6
+        minLength: 6,
     }),
     (0, class_validator_1.IsNotEmpty)(),
     (0, class_validator_1.MinLength)(6),

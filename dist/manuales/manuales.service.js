@@ -114,8 +114,7 @@ let ManualesService = class ManualesService {
                 tipoManual,
                 urlArchivo: fileUrl,
                 tituloManual: `Manual ${tipoManual} - ${ente.siglas || ente.nombre}`,
-                descripcion: descripcion ||
-                    `Manual ${tipoManual} generado automáticamente para ${ente.nombre}`,
+                descripcion: descripcion || `Manual ${tipoManual} generado automáticamente para ${ente.nombre}`,
                 versionDocumento: nextVersion,
                 createdBy: userId,
             },

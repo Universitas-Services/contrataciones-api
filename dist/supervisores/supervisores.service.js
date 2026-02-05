@@ -76,7 +76,7 @@ let SupervisoresService = class SupervisoresService {
                     activo: true,
                 },
             });
-            const asignaciones = createDto.entesIds.map(enteId => ({
+            const asignaciones = createDto.entesIds.map((enteId) => ({
                 supervisorId: newSupervisor.id,
                 enteId,
                 createdBy,
@@ -109,7 +109,7 @@ let SupervisoresService = class SupervisoresService {
             },
             orderBy: { createdAt: 'desc' },
         });
-        return supervisores.map(s => ({
+        return supervisores.map((s) => ({
             id: s.id,
             nombre: `${s.nombre} ${s.apellido}`,
             email: s.email,
@@ -149,7 +149,7 @@ let SupervisoresService = class SupervisoresService {
             email: supervisor.email,
             activo: supervisor.activo,
             rol: supervisor.rol,
-            entesAsignados: supervisor.entesAsignados.map(asignacion => ({
+            entesAsignados: supervisor.entesAsignados.map((asignacion) => ({
                 ...asignacion.ente,
                 asignadoEn: asignacion.createdAt,
             })),
@@ -244,7 +244,7 @@ let SupervisoresService = class SupervisoresService {
             where: { supervisorId },
             select: { enteId: true },
         });
-        return asignaciones.map(a => a.enteId);
+        return asignaciones.map((a) => a.enteId);
     }
 };
 exports.SupervisoresService = SupervisoresService;

@@ -43,7 +43,10 @@ exports.EntesController = EntesController;
 __decorate([
     (0, common_1.Post)(),
     (0, roles_decorator_1.Roles)('UNIVERSITAS'),
-    (0, swagger_1.ApiOperation)({ summary: 'Crear Ente', description: 'Crea un nuevo Ente Público con su usuario administrador' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Crear Ente',
+        description: 'Crea un nuevo Ente Público con su usuario administrador',
+    }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'Ente creado exitosamente' }),
     (0, swagger_1.ApiResponse)({ status: 403, description: 'No autorizado (solo UNIVERSITAS)' }),
     __param(0, (0, common_1.Body)()),
@@ -54,7 +57,10 @@ __decorate([
 ], EntesController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Listar Entes', description: 'UNIVERSITAS ve todos, SUPERVISOR ve asignados, otros ven solo el suyo' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Listar Entes',
+        description: 'UNIVERSITAS ve todos, SUPERVISOR ve asignados, otros ven solo el suyo',
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Lista de Entes según permisos' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -63,7 +69,10 @@ __decorate([
 ], EntesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Ver Ente', description: 'Obtiene detalles de un Ente específico' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Ver Ente',
+        description: 'Obtiene detalles de un Ente específico',
+    }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'ID del Ente' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Detalles del Ente' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Ente no encontrado' }),
@@ -75,7 +84,10 @@ __decorate([
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, roles_decorator_1.Roles)('UNIVERSITAS'),
-    (0, swagger_1.ApiOperation)({ summary: 'Eliminar Ente', description: 'Elimina un Ente (soft delete)' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Eliminar Ente',
+        description: 'Elimina un Ente (soft delete)',
+    }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'ID del Ente' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Ente eliminado' }),
     (0, swagger_1.ApiResponse)({ status: 403, description: 'No autorizado (solo UNIVERSITAS)' }),

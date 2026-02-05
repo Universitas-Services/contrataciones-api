@@ -9,7 +9,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
@@ -55,6 +55,11 @@ export class AuthService {
 
     if (!user.activo) {
       throw new UnauthorizedException('Usuario inactivo');
+    }
+
+    // Verificar si el Ente ha sido eliminado (Borrado Pasivo de usuarios)
+    if (user.ente && user.ente.deletedAt) {
+      throw new UnauthorizedException('El Ente al que pertenece este usuario ha sido desactivado');
     }
 
     // Generar JWT

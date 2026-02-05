@@ -6,9 +6,8 @@ export class CreateEnteDto {
   nombre: string;
 
   @IsString()
-  @IsNotEmpty()
-  @MinLength(10)
-  rif: string;
+  @IsOptional()
+  rif?: string;
 
   @IsString()
   @IsOptional()
@@ -33,4 +32,21 @@ export class CreateEnteDto {
   @IsString()
   @IsOptional()
   parroquia?: string;
+
+  // Datos del Usuario Administrador del Ente
+  @IsEmail()
+  @IsNotEmpty()
+  emailContacto: string;
+
+  @IsString()
+  @MinLength(6)
+  password: string;
+
+  @IsString()
+  @IsNotEmpty()
+  nombreAdmin: string;
+
+  @IsString()
+  @IsNotEmpty()
+  apellidoAdmin: string;
 }

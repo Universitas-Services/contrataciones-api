@@ -11,62 +11,105 @@ import { AsignarEntesDto } from './dto/asignar-entes.dto';
 
 @Injectable()
 export class SupervisoresService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(createDto: CreateSupervisorDto, createdBy: string) {
-    // Verificar que el email no esté en uso
+    const {
+      nombreOrganizacion,
+      rifOrganizacion,
+      emailOrganizacion,
+      nombreUsuario,
+      apellidoUsuario,
+      emailUsuario,
+      password,
+      entesIds,
+    } = createDto;
+
+    // 1. Validaciones previas
+    const existingOrg = await this.prisma.supervisor.findFirst({
+      where: {
+        OR: [{ rif: rifOrganizacion }, { email: emailOrganizacion }],
+      },
+    });
+
+    if (existingOrg) {
+      throw new ConflictException('Ya existe una Organización Supervisora con ese RIF o Email');
+    }
+
     const existingUser = await this.prisma.usuario.findUnique({
-      where: { email: createDto.email },
+      where: { email: emailUsuario },
     });
 
     if (existingUser) {
-      throw new ConflictException('El email ya está registrado');
+      throw new ConflictException('El email del usuario supervisor ya está registrado');
     }
 
-    // Verificar que todos los Entes existan
+    // Verificar Entes
     const entes = await this.prisma.entePublico.findMany({
-      where: { id: { in: createDto.entesIds } },
+      where: { id: { in: entesIds } },
     });
 
-    if (entes.length !== createDto.entesIds.length) {
+    if (entes.length !== entesIds.length) {
       throw new BadRequestException('Algunos Entes especificados no existen');
     }
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(createDto.password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
 
-    // Crear supervisor y asignaciones en transacción
-    const supervisor = await this.prisma.$transaction(async (tx) => {
-      // Crear usuario con rol SUPERVISOR
-      const newSupervisor = await tx.usuario.create({
+    // 2. Transacción de creación
+    return this.prisma.$transaction(async (tx) => {
+      // A. Crear Organización Supervisora
+      const supervisorOrg = await tx.supervisor.create({
         data: {
-          nombre: createDto.nombre,
-          apellido: createDto.apellido,
-          email: createDto.email,
+          nombre: nombreOrganizacion,
+          rif: rifOrganizacion,
+          email: emailOrganizacion,
+        },
+      });
+
+      // B. Asignar Entes a la Organización (Tabla EnteSupervisor)
+      // Nota: Asumimos fecha inicio hoy, fecha fin 1 año por defecto o indefinido
+      const relacionEntes = entesIds.map((enteId) => ({
+        enteId,
+        supervisorId: supervisorOrg.id,
+        fechaInicio: new Date(),
+        createdBy,
+      }));
+
+      await tx.enteSupervisor.createMany({
+        data: relacionEntes,
+      });
+
+      // C. Crear Usuario Supervisor vinculado a la Organización
+      const usuarioSupervisor = await tx.usuario.create({
+        data: {
+          supervisorId: supervisorOrg.id,
+          nombre: nombreUsuario,
+          apellido: apellidoUsuario,
+          email: emailUsuario,
           passwordHash,
           rol: 'SUPERVISOR',
           activo: true,
         },
       });
 
-      // Crear asignaciones de Entes
-      const asignaciones = createDto.entesIds.map((enteId) => ({
-        supervisorId: newSupervisor.id,
+      // D. (Opcional) Crear asignaciones directas al usuario para compatibilidad actual
+      // Aunque con la relación usuario->org->ente sería suficiente, mantendremos
+      // SupervisorAsignacion para que la lógica actual de permisos siga funcionando sin cambios masivos
+      const asignacionesUsuario = entesIds.map((enteId) => ({
+        supervisorId: usuarioSupervisor.id,
         enteId,
         createdBy,
       }));
 
       await tx.supervisorAsignacion.createMany({
-        data: asignaciones,
+        data: asignacionesUsuario,
       });
 
-      return newSupervisor;
+      return usuarioSupervisor;
     });
-
-    // Retornar supervisor con Entes asignados
-    return this.findOne(supervisor.id);
   }
 
+  // Modificado para obtener data incluyendo la org
   async findAll() {
     const supervisores = await this.prisma.usuario.findMany({
       where: {

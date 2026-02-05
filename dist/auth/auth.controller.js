@@ -32,7 +32,7 @@ __decorate([
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, swagger_1.ApiOperation)({
         summary: 'Iniciar sesión',
-        description: 'Endpoint público para autenticación de todos los roles del sistema. Retorna un JWT token que debe usarse en los demás endpoints.'
+        description: 'Endpoint público para autenticación de todos los roles del sistema. Retorna un JWT token que debe usarse en los demás endpoints.',
     }),
     (0, swagger_1.ApiBody)({
         type: login_dto_1.LoginDto,
@@ -41,24 +41,24 @@ __decorate([
                 summary: 'Login como UNIVERSITAS',
                 value: {
                     email: 'admin@universitas.gob.ve',
-                    password: 'universitas123'
-                }
+                    password: 'universitas123',
+                },
             },
             supervisor: {
                 summary: 'Login como SUPERVISOR',
                 value: {
                     email: 'supervisor@sistema.gob.ve',
-                    password: 'supervisor123'
-                }
+                    password: 'supervisor123',
+                },
             },
             adminEnte: {
                 summary: 'Login como ADMIN_ENTE',
                 value: {
                     email: 'admin@alcaldia.gob.ve',
-                    password: 'alcaldia123'
-                }
-            }
-        }
+                    password: 'alcaldia123',
+                },
+            },
+        },
     }),
     (0, swagger_1.ApiResponse)({
         status: 200,
@@ -72,14 +72,14 @@ __decorate([
                     rol: 'UNIVERSITAS',
                     nombre: 'Administrador',
                     apellido: 'Sistema',
-                    enteId: null
-                }
-            }
-        }
+                    enteId: null,
+                },
+            },
+        },
     }),
     (0, swagger_1.ApiResponse)({
         status: 401,
-        description: 'Credenciales inválidas o usuario inactivo'
+        description: 'Credenciales inválidas o usuario inactivo',
     }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),

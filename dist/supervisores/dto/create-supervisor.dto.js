@@ -31,12 +31,19 @@ __decorate([
     __metadata("design:type", String)
 ], CreateSupervisorDto.prototype, "apellido", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'carlos.ramirez@supervision.gob.ve', description: 'Email único del supervisor' }),
+    (0, swagger_1.ApiProperty)({
+        example: 'carlos.ramirez@supervision.gob.ve',
+        description: 'Email único del supervisor',
+    }),
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
 ], CreateSupervisorDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'supervisor123', description: 'Contraseña (mínimo 6 caracteres)', minLength: 6 }),
+    (0, swagger_1.ApiProperty)({
+        example: 'supervisor123',
+        description: 'Contraseña (mínimo 6 caracteres)',
+        minLength: 6,
+    }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(6),
     __metadata("design:type", String)
@@ -45,7 +52,7 @@ __decorate([
     (0, swagger_1.ApiProperty)({
         example: ['ente-uuid-1', 'ente-uuid-2'],
         description: 'Lista de IDs de Entes a asignar al supervisor',
-        type: [String]
+        type: [String],
     }),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.ArrayMinSize)(1, { message: 'Debe asignar al menos un Ente al supervisor' }),

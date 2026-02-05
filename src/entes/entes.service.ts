@@ -1,18 +1,63 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../database/prisma.service';
 import { CreateEnteDto } from './dto/create-ente.dto';
 
 @Injectable()
 export class EntesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(createEnteDto: CreateEnteDto, universitasId: string) {
-    return this.prisma.entePublico.create({
-      data: {
-        ...createEnteDto,
+    const { emailContacto, password, nombreAdmin, apellidoAdmin, ...enteData } = createEnteDto;
+
+    // Verificar si el email ya existe
+    const existingUser = await this.prisma.usuario.findUnique({
+      where: { email: emailContacto },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('El email del administrador ya está registrado');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Transacción para crear Ente y Usuario Admin
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Crear Ente
+      // Construir objeto de datos solo con valores definidos
+      const createData: Record<string, any> = {
+        nombre: enteData.nombre,
         universitasId,
         createdBy: universitasId,
-      },
+      };
+
+      // Agregar campos opcionales solo si están definidos
+      if (enteData.rif !== undefined) createData.rif = enteData.rif;
+      if (enteData.siglas !== undefined) createData.siglas = enteData.siglas;
+      if (enteData.logoUrl !== undefined) createData.logoUrl = enteData.logoUrl;
+      if (enteData.direccionFiscal !== undefined) createData.direccionFiscal = enteData.direccionFiscal;
+      if (enteData.estado !== undefined) createData.estado = enteData.estado;
+      if (enteData.municipio !== undefined) createData.municipio = enteData.municipio;
+      if (enteData.parroquia !== undefined) createData.parroquia = enteData.parroquia;
+
+      const ente = await tx.entePublico.create({
+        data: createData as any,
+      });
+
+      // 2. Crear Usuario Admin Ente vinculado
+      await tx.usuario.create({
+        data: {
+          enteId: ente.id,
+          email: emailContacto,
+          passwordHash: hashedPassword,
+          nombre: nombreAdmin,
+          apellido: apellidoAdmin,
+          rol: 'ADMIN_ENTE',
+          activo: true,
+        },
+      });
+
+      return ente;
     });
   }
 
@@ -89,6 +134,16 @@ export class EntesService {
       where: { id },
       data: {
         deletedAt: new Date(),
+        updatedBy: userId,
+      },
+    });
+  }
+
+  async restore(id: string, userId: string) {
+    return this.prisma.entePublico.update({
+      where: { id },
+      data: {
+        deletedAt: null,
         updatedBy: userId,
       },
     });

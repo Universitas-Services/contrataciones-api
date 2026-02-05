@@ -45,9 +45,15 @@ __decorate([
     (0, common_1.Post)('generar'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, roles_decorator_1.Roles)('ADMIN_ENTE', 'EJECUTOR'),
-    (0, swagger_1.ApiOperation)({ summary: 'Generar manual', description: 'Genera un manual DOCX para el Ente del usuario autenticado' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Generar manual',
+        description: 'Genera un manual DOCX para el Ente del usuario autenticado',
+    }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'Manual generado exitosamente' }),
-    (0, swagger_1.ApiResponse)({ status: 403, description: 'No autorizado (solo ADMIN_ENTE y EJECUTOR)' }),
+    (0, swagger_1.ApiResponse)({
+        status: 403,
+        description: 'No autorizado (solo ADMIN_ENTE y EJECUTOR)',
+    }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -56,7 +62,10 @@ __decorate([
 ], ManualesController.prototype, "generar", null);
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Listar manuales', description: 'Obtiene todos los manuales del Ente o de los Entes asignados (SUPERVISOR)' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Listar manuales',
+        description: 'Obtiene todos los manuales del Ente o de los Entes asignados (SUPERVISOR)',
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Lista de manuales' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -65,7 +74,10 @@ __decorate([
 ], ManualesController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Ver manual', description: 'Obtiene los detalles de un manual específico' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Ver manual',
+        description: 'Obtiene los detalles de un manual específico',
+    }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'ID del manual' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Detalles del manual' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Manual no encontrado' }),
@@ -77,7 +89,10 @@ __decorate([
 ], ManualesController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Get)(':id/download'),
-    (0, swagger_1.ApiOperation)({ summary: 'Descargar manual', description: 'Obtiene la URL de descarga del archivo DOCX' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Descargar manual',
+        description: 'Obtiene la URL de descarga del archivo DOCX',
+    }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'ID del manual' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'URL de descarga' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Manual no encontrado' }),

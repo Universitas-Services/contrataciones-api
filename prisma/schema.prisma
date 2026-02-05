@@ -157,7 +157,7 @@ model EntePublico {
   
   // Información básica
   nombre                        String
-  rif                           String    @unique
+  rif                           String?   @unique
   siglas                        String?
   logoUrl                       String?
   direccionFiscal               String?
@@ -201,6 +201,7 @@ model EntePublico {
 model Usuario {
   id                String        @id @default(uuid())
   enteId            String?       // Null si es Universitas
+  supervisorId      String?       // Null si no pertenece a una org supervisora
   
   // Autenticación
   email             String        @unique
@@ -221,11 +222,13 @@ model Usuario {
   
   // Relaciones
   ente              EntePublico?  @relation(fields: [enteId], references: [id])
+  supervisorEntidad Supervisor?   @relation(fields: [supervisorId], references: [id]) // Organización supervisora a la que pertenece
   entesAsignados    SupervisorAsignacion[] @relation("SupervisorAsignaciones") // Solo para rol SUPERVISOR
   sesionesEdicion   SessionEdicion[]
   auditLogs         AuditLog[]
   
   @@index([enteId, rol])
+  @@index([supervisorId])
   @@index([email])
 }
 
@@ -235,7 +238,7 @@ model Supervisor {
   
   // Información básica
   nombre            String
-  rif               String    @unique
+  rif               String?   @unique
   email             String    @unique
   telefono          String?
   direccion         String?
@@ -245,7 +248,8 @@ model Supervisor {
   updatedAt         DateTime  @updatedAt
   deletedAt         DateTime?
   
-  // Relaciones (temporal con Entes)
+  // Relaciones
+  usuarios          Usuario[]
   entesAsignados    EnteSupervisor[]
   
   @@index([rif])

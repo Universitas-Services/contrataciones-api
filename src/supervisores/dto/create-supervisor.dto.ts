@@ -2,20 +2,35 @@ import { IsString, IsEmail, IsArray, MinLength, IsOptional, ArrayMinSize } from 
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSupervisorDto {
-  @ApiProperty({ example: 'Carlos', description: 'Nombre del supervisor' })
+  @ApiProperty({ example: 'Contraloría Municipal', description: 'Nombre de la Organización Supervisora' })
   @IsString()
-  nombre: string;
+  nombreOrganizacion: string;
 
-  @ApiProperty({ example: 'Ramírez', description: 'Apellido del supervisor' })
+  @ApiProperty({ example: 'G-20000000-1', description: 'RIF de la Organización Supervisora' })
   @IsString()
-  apellido: string;
+  @IsOptional()
+  rifOrganizacion?: string;
+
+  @ApiProperty({ example: 'contacto@contraloria.gob.ve', description: 'Email institucional de la Organización' })
+  @IsEmail()
+  emailOrganizacion: string;
+
+  @ApiProperty({ example: 'Carlos', description: 'Nombre del usuario supervisor' })
+  @IsString()
+  @MinLength(2)
+  nombreUsuario: string;
+
+  @ApiProperty({ example: 'Ramírez', description: 'Apellido del usuario supervisor' })
+  @IsString()
+  @MinLength(2)
+  apellidoUsuario: string;
 
   @ApiProperty({
     example: 'carlos.ramirez@supervision.gob.ve',
-    description: 'Email único del supervisor',
+    description: 'Email de acceso del usuario supervisor',
   })
   @IsEmail()
-  email: string;
+  emailUsuario: string;
 
   @ApiProperty({
     example: 'supervisor123',

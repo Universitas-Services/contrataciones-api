@@ -26,9 +26,7 @@ let TenantGuard = class TenantGuard {
         if (user.rol === 'UNIVERSITAS') {
             return true;
         }
-        const enteId = request.params?.enteId ||
-            request.body?.enteId ||
-            request.query?.enteId;
+        const enteId = request.params?.enteId || request.body?.enteId || request.query?.enteId;
         if (!enteId) {
             request.tenantId = user.enteId;
             return true;

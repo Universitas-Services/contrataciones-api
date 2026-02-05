@@ -12,7 +12,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 @Controller('entes')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class EntesController {
-  constructor(private readonly entesService: EntesService) {}
+  constructor(private readonly entesService: EntesService) { }
 
   @Post()
   @Roles('UNIVERSITAS')
@@ -59,5 +59,17 @@ export class EntesController {
   @ApiResponse({ status: 403, description: 'No autorizado (solo UNIVERSITAS)' })
   remove(@Param('id') id: string, @CurrentUser() user: any) {
     return this.entesService.remove(id, user.id);
+  }
+
+  @Post(':id/restore')
+  @Roles('UNIVERSITAS')
+  @ApiOperation({
+    summary: 'Restaurar Ente',
+    description: 'Reactiva un Ente previamente eliminado',
+  })
+  @ApiParam({ name: 'id', description: 'ID del Ente' })
+  @ApiResponse({ status: 200, description: 'Ente restaurado' })
+  restore(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.entesService.restore(id, user.id);
   }
 }
