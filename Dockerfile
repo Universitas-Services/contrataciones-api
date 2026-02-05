@@ -36,8 +36,11 @@ COPY . .
 # Build application
 RUN npm run build
 
-# Install only production dependencies  
-RUN npm install --only=production --ignore-scripts && npm cache clean --force
+# Install only production dependencies (and rebuild bcrypt)
+RUN apk add --no-cache python3 make g++ && \
+    npm install --only=production --ignore-scripts && \
+    npm rebuild bcrypt --build-from-source && \
+    npm cache clean --force
 
 # ============================================================================
 # STAGE 3: Production
