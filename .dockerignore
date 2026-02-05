@@ -42,7 +42,7 @@ test
 .husky
 
 # Prisma (solo migraciones aplicadas, no el schema)
-prisma/migrations/**/*.sql
+# prisma/migrations/**/*.sql
 
 # Logs
 logs
