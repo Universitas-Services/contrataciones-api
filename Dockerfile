@@ -4,7 +4,7 @@
 FROM node:18-alpine AS dependencies
 
 # Install build dependencies for native modules
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ openssl
 
 WORKDIR /app
 
@@ -44,8 +44,8 @@ RUN npm install --only=production --ignore-scripts && npm cache clean --force
 # ============================================================================
 FROM node:18-alpine AS production
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install dumb-init and openssl for proper signal handling and Prisma
+RUN apk add --no-cache dumb-init openssl
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
