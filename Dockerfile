@@ -65,6 +65,9 @@ COPY --from=build --chown=nestjs:nodejs /app/package*.json ./
 # Copy templates for docx generation (commented - folder doesn't exist yet)
 # COPY --from=build --chown=nestjs:nodejs /app/templates ./templates
 
+# Create uploads directory with correct permissions
+RUN mkdir -p /app/uploads && chown -R nestjs:nodejs /app/uploads
+
 # Switch to non-root user
 USER nestjs
 
