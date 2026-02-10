@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../database/prisma.service';
 import { CreateEnteDto } from './dto/create-ente.dto';
+import { CreateAdminEnteDto } from './dto/create-admin-ente.dto';
 
 @Injectable()
 export class EntesService {
@@ -23,11 +24,24 @@ export class EntesService {
 
     // Transacción para crear Ente y Usuario Admin
     return this.prisma.$transaction(async (tx) => {
-      // 1. Crear Ente
+      // 1. Determinar el universitasId correcto (Organización)
+      // Si el usuario creador no está en la tabla Universitas, buscamos la organización principal
+      let universitasOrgId = universitasId;
+      const esUniversitas = await tx.universitas.findUnique({ where: { id: universitasId } });
+
+      if (!esUniversitas) {
+        const defaultUniversitas = await tx.universitas.findFirst();
+        if (!defaultUniversitas) {
+          throw new ConflictException('No se encontró una organización Universitas principal para asociar el Ente.');
+        }
+        universitasOrgId = defaultUniversitas.id;
+      }
+
+      // 2. Crear Ente
       // Construir objeto de datos solo con valores definidos
       const createData: Record<string, any> = {
         nombre: enteData.nombre,
-        universitasId,
+        universitasId: universitasOrgId,
         createdBy: universitasId,
       };
 
@@ -44,7 +58,7 @@ export class EntesService {
         data: createData as any,
       });
 
-      // 2. Crear Usuario Admin Ente vinculado
+      // 3. Crear Usuario Admin Ente vinculado
       await tx.usuario.create({
         data: {
           enteId: ente.id,
@@ -58,6 +72,38 @@ export class EntesService {
       });
 
       return ente;
+    });
+  }
+
+  async createAdmin(enteId: string, adminData: CreateAdminEnteDto, userId: string) {
+    // Verificar que el Ente existe
+    const ente = await this.prisma.entePublico.findUnique({
+      where: { id: enteId, deletedAt: null },
+    });
+
+    if (!ente) throw new NotFoundException('Ente no encontrado');
+
+    // Verificar si el email ya existe
+    const existingUser = await this.prisma.usuario.findUnique({
+      where: { email: adminData.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('El email ya está registrado para otro usuario');
+    }
+
+    const hashedPassword = await bcrypt.hash(adminData.password, 10);
+
+    return this.prisma.usuario.create({
+      data: {
+        enteId: ente.id,
+        email: adminData.email,
+        passwordHash: hashedPassword,
+        nombre: adminData.nombre,
+        apellido: adminData.apellido,
+        rol: 'ADMIN_ENTE',
+        activo: true,
+      },
     });
   }
 
