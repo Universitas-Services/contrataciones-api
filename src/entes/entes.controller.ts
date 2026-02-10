@@ -18,6 +18,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { EntesService } from './entes.service';
 import { CreateEnteDto } from './dto/create-ente.dto';
+import { CreateAdminEnteDto } from './dto/create-admin-ente.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -45,6 +46,22 @@ export class EntesController {
   @ApiResponse({ status: 403, description: 'No autorizado (solo UNIVERSITAS)' })
   create(@Body() createEnteDto: CreateEnteDto, @CurrentUser() user: any) {
     return this.entesService.create(createEnteDto, user.id);
+  }
+
+  @Post(':id/admin')
+  @Roles('UNIVERSITAS', 'ADMIN_ENTE')
+  @ApiOperation({
+    summary: 'Registrar nuevo Administrador del Ente',
+    description: 'Crea un nuevo usuario con rol ADMIN_ENTE asociado a este Ente',
+  })
+  @ApiResponse({ status: 201, description: 'Administrador creado exitosamente' })
+  @ApiResponse({ status: 403, description: 'No autorizado' })
+  createAdmin(
+    @Param('id') id: string,
+    @Body() createAdminDto: CreateAdminEnteDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.entesService.createAdmin(id, createAdminDto, user.id);
   }
 
   @Get()
