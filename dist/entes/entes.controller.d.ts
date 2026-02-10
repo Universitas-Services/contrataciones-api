@@ -2,7 +2,8 @@ import { EntesService } from './entes.service';
 import { CreateEnteDto } from './dto/create-ente.dto';
 export declare class EntesController {
     private readonly entesService;
-    constructor(entesService: EntesService);
+    private readonly storageService;
+    constructor(entesService: EntesService, storageService: any);
     create(createEnteDto: CreateEnteDto, user: any): Promise<{
         id: string;
         nombre: string;
@@ -10,7 +11,7 @@ export declare class EntesController {
         updatedAt: Date;
         deletedAt: Date | null;
         universitasId: string;
-        rif: string;
+        rif: string | null;
         siglas: string | null;
         logoUrl: string | null;
         direccionFiscal: string | null;
@@ -37,7 +38,7 @@ export declare class EntesController {
         updatedAt: Date;
         deletedAt: Date | null;
         universitasId: string;
-        rif: string;
+        rif: string | null;
         siglas: string | null;
         logoUrl: string | null;
         direccionFiscal: string | null;
@@ -51,6 +52,27 @@ export declare class EntesController {
         createdBy: string | null;
         updatedBy: string | null;
     })[]>;
+    uploadLogo(id: string, file: Express.Multer.File, user: any): Promise<{
+        id: string;
+        nombre: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        universitasId: string;
+        rif: string | null;
+        siglas: string | null;
+        logoUrl: string | null;
+        direccionFiscal: string | null;
+        estado: string | null;
+        municipio: string | null;
+        parroquia: string | null;
+        nombreUnidadAdminFinanciera: string | null;
+        nombreUnidadTecnologia: string | null;
+        nombreUnidadContratante: string | null;
+        organoAdscripcion: string | null;
+        createdBy: string | null;
+        updatedBy: string | null;
+    }>;
     findOne(id: string): Promise<{
         usuarios: {
             email: string;
@@ -114,7 +136,7 @@ export declare class EntesController {
         updatedAt: Date;
         deletedAt: Date | null;
         universitasId: string;
-        rif: string;
+        rif: string | null;
         siglas: string | null;
         logoUrl: string | null;
         direccionFiscal: string | null;
@@ -135,7 +157,28 @@ export declare class EntesController {
         updatedAt: Date;
         deletedAt: Date | null;
         universitasId: string;
-        rif: string;
+        rif: string | null;
+        siglas: string | null;
+        logoUrl: string | null;
+        direccionFiscal: string | null;
+        estado: string | null;
+        municipio: string | null;
+        parroquia: string | null;
+        nombreUnidadAdminFinanciera: string | null;
+        nombreUnidadTecnologia: string | null;
+        nombreUnidadContratante: string | null;
+        organoAdscripcion: string | null;
+        createdBy: string | null;
+        updatedBy: string | null;
+    }>;
+    restore(id: string, user: any): Promise<{
+        id: string;
+        nombre: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        universitasId: string;
+        rif: string | null;
         siglas: string | null;
         logoUrl: string | null;
         direccionFiscal: string | null;

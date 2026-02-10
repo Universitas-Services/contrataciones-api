@@ -52,41 +52,66 @@ let SupervisoresService = class SupervisoresService {
         this.prisma = prisma;
     }
     async create(createDto, createdBy) {
+        const { nombreOrganizacion, rifOrganizacion, emailOrganizacion, nombreUsuario, apellidoUsuario, emailUsuario, password, entesIds, } = createDto;
+        const existingOrg = await this.prisma.supervisor.findFirst({
+            where: {
+                OR: [{ rif: rifOrganizacion }, { email: emailOrganizacion }],
+            },
+        });
+        if (existingOrg) {
+            throw new common_1.ConflictException('Ya existe una Organización Supervisora con ese RIF o Email');
+        }
         const existingUser = await this.prisma.usuario.findUnique({
-            where: { email: createDto.email },
+            where: { email: emailUsuario },
         });
         if (existingUser) {
-            throw new common_1.ConflictException('El email ya está registrado');
+            throw new common_1.ConflictException('El email del usuario supervisor ya está registrado');
         }
         const entes = await this.prisma.entePublico.findMany({
-            where: { id: { in: createDto.entesIds } },
+            where: { id: { in: entesIds } },
         });
-        if (entes.length !== createDto.entesIds.length) {
+        if (entes.length !== entesIds.length) {
             throw new common_1.BadRequestException('Algunos Entes especificados no existen');
         }
-        const passwordHash = await bcrypt.hash(createDto.password, 10);
-        const supervisor = await this.prisma.$transaction(async (tx) => {
-            const newSupervisor = await tx.usuario.create({
+        const passwordHash = await bcrypt.hash(password, 10);
+        return this.prisma.$transaction(async (tx) => {
+            const supervisorOrg = await tx.supervisor.create({
                 data: {
-                    nombre: createDto.nombre,
-                    apellido: createDto.apellido,
-                    email: createDto.email,
+                    nombre: nombreOrganizacion,
+                    rif: rifOrganizacion,
+                    email: emailOrganizacion,
+                },
+            });
+            const relacionEntes = entesIds.map((enteId) => ({
+                enteId,
+                supervisorId: supervisorOrg.id,
+                fechaInicio: new Date(),
+                createdBy,
+            }));
+            await tx.enteSupervisor.createMany({
+                data: relacionEntes,
+            });
+            const usuarioSupervisor = await tx.usuario.create({
+                data: {
+                    supervisorId: supervisorOrg.id,
+                    nombre: nombreUsuario,
+                    apellido: apellidoUsuario,
+                    email: emailUsuario,
                     passwordHash,
                     rol: 'SUPERVISOR',
                     activo: true,
                 },
             });
-            const asignaciones = createDto.entesIds.map((enteId) => ({
-                supervisorId: newSupervisor.id,
+            const asignacionesUsuario = entesIds.map((enteId) => ({
+                supervisorId: usuarioSupervisor.id,
                 enteId,
                 createdBy,
             }));
             await tx.supervisorAsignacion.createMany({
-                data: asignaciones,
+                data: asignacionesUsuario,
             });
-            return newSupervisor;
+            return usuarioSupervisor;
         });
-        return this.findOne(supervisor.id);
     }
     async findAll() {
         const supervisores = await this.prisma.usuario.findMany({

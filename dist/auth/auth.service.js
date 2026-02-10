@@ -89,6 +89,9 @@ let AuthService = class AuthService {
         if (!user.activo) {
             throw new common_1.UnauthorizedException('Usuario inactivo');
         }
+        if (user.ente && user.ente.deletedAt) {
+            throw new common_1.UnauthorizedException('El Ente al que pertenece este usuario ha sido desactivado');
+        }
         const payload = {
             sub: user.id,
             email: user.email,

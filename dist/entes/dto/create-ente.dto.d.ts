@@ -1,6 +1,6 @@
 export declare class CreateEnteDto {
     nombre: string;
-    rif: string;
+    rif?: string;
     siglas?: string;
     logoUrl?: string;
     direccionFiscal?: string;

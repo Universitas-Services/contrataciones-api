@@ -13,31 +13,52 @@ exports.CreateSupervisorDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class CreateSupervisorDto {
-    nombre;
-    apellido;
-    email;
+    nombreOrganizacion;
+    rifOrganizacion;
+    emailOrganizacion;
+    nombreUsuario;
+    apellidoUsuario;
+    emailUsuario;
     password;
     entesIds;
 }
 exports.CreateSupervisorDto = CreateSupervisorDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Carlos', description: 'Nombre del supervisor' }),
+    (0, swagger_1.ApiProperty)({ example: 'Contraloría Municipal', description: 'Nombre de la Organización Supervisora' }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateSupervisorDto.prototype, "nombre", void 0);
+], CreateSupervisorDto.prototype, "nombreOrganizacion", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Ramírez', description: 'Apellido del supervisor' }),
+    (0, swagger_1.ApiProperty)({ example: 'G-20000000-1', description: 'RIF de la Organización Supervisora' }),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
-], CreateSupervisorDto.prototype, "apellido", void 0);
+], CreateSupervisorDto.prototype, "rifOrganizacion", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'contacto@contraloria.gob.ve', description: 'Email institucional de la Organización' }),
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], CreateSupervisorDto.prototype, "emailOrganizacion", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Carlos', description: 'Nombre del usuario supervisor' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(2),
+    __metadata("design:type", String)
+], CreateSupervisorDto.prototype, "nombreUsuario", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Ramírez', description: 'Apellido del usuario supervisor' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(2),
+    __metadata("design:type", String)
+], CreateSupervisorDto.prototype, "apellidoUsuario", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
         example: 'carlos.ramirez@supervision.gob.ve',
-        description: 'Email único del supervisor',
+        description: 'Email de acceso del usuario supervisor',
     }),
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
-], CreateSupervisorDto.prototype, "email", void 0);
+], CreateSupervisorDto.prototype, "emailUsuario", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
         example: 'supervisor123',

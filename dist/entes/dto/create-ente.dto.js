@@ -33,8 +33,7 @@ __decorate([
 ], CreateEnteDto.prototype, "nombre", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.MinLength)(10),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateEnteDto.prototype, "rif", void 0);
 __decorate([

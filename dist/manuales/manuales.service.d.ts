@@ -1,17 +1,16 @@
 import { PrismaService } from '../database/prisma.service';
-import { StorageService } from '../storage/storage.service';
 export declare class ManualesService {
     private prisma;
     private storage;
-    constructor(prisma: PrismaService, storage: StorageService);
+    constructor(prisma: PrismaService, storage: any);
     generarManual(enteId: string, tipoManual: string | undefined, descripcion: string | undefined, userId: string): Promise<{
-        id: string;
+        id: any;
         url: string;
         fileName: string;
         version: number;
-        generatedAt: Date;
-        tipoManual: string;
-        titulo: string;
+        generatedAt: any;
+        tipoManual: any;
+        titulo: any;
     }>;
     private validarDatosCompletos;
     private getNextVersion;

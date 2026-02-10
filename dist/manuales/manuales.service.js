@@ -41,6 +41,9 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -51,8 +54,9 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const pizzip_1 = __importDefault(require("pizzip"));
 const docxtemplater_1 = __importDefault(require("docxtemplater"));
+const axios_1 = __importDefault(require("axios"));
+const docxtemplater_image_module_free_1 = __importDefault(require("docxtemplater-image-module-free"));
 const prisma_service_1 = require("../database/prisma.service");
-const storage_service_1 = require("../storage/storage.service");
 let ManualesService = class ManualesService {
     prisma;
     storage;
@@ -68,21 +72,33 @@ let ManualesService = class ManualesService {
             throw new common_1.NotFoundException('Ente no encontrado');
         }
         this.validarDatosCompletos(ente);
-        const templatePath = path.join(__dirname, 'templates', 'manual-ente-base.docx');
+        const templatePath = path.join(process.cwd(), 'src', 'manuales', 'templates', 'manual-ente-base.docx');
         if (!fs.existsSync(templatePath)) {
             throw new common_1.BadRequestException(`Plantilla no encontrada en: ${templatePath}. Por favor, coloque el archivo manual-ente-base.docx en la carpeta templates.`);
         }
         const content = fs.readFileSync(templatePath, 'binary');
-        const zip = new pizzip_1.default(content);
-        const doc = new docxtemplater_1.default(zip, {
-            paragraphLoop: true,
-            linebreaks: true,
-            delimiters: { start: '{', end: '}' },
-        });
+        console.log('🔍 About to create PizZip instance...');
+        console.log('  - Content type:', typeof content);
+        console.log('  - Content length:', content.length);
+        console.log('  - First 4 chars code:', content.charCodeAt(0), content.charCodeAt(1), content.charCodeAt(2), content.charCodeAt(3));
+        let zip;
+        try {
+            zip = new pizzip_1.default(content);
+            console.log('✅ PizZip instance created successfully!');
+        }
+        catch (zipError) {
+            console.error('❌ FAILED at new PizZip(content):', {
+                message: zipError.message,
+                name: zipError.name,
+                stack: zipError.stack,
+            });
+            throw new common_1.BadRequestException(`SPECIFIC ERROR at PizZip creation: ${zipError.message}`);
+        }
         const now = new Date();
         const data = {
             nom_ente_contratante: ente.nombre,
             siglas_ente: ente.siglas || 'N/A',
+            logo_ente: ente.logoUrl || 'N/A',
             nom_unidad_admin_financiera: ente.nombreUnidadAdminFinanciera || 'Dirección de Administración',
             nom_unidad_contratante: ente.nombreUnidadContratante || 'Unidad de Contrataciones',
             nom_unidad_tecnologia: ente.nombreUnidadTecnologia || 'Dirección de Tecnología',
@@ -93,32 +109,122 @@ let ManualesService = class ManualesService {
             }),
             anio: now.getFullYear().toString(),
         };
-        doc.setData(data);
+        let logoBuffer;
         try {
-            doc.render();
+            if (ente.logoUrl) {
+                const response = await axios_1.default.get(ente.logoUrl, { responseType: 'arraybuffer' });
+                logoBuffer = Buffer.from(response.data);
+            }
+            else {
+                throw new Error('No logo URL');
+            }
+        }
+        catch (e) {
+            const placeholderPath = path.join(__dirname, 'templates', 'placeholder_logo.png');
+            logoBuffer = fs.existsSync(placeholderPath) ? fs.readFileSync(placeholderPath) : Buffer.alloc(0);
+        }
+        const imageModule = new docxtemplater_image_module_free_1.default({
+            centered: false,
+            getImage: (tagValue, tagName) => {
+                return logoBuffer;
+            },
+            getSize: () => [150, 150],
+        });
+        console.log('🔧 About to create Docxtemplater instance...');
+        let doc;
+        try {
+            doc = new docxtemplater_1.default(zip, {
+                paragraphLoop: true,
+                linebreaks: true,
+                delimiters: { start: '{', end: '}' },
+                modules: [imageModule],
+            });
+            console.log('✅ Docxtemplater instance created successfully!');
+        }
+        catch (docError) {
+            console.error('❌ FAILED at new Docxtemplater(zip):', {
+                message: docError.message,
+                name: docError.name,
+                stack: docError.stack,
+            });
+            throw new common_1.BadRequestException(`SPECIFIC ERROR at Docxtemplater creation: ${docError.message}`);
+        }
+        console.log('📝 About to render document...');
+        try {
+            doc.render({
+                ...data,
+                logo_ente: 'logo_placeholder',
+            });
+            console.log('✅ Document rendered successfully!');
         }
         catch (error) {
+            console.error('❌ FAILED at doc.render():', {
+                message: error.message,
+                name: error.name,
+                stack: error.stack,
+            });
             throw new common_1.BadRequestException(`Error al generar documento: ${error.message}. Verifique que los marcadores en la plantilla estén correctos.`);
         }
-        const buffer = doc.getZip().generate({
-            type: 'nodebuffer',
-            compression: 'DEFLATE',
-        });
+        console.log('📦 About to generate buffer...');
+        let buffer;
+        try {
+            buffer = doc.getZip().generate({
+                type: 'nodebuffer',
+                compression: 'DEFLATE',
+            });
+            console.log('✅ Buffer generated successfully!');
+        }
+        catch (genError) {
+            console.error('❌ FAILED at doc.getZip().generate():', {
+                message: genError.message,
+                name: genError.name,
+                stack: genError.stack,
+            });
+            throw new common_1.BadRequestException(`Error al generar buffer ZIP: ${genError.message}`);
+        }
         const fileName = `manual-${tipoManual.toLowerCase()}-${Date.now()}.docx`;
         const filePath = `manuales/${enteId}/${fileName}`;
-        const fileUrl = await this.storage.uploadFile(buffer, filePath);
+        console.log('☁️ About to upload to storage...');
+        let fileUrl;
+        try {
+            fileUrl = await this.storage.uploadFile(buffer, filePath);
+            console.log('✅ File uploaded successfully to:', fileUrl);
+        }
+        catch (uploadError) {
+            console.error('❌ FAILED at this.storage.uploadFile():', {
+                message: uploadError.message,
+                name: uploadError.name,
+                stack: uploadError.stack,
+            });
+            throw new common_1.BadRequestException(`Error al subir archivo: ${uploadError.message}`);
+        }
+        console.log('🔢 Getting next version...');
         const nextVersion = await this.getNextVersion(enteId, tipoManual);
-        const manual = await this.prisma.manualGenerado.create({
-            data: {
-                enteId,
-                tipoManual,
-                urlArchivo: fileUrl,
-                tituloManual: `Manual ${tipoManual} - ${ente.siglas || ente.nombre}`,
-                descripcion: descripcion || `Manual ${tipoManual} generado automáticamente para ${ente.nombre}`,
-                versionDocumento: nextVersion,
-                createdBy: userId,
-            },
-        });
+        console.log('✅ Next version:', nextVersion);
+        console.log('💾 About to save to database...');
+        let manual;
+        try {
+            manual = await this.prisma.manualGenerado.create({
+                data: {
+                    enteId,
+                    tipoManual,
+                    urlArchivo: fileUrl,
+                    tituloManual: `Manual ${tipoManual} - ${ente.siglas || ente.nombre}`,
+                    descripcion: descripcion || `Manual ${tipoManual} generado automáticamente para ${ente.nombre}`,
+                    versionDocumento: nextVersion,
+                    createdBy: userId,
+                },
+            });
+            console.log('✅ Manual saved to database successfully!');
+        }
+        catch (dbError) {
+            console.error('❌ FAILED at prisma.manualGenerado.create():', {
+                message: dbError.message,
+                name: dbError.name,
+                stack: dbError.stack,
+            });
+            throw new common_1.BadRequestException(`Error al guardar en base de datos: ${dbError.message}`);
+        }
         return {
             id: manual.id,
             url: fileUrl,
@@ -187,7 +293,7 @@ let ManualesService = class ManualesService {
 exports.ManualesService = ManualesService;
 exports.ManualesService = ManualesService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        storage_service_1.StorageService])
+    __param(1, (0, common_1.Inject)('IStorageService')),
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, Object])
 ], ManualesService);
 //# sourceMappingURL=manuales.service.js.map
