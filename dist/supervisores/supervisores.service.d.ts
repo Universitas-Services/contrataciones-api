@@ -5,18 +5,18 @@ export declare class SupervisoresService {
     private prisma;
     constructor(prisma: PrismaService);
     create(createDto: CreateSupervisorDto, createdBy: string): Promise<{
-        id: string;
-        nombre: string;
         email: string;
-        activo: boolean;
+        id: string;
+        enteId: string | null;
+        supervisorId: string | null;
+        passwordHash: string;
+        nombre: string;
+        apellido: string;
         rol: import(".prisma/client").$Enums.RolUsuario;
-        entesAsignados: {
-            asignadoEn: Date;
-            id: string;
-            nombre: string;
-            rif: string;
-            siglas: string | null;
-        }[];
+        activo: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
     }>;
     findAll(): Promise<{
         id: string;
@@ -36,7 +36,7 @@ export declare class SupervisoresService {
             asignadoEn: Date;
             id: string;
             nombre: string;
-            rif: string;
+            rif: string | null;
             siglas: string | null;
         }[];
     }>;
@@ -50,7 +50,7 @@ export declare class SupervisoresService {
             asignadoEn: Date;
             id: string;
             nombre: string;
-            rif: string;
+            rif: string | null;
             siglas: string | null;
         }[];
     }>;

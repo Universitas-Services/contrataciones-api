@@ -97,6 +97,27 @@ export class EntesService {
     });
   }
 
+  async findAvailable() {
+    return this.prisma.entePublico.findMany({
+      where: {
+        deletedAt: null,
+        supervisoresAsignados: {
+          none: {}, // Filtra Entes que NO tienen registros en la tabla pivote
+        },
+      },
+      select: {
+        id: true,
+        nombre: true,
+        rif: true,
+        estado: true,
+        municipio: true,
+      },
+      orderBy: {
+        nombre: 'asc',
+      },
+    });
+  }
+
   async findOne(id: string) {
     const ente = await this.prisma.entePublico.findFirst({
       where: { id, deletedAt: null },
@@ -127,6 +148,19 @@ export class EntesService {
     }
 
     return ente;
+  }
+
+  async updateLogo(id: string, logoUrl: string, userId: string) {
+    // Verificar que el Ente existe
+    await this.findOne(id);
+
+    return this.prisma.entePublico.update({
+      where: { id },
+      data: {
+        logoUrl,
+        updatedBy: userId,
+      },
+    });
   }
 
   async remove(id: string, userId: string) {

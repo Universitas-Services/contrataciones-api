@@ -7,6 +7,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
@@ -22,7 +23,7 @@ import { GenerarManualDto } from './dto/generar-manual.dto';
 @Controller('manuales')
 @UseGuards(AuthGuard('jwt'), RolesGuard, TenantGuard)
 export class ManualesController {
-  constructor(private readonly manualesService: ManualesService) {}
+  constructor(private readonly manualesService: ManualesService) { }
 
   @Post('generar')
   @HttpCode(HttpStatus.OK)
@@ -70,12 +71,39 @@ export class ManualesController {
   @Get(':id/download')
   @ApiOperation({
     summary: 'Descargar manual',
-    description: 'Obtiene la URL de descarga del archivo DOCX',
+    description: 'Descarga directamente el archivo DOCX del manual',
   })
   @ApiParam({ name: 'id', description: 'ID del manual' })
-  @ApiResponse({ status: 200, description: 'URL de descarga' })
+  @ApiResponse({ status: 200, description: 'Archivo DOCX descargado' })
   @ApiResponse({ status: 404, description: 'Manual no encontrado' })
-  async download(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.manualesService.download(id, user.enteId);
+  async download(@Param('id') id: string, @CurrentUser() user: any, @Res({ passthrough: false }) res: any) {
+    const result = await this.manualesService.download(id, user.enteId);
+
+    try {
+      // Fetch file from Cloudinary URL
+      const axios = require('axios');
+      const response = await axios.get(result.url, {
+        responseType: 'arraybuffer',
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+      });
+
+      const fileBuffer = Buffer.from(response.data);
+
+      // Set proper headers for DOCX download with explicit filename
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
+      res.setHeader('Content-Length', fileBuffer.length.toString());
+      res.setHeader('Cache-Control', 'no-cache');
+
+      // Send the file buffer
+      res.end(fileBuffer);
+    } catch (error: any) {
+      res.status(500).json({
+        statusCode: 500,
+        message: 'Error al descargar el archivo desde Cloudinary',
+        error: error.message,
+      });
+    }
   }
 }

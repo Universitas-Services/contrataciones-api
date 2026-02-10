@@ -30,7 +30,7 @@ export declare class AuthService {
                 updatedAt: Date;
                 deletedAt: Date | null;
                 universitasId: string;
-                rif: string;
+                rif: string | null;
                 siglas: string | null;
                 logoUrl: string | null;
                 direccionFiscal: string | null;

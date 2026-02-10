@@ -1,17 +1,20 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
+import axios from 'axios';
+// @ts-ignore
+import ImageModule from 'docxtemplater-image-module-free';
 import { PrismaService } from '../database/prisma.service';
-import { StorageService } from '../storage/storage.service';
+import { IStorageService } from '../common/interfaces/storage-service.interface';
 
 @Injectable()
 export class ManualesService {
   constructor(
     private prisma: PrismaService,
-    private storage: StorageService,
-  ) {}
+    @Inject('IStorageService') private storage: any, // Usar any o interfaz compatible para evitar problemas de metadata
+  ) { }
 
   async generarManual(
     enteId: string,
@@ -31,8 +34,8 @@ export class ManualesService {
     // 2. Validar que el Ente tenga todos los campos requeridos
     this.validarDatosCompletos(ente);
 
-    // 3. Cargar plantilla base
-    const templatePath = path.join(__dirname, 'templates', 'manual-ente-base.docx');
+    // 3. Cargar plantilla base - EXACT PATTERN from working test script
+    const templatePath = path.join(process.cwd(), 'src', 'manuales', 'templates', 'manual-ente-base.docx');
 
     if (!fs.existsSync(templatePath)) {
       throw new BadRequestException(
@@ -40,21 +43,34 @@ export class ManualesService {
       );
     }
 
+    // EXACT MATCH: read as 'binary' like test script
     const content = fs.readFileSync(templatePath, 'binary');
-    const zip = new PizZip(content);
 
-    // 4. Inicializar docxtemplater
-    const doc = new Docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-      delimiters: { start: '{', end: '}' },
-    });
+    // EXACT MATCH: create PizZip immediately with content
+    console.log('🔍 About to create PizZip instance...');
+    console.log('  - Content type:', typeof content);
+    console.log('  - Content length:', content.length);
+    console.log('  - First 4 chars code:', content.charCodeAt(0), content.charCodeAt(1), content.charCodeAt(2), content.charCodeAt(3));
 
-    // 5. Preparar datos para reemplazo
+    let zip: any;
+    try {
+      zip = new PizZip(content);
+      console.log('✅ PizZip instance created successfully!');
+    } catch (zipError: any) {
+      console.error('❌ FAILED at new PizZip(content):', {
+        message: zipError.message,
+        name: zipError.name,
+        stack: zipError.stack,
+      });
+      throw new BadRequestException(`SPECIFIC ERROR at PizZip creation: ${zipError.message}`);
+    }
+
+    // 4. Preparar datos para reemplazo
     const now = new Date();
     const data = {
       nom_ente_contratante: ente.nombre,
       siglas_ente: ente.siglas || 'N/A',
+      logo_ente: ente.logoUrl || 'N/A', // Marcador para la imagen
       nom_unidad_admin_financiera:
         ente.nombreUnidadAdminFinanciera || 'Dirección de Administración',
       nom_unidad_contratante: ente.nombreUnidadContratante || 'Unidad de Contrataciones',
@@ -69,45 +85,137 @@ export class ManualesService {
       anio: now.getFullYear().toString(),
     };
 
-    // 6. Reemplazar marcadores
-    doc.setData(data);
-
+    // 5. Descargar imagen (Logo)
+    let logoBuffer: Buffer;
     try {
-      doc.render();
+      if (ente.logoUrl) {
+        const response = await axios.get(ente.logoUrl, { responseType: 'arraybuffer' });
+        logoBuffer = Buffer.from(response.data);
+      } else {
+        throw new Error('No logo URL');
+      }
+    } catch (e) {
+      // Fallback
+      const placeholderPath = path.join(__dirname, 'templates', 'placeholder_logo.png');
+      logoBuffer = fs.existsSync(placeholderPath) ? fs.readFileSync(placeholderPath) : Buffer.alloc(0);
+    }
+
+    // 6. Configurar Modulo de Imagen (Síncrono)
+    const imageModule = new ImageModule({
+      centered: false,
+      getImage: (tagValue: string, tagName: string) => {
+        // tagValue será 'logo_ente_img' (el valor del string en data)
+        // Pero aquí devolvemos directamente el buffer preparado
+        return logoBuffer;
+      },
+      getSize: () => [150, 150],
+    });
+
+    // 7. Inicializar Docxtemplater - EXACT PATTERN from test script
+    console.log('🔧 About to create Docxtemplater instance...');
+    let doc: Docxtemplater;
+    try {
+      doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: '{', end: '}' },
+        modules: [imageModule],
+      });
+      console.log('✅ Docxtemplater instance created successfully!');
+    } catch (docError: any) {
+      console.error('❌ FAILED at new Docxtemplater(zip):', {
+        message: docError.message,
+        name: docError.name,
+        stack: docError.stack,
+      });
+      throw new BadRequestException(`SPECIFIC ERROR at Docxtemplater creation: ${docError.message}`);
+    }
+
+    // 8. Renderizar documento
+    console.log('📝 About to render document...');
+    try {
+      doc.render({
+        ...data,
+        logo_ente: 'logo_placeholder', // El valor string activa el modulo si coincide con el tag
+      });
+      console.log('✅ Document rendered successfully!');
     } catch (error: any) {
+      console.error('❌ FAILED at doc.render():', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+      });
       throw new BadRequestException(
         `Error al generar documento: ${error.message}. Verifique que los marcadores en la plantilla estén correctos.`,
       );
     }
 
-    // 7. Generar buffer del DOCX
-    const buffer = doc.getZip().generate({
-      type: 'nodebuffer',
-      compression: 'DEFLATE',
-    });
+    // 9. Generar buffer del DOCX - EXACT PATTERN from test script
+    console.log('📦 About to generate buffer...');
+    let buffer: Buffer;
+    try {
+      buffer = doc.getZip().generate({
+        type: 'nodebuffer',
+        compression: 'DEFLATE',
+      });
+      console.log('✅ Buffer generated successfully!');
+    } catch (genError: any) {
+      console.error('❌ FAILED at doc.getZip().generate():', {
+        message: genError.message,
+        name: genError.name,
+        stack: genError.stack,
+      });
+      throw new BadRequestException(`Error al generar buffer ZIP: ${genError.message}`);
+    }
 
-    // 8. Guardar archivo en storage
+    // 10. Guardar archivo en storage
     const fileName = `manual-${tipoManual.toLowerCase()}-${Date.now()}.docx`;
     const filePath = `manuales/${enteId}/${fileName}`;
 
-    const fileUrl = await this.storage.uploadFile(buffer, filePath);
+    console.log('☁️ About to upload to storage...');
+    let fileUrl: string;
+    try {
+      fileUrl = await this.storage.uploadFile(buffer, filePath);
+      console.log('✅ File uploaded successfully to:', fileUrl);
+    } catch (uploadError: any) {
+      console.error('❌ FAILED at this.storage.uploadFile():', {
+        message: uploadError.message,
+        name: uploadError.name,
+        stack: uploadError.stack,
+      });
+      throw new BadRequestException(`Error al subir archivo: ${uploadError.message}`);
+    }
 
-    // 9. Obtener siguiente versión
+    // 11. Obtener siguiente versión
+    console.log('🔢 Getting next version...');
     const nextVersion = await this.getNextVersion(enteId, tipoManual);
+    console.log('✅ Next version:', nextVersion);
 
-    // 10. Registrar en BD
-    const manual = await this.prisma.manualGenerado.create({
-      data: {
-        enteId,
-        tipoManual,
-        urlArchivo: fileUrl,
-        tituloManual: `Manual ${tipoManual} - ${ente.siglas || ente.nombre}`,
-        descripcion:
-          descripcion || `Manual ${tipoManual} generado automáticamente para ${ente.nombre}`,
-        versionDocumento: nextVersion,
-        createdBy: userId,
-      },
-    });
+    // 12. Registrar en BD
+    console.log('💾 About to save to database...');
+    let manual: any;
+    try {
+      manual = await this.prisma.manualGenerado.create({
+        data: {
+          enteId,
+          tipoManual,
+          urlArchivo: fileUrl,
+          tituloManual: `Manual ${tipoManual} - ${ente.siglas || ente.nombre}`,
+          descripcion:
+            descripcion || `Manual ${tipoManual} generado automáticamente para ${ente.nombre}`,
+          versionDocumento: nextVersion,
+          createdBy: userId,
+        },
+      });
+      console.log('✅ Manual saved to database successfully!');
+    } catch (dbError: any) {
+      console.error('❌ FAILED at prisma.manualGenerado.create():', {
+        message: dbError.message,
+        name: dbError.name,
+        stack: dbError.stack,
+      });
+      throw new BadRequestException(`Error al guardar en base de datos: ${dbError.message}`);
+    }
 
     return {
       id: manual.id,
@@ -132,7 +240,7 @@ export class ManualesService {
     if (camposFaltantes.length > 0) {
       throw new BadRequestException(
         `El Ente no tiene configurados los siguientes campos obligatorios: ${camposFaltantes.join(', ')}. ` +
-          'Por favor, actualice la configuración del Ente antes de generar el manual.',
+        'Por favor, actualice la configuración del Ente antes de generar el manual.',
       );
     }
   }

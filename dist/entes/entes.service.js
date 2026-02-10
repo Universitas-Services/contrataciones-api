@@ -61,12 +61,27 @@ let EntesService = class EntesService {
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         return this.prisma.$transaction(async (tx) => {
+            const createData = {
+                nombre: enteData.nombre,
+                universitasId,
+                createdBy: universitasId,
+            };
+            if (enteData.rif !== undefined)
+                createData.rif = enteData.rif;
+            if (enteData.siglas !== undefined)
+                createData.siglas = enteData.siglas;
+            if (enteData.logoUrl !== undefined)
+                createData.logoUrl = enteData.logoUrl;
+            if (enteData.direccionFiscal !== undefined)
+                createData.direccionFiscal = enteData.direccionFiscal;
+            if (enteData.estado !== undefined)
+                createData.estado = enteData.estado;
+            if (enteData.municipio !== undefined)
+                createData.municipio = enteData.municipio;
+            if (enteData.parroquia !== undefined)
+                createData.parroquia = enteData.parroquia;
             const ente = await tx.entePublico.create({
-                data: {
-                    ...enteData,
-                    universitasId,
-                    createdBy: universitasId,
-                },
+                data: createData,
             });
             await tx.usuario.create({
                 data: {
@@ -140,11 +155,30 @@ let EntesService = class EntesService {
         }
         return ente;
     }
+    async updateLogo(id, logoUrl, userId) {
+        await this.findOne(id);
+        return this.prisma.entePublico.update({
+            where: { id },
+            data: {
+                logoUrl,
+                updatedBy: userId,
+            },
+        });
+    }
     async remove(id, userId) {
         return this.prisma.entePublico.update({
             where: { id },
             data: {
                 deletedAt: new Date(),
+                updatedBy: userId,
+            },
+        });
+    }
+    async restore(id, userId) {
+        return this.prisma.entePublico.update({
+            where: { id },
+            data: {
+                deletedAt: null,
                 updatedBy: userId,
             },
         });

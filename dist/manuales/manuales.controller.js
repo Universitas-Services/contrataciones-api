@@ -36,8 +36,29 @@ let ManualesController = class ManualesController {
     findOne(id, user) {
         return this.manualesService.findOne(id, user.enteId);
     }
-    async download(id, user) {
-        return this.manualesService.download(id, user.enteId);
+    async download(id, user, res) {
+        const result = await this.manualesService.download(id, user.enteId);
+        try {
+            const axios = require('axios');
+            const response = await axios.get(result.url, {
+                responseType: 'arraybuffer',
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity,
+            });
+            const fileBuffer = Buffer.from(response.data);
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
+            res.setHeader('Content-Length', fileBuffer.length.toString());
+            res.setHeader('Cache-Control', 'no-cache');
+            res.end(fileBuffer);
+        }
+        catch (error) {
+            res.status(500).json({
+                statusCode: 500,
+                message: 'Error al descargar el archivo desde Cloudinary',
+                error: error.message,
+            });
+        }
     }
 };
 exports.ManualesController = ManualesController;
@@ -91,15 +112,16 @@ __decorate([
     (0, common_1.Get)(':id/download'),
     (0, swagger_1.ApiOperation)({
         summary: 'Descargar manual',
-        description: 'Obtiene la URL de descarga del archivo DOCX',
+        description: 'Descarga directamente el archivo DOCX del manual',
     }),
     (0, swagger_1.ApiParam)({ name: 'id', description: 'ID del manual' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'URL de descarga' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Archivo DOCX descargado' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Manual no encontrado' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __param(2, (0, common_1.Res)({ passthrough: false })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], ManualesController.prototype, "download", null);
 exports.ManualesController = ManualesController = __decorate([

@@ -4,13 +4,13 @@ export declare class ManualesController {
     private readonly manualesService;
     constructor(manualesService: ManualesService);
     generar(dto: GenerarManualDto, user: any): Promise<{
-        id: string;
+        id: any;
         url: string;
         fileName: string;
         version: number;
-        generatedAt: Date;
-        tipoManual: string;
-        titulo: string;
+        generatedAt: any;
+        tipoManual: any;
+        titulo: any;
     }>;
     findAll(user: any): Promise<{
         id: string;
@@ -36,8 +36,5 @@ export declare class ManualesController {
         urlArchivo: string;
         versionDocumento: number;
     }>;
-    download(id: string, user: any): Promise<{
-        url: string;
-        fileName: string;
-    }>;
+    download(id: string, user: any, res: any): Promise<void>;
 }
