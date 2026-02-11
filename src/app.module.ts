@@ -8,6 +8,7 @@ import { StorageModule } from './storage/storage.module';
 import { ManualesModule } from './manuales/manuales.module';
 import { SupervisoresModule } from './supervisores/supervisores.module';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { ProveedoresModule } from './proveedores/proveedores.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     EntesModule,
     ManualesModule,
     SupervisoresModule,
+    ProveedoresModule,
   ],
   providers: [
     {

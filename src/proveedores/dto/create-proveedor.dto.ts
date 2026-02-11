@@ -1,0 +1,158 @@
+import {
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsBoolean,
+  IsInt,
+  Min,
+  IsNumber,
+  IsDateString,
+} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+
+export class CreateProveedorDto {
+  @ApiProperty({
+    description: 'Correo electrónico del proveedor',
+    example: 'proveedor@empresa.com',
+  })
+  @IsEmail()
+  @IsNotEmpty()
+  correo: string;
+
+  @ApiProperty({
+    description: 'Nombre o razón social del proveedor',
+    example: 'Constructora Los Andes C.A.',
+  })
+  @IsString()
+  @IsNotEmpty()
+  nombre: string;
+
+  @ApiProperty({ description: 'RIF del proveedor', example: 'J-12345678-9' })
+  @IsString()
+  @IsNotEmpty()
+  rif: string;
+
+  @ApiProperty({
+    description: 'Tipo de persona',
+    enum: ['NATURAL', 'JURIDICA'],
+    example: 'JURIDICA',
+  })
+  @IsEnum(['NATURAL', 'JURIDICA'])
+  @IsNotEmpty()
+  tipoPersona: string;
+
+  @ApiPropertyOptional({
+    description: 'Tipo de entidad jurídica',
+    enum: ['EMPRESA_PRIVADA', 'COOPERATIVA', 'FUNDACION', 'ASOCIACION_CIVIL', 'CONSORCIO'],
+    example: 'EMPRESA_PRIVADA',
+  })
+  @IsOptional()
+  @IsString()
+  tipoEntidadJuridica?: string;
+
+  @ApiPropertyOptional({ description: 'Estado', example: 'Miranda' })
+  @IsOptional()
+  @IsString()
+  estado?: string;
+
+  @ApiPropertyOptional({ description: 'Municipio', example: 'Sucre' })
+  @IsOptional()
+  @IsString()
+  municipio?: string;
+
+  @ApiPropertyOptional({ description: 'Parroquia', example: 'Petare' })
+  @IsOptional()
+  @IsString()
+  parroquia?: string;
+
+  @ApiPropertyOptional({
+    description: 'Dirección fiscal',
+    example: 'Av. Principal, Edif. Torre A, Piso 3',
+  })
+  @IsOptional()
+  @IsString()
+  direccionFiscal?: string;
+
+  @ApiPropertyOptional({ description: 'Teléfono de contacto', example: '0212-1234567' })
+  @IsOptional()
+  @IsString()
+  telefono?: string;
+
+  @ApiPropertyOptional({ description: 'Nombre del representante legal', example: 'Juan Pérez' })
+  @IsOptional()
+  @IsString()
+  nombreRepLegal?: string;
+
+  @ApiPropertyOptional({ description: 'Cédula del representante legal', example: 'V-12345678' })
+  @IsOptional()
+  @IsString()
+  cedulaRepLegal?: string;
+
+  @ApiPropertyOptional({ description: 'Registro Nacional de Contratistas (RNC)', example: 'true' })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  registroRnc?: boolean;
+
+  @ApiPropertyOptional({ description: 'Solvencia laboral vigente', example: 'true' })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  solvenciaLaboral?: boolean;
+
+  @ApiPropertyOptional({ description: 'Licencia de funcionamiento municipal', example: 'false' })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  licenciaFuncionamientoMunicipal?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Actividad comercial',
+    example: 'Construcción de obras civiles',
+  })
+  @IsOptional()
+  @IsString()
+  actividadComercial?: string;
+
+  @ApiPropertyOptional({
+    description: 'Área de especialidad',
+    enum: ['OBRAS', 'BIENES', 'SERVICIOS', 'CONSULTORIA'],
+    example: 'OBRAS',
+  })
+  @IsOptional()
+  @IsString()
+  areaEspecialidad?: string;
+
+  @ApiPropertyOptional({ description: 'Años de experiencia', example: '10' })
+  @IsOptional()
+  @Transform(({ value }: { value: string }) => (value ? parseInt(value, 10) : undefined))
+  @IsInt()
+  @Min(0)
+  anosExperiencia?: number;
+
+  @ApiPropertyOptional({
+    description: 'Fecha del estado financiero (ISO 8601)',
+    example: '2025-12-31',
+  })
+  @IsOptional()
+  @IsDateString()
+  fechaEstadoFinanciero?: string;
+
+  @ApiPropertyOptional({ description: 'Patrimonio reportado', example: '1500000.50' })
+  @IsOptional()
+  @Transform(({ value }: { value: string }) => (value ? parseFloat(value) : undefined))
+  @IsNumber()
+  patrimonioReportado?: number;
+
+  @ApiPropertyOptional({
+    description: 'Nivel de contratación',
+    enum: ['BASICO', 'INTERMEDIO', 'AVANZADO', 'EXPERTO'],
+    example: 'INTERMEDIO',
+  })
+  @IsOptional()
+  @IsString()
+  nivelContratacion?: string;
+}
