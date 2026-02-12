@@ -309,26 +309,26 @@ model SupervisorAsignacion {
 
 // Máxima Autoridad del Ente (quien firma los contratos)
 model MaximaAutoridad {
-  id                                      String    @id @default(uuid())
-  enteId                                  String
+  id                                      String    @id @default(uuid()) @map("id_autoridad")
+  enteId                                  String    @map("id_ente")
   
   // Autoridad principal
-  nombreCompleto                          String
-  cedula                                  String
-  cargoOficial                            String
-  datosDesignacion                        String?
-  leyesAtribucionesSuscribir              String?
+  nombreCompletoAutoridad                 String    @map("nom_completo_autorida")
+  cedulaAutoridad                         String    @map("cedula_autoridad")
+  cargoOficialAutoridad                   String    @map("cargo_oficial_autoridad")
+  datosDesignacionAutoridad               String?   @map("datos_designacion_autoridad")
+  leyesAtribucionesSuscribirAutoridad     String?   @map("leyes_atribuciones_suscribir_autoridad")
   
   // Control de delegación
-  esDelegado                              Boolean   @default(false)
-  vigente                                 Boolean   @default(true)
+  esDelegado                              Boolean   @default(false) @map("ind_es_delegado")
+  vigente                                 Boolean   @default(true) @map("ind_autoridad_vigente")
   
   // Datos del delegado (si aplica)
-  nombreCompletoDelegado                  String?
-  cedulaDelegado                          String?
-  cargoOficialDelegado                    String?
-  datosDesignacionDelegado                String?
-  leyesAtribucionesSuscribirDelegado      String?
+  nombreCompletoDelegado                  String?   @map("nom_completo_delegado")
+  cedulaDelegado                          String?   @map("cedula_delegado")
+  cargoOficialDelegado                    String?   @map("cargo_oficial_delegado")
+  datosDesignacionDelegado                String?   @map("datos_designacion_delegado")
+  leyesAtribucionesSuscribirDelegado      String?   @map("leyes_atribuciones_suscribir_delegado")
   
   // Auditoría
   createdAt                               DateTime  @default(now())
@@ -343,17 +343,18 @@ model MaximaAutoridad {
   expedientes                             ExpedienteContratacion[]
   
   @@index([enteId, vigente])
-  @@index([cedula])
+  @@index([cedulaAutoridad])
+  @@map("tb_maxima_autoridad")
 }
 
 // Comisión de Contrataciones
 model ComisionContrataciones {
-  id                        String    @id @default(uuid())
-  enteId                    String
+  id                        String    @id @default(uuid()) @map("id_comision")
+  enteId                    String    @map("id_ente")
   
-  denominacion              String
-  datosDesignacion          String?
-  tieneCertificado          Boolean   @default(false)
+  denominacionComision      String    @map("denominacion_comision")
+  datosDesignacionComision  String?   @map("datos_designacion_comision")
+  comisionCertificada       Boolean   @default(false) @map("ind_comision_certificado")
   
   // Auditoría
   createdAt                 DateTime  @default(now())
@@ -369,17 +370,18 @@ model ComisionContrataciones {
   expedientes               ExpedienteContratacion[]
   
   @@index([enteId])
+  @@map("tb_comision_contrataciones")
 }
 
 // Miembros de la Comisión
 model MiembroComision {
-  id                    String              @id @default(uuid())
-  comisionId            String
+  id                    String              @id @default(uuid()) @map("id_miembro")
+  comisionId            String              @map("id_comision")
   
-  nombreCompleto        String
-  cedula                String
-  tipoMiembro           TipoMiembro
-  areaRepresentacion    AreaRepresentacion
+  nombreCompletoMiembro String              @map("nom_completo_miembro")
+  cedulaMiembro         String              @map("cedula_miembro")
+  tipoMiembro           TipoMiembro         @map("tipo_miembro")
+  areaRepresentacion    AreaRepresentacion  @map("area_representacion")
   
   // Auditoría
   createdAt             DateTime            @default(now())
@@ -390,16 +392,17 @@ model MiembroComision {
   comision              ComisionContrataciones @relation(fields: [comisionId], references: [id], onDelete: Cascade)
   
   @@index([comisionId])
+  @@map("tb_miembro_comision")
 }
 
 // Unidad Usuaria (departamento que solicita)
 model UnidadUsuaria {
-  id                            String    @id @default(uuid())
-  enteId                        String
+  id                            String    @id @default(uuid()) @map("id_unidad_usuaria")
+  enteId                        String    @map("id_ente")
   
-  nombre                        String
-  nombreResponsable             String
-  cargoResponsable              String
+  nombreUnidadUsuaria           String    @map("nom_unidad_usuaria")
+  nombreResponsableUnidadUsuaria String   @map("nom_responsable_unidad_usuaria")
+  cargoResponsableUnidadUsuaria String    @map("cargo_responsable_unidad_usuaria")
   
   // Auditoría
   createdAt                     DateTime  @default(now())
@@ -413,17 +416,18 @@ model UnidadUsuaria {
   expedientes                   ExpedienteContratacion[]
   
   @@index([enteId])
+  @@map("tb_unidad_usuaria")
 }
 
 // Unidad Contratante (departamento de compras)
 model UnidadContratante {
-  id                    String    @id @default(uuid())
-  enteId                String
+  id                    String    @id @default(uuid()) @map("id_unidad_contratante")
+  enteId                String    @map("id_ente")
   
-  nombre                String
-  nombreResponsable     String
-  cargoResponsable      String
-  activa                Boolean   @default(true)
+  nombreUnidadContratante String  @map("nom_unidad_contratante")
+  nombreResponsableUnidad String  @map("nom_responsable_unidad")
+  cargoResponsable      String    @map("cargo_responsable")
+  activa                Boolean   @default(true) @map("ind_activa")
   
   // Auditoría
   createdAt             DateTime  @default(now())
@@ -436,6 +440,7 @@ model UnidadContratante {
   ente                  EntePublico @relation(fields: [enteId], references: [id])
   
   @@index([enteId, activa])
+  @@map("tb_unidad_contratante")
 }
 
 // Proveedor (empresa que participa en licitaciones)

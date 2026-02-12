@@ -9,6 +9,10 @@ import { ManualesModule } from './manuales/manuales.module';
 import { SupervisoresModule } from './supervisores/supervisores.module';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { ProveedoresModule } from './proveedores/proveedores.module';
+import { MaximaAutoridadModule } from './maxima-autoridad/maxima-autoridad.module';
+import { UnidadUsuariaModule } from './unidad-usuaria/unidad-usuaria.module';
+import { UnidadContratanteModule } from './unidad-contratante/unidad-contratante.module';
+import { ComisionContratacionesModule } from './comision-contrataciones/comision-contrataciones.module';
 
 @Module({
   imports: [
@@ -22,6 +26,10 @@ import { ProveedoresModule } from './proveedores/proveedores.module';
     ManualesModule,
     SupervisoresModule,
     ProveedoresModule,
+    MaximaAutoridadModule,
+    UnidadUsuariaModule,
+    UnidadContratanteModule,
+    ComisionContratacionesModule,
   ],
   providers: [
     {
