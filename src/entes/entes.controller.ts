@@ -14,17 +14,27 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
   NotFoundException,
+  Patch,
+  ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { EntesService } from './entes.service';
 import { CreateEnteDto } from './dto/create-ente.dto';
 import { CreateAdminEnteDto } from './dto/create-admin-ente.dto';
+import { UpdateEnteDto } from './dto/update-ente.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { IStorageService } from '../common/interfaces/storage-service.interface';
 
 @ApiTags('🏢 Entes Públicos')
 @ApiBearerAuth('JWT-auth')
@@ -34,7 +44,7 @@ export class EntesController {
   constructor(
     private readonly entesService: EntesService,
     @Inject('IStorageService') private readonly storageService: any, // Usamos any o la clase concreta para evitar error de metadata con interfaces
-  ) { }
+  ) {}
 
   @Post()
   @Roles('UNIVERSITAS')
@@ -44,7 +54,7 @@ export class EntesController {
   })
   @ApiResponse({ status: 201, description: 'Ente creado exitosamente' })
   @ApiResponse({ status: 403, description: 'No autorizado (solo UNIVERSITAS)' })
-  create(@Body() createEnteDto: CreateEnteDto, @CurrentUser() user: any) {
+  create(@Body() createEnteDto: CreateEnteDto, @CurrentUser() user: { id: string }) {
     return this.entesService.create(createEnteDto, user.id);
   }
 
@@ -59,7 +69,7 @@ export class EntesController {
   createAdmin(
     @Param('id') id: string,
     @Body() createAdminDto: CreateAdminEnteDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: { id: string },
   ) {
     return this.entesService.createAdmin(id, createAdminDto, user.id);
   }
@@ -70,7 +80,7 @@ export class EntesController {
     description: 'UNIVERSITAS ve todos, SUPERVISOR ve asignados, otros ven solo el suyo',
   })
   @ApiResponse({ status: 200, description: 'Lista de Entes según permisos' })
-  findAll(@CurrentUser() user: any) {
+  findAll(@CurrentUser() user: { rol: string; id?: string; enteId?: string }) {
     return this.entesService.findAll(user);
   }
 
@@ -116,7 +126,7 @@ export class EntesController {
       }),
     )
     file: Express.Multer.File,
-    @CurrentUser() user: any,
+    @CurrentUser() user: { id: string },
   ) {
     if (!file) throw new NotFoundException('No se ha enviado ningún archivo');
 
@@ -125,10 +135,11 @@ export class EntesController {
     const folder = `universitas/entes/${id}`;
     const filename = `logo_${Date.now()}`;
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
     const secureUrl = await this.storageService.uploadFile(file.buffer, folder, filename);
 
     // 2. Actualizar BD
-    return this.entesService.updateLogo(id, secureUrl, user.id);
+    return this.entesService.updateLogo(id, secureUrl as string, user.id);
   }
 
   @Get(':id')
@@ -143,6 +154,26 @@ export class EntesController {
     return this.entesService.findOne(id);
   }
 
+  @Patch(':id')
+  @Roles('UNIVERSITAS', 'ADMIN_ENTE')
+  @ApiOperation({
+    summary: 'Actualizar Ente',
+    description: 'Actualiza los datos de un Ente. ADMIN_ENTE solo puede actualizar su propio Ente.',
+  })
+  @ApiParam({ name: 'id', description: 'ID del Ente' })
+  @ApiResponse({ status: 200, description: 'Ente actualizado' })
+  @ApiResponse({ status: 403, description: 'No autorizado' })
+  update(
+    @Param('id') id: string,
+    @Body() updateEnteDto: UpdateEnteDto,
+    @CurrentUser() user: { id: string; rol: string; enteId?: string },
+  ) {
+    if (user.rol === 'ADMIN_ENTE' && user.enteId !== id) {
+      throw new ForbiddenException('No tienes permisos para actualizar este Ente');
+    }
+    return this.entesService.update(id, updateEnteDto, user.id);
+  }
+
   @Delete(':id')
   @Roles('UNIVERSITAS')
   @ApiOperation({
@@ -152,7 +183,7 @@ export class EntesController {
   @ApiParam({ name: 'id', description: 'ID del Ente' })
   @ApiResponse({ status: 200, description: 'Ente eliminado' })
   @ApiResponse({ status: 403, description: 'No autorizado (solo UNIVERSITAS)' })
-  remove(@Param('id') id: string, @CurrentUser() user: any) {
+  remove(@Param('id') id: string, @CurrentUser() user: { id: string }) {
     return this.entesService.remove(id, user.id);
   }
 
@@ -164,7 +195,7 @@ export class EntesController {
   })
   @ApiParam({ name: 'id', description: 'ID del Ente' })
   @ApiResponse({ status: 200, description: 'Ente restaurado' })
-  restore(@Param('id') id: string, @CurrentUser() user: any) {
+  restore(@Param('id') id: string, @CurrentUser() user: { id: string }) {
     return this.entesService.restore(id, user.id);
   }
 }

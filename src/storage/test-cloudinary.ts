@@ -14,39 +14,42 @@ const apiSecret = process.env.CLOUDINARY_API_SECRET;
 console.log('--- Probando Credenciales de Cloudinary ---');
 console.log(`Cloud Name: ${cloudName}`);
 console.log(`API Key: ${apiKey}`);
-console.log(`API Secret: ${apiSecret ? apiSecret.slice(0, 5) + '...' + apiSecret.slice(-5) : 'UNDEFINED'}`);
+console.log(
+  `API Secret: ${apiSecret ? apiSecret.slice(0, 5) + '...' + apiSecret.slice(-5) : 'UNDEFINED'}`,
+);
 console.log(`API Secret Length: ${apiSecret ? apiSecret.length : 0}`);
 
 if (!cloudName || !apiKey || !apiSecret) {
-    console.error('❌ ERROR: Faltan variables de entorno.');
-    process.exit(1);
+  console.error('❌ ERROR: Faltan variables de entorno.');
+  process.exit(1);
 }
 
 cloudinary.config({
-    cloud_name: cloudName,
-    api_key: apiKey,
-    api_secret: apiSecret,
+  cloud_name: cloudName,
+  api_key: apiKey,
+  api_secret: apiSecret,
 });
 
 // Intentar generar una firma de prueba (no requiere llamada de red, pero valida la configuración local sdk)
 try {
-    const signature = cloudinary.utils.api_sign_request(
-        { timestamp: Math.floor(Date.now() / 1000), public_id: 'test' },
-        apiSecret
-    );
-    console.log(`✅ Firma generada localmente: ${signature}`);
-    console.log('La configuración del SDK parece correcta (sintácticamente).');
+  const signature = cloudinary.utils.api_sign_request(
+    { timestamp: Math.floor(Date.now() / 1000), public_id: 'test' },
+    apiSecret,
+  );
+  console.log(`✅ Firma generada localmente: ${signature}`);
+  console.log('La configuración del SDK parece correcta (sintácticamente).');
 } catch (error) {
-    console.error('❌ Error generando firma:', error);
+  console.error('❌ Error generando firma:', error);
 }
 
 // Intentar una llamada real (ping)
 console.log('Intentando conectar con Cloudinary (ping)...');
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 cloudinary.api.ping((error, result) => {
-    if (error) {
-        console.error('❌ ERROR DE CONEXIÓN O CREDENCIALES:', error);
-        console.error('Detalles:', JSON.stringify(error, null, 2));
-    } else {
-        console.log('✅ CONEXIÓN EXITOSA:', result);
-    }
+  if (error) {
+    console.error('❌ ERROR DE CONEXIÓN O CREDENCIALES:', error);
+    console.error('Detalles:', JSON.stringify(error, null, 2));
+  } else {
+    console.log('✅ CONEXIÓN EXITOSA:', result);
+  }
 });

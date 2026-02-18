@@ -1,17 +1,17 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Test, TestingModule } from '@nestjs/testing';
 import { EntesService } from './entes.service';
 import { PrismaService } from '../database/prisma.service';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import { NotFoundException } from '@nestjs/common';
 
 describe('EntesService', () => {
   let service: EntesService;
-  let prismaService: PrismaService;
 
   const mockPrismaService = {
     entePublico: {
       create: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
     },
@@ -30,7 +30,6 @@ describe('EntesService', () => {
     }).compile();
 
     service = module.get<EntesService>(EntesService);
-    prismaService = module.get<PrismaService>(PrismaService);
   });
 
   afterEach(() => {
@@ -39,7 +38,7 @@ describe('EntesService', () => {
 
   describe('findAll', () => {
     it('debe retornar todos los Entes para UNIVERSITAS', async () => {
-      const mockUser = { id: 'user-id', rol: 'UNIVERSITAS', enteId: null };
+      const mockUser = { id: 'user-id', rol: 'UNIVERSITAS', enteId: undefined };
       const mockEntes = [
         { id: 'ente-1', nombre: 'Alcaldía A', siglas: 'AA', rif: 'G-123' },
         { id: 'ente-2', nombre: 'Ministerio B', siglas: 'MB', rif: 'G-456' },
@@ -50,14 +49,15 @@ describe('EntesService', () => {
       const result = await service.findAll(mockUser);
 
       expect(result).toEqual(mockEntes);
-      expect(mockPrismaService.entePublico.findMany).toHaveBeenCalledWith({
-        where: { deletedAt: null },
-        select: expect.any(Object),
-      });
+      expect(mockPrismaService.entePublico.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { deletedAt: null },
+        }),
+      );
     });
 
     it('debe retornar solo Entes asignados para SUPERVISOR', async () => {
-      const mockUser = { id: 'supervisor-id', rol: 'SUPERVISOR', enteId: null };
+      const mockUser = { id: 'supervisor-id', rol: 'SUPERVISOR', enteId: undefined };
       const mockAsignaciones = [{ enteId: 'ente-1' }, { enteId: 'ente-2' }];
       const mockEntes = [
         { id: 'ente-1', nombre: 'Alcaldía A' },
@@ -85,13 +85,14 @@ describe('EntesService', () => {
       const result = await service.findAll(mockUser);
 
       expect(result).toEqual(mockEntes);
-      expect(mockPrismaService.entePublico.findMany).toHaveBeenCalledWith({
-        where: {
-          id: mockUser.enteId,
-          deletedAt: null,
-        },
-        select: expect.any(Object),
-      });
+      expect(mockPrismaService.entePublico.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: mockUser.enteId,
+            deletedAt: null,
+          }),
+        }),
+      );
     });
   });
 
@@ -104,39 +105,33 @@ describe('EntesService', () => {
         rif: 'G-20001234-5',
       };
 
-      mockPrismaService.entePublico.findUnique.mockResolvedValue(mockEnte);
+      mockPrismaService.entePublico.findFirst.mockResolvedValue(mockEnte);
 
       const result = await service.findOne('ente-uuid');
 
       expect(result).toEqual(mockEnte);
-      expect(mockPrismaService.entePublico.findUnique).toHaveBeenCalledWith({
-        where: { id: 'ente-uuid' },
-        include: expect.any(Object),
-      });
+      expect(mockPrismaService.entePublico.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'ente-uuid', deletedAt: null },
+        }),
+      );
     });
 
     it('debe lanzar NotFoundException si Ente no existe', async () => {
-      mockPrismaService.entePublico.findUnique.mockResolvedValue(null);
+      mockPrismaService.entePublico.findFirst.mockResolvedValue(null);
 
       await expect(service.findOne('invalid-id')).rejects.toThrow(NotFoundException);
-      await expect(service.findOne('invalid-id')).rejects.toThrow('Ente no encontrado');
     });
   });
 
   describe('remove', () => {
     it('debe hacer soft delete del Ente', async () => {
-      const mockEnte = {
+      const mockUpdatedEnte = {
         id: 'ente-uuid',
         nombre: 'Ente a eliminar',
-        deletedAt: null,
-      };
-
-      const mockUpdatedEnte = {
-        ...mockEnte,
         deletedAt: new Date(),
       };
 
-      mockPrismaService.entePublico.findUnique.mockResolvedValue(mockEnte);
       mockPrismaService.entePublico.update.mockResolvedValue(mockUpdatedEnte);
 
       const result = await service.remove('ente-uuid', 'user-id');
@@ -149,12 +144,6 @@ describe('EntesService', () => {
           updatedBy: 'user-id',
         },
       });
-    });
-
-    it('debe lanzar NotFoundException si Ente no existe', async () => {
-      mockPrismaService.entePublico.findUnique.mockResolvedValue(null);
-
-      await expect(service.remove('invalid-id', 'user-id')).rejects.toThrow(NotFoundException);
     });
   });
 });

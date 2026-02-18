@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 import {
   Controller,
   Post,
@@ -23,7 +24,7 @@ import { GenerarManualDto } from './dto/generar-manual.dto';
 @Controller('manuales')
 @UseGuards(AuthGuard('jwt'), RolesGuard, TenantGuard)
 export class ManualesController {
-  constructor(private readonly manualesService: ManualesService) { }
+  constructor(private readonly manualesService: ManualesService) {}
 
   @Post('generar')
   @HttpCode(HttpStatus.OK)
@@ -37,7 +38,10 @@ export class ManualesController {
     status: 403,
     description: 'No autorizado (solo ADMIN_ENTE y EJECUTOR)',
   })
-  async generar(@Body() dto: GenerarManualDto, @CurrentUser() user: any) {
+  async generar(
+    @Body() dto: GenerarManualDto,
+    @CurrentUser() user: { enteId: string; id: string },
+  ) {
     return this.manualesService.generarManual(
       user.enteId,
       dto.tipoManual || 'GENERAL',
@@ -52,7 +56,7 @@ export class ManualesController {
     description: 'Obtiene todos los manuales del Ente o de los Entes asignados (SUPERVISOR)',
   })
   @ApiResponse({ status: 200, description: 'Lista de manuales' })
-  findAll(@CurrentUser() user: any) {
+  findAll(@CurrentUser() user: { enteId: string }) {
     return this.manualesService.findAll(user.enteId);
   }
 
@@ -64,7 +68,7 @@ export class ManualesController {
   @ApiParam({ name: 'id', description: 'ID del manual' })
   @ApiResponse({ status: 200, description: 'Detalles del manual' })
   @ApiResponse({ status: 404, description: 'Manual no encontrado' })
-  findOne(@Param('id') id: string, @CurrentUser() user: any) {
+  findOne(@Param('id') id: string, @CurrentUser() user: { enteId: string }) {
     return this.manualesService.findOne(id, user.enteId);
   }
 
@@ -76,12 +80,19 @@ export class ManualesController {
   @ApiParam({ name: 'id', description: 'ID del manual' })
   @ApiResponse({ status: 200, description: 'Archivo DOCX descargado' })
   @ApiResponse({ status: 404, description: 'Manual no encontrado' })
-  async download(@Param('id') id: string, @CurrentUser() user: any, @Res({ passthrough: false }) res: any) {
+  async download(
+    @Param('id') id: string,
+    @CurrentUser() user: { enteId: string },
+    @Res({ passthrough: false }) res: any,
+  ) {
     const result = await this.manualesService.download(id, user.enteId);
 
     try {
       // Fetch file from Cloudinary URL
+      // Fetch file from Cloudinary URL
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const axios = require('axios');
+
       const response = await axios.get(result.url, {
         responseType: 'arraybuffer',
         maxContentLength: Infinity,
@@ -91,7 +102,10 @@ export class ManualesController {
       const fileBuffer = Buffer.from(response.data);
 
       // Set proper headers for DOCX download with explicit filename
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      );
       res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
       res.setHeader('Content-Length', fileBuffer.length.toString());
       res.setHeader('Cache-Control', 'no-cache');

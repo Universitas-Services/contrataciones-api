@@ -7,12 +7,15 @@ import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let prismaService: PrismaService;
-  let jwtService: JwtService;
 
   const mockPrismaService = {
     usuario: {
       findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+    universitas: {
+      findUnique: jest.fn(),
+      update: jest.fn(),
     },
   };
 
@@ -30,8 +33,6 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    prismaService = module.get<PrismaService>(PrismaService);
-    jwtService = module.get<JwtService>(JwtService);
   });
 
   afterEach(() => {
@@ -41,19 +42,20 @@ describe('AuthService', () => {
   describe('login', () => {
     it('debe retornar access_token cuando credenciales son válidas', async () => {
       const loginDto = {
-        email: 'admin@universitas.gob.ve',
-        password: 'universitas123',
+        email: 'test@test.com',
+        password: 'password123',
       };
 
       const mockUser = {
         id: 'user-uuid',
         email: loginDto.email,
         passwordHash: await bcrypt.hash(loginDto.password, 10),
-        rol: 'UNIVERSITAS',
+        rol: 'ADMIN_ENTE',
         activo: true,
         nombre: 'Administrador',
         apellido: 'Sistema',
-        enteId: null,
+        enteId: 'ente-uuid',
+        ente: { id: 'ente-uuid', nombre: 'Test Ente', deletedAt: null },
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -72,16 +74,16 @@ describe('AuthService', () => {
         rol: mockUser.rol,
         nombre: mockUser.nombre,
         apellido: mockUser.apellido,
-        enteId: mockUser.enteId,
       });
       expect(mockPrismaService.usuario.findUnique).toHaveBeenCalledWith({
-        where: { email: loginDto.email },
+        where: { email: loginDto.email, deletedAt: null },
         include: { ente: true },
       });
     });
 
     it('debe lanzar UnauthorizedException si email no existe', async () => {
       mockPrismaService.usuario.findUnique.mockResolvedValue(null);
+      mockPrismaService.universitas.findUnique.mockResolvedValue(null);
 
       await expect(
         service.login({
@@ -108,6 +110,7 @@ describe('AuthService', () => {
         nombre: 'Test',
         apellido: 'User',
         enteId: 'ente-uuid',
+        ente: { id: 'ente-uuid', nombre: 'Test Ente', deletedAt: null },
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -133,6 +136,7 @@ describe('AuthService', () => {
         nombre: 'Test',
         apellido: 'User',
         enteId: 'ente-uuid',
+        ente: { id: 'ente-uuid', nombre: 'Test Ente', deletedAt: null },
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,
@@ -155,7 +159,7 @@ describe('AuthService', () => {
       ).rejects.toThrow('Usuario inactivo');
     });
 
-    it('debe incluir JWT payload con userId, email y rol', async () => {
+    it('debe incluir JWT payload con userId, email, rol y enteId', async () => {
       const loginDto = {
         email: 'test@test.com',
         password: 'password',
@@ -170,6 +174,7 @@ describe('AuthService', () => {
         nombre: 'Test',
         apellido: 'User',
         enteId: 'ente-uuid',
+        ente: { id: 'ente-uuid', nombre: 'Test Ente', deletedAt: null },
         createdAt: new Date(),
         updatedAt: new Date(),
         deletedAt: null,

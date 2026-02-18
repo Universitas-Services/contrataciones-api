@@ -1,10 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unused-vars */
 import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import axios from 'axios';
-// @ts-ignore
 import ImageModule from 'docxtemplater-image-module-free';
 import { PrismaService } from '../database/prisma.service';
 import { IStorageService } from '../common/interfaces/storage-service.interface';
@@ -13,8 +13,9 @@ import { IStorageService } from '../common/interfaces/storage-service.interface'
 export class ManualesService {
   constructor(
     private prisma: PrismaService,
+
     @Inject('IStorageService') private storage: any, // Usar any o interfaz compatible para evitar problemas de metadata
-  ) { }
+  ) {}
 
   async generarManual(
     enteId: string,
@@ -35,7 +36,13 @@ export class ManualesService {
     this.validarDatosCompletos(ente);
 
     // 3. Cargar plantilla base - EXACT PATTERN from working test script
-    const templatePath = path.join(process.cwd(), 'src', 'manuales', 'templates', 'manual-ente-base.docx');
+    const templatePath = path.join(
+      process.cwd(),
+      'src',
+      'manuales',
+      'templates',
+      'manual-ente-base.docx',
+    );
 
     if (!fs.existsSync(templatePath)) {
       throw new BadRequestException(
@@ -50,7 +57,13 @@ export class ManualesService {
     console.log('🔍 About to create PizZip instance...');
     console.log('  - Content type:', typeof content);
     console.log('  - Content length:', content.length);
-    console.log('  - First 4 chars code:', content.charCodeAt(0), content.charCodeAt(1), content.charCodeAt(2), content.charCodeAt(3));
+    console.log(
+      '  - First 4 chars code:',
+      content.charCodeAt(0),
+      content.charCodeAt(1),
+      content.charCodeAt(2),
+      content.charCodeAt(3),
+    );
 
     let zip: any;
     try {
@@ -62,6 +75,7 @@ export class ManualesService {
         name: zipError.name,
         stack: zipError.stack,
       });
+
       throw new BadRequestException(`SPECIFIC ERROR at PizZip creation: ${zipError.message}`);
     }
 
@@ -90,6 +104,7 @@ export class ManualesService {
     try {
       if (ente.logoUrl) {
         const response = await axios.get(ente.logoUrl, { responseType: 'arraybuffer' });
+
         logoBuffer = Buffer.from(response.data);
       } else {
         throw new Error('No logo URL');
@@ -97,13 +112,15 @@ export class ManualesService {
     } catch (e) {
       // Fallback
       const placeholderPath = path.join(__dirname, 'templates', 'placeholder_logo.png');
-      logoBuffer = fs.existsSync(placeholderPath) ? fs.readFileSync(placeholderPath) : Buffer.alloc(0);
+      logoBuffer = fs.existsSync(placeholderPath)
+        ? fs.readFileSync(placeholderPath)
+        : Buffer.alloc(0);
     }
 
     // 6. Configurar Modulo de Imagen (Síncrono)
     const imageModule = new ImageModule({
       centered: false,
-      getImage: (tagValue: string, tagName: string) => {
+      getImage: (_tagValue: string, _tagName: string) => {
         // tagValue será 'logo_ente_img' (el valor del string en data)
         // Pero aquí devolvemos directamente el buffer preparado
         return logoBuffer;
@@ -125,10 +142,15 @@ export class ManualesService {
     } catch (docError: any) {
       console.error('❌ FAILED at new Docxtemplater(zip):', {
         message: docError.message,
+
         name: docError.name,
+
         stack: docError.stack,
       });
-      throw new BadRequestException(`SPECIFIC ERROR at Docxtemplater creation: ${docError.message}`);
+
+      throw new BadRequestException(
+        `SPECIFIC ERROR at Docxtemplater creation: ${docError.message}`,
+      );
     }
 
     // 8. Renderizar documento
@@ -165,6 +187,7 @@ export class ManualesService {
         name: genError.name,
         stack: genError.stack,
       });
+
       throw new BadRequestException(`Error al generar buffer ZIP: ${genError.message}`);
     }
 
@@ -183,6 +206,7 @@ export class ManualesService {
         name: uploadError.name,
         stack: uploadError.stack,
       });
+
       throw new BadRequestException(`Error al subir archivo: ${uploadError.message}`);
     }
 
@@ -214,6 +238,7 @@ export class ManualesService {
         name: dbError.name,
         stack: dbError.stack,
       });
+
       throw new BadRequestException(`Error al guardar en base de datos: ${dbError.message}`);
     }
 
@@ -224,6 +249,7 @@ export class ManualesService {
       version: nextVersion,
       generatedAt: manual.createdAt,
       tipoManual: manual.tipoManual,
+
       titulo: manual.tituloManual,
     };
   }
@@ -240,7 +266,7 @@ export class ManualesService {
     if (camposFaltantes.length > 0) {
       throw new BadRequestException(
         `El Ente no tiene configurados los siguientes campos obligatorios: ${camposFaltantes.join(', ')}. ` +
-        'Por favor, actualice la configuración del Ente antes de generar el manual.',
+          'Por favor, actualice la configuración del Ente antes de generar el manual.',
       );
     }
   }

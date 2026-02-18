@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../database/prisma.service';
+import { Prisma } from '@prisma/client';
 import { CreateEnteDto } from './dto/create-ente.dto';
 import { CreateAdminEnteDto } from './dto/create-admin-ente.dto';
+import { UpdateEnteDto } from './dto/update-ente.dto';
 
 @Injectable()
 export class EntesService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(createEnteDto: CreateEnteDto, universitasId: string) {
     const { emailContacto, password, nombreAdmin, apellidoAdmin, ...enteData } = createEnteDto;
@@ -32,7 +34,9 @@ export class EntesService {
       if (!esUniversitas) {
         const defaultUniversitas = await tx.universitas.findFirst();
         if (!defaultUniversitas) {
-          throw new ConflictException('No se encontró una organización Universitas principal para asociar el Ente.');
+          throw new ConflictException(
+            'No se encontró una organización Universitas principal para asociar el Ente.',
+          );
         }
         universitasOrgId = defaultUniversitas.id;
       }
@@ -49,12 +53,14 @@ export class EntesService {
       if (enteData.rif !== undefined) createData.rif = enteData.rif;
       if (enteData.siglas !== undefined) createData.siglas = enteData.siglas;
       if (enteData.logoUrl !== undefined) createData.logoUrl = enteData.logoUrl;
-      if (enteData.direccionFiscal !== undefined) createData.direccionFiscal = enteData.direccionFiscal;
+      if (enteData.direccionFiscal !== undefined)
+        createData.direccionFiscal = enteData.direccionFiscal;
       if (enteData.estado !== undefined) createData.estado = enteData.estado;
       if (enteData.municipio !== undefined) createData.municipio = enteData.municipio;
       if (enteData.parroquia !== undefined) createData.parroquia = enteData.parroquia;
 
       const ente = await tx.entePublico.create({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data: createData as any,
       });
 
@@ -62,9 +68,12 @@ export class EntesService {
       await tx.usuario.create({
         data: {
           enteId: ente.id,
+
           email: emailContacto,
           passwordHash: hashedPassword,
+
           nombre: nombreAdmin,
+
           apellido: apellidoAdmin,
           rol: 'ADMIN_ENTE',
           activo: true,
@@ -75,7 +84,7 @@ export class EntesService {
     });
   }
 
-  async createAdmin(enteId: string, adminData: CreateAdminEnteDto, userId: string) {
+  async createAdmin(enteId: string, adminData: CreateAdminEnteDto) {
     // Verificar que el Ente existe
     const ente = await this.prisma.entePublico.findUnique({
       where: { id: enteId, deletedAt: null },
@@ -108,7 +117,7 @@ export class EntesService {
   }
 
   async findAll(user?: { rol: string; id?: string; enteId?: string }) {
-    let whereClause: any = { deletedAt: null };
+    const whereClause: any = { deletedAt: null };
 
     if (user) {
       if (user.rol === 'SUPERVISOR' && user.id) {
@@ -120,16 +129,18 @@ export class EntesService {
 
         const entesIds = asignaciones.map((a) => a.enteId);
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         whereClause.id = { in: entesIds };
       } else if (user.rol !== 'UNIVERSITAS' && user.enteId) {
         // Otros roles: Solo ven su Ente
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         whereClause.id = user.enteId;
       }
       // UNIVERSITAS: No agrega filtro (ve todos)
     }
 
     return this.prisma.entePublico.findMany({
-      where: whereClause,
+      where: whereClause as Prisma.EntePublicoWhereInput,
       include: {
         _count: {
           select: {
@@ -194,6 +205,20 @@ export class EntesService {
     }
 
     return ente;
+  }
+
+  async update(id: string, updateEnteDto: UpdateEnteDto, userId: string) {
+    // Verificar que el Ente existe
+    await this.findOne(id);
+
+    return this.prisma.entePublico.update({
+      where: { id },
+      data: {
+        ...updateEnteDto,
+
+        updatedBy: userId,
+      },
+    });
   }
 
   async updateLogo(id: string, logoUrl: string, userId: string) {
