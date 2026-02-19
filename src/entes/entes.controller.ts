@@ -66,12 +66,8 @@ export class EntesController {
   })
   @ApiResponse({ status: 201, description: 'Administrador creado exitosamente' })
   @ApiResponse({ status: 403, description: 'No autorizado' })
-  createAdmin(
-    @Param('id') id: string,
-    @Body() createAdminDto: CreateAdminEnteDto,
-    @CurrentUser() user: { id: string },
-  ) {
-    return this.entesService.createAdmin(id, createAdminDto, user.id);
+  createAdmin(@Param('id') id: string, @Body() createAdminDto: CreateAdminEnteDto) {
+    return this.entesService.createAdmin(id, createAdminDto);
   }
 
   @Get()
