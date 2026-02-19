@@ -12,4 +12,4 @@ import { CloudinaryService } from './cloudinary.service';
   ],
   exports: ['IStorageService', CloudinaryService],
 })
-export class StorageModule { }
+export class StorageModule {}

@@ -11,7 +11,7 @@ import { AsignarEntesDto } from './dto/asignar-entes.dto';
 
 @Injectable()
 export class SupervisoresService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(createDto: CreateSupervisorDto, createdBy: string) {
     const {
@@ -244,7 +244,7 @@ export class SupervisoresService {
     return this.findOne(supervisorId);
   }
 
-  async remove(id: string, deletedBy: string) {
+  async remove(id: string) {
     const supervisor = await this.prisma.usuario.findFirst({
       where: {
         id,

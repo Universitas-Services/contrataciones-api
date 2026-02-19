@@ -35,7 +35,7 @@ export class SupervisoresController {
   })
   @ApiResponse({ status: 201, description: 'Supervisor creado exitosamente' })
   @ApiResponse({ status: 409, description: 'Email ya registrado' })
-  create(@Body() createDto: CreateSupervisorDto, @CurrentUser() user: any) {
+  create(@Body() createDto: CreateSupervisorDto, @CurrentUser() user: { id: string }) {
     return this.supervisoresService.create(createDto, user.id);
   }
 
@@ -73,7 +73,7 @@ export class SupervisoresController {
   async asignarEntes(
     @Param('id') id: string,
     @Body() dto: AsignarEntesDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: { id: string },
   ) {
     return this.supervisoresService.asignarEntes(id, dto, user.id);
   }
@@ -87,7 +87,7 @@ export class SupervisoresController {
   @ApiParam({ name: 'id', description: 'ID del supervisor' })
   @ApiResponse({ status: 200, description: 'Supervisor eliminado' })
   @ApiResponse({ status: 404, description: 'Supervisor no encontrado' })
-  remove(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.supervisoresService.remove(id, user.id);
+  remove(@Param('id') id: string) {
+    return this.supervisoresService.remove(id);
   }
 }

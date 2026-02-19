@@ -2,7 +2,10 @@ import { IsString, IsEmail, IsArray, MinLength, IsOptional, ArrayMinSize } from 
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSupervisorDto {
-  @ApiProperty({ example: 'Contraloría Municipal', description: 'Nombre de la Organización Supervisora' })
+  @ApiProperty({
+    example: 'Contraloría Municipal',
+    description: 'Nombre de la Organización Supervisora',
+  })
   @IsString()
   nombreOrganizacion: string;
 
@@ -11,7 +14,10 @@ export class CreateSupervisorDto {
   @IsOptional()
   rifOrganizacion?: string;
 
-  @ApiProperty({ example: 'contacto@contraloria.gob.ve', description: 'Email institucional de la Organización' })
+  @ApiProperty({
+    example: 'contacto@contraloria.gob.ve',
+    description: 'Email institucional de la Organización',
+  })
   @IsEmail()
   emailOrganizacion: string;
 

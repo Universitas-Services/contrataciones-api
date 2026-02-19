@@ -1,7 +1,10 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @ApiTags('🔓 Autenticación')
 @Controller('auth')
@@ -64,5 +67,25 @@ export class AuthController {
   })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Post('change-password')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Cambiar contraseña',
+    description: 'Permite al usuario autenticado cambiar su contraseña.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Contraseña actualizada correctamente',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No autorizado o contraseña actual incorrecta',
+  })
+  changePassword(@Body() changePasswordDto: ChangePasswordDto, @CurrentUser() user: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+    return this.authService.changePassword(user.id, changePasswordDto);
   }
 }

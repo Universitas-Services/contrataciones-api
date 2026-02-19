@@ -13,6 +13,9 @@ import { MaximaAutoridadModule } from './maxima-autoridad/maxima-autoridad.modul
 import { UnidadUsuariaModule } from './unidad-usuaria/unidad-usuaria.module';
 import { UnidadContratanteModule } from './unidad-contratante/unidad-contratante.module';
 import { ComisionContratacionesModule } from './comision-contrataciones/comision-contrataciones.module';
+import { ModalidadContratacionModule } from './modalidad-contratacion/modalidad-contratacion.module';
+import { ExpedienteContratacionModule } from './expediente-contratacion/expediente-contratacion.module';
+import { CronogramaExpedienteModule } from './cronograma-expediente/cronograma-expediente.module';
 
 @Module({
   imports: [
@@ -30,6 +33,9 @@ import { ComisionContratacionesModule } from './comision-contrataciones/comision
     UnidadUsuariaModule,
     UnidadContratanteModule,
     ComisionContratacionesModule,
+    ModalidadContratacionModule,
+    ExpedienteContratacionModule,
+    CronogramaExpedienteModule,
   ],
   providers: [
     {
