@@ -79,6 +79,7 @@ export class AuthService {
         apellido: user.apellido,
         email: user.email,
         rol: user.rol,
+        cambioPasswordDefault: user.cambioPasswordDefault,
         ente: user.ente,
       },
     };
@@ -115,7 +116,7 @@ export class AuthService {
 
       await this.prisma.usuario.update({
         where: { id: userId },
-        data: { passwordHash: newPasswordHash },
+        data: { passwordHash: newPasswordHash, cambioPasswordDefault: true },
       });
 
       return { message: 'Contraseña actualizada correctamente' };
