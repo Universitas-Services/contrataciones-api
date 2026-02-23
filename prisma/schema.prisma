@@ -174,11 +174,12 @@ model EntePublico {
   organoAdscripcion           String?
 
   // Auditoría
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?
+  updatedBy        String?
+  datosConfirmados Boolean   @default(false)
 
   // Relaciones
   universitas           Universitas              @relation(fields: [universitasId], references: [id])
@@ -205,8 +206,9 @@ model Usuario {
   supervisorId String? // Null si no pertenece a una org supervisora
 
   // Autenticación
-  email        String @unique
-  passwordHash String
+  email                 String  @unique
+  passwordHash          String
+  cambioPasswordDefault Boolean @default(false)
 
   // Información personal
   nombre   String

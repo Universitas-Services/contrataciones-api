@@ -215,7 +215,7 @@ export class EntesService {
       where: { id },
       data: {
         ...updateEnteDto,
-
+        datosConfirmados: true,
         updatedBy: userId,
       },
     });
