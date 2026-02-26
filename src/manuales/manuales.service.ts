@@ -35,14 +35,8 @@ export class ManualesService {
     // 2. Validar que el Ente tenga todos los campos requeridos
     this.validarDatosCompletos(ente);
 
-    // 3. Cargar plantilla base - EXACT PATTERN from working test script
-    const templatePath = path.join(
-      process.cwd(),
-      'src',
-      'manuales',
-      'templates',
-      'manual-ente-base.docx',
-    );
+    // 3. Cargar plantilla base - usar __dirname para que funcione en dev (src/) y prod (dist/)
+    const templatePath = path.join(__dirname, 'templates', 'manual-ente-base.docx');
 
     if (!fs.existsSync(templatePath)) {
       throw new BadRequestException(
