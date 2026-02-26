@@ -16,6 +16,8 @@ import {
   NotFoundException,
   Patch,
   ForbiddenException,
+  InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { EntesService } from './entes.service';
@@ -41,6 +43,8 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 @Controller('entes')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class EntesController {
+  private readonly logger = new Logger(EntesController.name);
+
   constructor(
     private readonly entesService: EntesService,
     @Inject('IStorageService') private readonly storageService: any, // Usamos any o la clase concreta para evitar error de metadata con interfaces
@@ -126,16 +130,30 @@ export class EntesController {
   ) {
     if (!file) throw new NotFoundException('No se ha enviado ningún archivo');
 
-    // 1. Subir a Cloudinary
-    // Estructura: universitas/entes/{id}/logo_{timestamp}
-    const folder = `universitas/entes/${id}`;
-    const filename = `logo_${Date.now()}`;
+    try {
+      // 1. Subir a Cloudinary
+      // Estructura: universitas/entes/{id}/logo_{timestamp}
+      const folder = `universitas/entes/${id}`;
+      const filename = `logo_${Date.now()}`;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    const secureUrl = await this.storageService.uploadFile(file.buffer, folder, filename);
+      this.logger.log(`Subiendo logo para ente ${id} - folder: ${folder}, filename: ${filename}`);
+      this.logger.log(
+        `Archivo: ${file.originalname}, size: ${file.size}, mimetype: ${file.mimetype}`,
+      );
 
-    // 2. Actualizar BD
-    return this.entesService.updateLogo(id, secureUrl as string, user.id);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+      const secureUrl = await this.storageService.uploadFile(file.buffer, folder, filename);
+
+      this.logger.log(`Logo subido exitosamente: ${secureUrl as string}`);
+
+      // 2. Actualizar BD
+      return this.entesService.updateLogo(id, secureUrl as string, user.id);
+    } catch (error) {
+      this.logger.error(`Error subiendo logo para ente ${id}:`, error);
+      throw new InternalServerErrorException(
+        `Error al subir logo: ${error instanceof Error ? error.message : 'Error desconocido'}`,
+      );
+    }
   }
 
   @Get(':id')
