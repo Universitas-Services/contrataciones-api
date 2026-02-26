@@ -14,21 +14,30 @@ export class CloudinaryService implements IStorageService {
     });
   }
 
-  async uploadFile(file: Buffer, filePath: string): Promise<string> {
-    // Parse folder and filename from filePath
-    const pathParts = filePath.split('/');
-    const filename = pathParts.pop() || 'file';
-    const folder = pathParts.join('/');
+  async uploadFile(file: Buffer, folder: string, filename?: string): Promise<string> {
+    // If filename is not provided, treat folder as full filePath for backward compatibility
+    let resolvedFolder: string;
+    let resolvedFilename: string;
+
+    if (filename) {
+      resolvedFolder = folder;
+      resolvedFilename = filename;
+    } else {
+      // Parse folder and filename from filePath
+      const pathParts = folder.split('/');
+      resolvedFilename = pathParts.pop() || 'file';
+      resolvedFolder = pathParts.join('/');
+    }
 
     // Detect resource type based on file extension
-    const extension = filename.split('.').pop()?.toLowerCase();
+    const extension = resolvedFilename.split('.').pop()?.toLowerCase();
     const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(extension || '');
-    const resourceType = isImage ? 'image' : 'raw';
+    const resourceType = isImage ? 'image' : 'auto';
 
     return new Promise((resolve, reject) => {
       const uploadOptions: any = {
-        folder: folder,
-        public_id: filename.replace(/\.[^/.]+$/, ''), // Remove extension from public_id
+        folder: resolvedFolder,
+        public_id: resolvedFilename.replace(/\.[^/.]+$/, ''), // Remove extension from public_id
         overwrite: true,
         resource_type: resourceType,
       };
