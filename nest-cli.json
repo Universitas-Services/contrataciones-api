@@ -12,6 +12,10 @@
       {
         "include": "**/*.txt",
         "outDir": "dist"
+      },
+      {
+        "include": "**/*.html",
+        "outDir": "dist"
       }
     ]
   }

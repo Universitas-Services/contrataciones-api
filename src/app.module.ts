@@ -16,6 +16,7 @@ import { ComisionContratacionesModule } from './comision-contrataciones/comision
 import { ModalidadContratacionModule } from './modalidad-contratacion/modalidad-contratacion.module';
 import { ExpedienteContratacionModule } from './expediente-contratacion/expediente-contratacion.module';
 import { CronogramaExpedienteModule } from './cronograma-expediente/cronograma-expediente.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { CronogramaExpedienteModule } from './cronograma-expediente/cronograma-e
     ModalidadContratacionModule,
     ExpedienteContratacionModule,
     CronogramaExpedienteModule,
+    EmailModule,
   ],
   providers: [
     {

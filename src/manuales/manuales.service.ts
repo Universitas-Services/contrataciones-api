@@ -8,11 +8,13 @@ import axios from 'axios';
 import ImageModule from 'docxtemplater-image-module-free';
 import { PrismaService } from '../database/prisma.service';
 import { IStorageService } from '../common/interfaces/storage-service.interface';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class ManualesService {
   constructor(
     private prisma: PrismaService,
+    private emailService: EmailService,
 
     @Inject('IStorageService') private storage: any, // Usar any o interfaz compatible para evitar problemas de metadata
   ) {}
@@ -32,7 +34,34 @@ export class ManualesService {
       throw new NotFoundException('Ente no encontrado');
     }
 
-    // 2. Validar que el Ente tenga todos los campos requeridos
+    // 2. Eliminar manual anterior si existe (un ente solo tiene UN manual)
+    const manualAnterior = await this.prisma.manualGenerado.findFirst({
+      where: { enteId, deletedAt: null },
+    });
+
+    if (manualAnterior) {
+      // Eliminar archivo de Cloudinary
+      try {
+        const publicId = this.extractCloudinaryPublicId(manualAnterior.urlArchivo);
+        if (publicId) {
+          await this.storage.deleteFile(publicId);
+          console.log('🗑️ Manual anterior eliminado de Cloudinary:', publicId);
+        }
+      } catch (deleteError: any) {
+        console.warn(
+          '⚠️ No se pudo eliminar el manual anterior de Cloudinary:',
+          deleteError.message,
+        );
+      }
+
+      // Eliminar registro de BD
+      await this.prisma.manualGenerado.delete({
+        where: { id: manualAnterior.id },
+      });
+      console.log('🗑️ Registro anterior eliminado de BD:', manualAnterior.id);
+    }
+
+    // 3. Validar que el Ente tenga todos los campos requeridos
     this.validarDatosCompletos(ente);
 
     // 3. Cargar plantilla base - usar __dirname para que funcione en dev (src/) y prod (dist/)
@@ -204,12 +233,7 @@ export class ManualesService {
       throw new BadRequestException(`Error al subir archivo: ${uploadError.message}`);
     }
 
-    // 11. Obtener siguiente versión
-    console.log('🔢 Getting next version...');
-    const nextVersion = await this.getNextVersion(enteId, tipoManual);
-    console.log('✅ Next version:', nextVersion);
-
-    // 12. Registrar en BD
+    // 11. Registrar en BD
     console.log('💾 About to save to database...');
     let manual: any;
     try {
@@ -221,7 +245,7 @@ export class ManualesService {
           tituloManual: `Manual ${tipoManual} - ${ente.siglas || ente.nombre}`,
           descripcion:
             descripcion || `Manual ${tipoManual} generado automáticamente para ${ente.nombre}`,
-          versionDocumento: nextVersion,
+          versionDocumento: 1,
           createdBy: userId,
         },
       });
@@ -240,10 +264,8 @@ export class ManualesService {
       id: manual.id,
       url: fileUrl,
       fileName,
-      version: nextVersion,
       generatedAt: manual.createdAt,
       tipoManual: manual.tipoManual,
-
       titulo: manual.tituloManual,
     };
   }
@@ -265,13 +287,49 @@ export class ManualesService {
     }
   }
 
-  private async getNextVersion(enteId: string, tipoManual: string): Promise<number> {
-    const lastManual = await this.prisma.manualGenerado.findFirst({
-      where: { enteId, tipoManual, deletedAt: null },
-      orderBy: { versionDocumento: 'desc' },
+  /**
+   * Extrae el publicId de Cloudinary desde una URL segura.
+   */
+  private extractCloudinaryPublicId(url: string): string | null {
+    try {
+      // URL formato: https://res.cloudinary.com/xxx/raw/upload/v123/manuales/enteId/archivo.docx
+      const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/);
+      return match ? match[1] : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Genera una URL de previsualización usando Google Docs Viewer.
+   * El frontend la usa en un iframe dentro de un modal/popup.
+   */
+  async getPreviewUrl(enteId: string) {
+    const manual = await this.findByEnte(enteId);
+
+    const previewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(manual.urlArchivo)}&embedded=true`;
+
+    return {
+      previewUrl,
+      tituloManual: manual.tituloManual,
+      urlArchivo: manual.urlArchivo,
+    };
+  }
+
+  /**
+   * Busca el único manual de un ente.
+   */
+  async findByEnte(enteId: string) {
+    const manual = await this.prisma.manualGenerado.findFirst({
+      where: { enteId, deletedAt: null },
+      orderBy: { createdAt: 'desc' },
     });
 
-    return lastManual ? lastManual.versionDocumento + 1 : 1;
+    if (!manual) {
+      throw new NotFoundException('Este ente no tiene un manual generado');
+    }
+
+    return manual;
   }
 
   async findAll(enteId: string) {
@@ -303,12 +361,52 @@ export class ManualesService {
     return manual;
   }
 
+  /**
+   * Descarga el manual de un ente por su enteId (sin necesitar ID del manual).
+   */
+  async downloadByEnte(enteId: string) {
+    const manual = await this.findByEnte(enteId);
+
+    return {
+      url: manual.urlArchivo,
+      fileName: `${manual.tituloManual.replace(/\s+/g, '-')}.docx`,
+    };
+  }
+
   async download(id: string, enteId: string) {
     const manual = await this.findOne(id, enteId);
 
     return {
       url: manual.urlArchivo,
-      fileName: `${manual.tituloManual.replace(/\s+/g, '-')}-v${manual.versionDocumento}.docx`,
+      fileName: `${manual.tituloManual.replace(/\s+/g, '-')}.docx`,
+    };
+  }
+
+  /**
+   * Envía el manual de un ente por correo electrónico como archivo adjunto.
+   * Busca el manual por enteId (sin necesitar ID del manual).
+   */
+  async sendManualByEmailByEnte(enteId: string, emailDestino: string) {
+    const result = await this.downloadByEnte(enteId);
+
+    // Descargar el archivo desde Cloudinary
+    const response = await axios.get(result.url, {
+      responseType: 'arraybuffer',
+    });
+    const fileBuffer = Buffer.from(response.data);
+
+    // Obtener nombre del destinatario
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { email: emailDestino, deletedAt: null },
+    });
+    const nombre = usuario ? usuario.nombre : emailDestino;
+
+    // Enviar por email
+    await this.emailService.sendManualByEmail(emailDestino, nombre, fileBuffer, result.fileName);
+
+    return {
+      message: `Manual enviado exitosamente a ${emailDestino}`,
+      fileName: result.fileName,
     };
   }
 }
