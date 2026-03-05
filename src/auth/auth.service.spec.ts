@@ -2,7 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../database/prisma.service';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException } from '@nestjs/common';
+import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcrypt';
 
 describe('AuthService', () => {
@@ -29,6 +31,11 @@ describe('AuthService', () => {
         AuthService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: JwtService, useValue: mockJwtService },
+        { provide: EmailService, useValue: { sendPasswordResetEmail: jest.fn() } },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('http://localhost:3000') },
+        },
       ],
     }).compile();
 

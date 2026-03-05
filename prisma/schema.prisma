@@ -206,9 +206,11 @@ model Usuario {
   supervisorId String? // Null si no pertenece a una org supervisora
 
   // Autenticación
-  email                 String  @unique
+  email                 String    @unique
   passwordHash          String
-  cambioPasswordDefault Boolean @default(false)
+  cambioPasswordDefault Boolean   @default(false)
+  resetPasswordToken    String?   @unique
+  resetPasswordExpires  DateTime?
 
   // Información personal
   nombre   String
