@@ -166,6 +166,7 @@ model EntePublico {
   estado    String?
   municipio String?
   parroquia String?
+  ciudad    String?
 
   // Unidades organizativas
   nombreUnidadAdminFinanciera String?

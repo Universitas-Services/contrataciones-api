@@ -75,6 +75,15 @@ export class UpdateEnteDto {
   parroquia?: string;
 
   @ApiProperty({
+    description: 'Ciudad de ubicación',
+    example: 'Caracas',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  ciudad?: string;
+
+  @ApiProperty({
     description: 'Nombre de la Unidad Administrativa Financiera',
     example: 'Dirección de Administración',
     required: false,

@@ -73,6 +73,15 @@ export class CreateEnteDto {
   @IsOptional()
   parroquia?: string;
 
+  @ApiProperty({
+    description: 'Ciudad de ubicación',
+    example: 'Caracas',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  ciudad?: string;
+
   // Datos del Usuario Administrador del Ente
   @ApiProperty({
     description: 'Correo electrónico del administrador del Ente',
