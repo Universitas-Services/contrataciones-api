@@ -58,6 +58,7 @@ export class EntesService {
       if (enteData.estado !== undefined) createData.estado = enteData.estado;
       if (enteData.municipio !== undefined) createData.municipio = enteData.municipio;
       if (enteData.parroquia !== undefined) createData.parroquia = enteData.parroquia;
+      if (enteData.ciudad !== undefined) createData.ciudad = enteData.ciudad;
 
       const ente = await tx.entePublico.create({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
