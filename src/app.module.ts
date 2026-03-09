@@ -17,6 +17,7 @@ import { ModalidadContratacionModule } from './modalidad-contratacion/modalidad-
 import { ExpedienteContratacionModule } from './expediente-contratacion/expediente-contratacion.module';
 import { CronogramaExpedienteModule } from './cronograma-expediente/cronograma-expediente.module';
 import { EmailModule } from './email/email.module';
+import { AdquirentePliegoModule } from './adquiriente-pliego/adquiriente-pliego.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { EmailModule } from './email/email.module';
     ModalidadContratacionModule,
     ExpedienteContratacionModule,
     CronogramaExpedienteModule,
+    AdquirentePliegoModule,
     EmailModule,
   ],
   providers: [
