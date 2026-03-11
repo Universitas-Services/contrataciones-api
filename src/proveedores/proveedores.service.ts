@@ -1,6 +1,13 @@
-import { Injectable, Inject, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateProveedorDto } from './dto/create-proveedor.dto';
+import { QueryProveedoresDto } from './dto/query-proveedores.dto';
 import type { IStorageService } from '../common/interfaces/storage-service.interface';
 
 // Mapeo de nombres de campo de archivo al enum TipoDocumentoProveedor
@@ -144,23 +151,174 @@ export class ProveedoresService {
       };
     });
   }
+  /**
+   * Estadísticas generales de proveedores del Ente
+   */
+  async getEstadisticas(enteId: string) {
+    const baseWhere = { enteId, deletedAt: null };
+
+    // Inicio del mes actual
+    const now = new Date();
+    const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Ejecutar todas las consultas en paralelo
+    const [
+      totalRegistrados,
+      totalAprobados,
+      totalRechazados,
+      totalPendientes,
+      totalEnRevision,
+      registradosEsteMes,
+      aprobadosEsteMes,
+      rechazadosEsteMes,
+      distribucionArea,
+      distribucionTipoPersona,
+    ] = await Promise.all([
+      // Totales por estatus
+      this.prisma.proveedor.count({ where: baseWhere }),
+      this.prisma.proveedor.count({
+        where: { ...baseWhere, estatusValidacion: 'APROBADO' },
+      }),
+      this.prisma.proveedor.count({
+        where: { ...baseWhere, estatusValidacion: 'RECHAZADO' },
+      }),
+      this.prisma.proveedor.count({
+        where: { ...baseWhere, estatusValidacion: 'PENDIENTE' },
+      }),
+      this.prisma.proveedor.count({
+        where: { ...baseWhere, estatusValidacion: 'EN_REVISION' },
+      }),
+
+      // Crecimiento mensual
+      this.prisma.proveedor.count({
+        where: { ...baseWhere, createdAt: { gte: inicioMes } },
+      }),
+      this.prisma.proveedor.count({
+        where: {
+          ...baseWhere,
+          estatusValidacion: 'APROBADO',
+          createdAt: { gte: inicioMes },
+        },
+      }),
+      this.prisma.proveedor.count({
+        where: {
+          ...baseWhere,
+          estatusValidacion: 'RECHAZADO',
+          createdAt: { gte: inicioMes },
+        },
+      }),
+
+      // Distribución por área de especialidad
+      this.prisma.proveedor.groupBy({
+        by: ['areaEspecialidad'],
+        where: baseWhere,
+        _count: { id: true },
+      }),
+
+      // Distribución por tipo de persona
+      this.prisma.proveedor.groupBy({
+        by: ['tipoPersona'],
+        where: baseWhere,
+        _count: { id: true },
+      }),
+    ]);
+
+    // Calcular porcentajes mensuales (evitar división por cero)
+    const calcPorcentaje = (parcial: number, total: number): number =>
+      total > 0 ? Math.round((parcial / total) * 1000) / 10 : 0;
+
+    // Mapear distribución por área
+    const areas: Record<string, number> = {
+      OBRAS: 0,
+      BIENES: 0,
+      SERVICIOS: 0,
+      CONSULTORIA: 0,
+      SIN_ASIGNAR: 0,
+    };
+    for (const item of distribucionArea) {
+      const key = item.areaEspecialidad || 'SIN_ASIGNAR';
+      areas[key] = item._count.id;
+    }
+
+    // Mapear distribución por tipo persona
+    const tiposPersona: Record<string, number> = {
+      NATURAL: 0,
+      JURIDICA: 0,
+    };
+    for (const item of distribucionTipoPersona) {
+      tiposPersona[item.tipoPersona] = item._count.id;
+    }
+
+    return {
+      resumen: {
+        totalRegistrados,
+        totalAprobados,
+        totalRechazados,
+        totalPendientes,
+        totalEnRevision,
+      },
+      crecimientoMensual: {
+        registradosEsteMes,
+        porcentajeRegistrados: calcPorcentaje(registradosEsteMes, totalRegistrados),
+        aprobadosEsteMes,
+        porcentajeAprobados: calcPorcentaje(aprobadosEsteMes, totalAprobados),
+        rechazadosEsteMes,
+        porcentajeRechazados: calcPorcentaje(rechazadosEsteMes, totalRechazados),
+      },
+      distribucionPorArea: areas,
+      distribucionPorTipoPersona: tiposPersona,
+    };
+  }
 
   /**
-   * Listar todos los proveedores del Ente
+   * Listar todos los proveedores del Ente con paginación y filtros
    */
-  async findAll(enteId: string) {
-    return this.prisma.proveedor.findMany({
-      where: {
-        enteId,
-        deletedAt: null,
-      },
-      include: {
-        documentos: {
-          where: { deletedAt: null },
+  async findAll(enteId: string, query: QueryProveedoresDto) {
+    const { page = 1, limit = 10, estatusValidacion, rif, nombre } = query;
+    const skip = (page - 1) * limit;
+
+    // Construir filtro dinámico
+    const where: Record<string, unknown> = {
+      enteId,
+      deletedAt: null,
+    };
+
+    if (estatusValidacion) {
+      where.estatusValidacion = estatusValidacion;
+    }
+
+    if (rif) {
+      where.rif = { contains: rif, mode: 'insensitive' };
+    }
+
+    if (nombre) {
+      where.nombre = { contains: nombre, mode: 'insensitive' };
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.proveedor.findMany({
+        where,
+        include: {
+          documentos: {
+            where: { deletedAt: null },
+          },
         },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.proveedor.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: { createdAt: 'desc' },
-    });
+    };
   }
 
   /**
@@ -185,6 +343,36 @@ export class ProveedoresService {
     }
 
     return proveedor;
+  }
+
+  /**
+   * Aprobar o rechazar un proveedor
+   */
+  async aprobar(id: string, enteId: string, userId: string, estatusValidacion: string) {
+    const proveedor = await this.findOne(id, enteId);
+
+    if (proveedor.estatusValidacion === estatusValidacion) {
+      throw new BadRequestException(`El proveedor ya tiene el estatus ${estatusValidacion}`);
+    }
+
+    const actualizado = await this.prisma.proveedor.update({
+      where: { id: proveedor.id },
+      data: {
+        estatusValidacion: estatusValidacion as 'APROBADO' | 'RECHAZADO',
+        updatedBy: userId,
+      },
+      include: {
+        documentos: {
+          where: { deletedAt: null },
+        },
+      },
+    });
+
+    const accion = estatusValidacion === 'APROBADO' ? 'aprobado' : 'rechazado';
+    return {
+      message: `Proveedor ${accion} exitosamente`,
+      proveedor: actualizado,
+    };
   }
 
   /**

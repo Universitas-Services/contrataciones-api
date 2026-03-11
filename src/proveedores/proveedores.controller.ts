@@ -2,9 +2,11 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   UseInterceptors,
   UploadedFiles,
@@ -24,6 +26,8 @@ import {
 } from '@nestjs/swagger';
 import { ProveedoresService } from './proveedores.service';
 import { CreateProveedorDto } from './dto/create-proveedor.dto';
+import { QueryProveedoresDto } from './dto/query-proveedores.dto';
+import { AprobarProveedorDto } from './dto/aprobar-proveedor.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { TenantGuard } from '../common/guards/tenant.guard';
@@ -192,11 +196,94 @@ export class ProveedoresController {
   @Get()
   @ApiOperation({
     summary: 'Listar proveedores',
-    description: 'Obtiene todos los proveedores del Ente del usuario autenticado',
+    description:
+      'Obtiene los proveedores del Ente del usuario autenticado con paginación y filtros opcionales. ' +
+      'Permite filtrar por estatus de validación, buscar por RIF o nombre.',
   })
-  @ApiResponse({ status: 200, description: 'Lista de proveedores con sus documentos' })
-  findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.proveedoresService.findAll(user.enteId);
+  @ApiResponse({ status: 200, description: 'Lista paginada de proveedores con metadatos' })
+  findAll(@Query() query: QueryProveedoresDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.proveedoresService.findAll(user.enteId, query);
+  }
+
+  @Patch(':id/estatus')
+  @Roles('EJECUTOR', 'ADMIN_ENTE')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Aprobar o rechazar proveedor',
+    description:
+      'Cambia el estatus de validación de un proveedor a APROBADO o RECHAZADO. ' +
+      'Solo usuarios con rol EJECUTOR o ADMIN_ENTE pueden realizar esta acción.',
+  })
+  @ApiParam({ name: 'id', description: 'ID del proveedor' })
+  @ApiResponse({ status: 200, description: 'Estatus del proveedor actualizado' })
+  @ApiResponse({ status: 400, description: 'Estatus inválido o el proveedor ya tiene ese estatus' })
+  @ApiResponse({ status: 403, description: 'No autorizado (solo EJECUTOR y ADMIN_ENTE)' })
+  @ApiResponse({ status: 404, description: 'Proveedor no encontrado' })
+  aprobar(
+    @Param('id') id: string,
+    @Body() aprobarDto: AprobarProveedorDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.proveedoresService.aprobar(id, user.enteId, user.id, aprobarDto.estatusValidacion);
+  }
+
+  @Get('estadisticas')
+  @ApiOperation({
+    summary: 'Estadísticas generales de proveedores',
+    description:
+      'Retorna estadísticas consolidadas del Ente: totales por estatus, ' +
+      'crecimiento mensual con porcentajes, distribución por área de especialidad ' +
+      'y distribución por tipo de persona.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Estadísticas de proveedores',
+    schema: {
+      type: 'object',
+      properties: {
+        resumen: {
+          type: 'object',
+          properties: {
+            totalRegistrados: { type: 'integer', example: 1250 },
+            totalAprobados: { type: 'integer', example: 1180 },
+            totalRechazados: { type: 'integer', example: 70 },
+            totalPendientes: { type: 'integer', example: 15 },
+            totalEnRevision: { type: 'integer', example: 5 },
+          },
+        },
+        crecimientoMensual: {
+          type: 'object',
+          properties: {
+            registradosEsteMes: { type: 'integer', example: 62 },
+            porcentajeRegistrados: { type: 'number', example: 5.2 },
+            aprobadosEsteMes: { type: 'integer', example: 35 },
+            porcentajeAprobados: { type: 'number', example: 3.1 },
+            rechazadosEsteMes: { type: 'integer', example: 2 },
+            porcentajeRechazados: { type: 'number', example: 2.9 },
+          },
+        },
+        distribucionPorArea: {
+          type: 'object',
+          properties: {
+            OBRAS: { type: 'integer', example: 320 },
+            BIENES: { type: 'integer', example: 450 },
+            SERVICIOS: { type: 'integer', example: 444 },
+            CONSULTORIA: { type: 'integer', example: 36 },
+            SIN_ASIGNAR: { type: 'integer', example: 0 },
+          },
+        },
+        distribucionPorTipoPersona: {
+          type: 'object',
+          properties: {
+            NATURAL: { type: 'integer', example: 400 },
+            JURIDICA: { type: 'integer', example: 850 },
+          },
+        },
+      },
+    },
+  })
+  getEstadisticas(@CurrentUser() user: AuthenticatedUser) {
+    return this.proveedoresService.getEstadisticas(user.enteId);
   }
 
   @Get(':id')
