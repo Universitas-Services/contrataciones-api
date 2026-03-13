@@ -54,102 +54,105 @@ export class ProveedoresService {
       );
     }
 
-    // 2. Crear proveedor y documentos en una transacción
-    return this.prisma.$transaction(async (tx) => {
-      // Paso A: Crear el proveedor
-      const proveedor = await tx.proveedor.create({
-        data: {
-          enteId,
-          correo: createDto.correo,
-          nombre: createDto.nombre,
-          rif: createDto.rif,
-          tipoPersona: createDto.tipoPersona as 'NATURAL' | 'JURIDICA',
-          tipoEntidadJuridica: createDto.tipoEntidadJuridica as
-            | 'EMPRESA_PRIVADA'
-            | 'COOPERATIVA'
-            | 'FUNDACION'
-            | 'ASOCIACION_CIVIL'
-            | 'CONSORCIO'
-            | undefined,
-          estado: createDto.estado,
-          municipio: createDto.municipio,
-          parroquia: createDto.parroquia,
-          direccionFiscal: createDto.direccionFiscal,
-          telefono: createDto.telefono,
-          nombreRepLegal: createDto.nombreRepLegal,
-          cedulaRepLegal: createDto.cedulaRepLegal,
-          registroRnc: createDto.registroRnc ?? false,
-          solvenciaLaboral: createDto.solvenciaLaboral ?? false,
-          licenciaFuncionamientoMunicipal: createDto.licenciaFuncionamientoMunicipal ?? false,
-          actividadComercial: createDto.actividadComercial,
-          areaEspecialidad: createDto.areaEspecialidad as
-            | 'OBRAS'
-            | 'BIENES'
-            | 'SERVICIOS'
-            | 'CONSULTORIA'
-            | undefined,
-          anosExperiencia: createDto.anosExperiencia,
-          fechaEstadoFinanciero: createDto.fechaEstadoFinanciero
-            ? new Date(createDto.fechaEstadoFinanciero)
-            : undefined,
-          patrimonioReportado: createDto.patrimonioReportado,
-          nivelContratacion: createDto.nivelContratacion as
-            | 'BASICO'
-            | 'INTERMEDIO'
-            | 'AVANZADO'
-            | 'EXPERTO'
-            | undefined,
-          createdBy: userId,
-        },
-      });
-
-      // Paso B: Subir archivos a Cloudinary y crear registros DocumentoProveedor
-      const documentosCreados: Awaited<ReturnType<typeof tx.documentoProveedor.create>>[] = [];
-
-      for (const [fieldName, fileArray] of Object.entries(files)) {
-        const tipoDocumento = FILE_FIELD_TO_TIPO[fieldName];
-        if (!tipoDocumento || !fileArray || fileArray.length === 0) continue;
-
-        const file = fileArray[0];
-
-        // Subir a Cloudinary: universitas/proveedores/{rif}/{tipo}.pdf
-        const folder = `universitas/proveedores/${createDto.rif}`;
-        const filename = tipoDocumento;
-        const secureUrl = await this.storageService.uploadFile(file.buffer, folder, filename);
-
-        // Leer observación correspondiente (obs_doc_rif, obs_doc_registro_mercantil, etc.)
-        const obsKey = `obs_${fieldName}`;
-        const observacion = observaciones[obsKey] || null;
-
-        // Crear registro en DocumentoProveedor
-        const documento = await tx.documentoProveedor.create({
+    // Timeout extendido porque las subidas a Cloudinary ocurren dentro de la transacción
+    return this.prisma.$transaction(
+      async (tx) => {
+        // Paso A: Crear el proveedor
+        const proveedor = await tx.proveedor.create({
           data: {
-            proveedorId: proveedor.id,
-            tipoDocumento: tipoDocumento as
-              | 'RIF'
-              | 'REGISTRO_MERCANTIL'
-              | 'ESTADOS_FINANCIEROS'
-              | 'REFERENCIAS_BANCARIAS'
-              | 'CERTIFICADO_SOLVENCIA_LABORAL'
-              | 'LICENCIA_MUNICIPAL'
-              | 'RNC',
-            urlArchivo: secureUrl,
-            observaciones: observacion,
+            enteId,
+            correo: createDto.correo,
+            nombre: createDto.nombre,
+            rif: createDto.rif,
+            tipoPersona: createDto.tipoPersona as 'NATURAL' | 'JURIDICA',
+            tipoEntidadJuridica: createDto.tipoEntidadJuridica as
+              | 'EMPRESA_PRIVADA'
+              | 'COOPERATIVA'
+              | 'FUNDACION'
+              | 'ASOCIACION_CIVIL'
+              | 'CONSORCIO'
+              | undefined,
+            estado: createDto.estado,
+            municipio: createDto.municipio,
+            parroquia: createDto.parroquia,
+            direccionFiscal: createDto.direccionFiscal,
+            telefono: createDto.telefono,
+            nombreRepLegal: createDto.nombreRepLegal,
+            cedulaRepLegal: createDto.cedulaRepLegal,
+            registroRnc: createDto.registroRnc ?? false,
+            solvenciaLaboral: createDto.solvenciaLaboral ?? false,
+            licenciaFuncionamientoMunicipal: createDto.licenciaFuncionamientoMunicipal ?? false,
+            actividadComercial: createDto.actividadComercial,
+            areaEspecialidad: createDto.areaEspecialidad as
+              | 'OBRAS'
+              | 'BIENES'
+              | 'SERVICIOS'
+              | 'CONSULTORIA'
+              | undefined,
+            anosExperiencia: createDto.anosExperiencia,
+            fechaEstadoFinanciero: createDto.fechaEstadoFinanciero
+              ? new Date(createDto.fechaEstadoFinanciero)
+              : undefined,
+            patrimonioReportado: createDto.patrimonioReportado,
+            nivelContratacion: createDto.nivelContratacion as
+              | 'BASICO'
+              | 'INTERMEDIO'
+              | 'AVANZADO'
+              | 'EXPERTO'
+              | undefined,
+            createdBy: userId,
           },
         });
 
-        documentosCreados.push(documento);
-      }
+        // Paso B: Subir archivos a Cloudinary y crear registros DocumentoProveedor
+        const documentosCreados: Awaited<ReturnType<typeof tx.documentoProveedor.create>>[] = [];
 
-      // Retornar proveedor con sus documentos
-      return {
-        message: 'Proveedor registrado exitosamente',
-        proveedor: {
-          ...proveedor,
-          documentos: documentosCreados,
-        },
-      };
-    });
+        for (const [fieldName, fileArray] of Object.entries(files)) {
+          const tipoDocumento = FILE_FIELD_TO_TIPO[fieldName];
+          if (!tipoDocumento || !fileArray || fileArray.length === 0) continue;
+
+          const file = fileArray[0];
+
+          // Subir a Cloudinary: universitas/proveedores/{rif}/{tipo}.pdf
+          const folder = `universitas/proveedores/${createDto.rif}`;
+          const filename = tipoDocumento;
+          const secureUrl = await this.storageService.uploadFile(file.buffer, folder, filename);
+
+          // Leer observación correspondiente (obs_doc_rif, obs_doc_registro_mercantil, etc.)
+          const obsKey = `obs_${fieldName}`;
+          const observacion = observaciones[obsKey] || null;
+
+          // Crear registro en DocumentoProveedor
+          const documento = await tx.documentoProveedor.create({
+            data: {
+              proveedorId: proveedor.id,
+              tipoDocumento: tipoDocumento as
+                | 'RIF'
+                | 'REGISTRO_MERCANTIL'
+                | 'ESTADOS_FINANCIEROS'
+                | 'REFERENCIAS_BANCARIAS'
+                | 'CERTIFICADO_SOLVENCIA_LABORAL'
+                | 'LICENCIA_MUNICIPAL'
+                | 'RNC',
+              urlArchivo: secureUrl,
+              observaciones: observacion,
+            },
+          });
+
+          documentosCreados.push(documento);
+        }
+
+        // Retornar proveedor con sus documentos
+        return {
+          message: 'Proveedor registrado exitosamente',
+          proveedor: {
+            ...proveedor,
+            documentos: documentosCreados,
+          },
+        };
+      },
+      { timeout: 30000 },
+    );
   }
   /**
    * Estadísticas generales de proveedores del Ente

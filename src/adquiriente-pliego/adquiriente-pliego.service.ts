@@ -341,6 +341,18 @@ export class AdquirentePliegoService {
           )
         : 'N/A',
 
+      // Criterios de evaluación condicional según tipo de contratación
+      // En la plantilla DOCX usar:
+      //   {#es_bienes} ... tablas de Bienes/Suministros ... {/es_bienes}
+      //   {#es_servicios} ... tablas de Servicios ... {/es_servicios}
+      //   {#es_obras} ... tablas de Obras ... {/es_obras}
+      tipo_objeto_contratacion: expediente.modalidad?.tipoContratacion || 'N/A',
+      es_bienes:
+        expediente.modalidad?.tipoContratacion === 'BIENES' ||
+        expediente.modalidad?.tipoContratacion === 'MIXTO',
+      es_servicios: expediente.modalidad?.tipoContratacion === 'SERVICIOS',
+      es_obras: expediente.modalidad?.tipoContratacion === 'OBRAS',
+
       // Metadatos
       fecha_generacion: now.toLocaleDateString('es-VE', {
         year: 'numeric',
