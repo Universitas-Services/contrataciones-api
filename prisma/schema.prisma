@@ -194,6 +194,7 @@ model EntePublico {
   proveedores           Proveedor[]
   expedientes           ExpedienteContratacion[]
   manuales              ManualGenerado[]
+  pliegos               PliegoGenerado[]
   ModalidadContratacion ModalidadContratacion[]
 
   @@index([universitasId])
@@ -593,6 +594,7 @@ model ExpedienteContratacion {
   cronograma              CronogramaExpediente?
   partidasPresupuestarias PartidaPresupuestaria[]
   adquirientesPliego      AdquirentePliego[]
+  pliegosGenerados        PliegoGenerado[]
   ofertas                 OfertaPresentada[]
   adjudicacion            Adjudicacion?
   documentosGenerados     DocumentoGenerado[]
@@ -699,18 +701,24 @@ model PartidaPresupuestaria {
 
 // Registro de quien adquirió el pliego
 model AdquirentePliego {
-  id           String @id @default(uuid())
-  expedienteId String
-  proveedorId  String
+  id           String @id @default(uuid()) @map("id_adquirente_au_au")
+  expedienteId String @map("id_expediente_au_au")
+  proveedorId  String @map("id_proveedor")
 
-  fechaAdquisicion     DateTime
-  nombreContactoRetiro String
-  datosPagoPliego      String?
+  fechaAdquisicion                    DateTime @map("fec_adquisicion_pliego_au_au")
+  nombreContactoRetiro                String   @map("nombre_contacto_retiro")
+  datosPagoPliego                     String?  @map("datos_pago_pliego_au_au") @db.VarChar(255)
+  nombreProveedorAdquiriente          String?  @map("nombre_proveedor_adquiriente_au_au") @db.VarChar(100)
+  direccionFiscalProveedorAdquiriente String?  @map("direccion_fiscal_proveedor_adquiriente_au_au") @db.VarChar(100)
+  telefonoProveedorAdquiriente        String?  @map("telefono_proveedor_adquiriente_au_au") @db.VarChar(100)
+  correoProveedorAdquiriente          String?  @map("correo_proveedor_adquiriente_au_au") @db.VarChar(100)
 
   // Auditoría
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
 
   // Relaciones
   expediente ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
@@ -718,6 +726,7 @@ model AdquirentePliego {
 
   @@index([expedienteId])
   @@index([proveedorId])
+  @@map("tb_adquirente_pliego")
 }
 
 // Ofertas presentadas por proveedores
@@ -908,6 +917,33 @@ model ManualGenerado {
 
   @@index([enteId, tipoManual])
   @@index([createdAt])
+}
+
+// Pliego generado por el Ente para un expediente
+model PliegoGenerado {
+  id               String @id @default(uuid())
+  enteId           String
+  expedienteId     String
+
+  tituloPliego     String
+  descripcion      String?
+  urlArchivo       String
+  versionDocumento Int     @default(1)
+
+  // Auditoría
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  // Relaciones
+  ente       EntePublico            @relation(fields: [enteId], references: [id])
+  expediente ExpedienteContratacion @relation(fields: [expedienteId], references: [id])
+
+  @@index([enteId])
+  @@index([expedienteId])
+  @@map("tb_pliego_generado")
 }
 
 // Sesiones de edición colaborativa

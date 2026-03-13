@@ -155,4 +155,39 @@ export class CreateProveedorDto {
   @IsOptional()
   @IsString()
   nivelContratacion?: string;
+
+  @ApiPropertyOptional({ description: 'Observaciones del RNC' })
+  @IsOptional()
+  @IsString()
+  obs_doc_rnc?: string;
+
+  @ApiPropertyOptional({ description: 'Observaciones de Solvencia Laboral' })
+  @IsOptional()
+  @IsString()
+  obs_doc_solvencia_laboral?: string;
+
+  @ApiPropertyOptional({ description: 'Observaciones de Licencia Municipal' })
+  @IsOptional()
+  @IsString()
+  obs_doc_licencia_municipal?: string;
+
+  @ApiPropertyOptional({ description: 'Observaciones del RIF' })
+  @IsOptional()
+  @IsString()
+  obs_doc_rif?: string;
+
+  @ApiPropertyOptional({ description: 'Observaciones de Referencias Bancarias' })
+  @IsOptional()
+  @IsString()
+  obs_doc_referencias_bancarias?: string;
+
+  @ApiPropertyOptional({ description: 'Observaciones de Estados Financieros' })
+  @IsOptional()
+  @IsString()
+  obs_doc_estados_financieros?: string;
+
+  @ApiPropertyOptional({ description: 'Observaciones del Registro Mercantil' })
+  @IsOptional()
+  @IsString()
+  obs_doc_registro_mercantil?: string;
 }

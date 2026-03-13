@@ -114,4 +114,27 @@ export class EmailService {
       ],
     });
   }
+
+  /**
+   * Envía un pliego de condiciones generado como archivo adjunto por correo electrónico.
+   */
+  async sendPliegoByEmail(to: string, nombre: string, pliegoBuffer: Buffer, filename: string) {
+    const html = this.loadTemplate('pliego-attached.html', {
+      nombre,
+      pliegoName: filename,
+    });
+
+    return this.sendEmail({
+      to,
+      subject: `Pliego de Condiciones Adjunto: ${filename} - Sistema de Contrataciones`,
+      html,
+      text: `Hola ${nombre}, se adjunta el pliego de condiciones "${filename}" solicitado.`,
+      attachments: [
+        {
+          filename,
+          content: pliegoBuffer,
+        },
+      ],
+    });
+  }
 }
