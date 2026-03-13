@@ -227,6 +227,55 @@ export class ProveedoresController {
     return this.proveedoresService.aprobar(id, user.enteId, user.id, aprobarDto.estatusValidacion);
   }
 
+  @Patch(':id/documentos')
+  @Roles('EJECUTOR', 'ADMIN_ENTE')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'doc_rif', maxCount: 1 },
+      { name: 'doc_registro_mercantil', maxCount: 1 },
+      { name: 'doc_estados_financieros', maxCount: 1 },
+      { name: 'doc_referencias_bancarias', maxCount: 1 },
+      { name: 'doc_solvencia_laboral', maxCount: 1 },
+      { name: 'doc_licencia_municipal', maxCount: 1 },
+      { name: 'doc_rnc', maxCount: 1 },
+    ]),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Actualizar documentos de proveedor',
+    description:
+      'Permite subir o reemplazar documentos de un proveedor existente. ' +
+      'Si el proveedor está PENDIENTE, el archivo anterior se reescribe. ' +
+      'Si ya fue APROBADO, se mantiene el historial (soft delete del anterior).',
+  })
+  @ApiParam({ name: 'id', description: 'ID del proveedor' })
+  @ApiResponse({ status: 200, description: 'Documentos actualizados exitosamente' })
+  @ApiResponse({ status: 403, description: 'No autorizado (solo EJECUTOR y ADMIN_ENTE)' })
+  @ApiResponse({ status: 404, description: 'Proveedor no encontrado' })
+  async updateDocumentos(
+    @Param('id') id: string,
+    @Body() body: Record<string, any>,
+    @UploadedFiles() files: Record<string, Express.Multer.File[]>,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    // Extraer campos obs_* del body para las observaciones de documentos
+    const observaciones: Record<string, string> = {};
+    for (const key of Object.keys(body)) {
+      if (key.startsWith('obs_doc_')) {
+        observaciones[key] = String(body[key]);
+      }
+    }
+
+    return this.proveedoresService.updateDocumentos(
+      id,
+      user.enteId,
+      user.id,
+      files || {},
+      observaciones,
+    );
+  }
+
   @Get('estadisticas')
   @ApiOperation({
     summary: 'Estadísticas generales de proveedores',

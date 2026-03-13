@@ -325,6 +325,109 @@ export class ProveedoresService {
   }
 
   /**
+   * Actualizar o subir nuevos documentos para un proveedor existente
+   */
+  async updateDocumentos(
+    id: string,
+    enteId: string,
+    userId: string,
+    files: Record<string, Express.Multer.File[]>,
+    observaciones: Record<string, string>,
+  ) {
+    const proveedor = await this.findOne(id, enteId);
+
+    // Si no hay archivos nuevos, retornar inmediatamente
+    if (!files || Object.keys(files).length === 0) {
+      return { message: 'No se enviaron documentos para actualizar', proveedor };
+    }
+
+    const documentosCreados: any[] = [];
+    const esPendiente = proveedor.estatusValidacion === 'PENDIENTE';
+
+    // Usar una función normal en lugar de transacción interactiva pesada
+    // ya que las eliminaciones/subidas a Cloudinary pueden fallar o tardar
+    for (const [fieldName, fileArray] of Object.entries(files)) {
+      const tipoDocumento = FILE_FIELD_TO_TIPO[fieldName] as
+        | 'RIF'
+        | 'REGISTRO_MERCANTIL'
+        | 'ESTADOS_FINANCIEROS'
+        | 'REFERENCIAS_BANCARIAS'
+        | 'CERTIFICADO_SOLVENCIA_LABORAL'
+        | 'LICENCIA_MUNICIPAL'
+        | 'RNC'
+        | undefined;
+      if (!tipoDocumento || !fileArray || fileArray.length === 0) continue;
+
+      const file = fileArray[0];
+      const folder = `universitas/proveedores/${proveedor.rif}`;
+      const filename = tipoDocumento;
+
+      const obsKey = `obs_${fieldName}`;
+      const observacion = observaciones[obsKey] || null;
+
+      // Buscar si ya existe un documento activo de este tipo
+      const documentoExistente = proveedor.documentos.find(
+        (doc) => doc.tipoDocumento === tipoDocumento && doc.deletedAt === null,
+      );
+
+      // 1. Manejar el documento existente si lo hay
+      if (documentoExistente) {
+        if (esPendiente) {
+          // Si nunca fue aprobado, reemplazar físicamente para ahorrar espacio
+          try {
+            // Extraer publicId de la URL de Cloudinary
+            const urlParts = documentoExistente.urlArchivo.split('/');
+            const uploadIndex = urlParts.findIndex((p) => p === 'upload');
+            if (uploadIndex !== -1) {
+              // Reconstruir publicId: universitas/proveedores/{rif}/{tipo_sin_ext}
+              const pathPart = urlParts.slice(uploadIndex + 2).join('/'); // saltar 'upload' y 'v1234'
+              const publicId = pathPart.substring(0, pathPart.lastIndexOf('.'));
+              if (publicId) {
+                await this.storageService.deleteFile(publicId);
+              }
+            }
+          } catch (error) {
+            console.error(`Error borrando archivo anterior en Cloudinary: ${error}`);
+            // Continuar aunque falle el borrado
+          }
+
+          // Hard delete del registro en BD viejo
+          await this.prisma.documentoProveedor.delete({
+            where: { id: documentoExistente.id },
+          });
+        } else {
+          // Si ya hubo aprobación, mantener historial mediante Soft Delete
+          await this.prisma.documentoProveedor.update({
+            where: { id: documentoExistente.id },
+            data: { deletedAt: new Date() },
+          });
+        }
+      }
+
+      const secureUrl = await this.storageService.uploadFile(file.buffer, folder, filename);
+
+      // 3. Crear el nuevo registro de documento
+      const nuevoDocumento = await this.prisma.documentoProveedor.create({
+        data: {
+          proveedorId: proveedor.id,
+          tipoDocumento: tipoDocumento as NonNullable<typeof tipoDocumento>,
+          urlArchivo: secureUrl,
+          observaciones: observacion,
+        },
+      });
+
+      documentosCreados.push(nuevoDocumento);
+    }
+
+    // Retornar el proveedor actualizado
+    const proveedorActualizado = await this.findOne(id, enteId);
+
+    return {
+      message: 'Documentos actualizados exitosamente',
+      proveedor: proveedorActualizado,
+    };
+  }
+  /**
    * Obtener un proveedor por ID
    */
   async findOne(id: string, enteId: string) {
@@ -356,6 +459,33 @@ export class ProveedoresService {
 
     if (proveedor.estatusValidacion === estatusValidacion) {
       throw new BadRequestException(`El proveedor ya tiene el estatus ${estatusValidacion}`);
+    }
+
+    // Validar que tenga todos los documentos antes de aprobar
+    if (estatusValidacion === 'APROBADO') {
+      const documentosRequeridos = [
+        'RIF',
+        'REGISTRO_MERCANTIL',
+        'ESTADOS_FINANCIEROS',
+        'REFERENCIAS_BANCARIAS',
+        'CERTIFICADO_SOLVENCIA_LABORAL',
+        'LICENCIA_MUNICIPAL',
+        'RNC',
+      ];
+
+      const documentosExistentes = proveedor.documentos
+        .filter((doc) => !doc.deletedAt)
+        .map((doc) => doc.tipoDocumento);
+
+      const documentosFaltantes = documentosRequeridos.filter(
+        (tipo) => !documentosExistentes.includes(tipo as any),
+      );
+
+      if (documentosFaltantes.length > 0) {
+        throw new BadRequestException(
+          `No se puede aprobar el proveedor. Faltan los siguientes documentos: ${documentosFaltantes.join(', ')}`,
+        );
+      }
     }
 
     const actualizado = await this.prisma.proveedor.update({
