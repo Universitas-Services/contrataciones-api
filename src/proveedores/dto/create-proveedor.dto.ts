@@ -130,7 +130,7 @@ export class CreateProveedorDto {
 
   @ApiPropertyOptional({
     description: 'Área de especialidad',
-    enum: ['BIENES', 'OBRAS', 'SERVICIO'],
+    enum: ['BIENES', 'OBRAS', 'SERVICIOS'],
     example: 'BIENES',
   })
   @IsOptional()
@@ -138,11 +138,12 @@ export class CreateProveedorDto {
     const map = {
       Bienes: 'BIENES',
       Obras: 'OBRAS',
-      Servicio: 'SERVICIO',
+      Servicio: 'SERVICIOS',
+      Servicios: 'SERVICIOS',
     };
     return map[value] || value?.toUpperCase();
   })
-  @IsEnum(['BIENES', 'OBRAS', 'SERVICIO'])
+  @IsEnum(['BIENES', 'OBRAS', 'SERVICIOS'])
   areaEspecialidad?: string;
 
   @ApiPropertyOptional({ description: 'Años de experiencia', example: '10' })

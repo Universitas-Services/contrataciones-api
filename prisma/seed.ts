@@ -22,14 +22,17 @@ async function main() {
   await prisma.documentoProveedor.deleteMany();
   await prisma.proveedor.deleteMany();
   await prisma.expedienteContratacion.deleteMany();
+  await prisma.modalidadContratacion.deleteMany();
   await prisma.unidadContratante.deleteMany();
   await prisma.unidadUsuaria.deleteMany();
   await prisma.miembroComision.deleteMany();
   await prisma.comisionContrataciones.deleteMany();
   await prisma.maximaAutoridad.deleteMany();
   await prisma.manualGenerado.deleteMany();
+  await prisma.pliegoGenerado.deleteMany();
   await prisma.documentoGenerado.deleteMany();
   await prisma.usuario.deleteMany();
+  await prisma.supervisorAsignacion.deleteMany();
   await prisma.enteSupervisor.deleteMany();
   await prisma.supervisor.deleteMany();
   await prisma.entePublico.deleteMany();
@@ -292,7 +295,7 @@ async function main() {
       rif: 'J-40001234-5',
       correo: 'info@construccionesmodernas.com',
       tipoPersona: 'JURIDICA',
-      tipoEntidadJuridica: 'COMPANIA_ANONIMA',
+      tipoEntidadJuridica: 'COMPANIA_ANONIMA' as any,
       estado: 'Miranda',
       municipio: 'Chacao',
       direccionFiscal: 'Av. Francisco de Miranda, Torre Ejecutiva',
@@ -302,10 +305,10 @@ async function main() {
       registroRnc: true,
       solvenciaLaboral: true,
       licenciaFuncionamientoMunicipal: true,
-      areaEspecialidad: 'OBRAS',
+      areaEspecialidad: 'OBRAS' as any,
       anosExperiencia: 15,
       patrimonioReportado: 500000000,
-      nivelContratacion: 'ALTA',
+      nivelContratacion: 'ALTA' as any,
       estatusValidacion: 'APROBADO',
       createdBy: ejecutor1.id,
     },
@@ -318,7 +321,7 @@ async function main() {
       rif: 'J-30005678-9',
       correo: 'ventas@sumintec.com',
       tipoPersona: 'JURIDICA',
-      tipoEntidadJuridica: 'SRL',
+      tipoEntidadJuridica: 'SRL' as any,
       estado: 'Distrito Capital',
       municipio: 'Libertador',
       direccionFiscal: 'Sabana Grande, C.C. Líder',
@@ -328,10 +331,10 @@ async function main() {
       registroRnc: true,
       solvenciaLaboral: true,
       licenciaFuncionamientoMunicipal: true,
-      areaEspecialidad: 'BIENES',
+      areaEspecialidad: 'SERVICIOS' as any,
       anosExperiencia: 8,
       patrimonioReportado: 150000000,
-      nivelContratacion: 'MEDIA',
+      nivelContratacion: 'MEDIA' as any,
       estatusValidacion: 'APROBADO',
       createdBy: ejecutor1.id,
     },

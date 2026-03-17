@@ -40,7 +40,7 @@ enum TipoEntidadJuridica {
 enum AreaEspecialidad {
   BIENES
   OBRAS
-  SERVICIO
+  SERVICIOS
 }
 
 enum NivelContratacion {
