@@ -92,7 +92,7 @@ export class ProveedoresController {
         actividadComercial: { type: 'string', example: 'Construcción de obras civiles' },
         areaEspecialidad: {
           type: 'string',
-          enum: ['BIENES', 'OBRAS', 'SERVICIO'],
+          enum: ['BIENES', 'OBRAS', 'SERVICIOS'],
           example: 'BIENES',
         },
         anosExperiencia: { type: 'integer', example: 10 },

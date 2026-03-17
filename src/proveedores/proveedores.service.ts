@@ -221,7 +221,7 @@ export class ProveedoresService {
     const areas: Record<string, number> = {
       BIENES: 0,
       OBRAS: 0,
-      SERVICIO: 0,
+      SERVICIOS: 0,
       SIN_ASIGNAR: 0,
     };
     for (const item of distribucionArea) {

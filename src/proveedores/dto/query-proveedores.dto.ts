@@ -61,10 +61,10 @@ export class QueryProveedoresDto {
 
   @ApiPropertyOptional({
     description: 'Filtrar por área de especialidad',
-    enum: ['BIENES', 'OBRAS', 'SERVICIO'],
+    enum: ['BIENES', 'OBRAS', 'SERVICIOS'],
     example: 'BIENES',
   })
   @IsOptional()
-  @IsEnum(['BIENES', 'OBRAS', 'SERVICIO'])
+  @IsEnum(['BIENES', 'OBRAS', 'SERVICIOS'])
   areaEspecialidad?: string;
 }
