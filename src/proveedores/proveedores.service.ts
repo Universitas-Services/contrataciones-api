@@ -79,6 +79,7 @@ export class ProveedoresService {
             registroRnc: createDto.registroRnc ?? false,
             solvenciaLaboral: createDto.solvenciaLaboral ?? false,
             licenciaFuncionamientoMunicipal: createDto.licenciaFuncionamientoMunicipal ?? false,
+            datosRegistroMercantil: createDto.datosRegistroMercantil,
             actividadComercial: createDto.actividadComercial,
             areaEspecialidad: createDto.areaEspecialidad as any, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             anosExperiencia: createDto.anosExperiencia,
