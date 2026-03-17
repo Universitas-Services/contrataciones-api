@@ -29,25 +29,24 @@ enum TipoPersona {
 }
 
 enum TipoEntidadJuridica {
-  EMPRESA_PRIVADA
-  COOPERATIVA
-  FUNDACION
+  COMPANIA_ANONIMA
   ASOCIACION_CIVIL
-  CONSORCIO
+  SRL
+  FUNDACION
+  COOPERATIVA
+  PYME
 }
 
 enum AreaEspecialidad {
-  OBRAS
   BIENES
-  SERVICIOS
-  CONSULTORIA
+  OBRAS
+  SERVICIO
 }
 
 enum NivelContratacion {
-  BASICO
-  INTERMEDIO
-  AVANZADO
-  EXPERTO
+  ALTA
+  MEDIA
+  BAJA
 }
 
 enum EstatusValidacion {
@@ -490,7 +489,8 @@ model Proveedor {
 
   // Estado de validación
   estatusValidacion EstatusValidacion @default(PENDIENTE)
-  fechaRegistro     DateTime          @default(now())
+  fechaRegistro          DateTime          @default(now())
+  fechaUltimaAprobacion  DateTime?
 
   // Auditoría
   createdAt DateTime  @default(now())

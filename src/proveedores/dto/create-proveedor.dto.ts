@@ -46,11 +46,22 @@ export class CreateProveedorDto {
 
   @ApiPropertyOptional({
     description: 'Tipo de entidad jurídica',
-    enum: ['EMPRESA_PRIVADA', 'COOPERATIVA', 'FUNDACION', 'ASOCIACION_CIVIL', 'CONSORCIO'],
-    example: 'EMPRESA_PRIVADA',
+    enum: ['COMPANIA_ANONIMA', 'ASOCIACION_CIVIL', 'SRL', 'FUNDACION', 'COOPERATIVA', 'PYME'],
+    example: 'COMPANIA_ANONIMA',
   })
   @IsOptional()
-  @IsString()
+  @Transform(({ value }) => {
+    const map = {
+      'Compañía Anónima (C.A)': 'COMPANIA_ANONIMA',
+      'Asociación Civil': 'ASOCIACION_CIVIL',
+      'Sociedades de Responsabilidad Limitada (S.R.L.)': 'SRL',
+      Fundaciones: 'FUNDACION',
+      Cooperativas: 'COOPERATIVA',
+      Pymes: 'PYME',
+    };
+    return map[value] || value?.toUpperCase();
+  })
+  @IsEnum(['COMPANIA_ANONIMA', 'ASOCIACION_CIVIL', 'SRL', 'FUNDACION', 'COOPERATIVA', 'PYME'])
   tipoEntidadJuridica?: string;
 
   @ApiPropertyOptional({ description: 'Estado', example: 'Miranda' })
@@ -119,11 +130,19 @@ export class CreateProveedorDto {
 
   @ApiPropertyOptional({
     description: 'Área de especialidad',
-    enum: ['OBRAS', 'BIENES', 'SERVICIOS', 'CONSULTORIA'],
-    example: 'OBRAS',
+    enum: ['BIENES', 'OBRAS', 'SERVICIO'],
+    example: 'BIENES',
   })
   @IsOptional()
-  @IsString()
+  @Transform(({ value }) => {
+    const map = {
+      Bienes: 'BIENES',
+      Obras: 'OBRAS',
+      Servicio: 'SERVICIO',
+    };
+    return map[value] || value?.toUpperCase();
+  })
+  @IsEnum(['BIENES', 'OBRAS', 'SERVICIO'])
   areaEspecialidad?: string;
 
   @ApiPropertyOptional({ description: 'Años de experiencia', example: '10' })
@@ -149,11 +168,12 @@ export class CreateProveedorDto {
 
   @ApiPropertyOptional({
     description: 'Nivel de contratación',
-    enum: ['BASICO', 'INTERMEDIO', 'AVANZADO', 'EXPERTO'],
-    example: 'INTERMEDIO',
+    enum: ['ALTA', 'MEDIA', 'BAJA'],
+    example: 'MEDIA',
   })
   @IsOptional()
-  @IsString()
+  @Transform(({ value }) => value?.toUpperCase())
+  @IsEnum(['ALTA', 'MEDIA', 'BAJA'])
   nivelContratacion?: string;
 
   @ApiPropertyOptional({ description: 'Observaciones del RNC' })

@@ -12,7 +12,9 @@ import {
   UploadedFiles,
   HttpCode,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import {
@@ -26,6 +28,7 @@ import {
 } from '@nestjs/swagger';
 import { ProveedoresService } from './proveedores.service';
 import { CreateProveedorDto } from './dto/create-proveedor.dto';
+import { UpdateProveedorDto } from './dto/update-proveedor.dto';
 import { QueryProveedoresDto } from './dto/query-proveedores.dto';
 import { AprobarProveedorDto } from './dto/aprobar-proveedor.dto';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -227,7 +230,7 @@ export class ProveedoresController {
     return this.proveedoresService.aprobar(id, user.enteId, user.id, aprobarDto.estatusValidacion);
   }
 
-  @Patch(':id/documentos')
+  @Patch(':id')
   @Roles('EJECUTOR', 'ADMIN_ENTE')
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(
@@ -243,37 +246,25 @@ export class ProveedoresController {
   )
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
-    summary: 'Actualizar documentos de proveedor',
+    summary: 'Actualizar proveedor (datos y documentos)',
     description:
-      'Permite subir o reemplazar documentos de un proveedor existente. ' +
-      'Si el proveedor está PENDIENTE, el archivo anterior se reescribe. ' +
-      'Si ya fue APROBADO, se mantiene el historial (soft delete del anterior).',
+      'Actualiza la información general de un proveedor y/o sus documentos. ' +
+      'Si el proveedor no está APROBADO, los documentos anteriores se eliminan físicamente. ' +
+      'Si ya fue APROBADO, se mantiene el historial mediante borrado lógico.',
   })
   @ApiParam({ name: 'id', description: 'ID del proveedor' })
-  @ApiResponse({ status: 200, description: 'Documentos actualizados exitosamente' })
-  @ApiResponse({ status: 403, description: 'No autorizado (solo EJECUTOR y ADMIN_ENTE)' })
+  @ApiBody({ type: UpdateProveedorDto })
+  @ApiResponse({ status: 200, description: 'Proveedor actualizado exitosamente' })
+  @ApiResponse({ status: 403, description: 'No autorizado' })
   @ApiResponse({ status: 404, description: 'Proveedor no encontrado' })
-  async updateDocumentos(
+  @ApiResponse({ status: 409, description: 'Conflicto con RIF de otro proveedor' })
+  async update(
     @Param('id') id: string,
-    @Body() body: Record<string, any>,
+    @Body() updateDto: UpdateProveedorDto,
     @UploadedFiles() files: Record<string, Express.Multer.File[]>,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    // Extraer campos obs_* del body para las observaciones de documentos
-    const observaciones: Record<string, string> = {};
-    for (const key of Object.keys(body)) {
-      if (key.startsWith('obs_doc_')) {
-        observaciones[key] = String(body[key]);
-      }
-    }
-
-    return this.proveedoresService.updateDocumentos(
-      id,
-      user.enteId,
-      user.id,
-      files || {},
-      observaciones,
-    );
+    return this.proveedoresService.update(id, user.enteId, user.id, updateDto, files || {});
   }
 
   @Get('estadisticas')
@@ -359,5 +350,65 @@ export class ProveedoresController {
   @ApiResponse({ status: 404, description: 'Proveedor no encontrado' })
   remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.proveedoresService.remove(id, user.enteId, user.id);
+  }
+
+  @Get(':id/documentos/:tipo/visualizar')
+  @ApiOperation({
+    summary: 'Visualizar documento de proveedor',
+    description: 'Redirige al visor del documento en el almacenamiento (Cloudinary)',
+  })
+  @ApiParam({ name: 'id', description: 'ID del proveedor' })
+  @ApiParam({
+    name: 'tipo',
+    description: 'Tipo de documento (RIF, RNC, REGISTRO_MERCANTIL, etc.)',
+  })
+  @ApiResponse({ status: 302, description: 'Redirección al documento' })
+  @ApiResponse({ status: 404, description: 'Proveedor o documento no encontrado' })
+  async visualizarDocumento(
+    @Param('id') id: string,
+    @Param('tipo') tipo: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+  ) {
+    const { documento } = await this.proveedoresService.getDocumentoActivo(id, tipo, user.enteId);
+    return res.redirect(documento.urlArchivo);
+  }
+
+  @Get(':id/documentos/:tipo/descargar')
+  @ApiOperation({
+    summary: 'Descargar documento de proveedor',
+    description: 'Descarga el documento del proveedor con un nombre descriptivo',
+  })
+  @ApiParam({ name: 'id', description: 'ID del proveedor' })
+  @ApiParam({
+    name: 'tipo',
+    description: 'Tipo de documento (RIF, RNC, REGISTRO_MERCANTIL, etc.)',
+  })
+  @ApiResponse({ status: 200, description: 'Archivo binario' })
+  @ApiResponse({ status: 404, description: 'Proveedor o documento no encontrado' })
+  async descargarDocumento(
+    @Param('id') id: string,
+    @Param('tipo') tipo: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+  ) {
+    const { documento, proveedor } = await this.proveedoresService.getDocumentoActivo(
+      id,
+      tipo,
+      user.enteId,
+    );
+
+    const stream = await this.proveedoresService.downloadFileStream(documento.urlArchivo);
+
+    // Limpiar nombre del proveedor para el nombre del archivo
+    const nombreLimpio = proveedor.nombre.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const fileName = `${tipo}_${nombreLimpio}.pdf`;
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+    });
+
+    stream.pipe(res);
   }
 }
