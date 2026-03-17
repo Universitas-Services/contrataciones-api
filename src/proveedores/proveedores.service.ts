@@ -4,9 +4,12 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
+import axios from 'axios';
 import { PrismaService } from '../database/prisma.service';
 import { CreateProveedorDto } from './dto/create-proveedor.dto';
+import { UpdateProveedorDto } from './dto/update-proveedor.dto';
 import { QueryProveedoresDto } from './dto/query-proveedores.dto';
 import type { IStorageService } from '../common/interfaces/storage-service.interface';
 
@@ -65,13 +68,7 @@ export class ProveedoresService {
             nombre: createDto.nombre,
             rif: createDto.rif,
             tipoPersona: createDto.tipoPersona as 'NATURAL' | 'JURIDICA',
-            tipoEntidadJuridica: createDto.tipoEntidadJuridica as
-              | 'EMPRESA_PRIVADA'
-              | 'COOPERATIVA'
-              | 'FUNDACION'
-              | 'ASOCIACION_CIVIL'
-              | 'CONSORCIO'
-              | undefined,
+            tipoEntidadJuridica: createDto.tipoEntidadJuridica as any, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             estado: createDto.estado,
             municipio: createDto.municipio,
             parroquia: createDto.parroquia,
@@ -83,23 +80,13 @@ export class ProveedoresService {
             solvenciaLaboral: createDto.solvenciaLaboral ?? false,
             licenciaFuncionamientoMunicipal: createDto.licenciaFuncionamientoMunicipal ?? false,
             actividadComercial: createDto.actividadComercial,
-            areaEspecialidad: createDto.areaEspecialidad as
-              | 'OBRAS'
-              | 'BIENES'
-              | 'SERVICIOS'
-              | 'CONSULTORIA'
-              | undefined,
+            areaEspecialidad: createDto.areaEspecialidad as any, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             anosExperiencia: createDto.anosExperiencia,
             fechaEstadoFinanciero: createDto.fechaEstadoFinanciero
               ? new Date(createDto.fechaEstadoFinanciero)
               : undefined,
             patrimonioReportado: createDto.patrimonioReportado,
-            nivelContratacion: createDto.nivelContratacion as
-              | 'BASICO'
-              | 'INTERMEDIO'
-              | 'AVANZADO'
-              | 'EXPERTO'
-              | undefined,
+            nivelContratacion: createDto.nivelContratacion as any, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
             createdBy: userId,
           },
         });
@@ -277,7 +264,15 @@ export class ProveedoresService {
    * Listar todos los proveedores del Ente con paginación y filtros
    */
   async findAll(enteId: string, query: QueryProveedoresDto) {
-    const { page = 1, limit = 10, estatusValidacion, rif, nombre } = query;
+    const {
+      page = 1,
+      limit = 10,
+      estatusValidacion,
+      rif,
+      nombre,
+      estadoVigencia,
+      areaEspecialidad,
+    } = query;
     const skip = (page - 1) * limit;
 
     // Construir filtro dinámico
@@ -288,6 +283,40 @@ export class ProveedoresService {
 
     if (estatusValidacion) {
       where.estatusValidacion = estatusValidacion;
+    }
+
+    if (areaEspecialidad) {
+      where.areaEspecialidad = areaEspecialidad;
+    }
+
+    if (estadoVigencia) {
+      const now = new Date();
+      const hace11Meses = new Date();
+      hace11Meses.setMonth(now.getMonth() - 11);
+
+      const hace12Meses = new Date();
+      hace12Meses.setMonth(now.getMonth() - 12);
+
+      switch (estadoVigencia) {
+        case 'POR_APROBAR':
+          where.estatusValidacion = { in: ['PENDIENTE', 'RECHAZADO'] };
+          break;
+        case 'ACTIVO':
+          where.estatusValidacion = 'APROBADO';
+          where.fechaUltimaAprobacion = { gte: hace11Meses };
+          break;
+        case 'POR_VENCER':
+          where.estatusValidacion = 'APROBADO';
+          where.fechaUltimaAprobacion = {
+            lt: hace11Meses,
+            gte: hace12Meses,
+          };
+          break;
+        case 'VENCIDO':
+          where.estatusValidacion = 'APROBADO';
+          where.fechaUltimaAprobacion = { lt: hace12Meses };
+          break;
+      }
     }
 
     if (rif) {
@@ -325,107 +354,139 @@ export class ProveedoresService {
   }
 
   /**
-   * Actualizar o subir nuevos documentos para un proveedor existente
+   * Actualizar datos generales y/o subir nuevos documentos para un proveedor existente
    */
-  async updateDocumentos(
+  async update(
     id: string,
     enteId: string,
     userId: string,
+    updateDto: UpdateProveedorDto,
     files: Record<string, Express.Multer.File[]>,
-    observaciones: Record<string, string>,
   ) {
     const proveedor = await this.findOne(id, enteId);
 
-    // Si no hay archivos nuevos, retornar inmediatamente
-    if (!files || Object.keys(files).length === 0) {
-      return { message: 'No se enviaron documentos para actualizar', proveedor };
-    }
-
-    const documentosCreados: any[] = [];
-    const esPendiente = proveedor.estatusValidacion === 'PENDIENTE';
-
-    // Usar una función normal en lugar de transacción interactiva pesada
-    // ya que las eliminaciones/subidas a Cloudinary pueden fallar o tardar
-    for (const [fieldName, fileArray] of Object.entries(files)) {
-      const tipoDocumento = FILE_FIELD_TO_TIPO[fieldName] as
-        | 'RIF'
-        | 'REGISTRO_MERCANTIL'
-        | 'ESTADOS_FINANCIEROS'
-        | 'REFERENCIAS_BANCARIAS'
-        | 'CERTIFICADO_SOLVENCIA_LABORAL'
-        | 'LICENCIA_MUNICIPAL'
-        | 'RNC'
-        | undefined;
-      if (!tipoDocumento || !fileArray || fileArray.length === 0) continue;
-
-      const file = fileArray[0];
-      const folder = `universitas/proveedores/${proveedor.rif}`;
-      const filename = tipoDocumento;
-
-      const obsKey = `obs_${fieldName}`;
-      const observacion = observaciones[obsKey] || null;
-
-      // Buscar si ya existe un documento activo de este tipo
-      const documentoExistente = proveedor.documentos.find(
-        (doc) => doc.tipoDocumento === tipoDocumento && doc.deletedAt === null,
-      );
-
-      // 1. Manejar el documento existente si lo hay
-      if (documentoExistente) {
-        if (esPendiente) {
-          // Si nunca fue aprobado, reemplazar físicamente para ahorrar espacio
-          try {
-            // Extraer publicId de la URL de Cloudinary
-            const urlParts = documentoExistente.urlArchivo.split('/');
-            const uploadIndex = urlParts.findIndex((p) => p === 'upload');
-            if (uploadIndex !== -1) {
-              // Reconstruir publicId: universitas/proveedores/{rif}/{tipo_sin_ext}
-              const pathPart = urlParts.slice(uploadIndex + 2).join('/'); // saltar 'upload' y 'v1234'
-              const publicId = pathPart.substring(0, pathPart.lastIndexOf('.'));
-              if (publicId) {
-                await this.storageService.deleteFile(publicId);
-              }
-            }
-          } catch (error) {
-            console.error(`Error borrando archivo anterior en Cloudinary: ${error}`);
-            // Continuar aunque falle el borrado
-          }
-
-          // Hard delete del registro en BD viejo
-          await this.prisma.documentoProveedor.delete({
-            where: { id: documentoExistente.id },
-          });
-        } else {
-          // Si ya hubo aprobación, mantener historial mediante Soft Delete
-          await this.prisma.documentoProveedor.update({
-            where: { id: documentoExistente.id },
-            data: { deletedAt: new Date() },
-          });
-        }
-      }
-
-      const secureUrl = await this.storageService.uploadFile(file.buffer, folder, filename);
-
-      // 3. Crear el nuevo registro de documento
-      const nuevoDocumento = await this.prisma.documentoProveedor.create({
-        data: {
-          proveedorId: proveedor.id,
-          tipoDocumento: tipoDocumento as NonNullable<typeof tipoDocumento>,
-          urlArchivo: secureUrl,
-          observaciones: observacion,
+    // 1. Verificar unicidad del RIF si se está intentando cambiar
+    if (updateDto.rif && updateDto.rif !== proveedor.rif) {
+      const existente = await this.prisma.proveedor.findFirst({
+        where: {
+          rif: updateDto.rif,
+          enteId: enteId,
+          deletedAt: null,
+          NOT: { id: id },
         },
       });
 
-      documentosCreados.push(nuevoDocumento);
+      if (existente) {
+        throw new ConflictException(
+          `Ya existe otro proveedor con RIF ${updateDto.rif} registrado en este Ente`,
+        );
+      }
     }
 
-    // Retornar el proveedor actualizado
-    const proveedorActualizado = await this.findOne(id, enteId);
+    // 2. Extraer observaciones de documentos del DTO
+    const observaciones: Record<string, string> = {};
+    const dataToUpdate: Record<string, string | number | boolean | Date> = { ...updateDto } as any;
 
-    return {
-      message: 'Documentos actualizados exitosamente',
-      proveedor: proveedorActualizado,
-    };
+    for (const key of Object.keys(dataToUpdate)) {
+      if (key.startsWith('obs_doc_')) {
+        observaciones[key] = String(dataToUpdate[key]);
+        delete dataToUpdate[key];
+      }
+    }
+
+    // 3. Actualizar campos generales en la BD
+    // Convertir fechas y asegurar tipos antes de actualizar
+    if (dataToUpdate.fechaEstadoFinanciero) {
+      dataToUpdate.fechaEstadoFinanciero = new Date(dataToUpdate.fechaEstadoFinanciero as string);
+    }
+
+    await this.prisma.proveedor.update({
+      where: { id: proveedor.id },
+      data: {
+        ...dataToUpdate,
+        updatedBy: userId,
+      },
+    });
+
+    // 4. Procesar actualización de documentos si se enviaron archivos
+    const documentosCreados: any[] = [];
+    const esConfirmado = proveedor.estatusValidacion === 'APROBADO';
+
+    if (files && Object.keys(files).length > 0) {
+      for (const [fieldName, fileArray] of Object.entries(files)) {
+        const tipoDocumento = FILE_FIELD_TO_TIPO[fieldName] as
+          | 'RIF'
+          | 'REGISTRO_MERCANTIL'
+          | 'ESTADOS_FINANCIEROS'
+          | 'REFERENCIAS_BANCARIAS'
+          | 'CERTIFICADO_SOLVENCIA_LABORAL'
+          | 'LICENCIA_MUNICIPAL'
+          | 'RNC'
+          | undefined;
+
+        if (!tipoDocumento || !fileArray || fileArray.length === 0) continue;
+
+        const file = fileArray[0];
+        const folder = `universitas/proveedores/${updateDto.rif || proveedor.rif}`;
+        const filename = tipoDocumento;
+
+        const obsKey = `obs_${fieldName}`;
+        const observacion = observaciones[obsKey] || null;
+
+        // Buscar si ya existe un documento activo de este tipo
+        const documentoExistente = proveedor.documentos.find(
+          (doc) => doc.tipoDocumento === tipoDocumento && doc.deletedAt === null,
+        );
+
+        // Manejar el documento existente
+        if (documentoExistente) {
+          if (!esConfirmado) {
+            // BORRADO FÍSICO en Cloudinary para PENDIENTE o RECHAZADO
+            try {
+              const urlParts = documentoExistente.urlArchivo.split('/');
+              const uploadIndex = urlParts.findIndex((p) => p === 'upload');
+              if (uploadIndex !== -1) {
+                const pathPart = urlParts.slice(uploadIndex + 2).join('/');
+                const publicId = pathPart.substring(0, pathPart.lastIndexOf('.'));
+                if (publicId) {
+                  await this.storageService.deleteFile(publicId);
+                }
+              }
+            } catch (error) {
+              console.error(`Error borrando archivo anterior en Cloudinary: ${error}`);
+            }
+
+            // Hard delete del registro en BD viejo
+            await this.prisma.documentoProveedor.delete({
+              where: { id: documentoExistente.id },
+            });
+          } else {
+            // SOFT DELETE para proveedores APROBADOS
+            await this.prisma.documentoProveedor.update({
+              where: { id: documentoExistente.id },
+              data: { deletedAt: new Date() },
+            });
+          }
+        }
+
+        const secureUrl = await this.storageService.uploadFile(file.buffer, folder, filename);
+
+        // Crear el nuevo registro de documento
+        const nuevoDocumento = await this.prisma.documentoProveedor.create({
+          data: {
+            proveedorId: proveedor.id,
+            tipoDocumento: tipoDocumento as any, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            urlArchivo: secureUrl,
+            observaciones: observacion,
+          },
+        });
+
+        documentosCreados.push(nuevoDocumento);
+      }
+    }
+
+    // Retornar el proveedor actualizado con todos sus campos y documentos vigentes
+    return this.findOne(id, enteId);
   }
   /**
    * Obtener un proveedor por ID
@@ -491,9 +552,10 @@ export class ProveedoresService {
     const actualizado = await this.prisma.proveedor.update({
       where: { id: proveedor.id },
       data: {
-        estatusValidacion: estatusValidacion as 'APROBADO' | 'RECHAZADO',
+        estatusValidacion: estatusValidacion as any,
+        fechaUltimaAprobacion: estatusValidacion === 'APROBADO' ? new Date() : undefined,
         updatedBy: userId,
-      },
+      } as any,
       include: {
         documentos: {
           where: { deletedAt: null },
@@ -523,5 +585,45 @@ export class ProveedoresService {
     });
 
     return { message: 'Proveedor eliminado exitosamente' };
+  }
+
+  /**
+   * Obtener un documento activo por proveedor y tipo
+   */
+  async getDocumentoActivo(proveedorId: string, tipo: string, enteId: string) {
+    // Validar que el proveedor exista y pertenezca al ente
+    const proveedor = await this.findOne(proveedorId, enteId);
+
+    const documento = await this.prisma.documentoProveedor.findFirst({
+      where: {
+        proveedorId: proveedor.id,
+        tipoDocumento: tipo as any,
+        deletedAt: null,
+      },
+    });
+
+    if (!documento) {
+      throw new NotFoundException(
+        `No se encontró un documento activo del tipo ${tipo} para este proveedor`,
+      );
+    }
+
+    return { documento, proveedor };
+  }
+
+  /**
+   * Obtener el stream de datos de un archivo desde su URL
+   */
+  async downloadFileStream(url: string) {
+    try {
+      const response = await axios({
+        method: 'GET',
+        url: url,
+        responseType: 'stream',
+      });
+      return response.data;
+    } catch {
+      throw new InternalServerErrorException('Error al obtener el archivo desde el almacenamiento');
+    }
   }
 }

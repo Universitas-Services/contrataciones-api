@@ -49,4 +49,22 @@ export class QueryProveedoresDto {
   @IsOptional()
   @IsString()
   nombre?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filtrar por vigencia del proveedor',
+    enum: ['ACTIVO', 'VENCIDO', 'POR_VENCER', 'POR_APROBAR'],
+    example: 'ACTIVO',
+  })
+  @IsOptional()
+  @IsEnum(['ACTIVO', 'VENCIDO', 'POR_VENCER', 'POR_APROBAR'])
+  estadoVigencia?: string;
+
+  @ApiPropertyOptional({
+    description: 'Filtrar por área de especialidad',
+    enum: ['BIENES', 'OBRAS', 'SERVICIO'],
+    example: 'BIENES',
+  })
+  @IsOptional()
+  @IsEnum(['BIENES', 'OBRAS', 'SERVICIO'])
+  areaEspecialidad?: string;
 }
