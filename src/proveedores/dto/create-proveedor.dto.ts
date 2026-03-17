@@ -121,6 +121,14 @@ export class CreateProveedorDto {
   licenciaFuncionamientoMunicipal?: boolean;
 
   @ApiPropertyOptional({
+    description: 'Datos del Registro Mercantil del proveedor',
+    example: 'Registro Mercantil Segundo del Estado Lara, bajo el N° 0, Tomo 00-A del Año 0000',
+  })
+  @IsOptional()
+  @IsString()
+  datosRegistroMercantil?: string;
+
+  @ApiPropertyOptional({
     description: 'Actividad comercial',
     example: 'Construcción de obras civiles',
   })

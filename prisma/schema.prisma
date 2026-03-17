@@ -476,6 +476,7 @@ model Proveedor {
   registroRnc                     Boolean @default(false)
   solvenciaLaboral                Boolean @default(false)
   licenciaFuncionamientoMunicipal Boolean @default(false)
+  datosRegistroMercantil          String? @db.Text
 
   // Actividad comercial
   actividadComercial String?

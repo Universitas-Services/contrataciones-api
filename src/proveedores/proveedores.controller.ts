@@ -89,6 +89,10 @@ export class ProveedoresController {
         registroRnc: { type: 'boolean', example: true },
         solvenciaLaboral: { type: 'boolean', example: true },
         licenciaFuncionamientoMunicipal: { type: 'boolean', example: false },
+        datosRegistroMercantil: {
+          type: 'string',
+          example: 'Registro Mercantil Segundo del Estado Lara, bajo el N° 0, Tomo 00-A del Año 0000',
+        },
         actividadComercial: { type: 'string', example: 'Construcción de obras civiles' },
         areaEspecialidad: {
           type: 'string',
