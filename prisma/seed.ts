@@ -22,14 +22,17 @@ async function main() {
   await prisma.documentoProveedor.deleteMany();
   await prisma.proveedor.deleteMany();
   await prisma.expedienteContratacion.deleteMany();
+  await prisma.modalidadContratacion.deleteMany();
   await prisma.unidadContratante.deleteMany();
   await prisma.unidadUsuaria.deleteMany();
   await prisma.miembroComision.deleteMany();
   await prisma.comisionContrataciones.deleteMany();
   await prisma.maximaAutoridad.deleteMany();
   await prisma.manualGenerado.deleteMany();
+  await prisma.pliegoGenerado.deleteMany();
   await prisma.documentoGenerado.deleteMany();
   await prisma.usuario.deleteMany();
+  await prisma.supervisorAsignacion.deleteMany();
   await prisma.enteSupervisor.deleteMany();
   await prisma.supervisor.deleteMany();
   await prisma.entePublico.deleteMany();
