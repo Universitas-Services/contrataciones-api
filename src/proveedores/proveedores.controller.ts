@@ -76,8 +76,8 @@ export class ProveedoresController {
         tipoPersona: { type: 'string', enum: ['NATURAL', 'JURIDICA'], example: 'JURIDICA' },
         tipoEntidadJuridica: {
           type: 'string',
-          enum: ['EMPRESA_PRIVADA', 'COOPERATIVA', 'FUNDACION', 'ASOCIACION_CIVIL', 'CONSORCIO'],
-          example: 'EMPRESA_PRIVADA',
+          enum: ['COMPANIA_ANONIMA', 'ASOCIACION_CIVIL', 'SRL', 'FUNDACION', 'COOPERATIVA', 'PYME'],
+          example: 'COMPANIA_ANONIMA',
         },
         estado: { type: 'string', example: 'Miranda' },
         municipio: { type: 'string', example: 'Sucre' },
@@ -92,16 +92,16 @@ export class ProveedoresController {
         actividadComercial: { type: 'string', example: 'Construcción de obras civiles' },
         areaEspecialidad: {
           type: 'string',
-          enum: ['OBRAS', 'BIENES', 'SERVICIOS', 'CONSULTORIA'],
-          example: 'OBRAS',
+          enum: ['BIENES', 'OBRAS', 'SERVICIO'],
+          example: 'BIENES',
         },
         anosExperiencia: { type: 'integer', example: 10 },
         fechaEstadoFinanciero: { type: 'string', format: 'date', example: '2025-12-31' },
         patrimonioReportado: { type: 'number', example: 1500000.5 },
         nivelContratacion: {
           type: 'string',
-          enum: ['BASICO', 'INTERMEDIO', 'AVANZADO', 'EXPERTO'],
-          example: 'INTERMEDIO',
+          enum: ['ALTA', 'MEDIA', 'BAJA'],
+          example: 'MEDIA',
         },
         doc_rif: { type: 'string', format: 'binary', description: 'PDF del RIF (archivo)' },
         obs_doc_rif: {
@@ -305,10 +305,9 @@ export class ProveedoresController {
         distribucionPorArea: {
           type: 'object',
           properties: {
-            OBRAS: { type: 'integer', example: 320 },
             BIENES: { type: 'integer', example: 450 },
-            SERVICIOS: { type: 'integer', example: 444 },
-            CONSULTORIA: { type: 'integer', example: 36 },
+            OBRAS: { type: 'integer', example: 320 },
+            SERVICIO: { type: 'integer', example: 444 },
             SIN_ASIGNAR: { type: 'integer', example: 0 },
           },
         },

@@ -219,10 +219,9 @@ export class ProveedoresService {
 
     // Mapear distribución por área
     const areas: Record<string, number> = {
-      OBRAS: 0,
       BIENES: 0,
-      SERVICIOS: 0,
-      CONSULTORIA: 0,
+      OBRAS: 0,
+      SERVICIO: 0,
       SIN_ASIGNAR: 0,
     };
     for (const item of distribucionArea) {
