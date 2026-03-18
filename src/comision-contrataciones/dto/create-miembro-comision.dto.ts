@@ -20,18 +20,18 @@ export class CreateMiembroComisionDto {
   cedulaMiembro: string;
 
   @ApiProperty({
-    description: 'Tipo de miembro (TITULAR, SUPLENTE, COORDINADOR, SECRETARIO)',
+    description: 'Tipo de miembro',
     enum: TipoMiembro,
-    example: 'TITULAR',
+    example: 'Miembro principal',
   })
   @IsEnum(TipoMiembro)
   @IsNotEmpty()
   tipoMiembro: TipoMiembro;
 
   @ApiProperty({
-    description: 'Área de representación (JURIDICA, TECNICA, FINANCIERA, ADMINISTRATIVA)',
+    description: 'Área de representación',
     enum: AreaRepresentacion,
-    example: 'JURIDICA',
+    example: 'Área jurídica',
   })
   @IsEnum(AreaRepresentacion)
   @IsNotEmpty()

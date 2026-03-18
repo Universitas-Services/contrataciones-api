@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateMaximaAutoridadDto {
@@ -54,12 +54,7 @@ export class CreateMaximaAutoridadDto {
   @IsOptional()
   esDelegado?: boolean;
 
-  @ApiProperty({
-    description: 'Indica si la autoridad está vigente',
-    example: true,
-    default: true,
-    required: false,
-  })
+  @ApiHideProperty()
   @IsBoolean()
   @IsOptional()
   vigente?: boolean;

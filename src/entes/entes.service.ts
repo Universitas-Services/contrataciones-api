@@ -61,7 +61,6 @@ export class EntesService {
       if (enteData.ciudad !== undefined) createData.ciudad = enteData.ciudad;
 
       const ente = await tx.entePublico.create({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         data: createData as any,
       });
 
@@ -130,11 +129,10 @@ export class EntesService {
 
         const entesIds = asignaciones.map((a) => a.enteId);
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         whereClause.id = { in: entesIds };
       } else if (user.rol !== 'UNIVERSITAS' && user.enteId) {
         // Otros roles: Solo ven su Ente
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
         whereClause.id = user.enteId;
       }
       // UNIVERSITAS: No agrega filtro (ve todos)

@@ -87,7 +87,7 @@ export class AuthController {
     description: 'No autorizado o contraseña actual incorrecta',
   })
   changePassword(@Body() changePasswordDto: ChangePasswordDto, @CurrentUser() user: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.authService.changePassword(user.id, changePasswordDto);
   }
 

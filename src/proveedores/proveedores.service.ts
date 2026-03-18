@@ -68,7 +68,7 @@ export class ProveedoresService {
             nombre: createDto.nombre,
             rif: createDto.rif,
             tipoPersona: createDto.tipoPersona as 'NATURAL' | 'JURIDICA',
-            tipoEntidadJuridica: createDto.tipoEntidadJuridica as any, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            tipoEntidadJuridica: createDto.tipoEntidadJuridica as any,
             estado: createDto.estado,
             municipio: createDto.municipio,
             parroquia: createDto.parroquia,
@@ -81,13 +81,13 @@ export class ProveedoresService {
             licenciaFuncionamientoMunicipal: createDto.licenciaFuncionamientoMunicipal ?? false,
             datosRegistroMercantil: createDto.datosRegistroMercantil,
             actividadComercial: createDto.actividadComercial,
-            areaEspecialidad: createDto.areaEspecialidad as any, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            areaEspecialidad: createDto.areaEspecialidad as any,
             anosExperiencia: createDto.anosExperiencia,
             fechaEstadoFinanciero: createDto.fechaEstadoFinanciero
               ? new Date(createDto.fechaEstadoFinanciero)
               : undefined,
             patrimonioReportado: createDto.patrimonioReportado,
-            nivelContratacion: createDto.nivelContratacion as any, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            nivelContratacion: createDto.nivelContratacion as any,
             createdBy: userId,
           },
         });
@@ -475,7 +475,7 @@ export class ProveedoresService {
         const nuevoDocumento = await this.prisma.documentoProveedor.create({
           data: {
             proveedorId: proveedor.id,
-            tipoDocumento: tipoDocumento as any, // eslint-disable-line @typescript-eslint/no-unsafe-assignment
+            tipoDocumento: tipoDocumento as any,
             urlArchivo: secureUrl,
             observaciones: observacion,
           },

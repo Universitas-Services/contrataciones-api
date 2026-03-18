@@ -18,6 +18,7 @@ import { ExpedienteContratacionModule } from './expediente-contratacion/expedien
 import { CronogramaExpedienteModule } from './cronograma-expediente/cronograma-expediente.module';
 import { EmailModule } from './email/email.module';
 import { AdquirentePliegoModule } from './adquiriente-pliego/adquiriente-pliego.module';
+import { DirectorioActoresModule } from './directorio-actores/directorio-actores.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { AdquirentePliegoModule } from './adquiriente-pliego/adquiriente-pliego.
     CronogramaExpedienteModule,
     AdquirentePliegoModule,
     EmailModule,
+    DirectorioActoresModule,
   ],
   providers: [
     {
