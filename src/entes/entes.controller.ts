@@ -141,7 +141,6 @@ export class EntesController {
         `Archivo: ${file.originalname}, size: ${file.size}, mimetype: ${file.mimetype}`,
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       const secureUrl = await this.storageService.uploadFile(file.buffer, folder, filename);
 
       this.logger.log(`Logo subido exitosamente: ${secureUrl as string}`);

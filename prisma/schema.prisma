@@ -101,17 +101,17 @@ enum TipoDocumentoProveedor {
 }
 
 enum TipoMiembro {
-  TITULAR
-  SUPLENTE
-  COORDINADOR
-  SECRETARIO
+  MIEMBRO_PRINCIPAL @map("Miembro principal")
+  MIEMBRO_SUPLENTE  @map("Miembro suplente")
+  COORDINADOR       @map("Coordinador (a)")
+  SECRETARIO        @map("Secretario (a)")
 }
 
 enum AreaRepresentacion {
-  JURIDICA
-  TECNICA
-  FINANCIERA
-  ADMINISTRATIVA
+  AREA_JURIDICA             @map("Área jurídica")
+  AREA_TECNICA              @map("Área técnica")
+  AREA_ECONOMICA_FINANCIERA @map("Área económica-financiera")
+  SECRETARIO_A              @map("Secretario (a)")
 }
 
 enum TipoGarantia {
@@ -361,6 +361,7 @@ model ComisionContrataciones {
   denominacionComision     String  @map("denominacion_comision")
   datosDesignacionComision String? @map("datos_designacion_comision")
   comisionCertificada      Boolean @default(false) @map("ind_comision_certificado")
+  activa                   Boolean @default(true) @map("ind_activa")
 
   // Auditoría
   createdAt DateTime  @default(now())
@@ -409,6 +410,7 @@ model UnidadUsuaria {
   nombreUnidadUsuaria            String @map("nom_unidad_usuaria")
   nombreResponsableUnidadUsuaria String @map("nom_responsable_unidad_usuaria")
   cargoResponsableUnidadUsuaria  String @map("cargo_responsable_unidad_usuaria")
+  activa                         Boolean @default(true) @map("ind_activa")
 
   // Auditoría
   createdAt DateTime  @default(now())
@@ -563,10 +565,10 @@ model ModalidadContratacion {
 model ExpedienteContratacion {
   id              String @id @default(uuid()) @map("id_expediente_au_au")
   enteId          String @map("id_ente") // Mantenemos coherencia con resto del esquema
-  modalidadId     String @map("id_modalidad")
-  comisionId      String @map("id_comision")
-  unidadUsuariaId String @map("id_unidad_usuaria")
-  autoridadId     String @map("id_autoridad")
+  modalidadId     String  @map("id_modalidad")
+  comisionId      String? @map("id_comision")
+  unidadUsuariaId String? @map("id_unidad_usuaria")
+  autoridadId     String? @map("id_autoridad")
 
   // Descripción del proceso
   descripcionObjeto  String @map("desc_objeto_contratacion_au_au")
@@ -587,9 +589,9 @@ model ExpedienteContratacion {
   // Relaciones
   ente          EntePublico            @relation(fields: [enteId], references: [id])
   modalidad     ModalidadContratacion  @relation(fields: [modalidadId], references: [id])
-  comision      ComisionContrataciones @relation(fields: [comisionId], references: [id])
-  unidadUsuaria UnidadUsuaria          @relation(fields: [unidadUsuariaId], references: [id])
-  autoridad     MaximaAutoridad        @relation(fields: [autoridadId], references: [id])
+  comision      ComisionContrataciones? @relation(fields: [comisionId], references: [id])
+  unidadUsuaria UnidadUsuaria?          @relation(fields: [unidadUsuariaId], references: [id])
+  autoridad     MaximaAutoridad?        @relation(fields: [autoridadId], references: [id])
 
   fasePreparatoria        FasePreparatoria?
   cronograma              CronogramaExpediente?

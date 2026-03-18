@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiHideProperty } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateUnidadContratanteDto {
@@ -26,12 +26,7 @@ export class CreateUnidadContratanteDto {
   @IsNotEmpty()
   cargoResponsable: string;
 
-  @ApiProperty({
-    description: 'Indica si la unidad está activa',
-    example: true,
-    default: true,
-    required: false,
-  })
+  @ApiHideProperty()
   @IsBoolean()
   @IsOptional()
   activa?: boolean;

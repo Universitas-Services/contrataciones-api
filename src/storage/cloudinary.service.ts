@@ -44,7 +44,6 @@ export class CloudinaryService implements IStorageService {
 
       // Only add transformations for images
       if (isImage) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         uploadOptions.transformation = [{ quality: 'auto', fetch_format: 'auto' }];
       }
 
