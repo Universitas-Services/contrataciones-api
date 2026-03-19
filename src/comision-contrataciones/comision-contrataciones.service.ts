@@ -3,6 +3,7 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateComisionContratacionesDto } from './dto/create-comision-contrataciones.dto';
 import { UpdateComisionContratacionesDto } from './dto/update-comision-contrataciones.dto';
 import { CreateMiembroComisionDto } from './dto/create-miembro-comision.dto';
+import { UpdateMiembroComisionDto } from './dto/update-miembro-comision.dto';
 
 @Injectable()
 export class ComisionContratacionesService {
@@ -131,15 +132,26 @@ export class ComisionContratacionesService {
       throw new NotFoundException(`Miembro con ID ${miembroId} no encontrado o sin acceso.`);
     }
 
-    // Eliminación física o lógica? El esquema tiene deletedAt, usaremos soft delete si es preferido,
-    // pero el código anterior usaba físicas para miembros dependientes.
-    // Revisando esquema: MiembroComision tiene deletedAt.
+    return this.prisma.miembroComision.delete({
+      where: { id: miembroId },
+    });
+  }
+
+  async updateMiembro(miembroId: string, updateDto: UpdateMiembroComisionDto, enteId: string) {
+    const miembro = await this.prisma.miembroComision.findFirst({
+      where: {
+        id: miembroId,
+        comision: { enteId, deletedAt: null },
+      },
+    });
+
+    if (!miembro) {
+      throw new NotFoundException(`Miembro con ID ${miembroId} no encontrado o sin acceso.`);
+    }
 
     return this.prisma.miembroComision.update({
       where: { id: miembroId },
-      data: {
-        deletedAt: new Date(),
-      },
+      data: updateDto,
     });
   }
 }
