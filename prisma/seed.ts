@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, TipoMiembro, AreaRepresentacion } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -248,22 +248,22 @@ async function main() {
         comisionId: comision.id,
         nombreCompletoMiembro: 'Lic. Pedro Ramírez',
         cedulaMiembro: 'V-11111111',
-        tipoMiembro: 'COORDINADOR',
-        areaRepresentacion: 'JURIDICA',
+        tipoMiembro: TipoMiembro.COORDINADOR,
+        areaRepresentacion: AreaRepresentacion.AREA_JURIDICA,
       },
       {
         comisionId: comision.id,
         nombreCompletoMiembro: 'Ing. Laura Sánchez',
         cedulaMiembro: 'V-22222222',
-        tipoMiembro: 'TITULAR',
-        areaRepresentacion: 'TECNICA',
+        tipoMiembro: TipoMiembro.MIEMBRO_PRINCIPAL,
+        areaRepresentacion: AreaRepresentacion.AREA_TECNICA,
       },
       {
         comisionId: comision.id,
         nombreCompletoMiembro: 'Lic. Roberto Castro',
         cedulaMiembro: 'V-33333333',
-        tipoMiembro: 'TITULAR',
-        areaRepresentacion: 'FINANCIERA',
+        tipoMiembro: TipoMiembro.MIEMBRO_PRINCIPAL,
+        areaRepresentacion: AreaRepresentacion.AREA_ECONOMICA_FINANCIERA,
       },
     ],
   });
