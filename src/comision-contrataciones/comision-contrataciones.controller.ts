@@ -15,6 +15,7 @@ import { ComisionContratacionesService } from './comision-contrataciones.service
 import { CreateComisionContratacionesDto } from './dto/create-comision-contrataciones.dto';
 import { UpdateComisionContratacionesDto } from './dto/update-comision-contrataciones.dto';
 import { CreateMiembroComisionDto } from './dto/create-miembro-comision.dto';
+import { UpdateMiembroComisionDto } from './dto/update-miembro-comision.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -111,11 +112,26 @@ export class ComisionContratacionesController {
     return this.comisionService.addMiembro(comisionId, createMiembroDto, enteId);
   }
 
+  @Patch('miembros/:miembroId')
+  @Roles('ADMIN_ENTE', 'UNIVERSITAS')
+  @ApiOperation({
+    summary: 'Actualizar Miembro',
+    description: 'Actualiza los datos de un miembro de la comisión.',
+  })
+  updateMiembro(
+    @Param('miembroId') miembroId: string,
+    @Body() updateMiembroDto: UpdateMiembroComisionDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const enteId = user.enteId;
+    return this.comisionService.updateMiembro(miembroId, updateMiembroDto, enteId);
+  }
+
   @Delete('miembros/:miembroId')
   @Roles('ADMIN_ENTE', 'UNIVERSITAS')
   @ApiOperation({
     summary: 'Eliminar Miembro',
-    description: 'Elimina un miembro de la comisión.',
+    description: 'Elimina de forma física un miembro de la comisión.',
   })
   removeMiembro(@Param('miembroId') miembroId: string, @CurrentUser() user: AuthenticatedUser) {
     const enteId = user.enteId;
