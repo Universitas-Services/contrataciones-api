@@ -28,7 +28,7 @@ export class DirectorioActoresService {
       promesas.push(
         this.prisma.unidadContratante
           .findMany({
-            where: { enteId },
+            where: { enteId, deletedAt: null },
             select: { id: true, nombreUnidadContratante: true, activa: true, createdAt: true },
           })
           .then((data) => {
@@ -50,7 +50,7 @@ export class DirectorioActoresService {
       promesas.push(
         this.prisma.unidadUsuaria
           .findMany({
-            where: { enteId },
+            where: { enteId, deletedAt: null },
             select: { id: true, nombreUnidadUsuaria: true, activa: true, createdAt: true },
           })
           .then((data) => {
@@ -72,7 +72,7 @@ export class DirectorioActoresService {
       promesas.push(
         this.prisma.maximaAutoridad
           .findMany({
-            where: { enteId },
+            where: { enteId, deletedAt: null },
             select: { id: true, nombreCompletoAutoridad: true, vigente: true, createdAt: true },
           })
           .then((data) => {
@@ -94,7 +94,7 @@ export class DirectorioActoresService {
       promesas.push(
         this.prisma.comisionContrataciones
           .findMany({
-            where: { enteId },
+            where: { enteId, deletedAt: null },
             select: { id: true, denominacionComision: true, activa: true, createdAt: true },
           })
           .then((data) => {
