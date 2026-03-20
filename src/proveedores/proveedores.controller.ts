@@ -375,7 +375,15 @@ export class ProveedoresController {
     @Res() res: Response,
   ) {
     const { documento } = await this.proveedoresService.getDocumentoActivo(id, tipo, user.enteId);
-    return res.redirect(documento.urlArchivo);
+    let finalUrl = documento.urlArchivo;
+    if (
+      !finalUrl.toLowerCase().endsWith('.pdf') &&
+      !finalUrl.toLowerCase().endsWith('.jpg') &&
+      !finalUrl.toLowerCase().endsWith('.png')
+    ) {
+      finalUrl += '.pdf';
+    }
+    return res.redirect(finalUrl);
   }
 
   @Get(':id/documentos/:tipo/descargar')

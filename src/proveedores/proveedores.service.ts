@@ -616,14 +616,31 @@ export class ProveedoresService {
    */
   async downloadFileStream(url: string) {
     try {
+      let finalUrl = url;
+      // Cloudinary often requires the file extension to serve raw/pdf files correctly.
+      if (
+        !finalUrl.toLowerCase().endsWith('.pdf') &&
+        !finalUrl.toLowerCase().endsWith('.jpg') &&
+        !finalUrl.toLowerCase().endsWith('.png')
+      ) {
+        finalUrl += '.pdf';
+      }
+
       const response = await axios({
         method: 'GET',
-        url: url,
+        url: finalUrl,
         responseType: 'stream',
       });
       return response.data;
-    } catch {
-      throw new InternalServerErrorException('Error al obtener el archivo desde el almacenamiento');
+    } catch (error: any) {
+      console.error('Error in downloadFileStream:', error.message);
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response headers:', error.response.headers);
+      }
+      throw new InternalServerErrorException(
+        `Error al obtener el archivo desde el almacenamiento: ${error.message}`,
+      );
     }
   }
 }
