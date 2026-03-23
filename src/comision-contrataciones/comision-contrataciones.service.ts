@@ -1,30 +1,57 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateComisionContratacionesDto } from './dto/create-comision-contrataciones.dto';
 import { UpdateComisionContratacionesDto } from './dto/update-comision-contrataciones.dto';
+import { TipoMiembro, AreaRepresentacion } from '@prisma/client';
 import { CreateMiembroComisionDto } from './dto/create-miembro-comision.dto';
-import { UpdateMiembroComisionDto } from './dto/update-miembro-comision.dto';
 
 @Injectable()
 export class ComisionContratacionesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private validate8Miembros(miembros: CreateMiembroComisionDto[]) {
+    if (!miembros || miembros.length !== 8) {
+      throw new BadRequestException(
+        'La comisión debe tener exactamente 8 miembros (1 principal y 1 suplente por cada una de las 4 áreas)',
+      );
+    }
+
+    const requiredCombinations = [
+      { area: AreaRepresentacion.AREA_JURIDICA, tipo: TipoMiembro.MIEMBRO_PRINCIPAL },
+      { area: AreaRepresentacion.AREA_JURIDICA, tipo: TipoMiembro.MIEMBRO_SUPLENTE },
+      { area: AreaRepresentacion.AREA_TECNICA, tipo: TipoMiembro.MIEMBRO_PRINCIPAL },
+      { area: AreaRepresentacion.AREA_TECNICA, tipo: TipoMiembro.MIEMBRO_SUPLENTE },
+      { area: AreaRepresentacion.AREA_ECONOMICA_FINANCIERA, tipo: TipoMiembro.MIEMBRO_PRINCIPAL },
+      { area: AreaRepresentacion.AREA_ECONOMICA_FINANCIERA, tipo: TipoMiembro.MIEMBRO_SUPLENTE },
+      { area: AreaRepresentacion.SECRETARIO_A, tipo: TipoMiembro.MIEMBRO_PRINCIPAL },
+      { area: AreaRepresentacion.SECRETARIO_A, tipo: TipoMiembro.MIEMBRO_SUPLENTE },
+    ];
+
+    for (const req of requiredCombinations) {
+      const found = miembros.find(
+        (m) => m.areaRepresentacion === req.area && m.tipoMiembro === req.tipo,
+      );
+      if (!found) {
+        throw new BadRequestException(`Falta el miembro con área ${req.area} y rol ${req.tipo}`);
+      }
+    }
+  }
+
   async create(createDto: CreateComisionContratacionesDto, enteId: string, userId: string) {
     const { miembros, ...comisionData } = createDto;
+
+    this.validate8Miembros(miembros);
 
     return this.prisma.comisionContrataciones.create({
       data: {
         ...comisionData,
         enteId,
         createdBy: userId,
-        miembros:
-          miembros && miembros.length > 0
-            ? {
-                create: miembros.map((miembro) => ({
-                  ...miembro,
-                })),
-              }
-            : undefined,
+        miembros: {
+          create: miembros.map((miembro) => ({
+            ...miembro,
+          })),
+        },
       },
       include: {
         miembros: true,
@@ -74,11 +101,31 @@ export class ComisionContratacionesService {
   ) {
     await this.findOne(id, enteId);
 
-    // Separamos miembros para no intentar actualizar la relación directamente en este método
-    // La actualización de miembros se maneja por endpoints separados o lógica específica si se requiere
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { miembros, ...comisionData } = updateDto;
 
+    if (miembros) {
+      this.validate8Miembros(miembros);
+
+      return this.prisma.comisionContrataciones.update({
+        where: { id },
+        data: {
+          ...comisionData,
+          updatedBy: userId,
+          miembros: {
+            deleteMany: {}, // Borra los antiguos
+            create: miembros.map((miembro) => ({
+              // Crea los 8 nuevos
+              ...miembro,
+            })),
+          },
+        },
+        include: {
+          miembros: true,
+        },
+      });
+    }
+
+    // Si no enviaron miembros, solo actualizamos los datos básicos
     return this.prisma.comisionContrataciones.update({
       where: { id },
       data: {
@@ -97,61 +144,9 @@ export class ComisionContratacionesService {
     return this.prisma.comisionContrataciones.update({
       where: { id },
       data: {
-        deletedAt: new Date(),
+        activa: false,
         updatedBy: userId,
       },
-    });
-  }
-
-  // Métodos específicos para Miembros
-
-  async addMiembro(comisionId: string, createMiembroDto: CreateMiembroComisionDto, enteId: string) {
-    await this.findOne(comisionId, enteId); // Verificar existencia y acceso
-
-    return this.prisma.miembroComision.create({
-      data: {
-        ...createMiembroDto,
-        comisionId,
-      },
-    });
-  }
-
-  async removeMiembro(miembroId: string, enteId: string) {
-    // Primero verificamos que el miembro pertenezca a una comisión del ente
-    const miembro = await this.prisma.miembroComision.findFirst({
-      where: {
-        id: miembroId,
-        comision: {
-          enteId,
-          deletedAt: null,
-        },
-      },
-    });
-
-    if (!miembro) {
-      throw new NotFoundException(`Miembro con ID ${miembroId} no encontrado o sin acceso.`);
-    }
-
-    return this.prisma.miembroComision.delete({
-      where: { id: miembroId },
-    });
-  }
-
-  async updateMiembro(miembroId: string, updateDto: UpdateMiembroComisionDto, enteId: string) {
-    const miembro = await this.prisma.miembroComision.findFirst({
-      where: {
-        id: miembroId,
-        comision: { enteId, deletedAt: null },
-      },
-    });
-
-    if (!miembro) {
-      throw new NotFoundException(`Miembro con ID ${miembroId} no encontrado o sin acceso.`);
-    }
-
-    return this.prisma.miembroComision.update({
-      where: { id: miembroId },
-      data: updateDto,
     });
   }
 }
