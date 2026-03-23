@@ -6,6 +6,8 @@ import {
   IsString,
   ValidateNested,
   IsArray,
+  ArrayMinSize,
+  ArrayMaxSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateMiembroComisionDto } from './create-miembro-comision.dto';
@@ -39,13 +41,15 @@ export class CreateComisionContratacionesDto {
   comisionCertificada?: boolean;
 
   @ApiProperty({
-    description: 'Lista de miembros iniciales (opcional)',
+    description: 'Lista de los 8 miembros requeridos (1 principal y 1 suplente por cada área)',
     type: [CreateMiembroComisionDto],
-    required: false,
+    required: true,
   })
   @IsArray()
+  @ArrayMinSize(8, { message: 'La comisión debe tener exactamente 8 miembros' })
+  @ArrayMaxSize(8, { message: 'La comisión debe tener exactamente 8 miembros' })
   @ValidateNested({ each: true })
   @Type(() => CreateMiembroComisionDto)
-  @IsOptional()
-  miembros?: CreateMiembroComisionDto[];
+  @IsNotEmpty()
+  miembros: CreateMiembroComisionDto[];
 }
