@@ -106,4 +106,32 @@ export class MaximaAutoridadController {
     const enteId = user.enteId;
     return this.maximaAutoridadService.remove(id, enteId, user.id);
   }
+
+  @Patch(':id/activar')
+  @Roles('ADMIN_ENTE', 'UNIVERSITAS')
+  @ApiOperation({
+    summary: 'Activar Autoridad',
+    description: 'Activa una máxima autoridad. Retorna error si ya existe otra activa.',
+  })
+  @ApiResponse({ status: 200, description: 'Autoridad activada.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Ya existe una Máxima Autoridad activa. Debe desactivarla manualmente primero.',
+  })
+  activar(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    const enteId = user.enteId;
+    return this.maximaAutoridadService.activar(id, enteId, user.id);
+  }
+
+  @Patch(':id/desactivar')
+  @Roles('ADMIN_ENTE', 'UNIVERSITAS')
+  @ApiOperation({
+    summary: 'Desactivar Autoridad',
+    description: 'Desactiva una máxima autoridad.',
+  })
+  @ApiResponse({ status: 200, description: 'Autoridad desactivada.' })
+  desactivar(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    const enteId = user.enteId;
+    return this.maximaAutoridadService.desactivar(id, enteId, user.id);
+  }
 }
