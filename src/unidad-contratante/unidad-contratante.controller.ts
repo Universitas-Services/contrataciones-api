@@ -82,8 +82,8 @@ export class UnidadContratanteController {
   @Delete(':id')
   @Roles('ADMIN_ENTE', 'UNIVERSITAS')
   @ApiOperation({
-    summary: 'Eliminar Unidad Contratante',
-    description: 'Elimina lógicamente una unidad contratante.',
+    summary: 'Activar/Desactivar Unidad Contratante',
+    description: 'Alterna el estado activo/inactivo de una unidad contratante.',
   })
   remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     const enteId = user.enteId;

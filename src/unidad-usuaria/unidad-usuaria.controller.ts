@@ -82,8 +82,8 @@ export class UnidadUsuariaController {
   @Delete(':id')
   @Roles('ADMIN_ENTE', 'UNIVERSITAS')
   @ApiOperation({
-    summary: 'Eliminar Unidad Usuaria',
-    description: 'Elimina lógicamente una unidad usuaria.',
+    summary: 'Activar/Desactivar Unidad Usuaria',
+    description: 'Alterna el estado activo/inactivo de una unidad usuaria.',
   })
   remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     const enteId = user.enteId;

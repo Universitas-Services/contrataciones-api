@@ -58,12 +58,12 @@ export class UnidadContratanteService {
   }
 
   async remove(id: string, enteId: string, userId: string) {
-    await this.findOne(id, enteId);
+    const unidad = await this.findOne(id, enteId);
 
     return this.prisma.unidadContratante.update({
       where: { id },
       data: {
-        deletedAt: new Date(),
+        activa: !unidad.activa,
         updatedBy: userId,
       },
     });
