@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateMaximaAutoridadDto } from './dto/create-maxima-autoridad.dto';
 import { UpdateMaximaAutoridadDto } from './dto/update-maxima-autoridad.dto';
@@ -11,6 +11,7 @@ export class MaximaAutoridadService {
     return this.prisma.maximaAutoridad.create({
       data: {
         ...createDto,
+        vigente: false,
         enteId,
         createdBy: userId,
       },
@@ -65,6 +66,44 @@ export class MaximaAutoridadService {
       where: { id },
       data: {
         deletedAt: new Date(),
+        updatedBy: userId,
+      },
+    });
+  }
+
+  async activar(id: string, enteId: string, userId: string) {
+    await this.findOne(id, enteId);
+
+    const activaExisente = await this.prisma.maximaAutoridad.findFirst({
+      where: {
+        enteId,
+        vigente: true,
+        deletedAt: null,
+      },
+    });
+
+    if (activaExisente && activaExisente.id !== id) {
+      throw new BadRequestException(
+        'Ya existe una Máxima Autoridad activa para este ente. Debe desactivarla manualmente antes de activar otra.',
+      );
+    }
+
+    return this.prisma.maximaAutoridad.update({
+      where: { id },
+      data: {
+        vigente: true,
+        updatedBy: userId,
+      },
+    });
+  }
+
+  async desactivar(id: string, enteId: string, userId: string) {
+    await this.findOne(id, enteId);
+
+    return this.prisma.maximaAutoridad.update({
+      where: { id },
+      data: {
+        vigente: false,
         updatedBy: userId,
       },
     });
