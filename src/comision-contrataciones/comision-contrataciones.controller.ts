@@ -86,8 +86,8 @@ export class ComisionContratacionesController {
   @Delete(':id')
   @Roles('ADMIN_ENTE', 'UNIVERSITAS')
   @ApiOperation({
-    summary: 'Desactivar Comisión',
-    description: 'Inactiva (eliminación lógica desactivando la propiedad activa) de una comisión.',
+    summary: 'Activar/Desactivar Comisión',
+    description: 'Alterna el estado activo/inactivo (vigente) de una comisión.',
   })
   remove(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     const enteId = user.enteId;

@@ -139,12 +139,12 @@ export class ComisionContratacionesService {
   }
 
   async remove(id: string, enteId: string, userId: string) {
-    await this.findOne(id, enteId);
+    const comision = await this.findOne(id, enteId);
 
     return this.prisma.comisionContrataciones.update({
       where: { id },
       data: {
-        activa: false,
+        activa: !comision.activa,
         updatedBy: userId,
       },
     });
