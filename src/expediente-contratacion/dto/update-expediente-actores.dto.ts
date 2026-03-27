@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsDateString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateExpedienteActoresDto {
@@ -16,4 +16,12 @@ export class UpdateExpedienteActoresDto {
   @IsString()
   @IsNotEmpty()
   unidadUsuariaId: string;
+
+  @ApiProperty({
+    description: 'Fecha central del cronograma (Llamado a Participar)',
+    example: '2026-03-02',
+  })
+  @IsDateString()
+  @IsNotEmpty()
+  fechaLlamadoParticipar: string;
 }

@@ -577,6 +577,7 @@ model ExpedienteContratacion {
   // Configuración
   estatusProceso   EstatusProceso @default(BORRADOR) @map("estatus_proceso_au_au")
   totalPresupuesto Decimal?       @map("total_presupuesto_au_au") @db.Decimal(15, 2)
+  autoridadFirmaComoDelegado Boolean @default(false) @map("ind_firma_delegado_au_au")
 
   // Auditoría
   createdAt DateTime  @default(now())

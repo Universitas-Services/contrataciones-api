@@ -1,10 +1,20 @@
-import { Controller, Post, Body, UseGuards, Put, Param, Get, Query, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Put,
+  Patch,
+  Param,
+  Get,
+  Query,
+  Delete,
+} from '@nestjs/common';
 import { ExpedienteContratacionService } from './expediente-contratacion.service';
 import { CreateProcesoCompletoDto } from './dto/create-proceso-completo.dto';
 import { CalcularModalidadDto } from './dto/calcular-modalidad.dto';
 import { CreateExpedienteDraftDto } from './dto/create-expediente-draft.dto';
-import { UpdateExpedienteDraftDto } from './dto/update-expediente-draft.dto';
-import { UpdateExpedienteActoresDto } from './dto/update-expediente-actores.dto';
+import { UpdateExpedienteGeneralDto } from './dto/update-expediente-general.dto';
 import { QueryExpedienteDto } from './dto/query-expedientes.dto';
 import { GenerarCronogramaDto } from './dto/generar-cronograma.dto';
 import { UpdateCronogramaExpedienteDto } from './dto/update-cronograma.dto';
@@ -55,16 +65,16 @@ export class ExpedienteContratacionController {
     return this.expedienteService.createBorrador(dto, user.id, user.enteId);
   }
 
-  @Put(':id/actores')
+  @Patch(':id')
   @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
-  @ApiOperation({ summary: 'Paso 3: Asignar actores al Expediente' })
-  @ApiResponse({ status: 200, description: 'Actores asignados exitosamente' })
-  updateActores(
+  @ApiOperation({ summary: 'Edición General: Editar Datos Básicos, Actores o Fecha Base' })
+  @ApiResponse({ status: 200, description: 'Expediente actualizado exitosamente' })
+  updateGeneral(
     @Param('id') id: string,
-    @Body() dto: UpdateExpedienteActoresDto,
+    @Body() dto: UpdateExpedienteGeneralDto,
     @CurrentUser() user: { id: string; enteId: string },
   ) {
-    return this.expedienteService.updateActores(id, dto, user.id, user.enteId);
+    return this.expedienteService.updateGeneral(id, dto, user.id, user.enteId);
   }
 
   @Get()
@@ -87,18 +97,6 @@ export class ExpedienteContratacionController {
     @CurrentUser() user: { id: string; enteId: string; rol: RolUsuario },
   ) {
     return this.expedienteService.findOne(id, user.enteId, user.rol);
-  }
-
-  @Put(':id/datos-basicos')
-  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
-  @ApiOperation({ summary: 'Paso 1 y 2 Update: Editar Borrador o Datos Básicos de Modalidad' })
-  @ApiResponse({ status: 200, description: 'Expediente actualizado exitosamente' })
-  updateBorrador(
-    @Param('id') id: string,
-    @Body() dto: UpdateExpedienteDraftDto,
-    @CurrentUser() user: { id: string; enteId: string },
-  ) {
-    return this.expedienteService.updateBorrador(id, dto, user.id, user.enteId);
   }
 
   @Delete(':id')
