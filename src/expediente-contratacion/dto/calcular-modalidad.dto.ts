@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsPositive } from 'class-validator';
+import { IsEnum, IsNumber, IsPositive, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TipoContratacion } from '@prisma/client';
 
@@ -18,4 +18,14 @@ export class CalcularModalidadDto {
   @IsNumber()
   @IsPositive()
   montoEstimadoBs: number;
+
+  @ApiProperty({
+    description: 'Valor actual de la UCAU consultado desde el cliente (opcional, por defecto 35.0)',
+    example: 35.0,
+    required: false,
+  })
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  valorUcauBase?: number;
 }

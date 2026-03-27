@@ -119,9 +119,9 @@ export class ExpedienteContratacionService {
   // --- NUEVA LÓGICA DE CÁLCULO DE MODALIDAD (PASO 2) ---
 
   calcularModalidadSugerida(dto: CalcularModalidadDto) {
-    // NOTA: Este valor UCAU debe venir de una configuración global en el futuro.
-    // Usamos un valor fijo de referencia para el MVP.
-    const VALOR_UCAU_ACTUAL = 35.0; // Bs.
+    // Si el cliente provee el valor UCA (lo trae de otro endpoint), lo usamos.
+    // De lo contrario, usamos el valor fallback de 35.0 Bs.
+    const VALOR_UCAU_ACTUAL = dto.valorUcauBase ?? 35.0;
 
     const montoUcau = Number(dto.montoEstimadoBs) / VALOR_UCAU_ACTUAL;
 

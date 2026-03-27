@@ -6,6 +6,8 @@ import { CreateEnteDto } from './dto/create-ente.dto';
 import { CreateAdminEnteDto } from './dto/create-admin-ente.dto';
 import { UpdateEnteDto } from './dto/update-ente.dto';
 import { CreateEnteUsuarioDto } from './dto/create-ente-usuario.dto';
+import { QueryEnteUsuariosDto } from './dto/query-ente-usuarios.dto';
+import { UpdateEnteUsuarioDto } from './dto/update-ente-usuario.dto';
 
 @Injectable()
 export class EntesService {
@@ -155,6 +157,115 @@ export class EntesService {
         rol: true,
         activo: true,
         createdAt: true,
+      },
+    });
+  }
+
+  async findAllUsuariosEnte(enteId: string, query: QueryEnteUsuariosDto) {
+    const { page = 1, limit = 10, rol, busqueda } = query;
+    const skip = (page - 1) * limit;
+
+    const whereClause: Prisma.UsuarioWhereInput = {
+      enteId,
+      deletedAt: null,
+      rol: {
+        not: 'UNIVERSITAS',
+      },
+    };
+
+    if (rol) {
+      whereClause.rol = rol as any;
+    }
+
+    if (busqueda) {
+      whereClause.OR = [
+        { nombre: { contains: busqueda, mode: 'insensitive' } },
+        { apellido: { contains: busqueda, mode: 'insensitive' } },
+        { email: { contains: busqueda, mode: 'insensitive' } },
+      ];
+    }
+
+    const [total, data] = await Promise.all([
+      this.prisma.usuario.count({ where: whereClause }),
+      this.prisma.usuario.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          email: true,
+          rol: true,
+          activo: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    return {
+      metadata: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+      data,
+    };
+  }
+
+  async updateUsuarioEnte(enteId: string, usuarioId: string, updateDto: UpdateEnteUsuarioDto) {
+    const user = await this.prisma.usuario.findFirst({
+      where: { id: usuarioId, enteId, deletedAt: null },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado en este Ente');
+    }
+
+    const dataToUpdate: Prisma.UsuarioUpdateInput = {
+      ...updateDto,
+    };
+
+    if (updateDto.password) {
+      dataToUpdate.passwordHash = await bcrypt.hash(updateDto.password, 10);
+      delete (dataToUpdate as any).password;
+    }
+
+    return this.prisma.usuario.update({
+      where: { id: usuarioId },
+      data: dataToUpdate,
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        rol: true,
+        activo: true,
+      },
+    });
+  }
+
+  async removeUsuarioEnte(enteId: string, usuarioId: string) {
+    const user = await this.prisma.usuario.findFirst({
+      where: { id: usuarioId, enteId, deletedAt: null },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado en este Ente');
+    }
+
+    return this.prisma.usuario.update({
+      where: { id: usuarioId },
+      data: {
+        deletedAt: new Date(),
+        activo: false,
+      },
+      select: {
+        id: true,
+        email: true,
+        rol: true,
       },
     });
   }
