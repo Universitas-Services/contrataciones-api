@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import { CreateEnteDto } from './dto/create-ente.dto';
 import { CreateAdminEnteDto } from './dto/create-admin-ente.dto';
 import { UpdateEnteDto } from './dto/update-ente.dto';
+import { CreateEnteUsuarioDto } from './dto/create-ente-usuario.dto';
 
 @Injectable()
 export class EntesService {
@@ -112,6 +113,48 @@ export class EntesService {
         apellido: adminData.apellido,
         rol: 'ADMIN_ENTE',
         activo: true,
+      },
+    });
+  }
+
+  async createUsuarioEnte(enteId: string, userData: CreateEnteUsuarioDto) {
+    // Verificar que el Ente existe
+    const ente = await this.prisma.entePublico.findUnique({
+      where: { id: enteId, deletedAt: null },
+    });
+
+    if (!ente) throw new NotFoundException('Ente no encontrado');
+
+    // Verificar si el email ya existe
+    const existingUser = await this.prisma.usuario.findUnique({
+      where: { email: userData.email }, // Buscar globalmente
+    });
+
+    if (existingUser) {
+      throw new ConflictException('El email ya está registrado para otro usuario');
+    }
+
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+    return this.prisma.usuario.create({
+      data: {
+        enteId: ente.id,
+        email: userData.email,
+        passwordHash: hashedPassword,
+        nombre: userData.nombre,
+        apellido: userData.apellido,
+        rol: userData.rol,
+        activo: true,
+        cambioPasswordDefault: false,
+      },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        rol: true,
+        activo: true,
+        createdAt: true,
       },
     });
   }
