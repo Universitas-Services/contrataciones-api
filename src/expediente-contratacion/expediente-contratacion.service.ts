@@ -8,8 +8,7 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateProcesoCompletoDto } from './dto/create-proceso-completo.dto';
 import { CalcularModalidadDto } from './dto/calcular-modalidad.dto';
 import { CreateExpedienteDraftDto } from './dto/create-expediente-draft.dto';
-import { UpdateExpedienteDraftDto } from './dto/update-expediente-draft.dto';
-import { UpdateExpedienteActoresDto } from './dto/update-expediente-actores.dto';
+import { UpdateExpedienteGeneralDto } from './dto/update-expediente-general.dto';
 import { QueryExpedienteDto } from './dto/query-expedientes.dto';
 import { GenerarCronogramaDto } from './dto/generar-cronograma.dto';
 import { UpdateCronogramaExpedienteDto } from './dto/update-cronograma.dto';
@@ -258,39 +257,130 @@ export class ExpedienteContratacionService {
     }
   }
 
-  // --- ACTUALIZAR ACTORES (PASO 3 COMPLETADO) ---
-  async updateActores(id: string, dto: UpdateExpedienteActoresDto, userId: string, enteId: string) {
+  // --- EDICIÓN GENERAL (Múltiples Campos y Autocálculo de Cronograma) ---
+  async updateGeneral(id: string, dto: UpdateExpedienteGeneralDto, userId: string, enteId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
       where: { id },
+      include: {
+        modalidad: true,
+        cronograma: true,
+      },
     });
 
-    if (!expediente) {
-      throw new BadRequestException('El expediente no existe');
-    }
-
-    if (expediente.enteId !== enteId) {
+    if (!expediente) throw new NotFoundException('El expediente no existe');
+    if (expediente.enteId !== enteId)
       throw new BadRequestException('No tiene permisos para modificar este expediente');
-    }
+    if (expediente.estatusProceso === 'ANULADO')
+      throw new BadRequestException('No se puede editar un expediente anulado');
 
     try {
-      const result = await this.prisma.expedienteContratacion.update({
-        where: { id },
-        data: {
-          autoridadId: dto.autoridadId,
-          comisionId: dto.comisionId,
-          unidadUsuariaId: dto.unidadUsuariaId,
-          updatedBy: userId,
-        },
-      });
+      return await this.prisma.$transaction(async (tx) => {
+        // --- 1. DATOS DE MODALIDAD ---
+        const dataModalidad: Prisma.ModalidadContratacionUpdateInput = {};
+        if (dto.tipoContratacion !== undefined)
+          dataModalidad.tipoContratacion = dto.tipoContratacion;
+        if (dto.montoEstimadoBs !== undefined) dataModalidad.montoEstimadoBs = dto.montoEstimadoBs;
+        if (dto.montoEstimadoDolar !== undefined)
+          dataModalidad.montoEstimadoDolar = dto.montoEstimadoDolar;
+        if (dto.valorUcauBase !== undefined) dataModalidad.valorUcauBase = dto.valorUcauBase;
+        if (dto.modalidadSeleccion !== undefined)
+          dataModalidad.modalidadSeleccion = dto.modalidadSeleccion;
 
-      return {
-        message: 'Actores del proceso asignados exitosamente',
-        data: result,
-      };
+        let modalidadInfo = expediente.modalidad;
+        if (Object.keys(dataModalidad).length > 0 && expediente.modalidadId) {
+          dataModalidad.updatedBy = userId;
+          modalidadInfo = await tx.modalidadContratacion.update({
+            where: { id: expediente.modalidadId },
+            data: dataModalidad,
+          });
+        }
+
+        // --- 2. DATOS DEL EXPEDIENTE (Básicos + Actores) ---
+        const dataExpediente: Prisma.ExpedienteContratacionUncheckedUpdateInput = {};
+        if (dto.descripcionObjeto !== undefined)
+          dataExpediente.descripcionObjeto = dto.descripcionObjeto;
+        if (dto.codigoNomenclatura !== undefined)
+          dataExpediente.codigoNomenclatura = dto.codigoNomenclatura;
+        if (dto.autoridadId !== undefined) dataExpediente.autoridadId = dto.autoridadId;
+        if (dto.comisionId !== undefined) dataExpediente.comisionId = dto.comisionId;
+        if (dto.unidadUsuariaId !== undefined) dataExpediente.unidadUsuariaId = dto.unidadUsuariaId;
+        if (dto.autoridadFirmaComoDelegado !== undefined)
+          dataExpediente.autoridadFirmaComoDelegado = dto.autoridadFirmaComoDelegado;
+
+        let resultExpediente: any = expediente;
+        if (Object.keys(dataExpediente).length > 0) {
+          dataExpediente.updatedBy = userId;
+          resultExpediente = await tx.expedienteContratacion.update({
+            where: { id },
+            data: dataExpediente,
+          });
+        }
+
+        // --- 3. CRONOGRAMA (Si envían fecha o si cambió el tipoContratacion y ya había cronograma) ---
+        let resultCronograma = expediente.cronograma;
+        const triggerCronograma =
+          !!dto.fechaLlamadoParticipar || (!!dto.tipoContratacion && !!expediente.cronograma);
+
+        if (triggerCronograma && modalidadInfo) {
+          const baseDate = dto.fechaLlamadoParticipar
+            ? dto.fechaLlamadoParticipar
+            : expediente.cronograma?.fechaLlamadoParticipar
+              ? expediente.cronograma.fechaLlamadoParticipar.toISOString().split('T')[0]
+              : null;
+
+          if (baseDate) {
+            const calculo = this.generarCronogramaLegal({
+              tipoContratacion: modalidadInfo.tipoContratacion,
+              fechaLlamadoParticipar: baseDate,
+            });
+
+            const f = calculo.data;
+            const cronogramaData = {
+              fechaLlamadoParticipar: new Date(f.fechaLlamadoParticipar + 'T00:00:00Z'),
+              fechaInicioDisponibilidadPliego: new Date(
+                f.fechaInicioDisponibilidadPliego + 'T00:00:00Z',
+              ),
+              fechaFinDisponibilidadPliego: new Date(f.fechaFinDisponibilidadPliego + 'T00:00:00Z'),
+              fechaSolicitudAclaratorias: new Date(f.fechaSolicitudAclaratorias + 'T00:00:00Z'),
+              fechaRespuestaAclaratorias: new Date(f.fechaRespuestaAclaratorias + 'T00:00:00Z'),
+              fechaModificacionPliego: new Date(f.fechaModificacionPliego + 'T00:00:00Z'),
+              fechaActoRecepcionAperturaSobres: new Date(
+                f.fechaActoRecepcionAperturaSobres + 'T00:00:00Z',
+              ),
+              fechaLimiteEvaluacion: new Date(f.fechaLimiteEvaluacion + 'T00:00:00Z'),
+              fechaLimiteAdjudicacion: new Date(f.fechaLimiteAdjudicacion + 'T00:00:00Z'),
+              fechaLimiteNotificacion: new Date(f.fechaLimiteNotificacion + 'T00:00:00Z'),
+              fechaLimiteGarantias: new Date(f.fechaLimiteGarantias + 'T00:00:00Z'),
+              fechaLimiteFirmaContrato: new Date(f.fechaLimiteFirmaContrato + 'T00:00:00Z'),
+              updatedBy: userId,
+            };
+
+            if (expediente.cronograma) {
+              resultCronograma = await tx.cronogramaExpediente.update({
+                where: { id: expediente.cronograma.id },
+                data: cronogramaData,
+              });
+            } else {
+              resultCronograma = await tx.cronogramaExpediente.create({
+                data: { ...cronogramaData, expedienteId: id, createdBy: userId },
+              });
+            }
+          }
+        }
+
+        return {
+          message: 'Expediente actualizado exitosamente',
+          data: {
+            expediente: resultExpediente,
+            modalidad: modalidadInfo,
+            cronograma: resultCronograma,
+          },
+        };
+      });
     } catch (error: unknown) {
       console.error(error);
       throw new InternalServerErrorException(
-        'Error al actualizar los actores del expediente: ' +
+        'Error al actualizar expediente: ' +
           (error instanceof Error ? error.message : String(error)),
       );
     }
@@ -381,68 +471,6 @@ export class ExpedienteContratacionService {
     }
 
     return { message: 'Expediente obtenido exitosamente', data: expediente };
-  }
-
-  // --- ACTUALIZAR BORRADOR (DATOS BÁSICOS PÁGINAS 1 y 2) ---
-  async updateBorrador(id: string, dto: UpdateExpedienteDraftDto, userId: string, enteId: string) {
-    const expediente = await this.prisma.expedienteContratacion.findUnique({
-      where: { id },
-    });
-
-    if (!expediente) throw new NotFoundException('Expediente no encontrado');
-    if (expediente.enteId !== enteId) throw new BadRequestException('Sin permisos');
-    if (expediente.estatusProceso !== 'BORRADOR')
-      throw new BadRequestException('Solo puede editar expedientes en estado BORRADOR');
-
-    try {
-      return await this.prisma.$transaction(async (tx) => {
-        // Actualizar Modalidad
-        const dataModalidad: Prisma.ModalidadContratacionUpdateInput = {};
-        if (dto.tipoContratacion !== undefined)
-          dataModalidad.tipoContratacion = dto.tipoContratacion;
-        if (dto.montoEstimadoBs !== undefined) dataModalidad.montoEstimadoBs = dto.montoEstimadoBs;
-        if (dto.montoEstimadoDolar !== undefined)
-          dataModalidad.montoEstimadoDolar = dto.montoEstimadoDolar;
-        if (dto.valorUcauBase !== undefined) dataModalidad.valorUcauBase = dto.valorUcauBase;
-        if (dto.modalidadSeleccion !== undefined)
-          dataModalidad.modalidadSeleccion = dto.modalidadSeleccion;
-        dataModalidad.updatedBy = userId;
-
-        let modalidadInfo;
-        if (Object.keys(dataModalidad).length > 1) {
-          // 1 is updatedBy
-          modalidadInfo = await tx.modalidadContratacion.update({
-            where: { id: expediente.modalidadId },
-            data: dataModalidad,
-          });
-        }
-
-        // Actualizar Expediente
-        const dataExpediente: Prisma.ExpedienteContratacionUpdateInput = {};
-        if (dto.descripcionObjeto !== undefined)
-          dataExpediente.descripcionObjeto = dto.descripcionObjeto;
-        if (dto.codigoNomenclatura !== undefined)
-          dataExpediente.codigoNomenclatura = dto.codigoNomenclatura;
-        dataExpediente.updatedBy = userId;
-
-        let expedienteInfo = expediente;
-        if (Object.keys(dataExpediente).length > 1) {
-          expedienteInfo = await tx.expedienteContratacion.update({
-            where: { id },
-            data: dataExpediente,
-          });
-        }
-
-        return {
-          message: 'Borrador actualizado exitosamente',
-          data: { expediente: expedienteInfo, modalidad: modalidadInfo },
-        };
-      });
-    } catch (error: unknown) {
-      throw new InternalServerErrorException(
-        'Error al actualizar borrador: ' + (error instanceof Error ? error.message : String(error)),
-      );
-    }
   }
 
   // --- ANULAR / ELIMINAR EXPEDIENTE ---
