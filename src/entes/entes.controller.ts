@@ -23,6 +23,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { EntesService } from './entes.service';
 import { CreateEnteDto } from './dto/create-ente.dto';
 import { CreateAdminEnteDto } from './dto/create-admin-ente.dto';
+import { CreateEnteUsuarioDto } from './dto/create-ente-usuario.dto';
 import { UpdateEnteDto } from './dto/update-ente.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -72,6 +73,25 @@ export class EntesController {
   @ApiResponse({ status: 403, description: 'No autorizado' })
   createAdmin(@Param('id') id: string, @Body() createAdminDto: CreateAdminEnteDto) {
     return this.entesService.createAdmin(id, createAdminDto);
+  }
+
+  @Post(':id/usuarios')
+  @Roles('UNIVERSITAS', 'ADMIN_ENTE')
+  @ApiOperation({
+    summary: 'Crear usuario de Ente',
+    description: 'Crea un nuevo usuario (ADMIN_ENTE, EJECUTOR, VISUALIZADOR) asociado a este Ente',
+  })
+  @ApiResponse({ status: 201, description: 'Usuario creado exitosamente' })
+  @ApiResponse({ status: 403, description: 'No autorizado' })
+  createUsuario(
+    @Param('id') id: string,
+    @Body() dto: CreateEnteUsuarioDto,
+    @CurrentUser() user: { id: string; rol: string; enteId?: string },
+  ) {
+    if (user.rol === 'ADMIN_ENTE' && user.enteId !== id) {
+      throw new ForbiddenException('No tienes permisos para crear usuarios en este Ente');
+    }
+    return this.entesService.createUsuarioEnte(id, dto);
   }
 
   @Get()
