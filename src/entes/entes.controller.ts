@@ -18,12 +18,15 @@ import {
   ForbiddenException,
   InternalServerErrorException,
   Logger,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { EntesService } from './entes.service';
 import { CreateEnteDto } from './dto/create-ente.dto';
 import { CreateAdminEnteDto } from './dto/create-admin-ente.dto';
 import { CreateEnteUsuarioDto } from './dto/create-ente-usuario.dto';
+import { QueryEnteUsuariosDto } from './dto/query-ente-usuarios.dto';
+import { UpdateEnteUsuarioDto } from './dto/update-ente-usuario.dto';
 import { UpdateEnteDto } from './dto/update-ente.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -92,6 +95,65 @@ export class EntesController {
       throw new ForbiddenException('No tienes permisos para crear usuarios en este Ente');
     }
     return this.entesService.createUsuarioEnte(id, dto);
+  }
+
+  @Get(':id/usuarios')
+  @Roles('UNIVERSITAS', 'ADMIN_ENTE')
+  @ApiOperation({
+    summary: 'Listar usuarios del Ente',
+    description:
+      'Lista los usuarios internos de un Ente (EJECUTOR, VISUALIZADOR, etc.) con paginación y filtros',
+  })
+  @ApiResponse({ status: 200, description: 'Lista paginada de usuarios' })
+  @ApiResponse({ status: 403, description: 'No autorizado' })
+  findAllUsuarios(
+    @Param('id') id: string,
+    @Query() query: QueryEnteUsuariosDto,
+    @CurrentUser() user: { id: string; rol: string; enteId?: string },
+  ) {
+    if (user.rol === 'ADMIN_ENTE' && user.enteId !== id) {
+      throw new ForbiddenException('No tienes permisos para ver usuarios de este Ente');
+    }
+    return this.entesService.findAllUsuariosEnte(id, query);
+  }
+
+  @Patch(':id/usuarios/:usuarioId')
+  @Roles('UNIVERSITAS', 'ADMIN_ENTE')
+  @ApiOperation({
+    summary: 'Actualizar usuario de Ente',
+    description: 'Actualiza la información (nombre, rol, password, estado activo) de un usuario',
+  })
+  @ApiResponse({ status: 200, description: 'Usuario actualizado' })
+  @ApiResponse({ status: 403, description: 'No autorizado' })
+  updateUsuario(
+    @Param('id') id: string,
+    @Param('usuarioId') usuarioId: string,
+    @Body() dto: UpdateEnteUsuarioDto,
+    @CurrentUser() user: { id: string; rol: string; enteId?: string },
+  ) {
+    if (user.rol === 'ADMIN_ENTE' && user.enteId !== id) {
+      throw new ForbiddenException('No tienes permisos para modificar usuarios de este Ente');
+    }
+    return this.entesService.updateUsuarioEnte(id, usuarioId, dto);
+  }
+
+  @Delete(':id/usuarios/:usuarioId')
+  @Roles('UNIVERSITAS', 'ADMIN_ENTE')
+  @ApiOperation({
+    summary: 'Eliminar usuario de Ente',
+    description: 'Realiza un borrado lógico (desactivación) de un usuario perteneciente al Ente',
+  })
+  @ApiResponse({ status: 200, description: 'Usuario eliminado lógicamente' })
+  @ApiResponse({ status: 403, description: 'No autorizado' })
+  removeUsuario(
+    @Param('id') id: string,
+    @Param('usuarioId') usuarioId: string,
+    @CurrentUser() user: { id: string; rol: string; enteId?: string },
+  ) {
+    if (user.rol === 'ADMIN_ENTE' && user.enteId !== id) {
+      throw new ForbiddenException('No tienes permisos para eliminar usuarios de este Ente');
+    }
+    return this.entesService.removeUsuarioEnte(id, usuarioId);
   }
 
   @Get()
