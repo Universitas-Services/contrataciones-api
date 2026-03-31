@@ -407,9 +407,9 @@ model UnidadUsuaria {
   id     String @id @default(uuid()) @map("id_unidad_usuaria")
   enteId String @map("id_ente")
 
-  nombreUnidadUsuaria            String @map("nom_unidad_usuaria")
-  nombreResponsableUnidadUsuaria String @map("nom_responsable_unidad_usuaria")
-  cargoResponsableUnidadUsuaria  String @map("cargo_responsable_unidad_usuaria")
+  nombreUnidadUsuaria            String  @map("nom_unidad_usuaria")
+  nombreResponsableUnidadUsuaria String  @map("nom_responsable_unidad_usuaria")
+  cargoResponsableUnidadUsuaria  String  @map("cargo_responsable_unidad_usuaria")
   activa                         Boolean @default(true) @map("ind_activa")
 
   // Auditoría
@@ -491,9 +491,9 @@ model Proveedor {
   nivelContratacion     NivelContratacion?
 
   // Estado de validación
-  estatusValidacion EstatusValidacion @default(PENDIENTE)
-  fechaRegistro          DateTime          @default(now())
-  fechaUltimaAprobacion  DateTime?
+  estatusValidacion     EstatusValidacion @default(PENDIENTE)
+  fechaRegistro         DateTime          @default(now())
+  fechaUltimaAprobacion DateTime?
 
   // Auditoría
   createdAt DateTime  @default(now())
@@ -563,8 +563,8 @@ model ModalidadContratacion {
 
 // Expediente de contratación (proceso principal)
 model ExpedienteContratacion {
-  id              String @id @default(uuid()) @map("id_expediente_au_au")
-  enteId          String @map("id_ente") // Mantenemos coherencia con resto del esquema
+  id              String  @id @default(uuid()) @map("id_expediente_au_au")
+  enteId          String  @map("id_ente") // Mantenemos coherencia con resto del esquema
   modalidadId     String  @map("id_modalidad")
   comisionId      String? @map("id_comision")
   unidadUsuariaId String? @map("id_unidad_usuaria")
@@ -575,9 +575,9 @@ model ExpedienteContratacion {
   codigoNomenclatura String @map("cod_nomenclatura_proceso_au_au")
 
   // Configuración
-  estatusProceso   EstatusProceso @default(BORRADOR) @map("estatus_proceso_au_au")
-  totalPresupuesto Decimal?       @map("total_presupuesto_au_au") @db.Decimal(15, 2)
-  autoridadFirmaComoDelegado Boolean @default(false) @map("ind_firma_delegado_au_au")
+  estatusProceso             EstatusProceso @default(BORRADOR) @map("estatus_proceso_au_au")
+  totalPresupuesto           Decimal?       @map("total_presupuesto_au_au") @db.Decimal(15, 2)
+  autoridadFirmaComoDelegado Boolean        @default(false) @map("ind_firma_delegado_au_au")
 
   // Auditoría
   createdAt DateTime  @default(now())
@@ -588,13 +588,14 @@ model ExpedienteContratacion {
   version   Int       @default(1)
 
   // Relaciones
-  ente          EntePublico            @relation(fields: [enteId], references: [id])
-  modalidad     ModalidadContratacion  @relation(fields: [modalidadId], references: [id])
+  ente          EntePublico             @relation(fields: [enteId], references: [id])
+  modalidad     ModalidadContratacion   @relation(fields: [modalidadId], references: [id])
   comision      ComisionContrataciones? @relation(fields: [comisionId], references: [id])
   unidadUsuaria UnidadUsuaria?          @relation(fields: [unidadUsuariaId], references: [id])
   autoridad     MaximaAutoridad?        @relation(fields: [autoridadId], references: [id])
 
   fasePreparatoria        FasePreparatoria?
+  presupuestoItems        PresupuestoItem[]
   cronograma              CronogramaExpediente?
   partidasPresupuestarias PartidaPresupuestaria[]
   adquirientesPliego      AdquirentePliego[]
@@ -610,39 +611,79 @@ model ExpedienteContratacion {
 
 // Fase preparatoria del expediente
 model FasePreparatoria {
-  id           String @id @default(uuid())
-  expedienteId String @unique
+  id           String @id @default(uuid()) @map("id_fase_preparatoria")
+  expedienteId String @unique @map("id_expediente")
 
-  detallesTecnicosCalidad       String?
-  alcanceCantidadesObra         String?
-  justificacionVentajas         String?
-  origenCrsRegistro             Boolean  @default(false)
-  diasValidezOferta             Int?
-  autoridadAclaratorias         String?
-  normativaLegal                String?
-  diasVigenciaGarantiaExtension Int?
-  objetivosEspecificosLlamado   String?
-  direccionRetiroPliego         String?
-  horarioRetiroPliego           String?
-  costoPliegoBs                 Decimal? @db.Decimal(10, 2)
-  bancoPagoPliego               String?
-  cuentaPagoPliego              String?
-  titularPagoPliego             String?
-  condicionPluranual            String?
-  viabilidadContratoMarco       String?
+  // --- Página 1: Definición Técnica ---
+  datosActoAutorizacionInicio String?   @map("datos_acto_autorizacion_inicio") @db.VarChar(255)
+  fechaActaInicio             DateTime? @map("fec_acta_inicio")
+  detallesTecnicosCalidad     String?   @map("detalles_tecnicos_calidad") @db.Text
+  alcanceCantidadesObra       String?   @map("alcance_cantidades_obra") @db.Text
+  justificacionVentajas       String?   @map("justificacion_ventajas") @db.Text
+  origenCrsRegistro           Boolean   @default(false) @map("ind_origen_crs_registro")
+
+  // --- Página 3: Parámetros Legales del Pliego ---
+  diasValidezOferta             Int?    @map("dias_validez_oferta")
+  autoridadAclaratorias         String? @map("autoridad_aclaratorias") @db.VarChar(255)
+  normativaLegal                String? @map("normativa_legal") @db.Text
+  diasVigenciaGarantiaExtension Int?    @map("dias_vigencia_garantia_ext")
+
+  // --- Página 4 y 5: Configuración del Llamado ---
+  objetivosEspecificos1 String?  @map("objetivos_especificos_1") @db.VarChar(255)
+  objetivosEspecificos2 String?  @map("objetivos_especificos_2") @db.VarChar(255)
+  objetivosEspecificos3 String?  @map("objetivos_especificos_3") @db.VarChar(255)
+  direccionRetiroPliego String?  @map("direccion_retiro_pliego") @db.VarChar(255)
+  horarioRetiroPliego   String?  @map("horario_retiro_pliego") @db.VarChar(255)
+  pliegoGratuito        Boolean  @default(true) @map("pliego_gratuito")
+  costoPliegoBs         Decimal? @map("costo_pliego_bs") @db.Decimal(10, 2)
+  bancoPagoPliego       String?  @map("banco_pago_pliego") @db.VarChar(100)
+  cuentaPagoPliego      String?  @map("cuenta_pago_pliego") @db.VarChar(50)
+  titularPagoPliego     String?  @map("titular_pago_pliego") @db.VarChar(100)
+  horaActoRecepAper     String?  @map("hora_acto_recep_aper") @db.VarChar(50)
+  correoComision        String?  @map("correo_comision") @db.VarChar(100)
+  telefonoComision      String?  @map("telefono_comision") @db.VarChar(50)
+
+  // --- Página 6: Observaciones Finales ---
+  condicionPlurianual     String? @map("condicion_plurianual") @db.VarChar(255)
+  viabilidadContratoMarco String? @map("viabilidad_contrato_marco") @db.VarChar(255)
 
   // Auditoría
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-  createdBy String?
-  updatedBy String?
-  version   Int       @default(1)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdBy String?   @map("created_by")
+  updatedBy String?   @map("updated_by")
+  version   Int       @default(1) @map("version")
 
   // Relaciones
   expediente ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
 
   @@index([expedienteId])
+  @@map("tb_fase_preparatoria")
+}
+
+// Presupuesto del expediente (Página 2)
+model PresupuestoItem {
+  id           String @id @default(uuid()) @map("id_presupuesto_item")
+  expedienteId String @map("id_expediente")
+
+  descripcionItem        String  @map("descripcion_item") @db.VarChar(255)
+  codigoPartida          String  @map("codigo_partida") @db.VarChar(50)
+  unidadMedida           String  @map("unidad_medida") @db.VarChar(50)
+  cantidadRequerida      Decimal @map("cantidad_requerida") @db.Decimal(10, 2)
+  precioUnitarioEstimado Decimal @map("precio_unitario_estimado") @db.Decimal(15, 2)
+  totalItem              Decimal @map("total_item") @db.Decimal(15, 2)
+
+  // Auditoría
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // Relaciones
+  expediente ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+
+  @@index([expedienteId])
+  @@map("tb_presupuesto_items")
 }
 
 // Cronograma del expediente
@@ -925,9 +966,9 @@ model ManualGenerado {
 
 // Pliego generado por el Ente para un expediente
 model PliegoGenerado {
-  id               String @id @default(uuid())
-  enteId           String
-  expedienteId     String
+  id           String @id @default(uuid())
+  enteId       String
+  expedienteId String
 
   tituloPliego     String
   descripcion      String?
