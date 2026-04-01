@@ -1,12 +1,23 @@
-import { PrismaClient, TipoMiembro, AreaRepresentacion } from '@prisma/client';
+import {
+  PrismaClient,
+  TipoMiembro,
+  AreaRepresentacion,
+  RolUsuario,
+  TipoContratacion,
+  ModalidadSeleccion,
+  EstatusProceso,
+} from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-async function main() {
-  console.log('🌱 Iniciando seeder...\n');
+const LOGO_NEUTRO =
+  'https://res.cloudinary.com/da86ka5ip/image/upload/v1743519586/universitas/placeholder_logo.png';
 
-  // Limpiar base de datos (opcional en desarrollo)
+async function main() {
+  console.log('🌱 Iniciando seeder (Limpieza Total)...\n');
+
+  // 0. Limpiar base de datos
   console.log('🧹 Limpiando base de datos...');
   await prisma.auditLog.deleteMany();
   await prisma.sessionEdicion.deleteMany();
@@ -17,6 +28,7 @@ async function main() {
   await prisma.ofertaPresentada.deleteMany();
   await prisma.adquirentePliego.deleteMany();
   await prisma.partidaPresupuestaria.deleteMany();
+  await prisma.presupuestoItem.deleteMany();
   await prisma.cronogramaExpediente.deleteMany();
   await prisma.fasePreparatoria.deleteMany();
   await prisma.documentoProveedor.deleteMany();
@@ -49,416 +61,254 @@ async function main() {
       passwordHash: await bcrypt.hash('admin123', 10),
     },
   });
-  console.log(`✅ Universitas creado: ${universitas.email}\n`);
+
+  await prisma.usuario.create({
+    data: {
+      enteId: null,
+      email: 'admin@universitas.gob.ve',
+      passwordHash: await bcrypt.hash('universitas123', 10),
+      nombre: 'Administrador',
+      apellido: 'Sistema',
+      rol: RolUsuario.UNIVERSITAS,
+      activo: true,
+    },
+  });
 
   // ============================================================================
-  // 2. ENTES PÚBLICOS (Tenants)
+  // 2. ENTES PÚBLICOS
   // ============================================================================
   console.log('🏛️  Creando Entes Públicos...');
 
-  const enteAlcaldia = await prisma.entePublico.create({
+  await prisma.entePublico.create({
     data: {
       universitasId: universitas.id,
       nombre: 'Alcaldía del Municipio Libertador',
       rif: 'G-20001234-5',
       siglas: 'AML',
+      logoUrl: LOGO_NEUTRO,
       estado: 'Distrito Capital',
       municipio: 'Libertador',
       parroquia: 'Catedral',
       direccionFiscal: 'Plaza Bolívar, Edificio Municipal',
       nombreUnidadAdminFinanciera: 'Dirección de Administración y Finanzas',
-      nombreUnidadTecnologia: 'Dirección de Tecnología e Información',
-      nombreUnidadContratante: 'Dirección de Compras y Contrataciones',
+      nombreUnidadTecnologia: 'Dirección de TI',
+      nombreUnidadContratante: 'Dirección de Compras',
     },
   });
 
-  const enteMinisterio = await prisma.entePublico.create({
+  const enteMiranda = await prisma.entePublico.create({
     data: {
       universitasId: universitas.id,
-      nombre: 'Ministerio de Educación',
-      rif: 'G-20005678-9',
-      siglas: 'MINEDU',
-      estado: 'Distrito Capital',
-      municipio: 'Libertador',
-      parroquia: 'El Recreo',
-      direccionFiscal: 'Av. Universidad, Torre Ministerial',
-      nombreUnidadAdminFinanciera: 'Oficina de Planificación y Presupuesto',
-      nombreUnidadTecnologia: 'Centro de Tecnologías de Información',
-      nombreUnidadContratante: 'Oficina de Adquisiciones',
+      nombre: 'Gobernación del Estado Miranda',
+      rif: 'G-20009988-7',
+      siglas: 'GEM',
+      logoUrl: LOGO_NEUTRO,
+      estado: 'Miranda',
+      municipio: 'Sucre',
+      parroquia: 'Leoncio Martínez',
+      direccionFiscal: 'Av. Francisco de Miranda, Edif. Gubernamental',
+      nombreUnidadAdminFinanciera: 'Secretaría de Finanzas',
+      nombreUnidadTecnologia: 'Dirección de Telemática',
+      nombreUnidadContratante: 'Oficina Central de Contrataciones',
     },
   });
 
-  console.log(`✅ ${enteAlcaldia.siglas} - ${enteAlcaldia.nombre}`);
-  console.log(`✅ ${enteMinisterio.siglas} - ${enteMinisterio.nombre}\n`);
-
   // ============================================================================
-  // 3. USUARIO UNIVERSITAS (para login)
+  // 3. USUARIOS ENTES
   // ============================================================================
-  console.log('👤 Creando Usuario UNIVERSITAS...');
-  const usuarioUniversitas = await prisma.usuario.create({
+  const adminMiranda = await prisma.usuario.create({
     data: {
-      enteId: null, // UNIVERSITAS no pertenece a ningún Ente
-      email: 'admin@universitas.gob.ve',
-      passwordHash: await bcrypt.hash('universitas123', 10),
-      nombre: 'Administrador',
-      apellido: 'Sistema',
-      rol: 'UNIVERSITAS',
-      activo: true,
-    },
-  });
-  console.log(`✅ Usuario UNIVERSITAS: ${usuarioUniversitas.email}\n`);
-
-  // ============================================================================
-  // 4. SUPERVISORES (Entes Auditores)
-  // ============================================================================
-  console.log('👁️  Creando Supervisores...');
-
-  const supervisor1 = await prisma.supervisor.create({
-    data: {
-      nombre: 'Contraloría Municipal',
-      rif: 'G-30001111-0',
-      email: 'contraloria@municipal.gob.ve',
-      telefono: '+58 212-5551234',
-      direccion: 'Av. Principal de Los Ruices',
-    },
-  });
-
-  // Asignar supervisor al Ente Alcaldía (temporal - 1 año)
-  await prisma.enteSupervisor.create({
-    data: {
-      enteId: enteAlcaldia.id,
-      supervisorId: supervisor1.id,
-      fechaInicio: new Date('2024-01-01'),
-      fechaFin: new Date('2024-12-31'),
+      enteId: enteMiranda.id,
+      email: 'admin@miranda.gob.ve',
+      passwordHash: await bcrypt.hash('miranda123', 10),
+      nombre: 'Roberto',
+      apellido: 'Rojas',
+      rol: RolUsuario.ADMIN_ENTE,
       activo: true,
     },
   });
 
-  console.log(`✅ ${supervisor1.nombre} → asignado a ${enteAlcaldia.siglas}\n`);
-
-  // ============================================================================
-  // 4. USUARIOS
-  // ============================================================================
-  console.log('👥 Creando Usuarios...');
-
-  // Admin del Ente Alcaldía
-  const adminAlcaldia = await prisma.usuario.create({
+  const ejecutorMiranda = await prisma.usuario.create({
     data: {
-      enteId: enteAlcaldia.id,
-      email: 'admin@alcaldia.gob.ve',
-      passwordHash: await bcrypt.hash('alcaldia123', 10),
-      nombre: 'María',
-      apellido: 'González',
-      rol: 'ADMIN_ENTE',
-      activo: true,
-    },
-  });
-
-  // Ejecutores de Alcaldía
-  const ejecutor1 = await prisma.usuario.create({
-    data: {
-      enteId: enteAlcaldia.id,
-      email: 'jperez@alcaldia.gob.ve',
-      passwordHash: await bcrypt.hash('ejecutor123', 10),
-      nombre: 'Juan',
+      enteId: enteMiranda.id,
+      email: 'ejecutor@miranda.gob.ve',
+      passwordHash: await bcrypt.hash('miranda123', 10),
+      nombre: 'Pedro',
       apellido: 'Pérez',
-      rol: 'EJECUTOR',
+      rol: RolUsuario.EJECUTOR,
       activo: true,
     },
   });
-
-  const ejecutor2 = await prisma.usuario.create({
-    data: {
-      enteId: enteAlcaldia.id,
-      email: 'amartinez@alcaldia.gob.ve',
-      passwordHash: await bcrypt.hash('ejecutor123', 10),
-      nombre: 'Ana',
-      apellido: 'Martínez',
-      rol: 'EJECUTOR',
-      activo: true,
-    },
-  });
-
-  // Visualizador
-  const visualizador = await prisma.usuario.create({
-    data: {
-      enteId: enteAlcaldia.id,
-      email: 'lrodriguez@alcaldia.gob.ve',
-      passwordHash: await bcrypt.hash('viewer123', 10),
-      nombre: 'Luis',
-      apellido: 'Rodríguez',
-      rol: 'VISUALIZADOR',
-      activo: true,
-    },
-  });
-
-  // Usuario del Ministerio
-  await prisma.usuario.create({
-    data: {
-      enteId: enteMinisterio.id,
-      email: 'cgarcia@minedu.gob.ve',
-      passwordHash: await bcrypt.hash('minedu123', 10),
-      nombre: 'Carmen',
-      apellido: 'García',
-      rol: 'EJECUTOR',
-      activo: true,
-    },
-  });
-
-  console.log(`✅ Admin Ente: ${adminAlcaldia.email}`);
-  console.log(`✅ Ejecutor 1: ${ejecutor1.email}`);
-  console.log(`✅ Ejecutor 2: ${ejecutor2.email}`);
-  console.log(`✅ Visualizador: ${visualizador.email}\n`);
 
   // ============================================================================
-  // 5. ESTRUCTURA ORGANIZATIVA
+  // 4. ESTRUCTURA ORGANIZATIVA (MIRANDA)
   // ============================================================================
-  console.log('📋 Creando estructura organizativa...');
+  console.log('📋 Generando estructura para GEM...');
 
-  // Máxima Autoridad
-  const autoridad = await prisma.maximaAutoridad.create({
+  const autoridadMiranda = await prisma.maximaAutoridad.create({
     data: {
-      enteId: enteAlcaldia.id,
-      nombreCompletoAutoridad: 'Dr. Carlos Alberto Fernández',
-      cedulaAutoridad: 'V-12345678',
-      cargoOficialAutoridad: 'Alcalde del Municipio Libertador',
-      datosDesignacionAutoridad: 'Electo según GACETA Municipal N° 001-2024',
-      leyesAtribucionesSuscribirAutoridad: 'Ley Orgánica del Poder Público Municipal',
+      enteId: enteMiranda.id,
+      nombreCompletoAutoridad: 'Héctor Rodríguez Castro',
+      cedulaAutoridad: 'V-15.123.456',
+      cargoOficialAutoridad: 'Gobernador del Estado Miranda',
+      datosDesignacionAutoridad: 'Proclamado según Acta del CNE N° 2021-11-21',
+      leyesAtribucionesSuscribirAutoridad:
+        'Constitución del Estado Bolivariano de Miranda, Art. 70',
       esDelegado: false,
       vigente: true,
-      createdBy: adminAlcaldia.id,
+      createdBy: adminMiranda.id,
     },
   });
 
-  // Comisión de Contrataciones
-  const comision = await prisma.comisionContrataciones.create({
+  const comisionMiranda = await prisma.comisionContrataciones.create({
     data: {
-      enteId: enteAlcaldia.id,
-      denominacionComision: 'Comisión de Contrataciones Públicas',
-      datosDesignacionComision: 'Resolución N° 100-2024',
+      enteId: enteMiranda.id,
+      denominacionComision: 'Comisión Principal de Contrataciones GEM',
+      datosDesignacionComision: 'Resolución G-005-2022 publicada en Gaceta Estadal',
       comisionCertificada: true,
-      createdBy: adminAlcaldia.id,
+      createdBy: adminMiranda.id,
     },
   });
 
-  // Miembros de la comisión
   await prisma.miembroComision.createMany({
     data: [
       {
-        comisionId: comision.id,
-        nombreCompletoMiembro: 'Lic. Pedro Ramírez',
-        cedulaMiembro: 'V-11111111',
+        comisionId: comisionMiranda.id,
+        nombreCompletoMiembro: 'Abg. Claudia López',
+        cedulaMiembro: 'V-14.222.333',
         tipoMiembro: TipoMiembro.COORDINADOR,
         areaRepresentacion: AreaRepresentacion.AREA_JURIDICA,
       },
       {
-        comisionId: comision.id,
-        nombreCompletoMiembro: 'Ing. Laura Sánchez',
-        cedulaMiembro: 'V-22222222',
+        comisionId: comisionMiranda.id,
+        nombreCompletoMiembro: 'Ing. Marcos Beltrán',
+        cedulaMiembro: 'V-11.444.555',
         tipoMiembro: TipoMiembro.MIEMBRO_PRINCIPAL,
         areaRepresentacion: AreaRepresentacion.AREA_TECNICA,
       },
       {
-        comisionId: comision.id,
-        nombreCompletoMiembro: 'Lic. Roberto Castro',
-        cedulaMiembro: 'V-33333333',
+        comisionId: comisionMiranda.id,
+        nombreCompletoMiembro: 'Lcda. Sofía Méndez',
+        cedulaMiembro: 'V-18.666.777',
         tipoMiembro: TipoMiembro.MIEMBRO_PRINCIPAL,
         areaRepresentacion: AreaRepresentacion.AREA_ECONOMICA_FINANCIERA,
       },
     ],
   });
 
-  // Unidad Usuaria
-  const unidadUsuaria = await prisma.unidadUsuaria.create({
+  const unidadMiranda = await prisma.unidadUsuaria.create({
     data: {
-      enteId: enteAlcaldia.id,
-      nombreUnidadUsuaria: 'Dirección de Obras Públicas',
-      nombreResponsableUnidadUsuaria: 'Ing. Miguel Torres',
-      cargoResponsableUnidadUsuaria: 'Director de Obras',
-      createdBy: adminAlcaldia.id,
+      enteId: enteMiranda.id,
+      nombreUnidadUsuaria: 'Dirección Regional de Salud',
+      nombreResponsableUnidadUsuaria: 'Dr. Alejandro Moreno',
+      cargoResponsableUnidadUsuaria: 'Director General',
+      createdBy: adminMiranda.id,
     },
   });
-
-  console.log(`✅ Autoridad: ${autoridad.nombreCompletoAutoridad}`);
-  console.log(`✅ Comisión: ${comision.denominacionComision} (3 miembros)`);
-  console.log(`✅ Unidad Usuaria: ${unidadUsuaria.nombreUnidadUsuaria}\n`);
 
   // ============================================================================
-  // 6. PROVEEDORES
+  // 5. EXPEDIENTE COMPLETO (MIRANDA)
   // ============================================================================
-  console.log('🏢 Creando Proveedores...');
+  console.log('📂 Creando Expediente Maestro...');
 
-  const proveedor1 = await prisma.proveedor.create({
+  const modalidadMiranda = await prisma.modalidadContratacion.create({
     data: {
-      enteId: enteAlcaldia.id,
-      nombre: 'Construcciones Modernas C.A.',
-      rif: 'J-40001234-5',
-      correo: 'info@construccionesmodernas.com',
-      tipoPersona: 'JURIDICA',
-      tipoEntidadJuridica: 'COMPANIA_ANONIMA' as any,
-      estado: 'Miranda',
-      municipio: 'Chacao',
-      direccionFiscal: 'Av. Francisco de Miranda, Torre Ejecutiva',
-      telefono: '+58 212-9876543',
-      nombreRepLegal: 'Arq. José Méndez',
-      cedulaRepLegal: 'V-9876543',
-      registroRnc: true,
-      solvenciaLaboral: true,
-      licenciaFuncionamientoMunicipal: true,
-      areaEspecialidad: 'OBRAS' as any,
-      anosExperiencia: 15,
-      patrimonioReportado: 500000000,
-      nivelContratacion: 'ALTA' as any,
-      estatusValidacion: 'APROBADO',
-      createdBy: ejecutor1.id,
+      enteId: enteMiranda.id,
+      tipoContratacion: TipoContratacion.BIENES,
+      montoEstimadoBs: 15000000.0,
+      montoEstimadoDolar: 416666.67,
+      valorUcauBase: 36.0,
+      modalidadSeleccion: ModalidadSeleccion.LICITACION_PUBLICA,
+      createdBy: ejecutorMiranda.id,
     },
   });
 
-  const proveedor2 = await prisma.proveedor.create({
+  const expedienteM = await prisma.expedienteContratacion.create({
     data: {
-      enteId: enteAlcaldia.id,
-      nombre: 'Suministros Tecnológicos del Centro S.R.L.',
-      rif: 'J-30005678-9',
-      correo: 'ventas@sumintec.com',
-      tipoPersona: 'JURIDICA',
-      tipoEntidadJuridica: 'SRL' as any,
-      estado: 'Distrito Capital',
-      municipio: 'Libertador',
-      direccionFiscal: 'Sabana Grande, C.C. Líder',
-      telefono: '+58 212-7654321',
-      nombreRepLegal: 'Lic. Sandra Vargas',
-      cedulaRepLegal: 'V-8765432',
-      registroRnc: true,
-      solvenciaLaboral: true,
-      licenciaFuncionamientoMunicipal: true,
-      areaEspecialidad: 'SERVICIOS' as any,
-      anosExperiencia: 8,
-      patrimonioReportado: 150000000,
-      nivelContratacion: 'MEDIA' as any,
-      estatusValidacion: 'APROBADO',
-      createdBy: ejecutor1.id,
+      enteId: enteMiranda.id,
+      comisionId: comisionMiranda.id,
+      unidadUsuariaId: unidadMiranda.id,
+      autoridadId: autoridadMiranda.id,
+      modalidadId: modalidadMiranda.id,
+      descripcionObjeto: 'Adquisición de Insumos Médicos y Quirúrgicos para la Red Hospitalaria',
+      codigoNomenclatura: 'LP-GEM-SALUD-002-2024',
+      estatusProceso: EstatusProceso.EN_PREPARACION,
+      createdBy: ejecutorMiranda.id,
     },
   });
 
-  console.log(`✅ ${proveedor1.nombre} (${proveedor1.areaEspecialidad})`);
-  console.log(`✅ ${proveedor2.nombre} (${proveedor2.areaEspecialidad})\n`);
-
-  // ============================================================================
-  // 7. EXPEDIENTE DE CONTRATACIÓN
-  // ============================================================================
-  console.log('📂 Creando Expediente de Contratación...');
-
-  // Modalidad de Contratación
-  const modalidad = await prisma.modalidadContratacion.create({
-    data: {
-      enteId: enteAlcaldia.id,
-      tipoContratacion: 'OBRAS',
-      montoEstimadoBs: 25000000,
-      montoEstimadoDolar: 5000,
-      valorUcauBase: 25,
-      modalidadSeleccion: 'LICITACION_PUBLICA',
-      createdBy: ejecutor1.id,
-    },
-  });
-
-  const expediente = await prisma.expedienteContratacion.create({
-    data: {
-      enteId: enteAlcaldia.id,
-      comisionId: comision.id,
-      unidadUsuariaId: unidadUsuaria.id,
-      autoridadId: autoridad.id,
-      modalidadId: modalidad.id, // Link to modalidad
-      descripcionObjeto: 'Construcción de Centro Deportivo Comunitario',
-      codigoNomenclatura: 'LP-001-2024',
-      estatusProceso: 'EN_PREPARACION',
-      createdBy: ejecutor1.id,
-    },
-  });
-
-  // Fase preparatoria
   await prisma.fasePreparatoria.create({
     data: {
-      expedienteId: expediente.id,
+      expedienteId: expedienteM.id,
       detallesTecnicosCalidad:
-        'Cancha multiusos cubierta, gradas para 500 personas, iluminación LED',
-      alcanceCantidadesObra:
-        '1200 m² de construcción, incluye instalaciones sanitarias y eléctricas',
-      justificacionVentajas: 'Beneficiará a la comunidad de más de 5000 habitantes',
+        'Suministros médicos estériles de alta calidad, certificados por SENIAT y MPPS.',
+      alcanceCantidadesObra: 'Lote de 50,000 unidades divididas en 10 rubros críticos.',
+      justificacionVentajas: 'Garantizar el inventario para el primer semestre de 2024.',
       origenCrsRegistro: true,
-      diasValidezOferta: 60,
-      diasVigenciaGarantiaExtension: 30,
-      costoPliegoBs: 50000,
-      createdBy: ejecutor1.id,
+      diasValidezOferta: 90,
+      diasVigenciaGarantiaExtension: 60,
+      costoPliegoBs: 25000.0,
+      bancoPagoPliego: 'Banco de Venezuela',
+      cuentaPagoPliego: '0102-0000-00-0000000000',
+      titularPagoPliego: 'Gobernación del Estado Miranda',
+      horaActoRecepAper: '10:00 AM',
+      correoComision: 'comision.contratacion@miranda.gob.ve',
+      telefonoComision: '0212-3214567',
+      createdBy: ejecutorMiranda.id,
     },
   });
 
-  // Cronograma
   await prisma.cronogramaExpediente.create({
     data: {
-      expedienteId: expediente.id,
-      fechaLlamadoParticipar: new Date('2024-03-01'),
-      fechaInicioDisponibilidadPliego: new Date('2024-03-05'),
-      fechaFinDisponibilidadPliego: new Date('2024-03-20'),
-      fechaActoRecepcionAperturaSobres: new Date('2024-04-01'),
-      fechaLimiteEvaluacion: new Date('2024-04-10'),
-      fechaLimiteAdjudicacion: new Date('2024-04-15'),
-      createdBy: ejecutor1.id,
+      expedienteId: expedienteM.id,
+      fechaLlamadoParticipar: new Date('2024-05-01'),
+      fechaInicioDisponibilidadPliego: new Date('2024-05-05'),
+      fechaFinDisponibilidadPliego: new Date('2024-05-15'),
+      fechaActoRecepcionAperturaSobres: new Date('2024-05-25'),
+      fechaLimiteEvaluacion: new Date('2024-06-05'),
+      fechaLimiteAdjudicacion: new Date('2024-06-15'),
+      createdBy: ejecutorMiranda.id,
     },
   });
 
-  // Partidas presupuestarias
-  await prisma.partidaPresupuestaria.createMany({
+  await prisma.presupuestoItem.createMany({
     data: [
       {
-        expedienteId: expediente.id,
-        descripcionItem: 'Estructura de techo metálico con cubierta',
-        codigoPartida: '45-02-001',
-        unidadMedida: 'm²',
-        cantidadRequerida: 1200,
-        precioUnitarioEstimado: 15000,
-        montoTotalRenglon: 18000000,
-        createdBy: ejecutor1.id,
+        expedienteId: expedienteM.id,
+        descripcionItem: 'Gasa Quirúrgica Estéril 10x10cm (Caja 100 und)',
+        codigoPartida: '401-01-002',
+        unidadMedida: 'Caja',
+        cantidadRequerida: 5000,
+        precioUnitarioEstimado: 2500.0,
+        totalItem: 12500000.0,
       },
       {
-        expedienteId: expediente.id,
-        descripcionItem: 'Piso deportivo de caucho',
-        codigoPartida: '45-03-002',
-        unidadMedida: 'm²',
-        cantidadRequerida: 800,
-        precioUnitarioEstimado: 8000,
-        montoTotalRenglon: 6400000,
-        createdBy: ejecutor1.id,
+        expedienteId: expedienteM.id,
+        descripcionItem: 'Alcohol Isopropílico 70% (Frasco 1L)',
+        codigoPartida: '401-02-005',
+        unidadMedida: 'Litro',
+        cantidadRequerida: 1000,
+        precioUnitarioEstimado: 1200.0,
+        totalItem: 1200000.0,
+      },
+      {
+        expedienteId: expedienteM.id,
+        descripcionItem: 'Guantes de Nitrilo (Talla M)',
+        codigoPartida: '401-01-010',
+        unidadMedida: 'Par',
+        cantidadRequerida: 10000,
+        precioUnitarioEstimado: 130.0,
+        totalItem: 1300000.0,
       },
     ],
   });
 
-  console.log(`✅ Expediente: ${expediente.codigoNomenclatura}`);
-  console.log(`   → ${expediente.descripcionObjeto}`);
-  console.log(`   → Monto: Bs. ${modalidad.montoEstimadoBs.toLocaleString()}\n`);
-
-  // ============================================================================
-  // RESUMEN
-  // ============================================================================
-  console.log('═'.repeat(60));
-  console.log('✅ SEEDER COMPLETADO\n');
-  console.log('📊 Resumen de datos creados:');
-  console.log(`   • 1 Universitas`);
-  console.log(`   • 1 Usuario UNIVERSITAS (para login)`);
-  console.log(`   • 2 Entes Públicos`);
-  console.log(`   • 1 Supervisor (asignado temporalmente)`);
-  console.log(`   • 5 Usuarios de Entes (roles: Admin, Ejecutor, Visualizador)`);
-  console.log(`   • 1 Máxima Autoridad`);
-  console.log(`   • 1 Comisión (3 miembros)`);
-  console.log(`   • 1 Unidad Usuaria`);
-  console.log(`   • 2 Proveedores`);
-  console.log(`   • 1 Expediente de Contratación (con fase preparatoria)\n`);
-
-  console.log('🔑 Credenciales de acceso:');
-  console.log(`   UNIVERSITAS:  admin@universitas.gob.ve / universitas123`);
-  console.log(`   Admin Ente:   admin@alcaldia.gob.ve / alcaldia123`);
-  console.log(`   Ejecutor:     jperez@alcaldia.gob.ve / ejecutor123`);
-  console.log(`   Visualizador: lrodriguez@alcaldia.gob.ve / viewer123`);
-  console.log('═'.repeat(60));
+  console.log('\n✅ SEEDER REESTRUCTURADO Y COMPLETADO');
+  console.log('--------------------------------------------------');
+  console.log('🔑 CREDENCIALES:');
+  console.log('MIRANDA ADMIN: admin@miranda.gob.ve / miranda123');
+  console.log('MIRANDA EJEC:  ejecutor@miranda.gob.ve / miranda123');
+  console.log('--------------------------------------------------');
 }
 
 main()
