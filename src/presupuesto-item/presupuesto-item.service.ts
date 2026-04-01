@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { CreatePresupuestoItemDto } from './dto/create-presupuesto-item.dto';
 import { UpdatePresupuestoItemDto } from './dto/update-presupuesto-item.dto';
+import { QueryPresupuestoItemDto } from './dto/query-presupuesto-item.dto';
 
 @Injectable()
 export class PresupuestoItemService {
@@ -45,6 +47,40 @@ export class PresupuestoItemService {
         porcentajeIvaApicado: this.IVA_RATE * 100, // Ej: 16
         montoIva: impuestoMonto,
         montoTotal,
+      },
+    };
+  }
+
+  async findAll(query: QueryPresupuestoItemDto) {
+    const { page = 1, limit = 10, search } = query;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.PresupuestoItemWhereInput = {
+      deletedAt: null,
+      ...(search && {
+        OR: [
+          { descripcionItem: { contains: search, mode: 'insensitive' } },
+          { codigoPartida: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+    };
+
+    const [total, data] = await Promise.all([
+      this.prisma.presupuestoItem.count({ where }),
+      this.prisma.presupuestoItem.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit),
       },
     };
   }

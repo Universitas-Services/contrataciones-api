@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { ApiTags, ApiBody, ApiOperation } from '@nestjs/swagger';
 import { PresupuestoItemService } from './presupuesto-item.service';
 import { CreatePresupuestoItemDto } from './dto/create-presupuesto-item.dto';
 import { UpdatePresupuestoItemDto } from './dto/update-presupuesto-item.dto';
+import { QueryPresupuestoItemDto } from './dto/query-presupuesto-item.dto';
 
 @ApiTags('Presupuesto Items')
 @Controller('expedientes')
@@ -17,6 +18,12 @@ export class PresupuestoItemController {
     @Body() createPresupuestoItemDto: CreatePresupuestoItemDto,
   ) {
     return this.presupuestoItemService.create(expedienteId, createPresupuestoItemDto);
+  }
+
+  @Get('presupuesto-items')
+  @ApiOperation({ summary: 'Listar todos los ítems de presupuesto con paginación y filtros' })
+  findAll(@Query() query: QueryPresupuestoItemDto) {
+    return this.presupuestoItemService.findAll(query);
   }
 
   @Get(':expedienteId/presupuesto-items')
