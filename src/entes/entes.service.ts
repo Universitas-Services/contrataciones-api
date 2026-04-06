@@ -215,6 +215,88 @@ export class EntesService {
     };
   }
 
+  async findAllOperativosEnte(enteId: string, query: QueryEnteUsuariosDto) {
+    const { page = 1, limit = 10, rol, busqueda } = query;
+    const skip = (page - 1) * limit;
+
+    // Solo roles operativos
+    const whereClause: Prisma.UsuarioWhereInput = {
+      enteId,
+      deletedAt: null,
+      rol: {
+        in: ['EJECUTOR', 'VISUALIZADOR'],
+      },
+    };
+
+    // Si el usuario pidió un rol específico, lo filtramos pero dentro del conjunto permitido
+    if (rol && ['EJECUTOR', 'VISUALIZADOR'].includes(rol)) {
+      whereClause.rol = rol as any;
+    }
+
+    if (busqueda) {
+      whereClause.OR = [
+        { nombre: { contains: busqueda, mode: 'insensitive' } },
+        { apellido: { contains: busqueda, mode: 'insensitive' } },
+        { email: { contains: busqueda, mode: 'insensitive' } },
+      ];
+    }
+
+    const [total, data] = await Promise.all([
+      this.prisma.usuario.count({ where: whereClause }),
+      this.prisma.usuario.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          email: true,
+          rol: true,
+          activo: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    return {
+      metadata: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+      data,
+    };
+  }
+
+  async findOperativoEnte(enteId: string, usuarioId: string) {
+    const user = await this.prisma.usuario.findFirst({
+      where: {
+        id: usuarioId,
+        enteId,
+        deletedAt: null,
+        rol: { in: ['EJECUTOR', 'VISUALIZADOR'] },
+      },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        rol: true,
+        activo: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuario operativo no encontrado en este Ente');
+    }
+
+    return user;
+  }
+
   async updateUsuarioEnte(enteId: string, usuarioId: string, updateDto: UpdateEnteUsuarioDto) {
     const user = await this.prisma.usuario.findFirst({
       where: { id: usuarioId, enteId, deletedAt: null },

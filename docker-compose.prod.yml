@@ -7,17 +7,17 @@ services:
     container_name: contrataciones-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_USER: ${DB_USER:-nestjs_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-nestjs_password_2024}
       POSTGRES_DB: ${DB_NAME:-contrataciones_db}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${DB_PORT_HOST:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - contrataciones-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-nestjs_user} -d ${DB_NAME:-contrataciones_db}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -35,7 +35,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${DB_USER:-nestjs_user}:${DB_PASSWORD:-nestjs_password_2024}@postgres:5432/${DB_NAME:-contrataciones_db}
+      DATABASE_URL: postgresql://${DB_USER:-nestjs_user}:${DB_PASSWORD:-nestjs_password_2024}@postgres:5432/${DB_NAME:-contrataciones_db}?schema=public
       JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
