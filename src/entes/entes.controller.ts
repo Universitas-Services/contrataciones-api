@@ -156,6 +156,43 @@ export class EntesController {
     return this.entesService.removeUsuarioEnte(id, usuarioId);
   }
 
+  @Get('gestion/mis-usuarios')
+  @Roles('UNIVERSITAS', 'ADMIN_ENTE')
+  @ApiOperation({
+    summary: 'Listar mis usuarios operativos (ADMIN_ENTE)',
+    description:
+      'Permite a un Administrador de Ente listar sus propios Ejecutores y Visualizadores con paginación y búsqueda.',
+  })
+  @ApiResponse({ status: 200, description: 'Lista paginada de usuarios operativos' })
+  findAllMisUsuarios(
+    @Query() query: QueryEnteUsuariosDto,
+    @CurrentUser() user: { id: string; rol: string; enteId?: string },
+  ) {
+    if (!user.enteId && user.rol !== 'UNIVERSITAS') {
+      throw new ForbiddenException('No tienes un Ente asociado');
+    }
+    const targetEnteId = user.enteId; // Si es UNIVERSITAS, debería usar el endpoint general, pero aquí manejamos su 'enteId' si lo tiene
+    if (!targetEnteId) throw new ForbiddenException('ID de Ente no disponible');
+
+    return this.entesService.findAllOperativosEnte(targetEnteId, query);
+  }
+
+  @Get('gestion/mis-usuarios/:usuarioId')
+  @Roles('UNIVERSITAS', 'ADMIN_ENTE')
+  @ApiOperation({
+    summary: 'Ver detalle de un usuario operativo',
+    description: 'Obtiene información detallada de un Ejecutor o Visualizador del propio Ente.',
+  })
+  @ApiResponse({ status: 200, description: 'Detalle del usuario' })
+  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
+  findOneMiUsuario(
+    @Param('usuarioId') usuarioId: string,
+    @CurrentUser() user: { id: string; rol: string; enteId?: string },
+  ) {
+    if (!user.enteId) throw new ForbiddenException('No tienes un Ente asociado');
+    return this.entesService.findOperativoEnte(user.enteId, usuarioId);
+  }
+
   @Get()
   @ApiOperation({
     summary: 'Listar Entes',
