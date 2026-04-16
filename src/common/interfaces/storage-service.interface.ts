@@ -6,7 +6,7 @@ export interface IStorageService {
    * @param filename Nombre del archivo (sin extensión).
    * @returns La URL pública segura del archivo subido.
    */
-  uploadFile(file: Buffer, folder: string, filename: string): Promise<string>;
+  uploadFile(file: Buffer, folder: string, filename?: string): Promise<string>;
 
   /**
    * Elimina un archivo del almacenamiento.

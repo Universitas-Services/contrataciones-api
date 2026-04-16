@@ -137,4 +137,26 @@ export class EmailService {
       ],
     });
   }
+  /**
+   * Envía un documento generado como archivo adjunto por correo electrónico.
+   */
+  async sendDocumentoExpedienteEmail(to: string, nombre: string, buffer: Buffer, filename: string) {
+    const html = this.loadTemplate('documento-attached.html', {
+      nombre,
+      documentoName: filename,
+    });
+
+    return this.sendEmail({
+      to,
+      subject: `Documento Adjunto: ${filename} - Sistema de Contrataciones`,
+      html,
+      text: `Hola ${nombre}, se adjunta el documento "${filename}" solicitado.`,
+      attachments: [
+        {
+          filename,
+          content: buffer,
+        },
+      ],
+    });
+  }
 }

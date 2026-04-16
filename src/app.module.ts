@@ -21,6 +21,7 @@ import { AdquirentePliegoModule } from './adquiriente-pliego/adquiriente-pliego.
 import { DirectorioActoresModule } from './directorio-actores/directorio-actores.module';
 import { FasePreparatoriaModule } from './fase-preparatoria/fase-preparatoria.module';
 import { PresupuestoItemModule } from './presupuesto-item/presupuesto-item.module';
+import { GeneradorDocumentosModule } from './generador-documentos/generador-documentos.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { PresupuestoItemModule } from './presupuesto-item/presupuesto-item.modul
     DirectorioActoresModule,
     FasePreparatoriaModule,
     PresupuestoItemModule,
+    GeneradorDocumentosModule,
   ],
   providers: [
     {

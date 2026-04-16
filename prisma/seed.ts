@@ -193,6 +193,13 @@ async function main() {
         tipoMiembro: TipoMiembro.MIEMBRO_PRINCIPAL,
         areaRepresentacion: AreaRepresentacion.AREA_ECONOMICA_FINANCIERA,
       },
+      {
+        comisionId: comisionMiranda.id,
+        nombreCompletoMiembro: 'TSU. Carlos Salazar',
+        cedulaMiembro: 'V-20.123.456',
+        tipoMiembro: TipoMiembro.SECRETARIO,
+        areaRepresentacion: AreaRepresentacion.SECRETARIO_A,
+      },
     ],
   });
 
@@ -254,6 +261,11 @@ async function main() {
       horaActoRecepAper: '10:00 AM',
       correoComision: 'comision.contratacion@miranda.gob.ve',
       telefonoComision: '0212-3214567',
+      // Nuevos campos para Generación de Documentos
+      fechaActaInicio: new Date('2024-04-10'),
+      datosActoAutorizacionInicio: 'Resolución N° 045-2024 de fecha 05-04-2024',
+      condicionPlurianual: 'No aplica',
+      viabilidadContratoMarco: 'No aplica',
       createdBy: ejecutorMiranda.id,
     },
   });
@@ -264,9 +276,15 @@ async function main() {
       fechaLlamadoParticipar: new Date('2024-05-01'),
       fechaInicioDisponibilidadPliego: new Date('2024-05-05'),
       fechaFinDisponibilidadPliego: new Date('2024-05-15'),
+      fechaSolicitudAclaratorias: new Date('2024-05-18'),
+      fechaModificacionPliego: new Date('2024-05-20'),
+      fechaRespuestaAclaratorias: new Date('2024-05-22'),
       fechaActoRecepcionAperturaSobres: new Date('2024-05-25'),
       fechaLimiteEvaluacion: new Date('2024-06-05'),
       fechaLimiteAdjudicacion: new Date('2024-06-15'),
+      fechaLimiteNotificacion: new Date('2024-06-18'),
+      fechaLimiteGarantias: new Date('2024-06-25'),
+      fechaLimiteFirmaContrato: new Date('2024-06-30'),
       createdBy: ejecutorMiranda.id,
     },
   });
