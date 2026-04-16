@@ -88,6 +88,8 @@ enum TipoDocumento {
   ADDENDUM
   ORDEN_COMPRA
   ACTA_RECEPCION
+  ACTA_INICIO
+  LLAMADO_PARTICIPAR
 }
 
 enum TipoDocumentoProveedor {
