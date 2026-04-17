@@ -53,12 +53,11 @@ export class AdquirentePliegoService {
         expedienteId: dto.expedienteId,
         proveedorId: dto.proveedorId,
         fechaAdquisicion: new Date(dto.fechaAdquisicion),
-        nombreContactoRetiro: dto.nombreContactoRetiro,
-        datosPagoPliego: dto.datosPagoPliego,
         nombreProveedorAdquiriente: dto.nombreProveedorAdquiriente,
-        direccionFiscalProveedorAdquiriente: dto.direccionFiscalProveedorAdquiriente,
-        telefonoProveedorAdquiriente: dto.telefonoProveedorAdquiriente,
-        correoProveedorAdquiriente: dto.correoProveedorAdquiriente,
+        direccionFiscalProveedorAdquirente: dto.direccionFiscalProveedorAdquirente,
+        telefonoProveedorAdquirente: dto.telefonoProveedorAdquirente,
+        correoProveedorAdquirente: dto.correoProveedorAdquirente,
+        datosPagoPliego: dto.datosPagoPliego,
         createdBy: userId,
       },
       include: {
@@ -125,17 +124,15 @@ export class AdquirentePliegoService {
     const updateData: any = { updatedBy: userId };
 
     if (dto.fechaAdquisicion) updateData.fechaAdquisicion = new Date(dto.fechaAdquisicion);
-    if (dto.nombreContactoRetiro !== undefined)
-      updateData.nombreContactoRetiro = dto.nombreContactoRetiro;
-    if (dto.datosPagoPliego !== undefined) updateData.datosPagoPliego = dto.datosPagoPliego;
     if (dto.nombreProveedorAdquiriente !== undefined)
       updateData.nombreProveedorAdquiriente = dto.nombreProveedorAdquiriente;
-    if (dto.direccionFiscalProveedorAdquiriente !== undefined)
-      updateData.direccionFiscalProveedorAdquiriente = dto.direccionFiscalProveedorAdquiriente;
-    if (dto.telefonoProveedorAdquiriente !== undefined)
-      updateData.telefonoProveedorAdquiriente = dto.telefonoProveedorAdquiriente;
-    if (dto.correoProveedorAdquiriente !== undefined)
-      updateData.correoProveedorAdquiriente = dto.correoProveedorAdquiriente;
+    if (dto.direccionFiscalProveedorAdquirente !== undefined)
+      updateData.direccionFiscalProveedorAdquirente = dto.direccionFiscalProveedorAdquirente;
+    if (dto.telefonoProveedorAdquirente !== undefined)
+      updateData.telefonoProveedorAdquirente = dto.telefonoProveedorAdquirente;
+    if (dto.correoProveedorAdquirente !== undefined)
+      updateData.correoProveedorAdquirente = dto.correoProveedorAdquirente;
+    if (dto.datosPagoPliego !== undefined) updateData.datosPagoPliego = dto.datosPagoPliego;
 
     // Si cambian expedienteId o proveedorId, validarlos
     if (dto.expedienteId) {
@@ -368,12 +365,12 @@ export class AdquirentePliegoService {
         fec_adquisicion_pliego_au_au: new Date(adq.fechaAdquisicion).toLocaleDateString('es-VE'),
         nombre_proveedor_adquiriente_au_au:
           adq.nombreProveedorAdquiriente || adq.proveedor?.nombre || 'N/A',
-        direccion_fiscal_proveedor_adquiriente_au_au:
-          adq.direccionFiscalProveedorAdquiriente || adq.proveedor?.direccionFiscal || 'N/A',
-        telefono_proveedor_adquiriente_au_au:
-          adq.telefonoProveedorAdquiriente || adq.proveedor?.telefono || 'N/A',
-        correo_proveedor_adquiriente_au_au:
-          adq.correoProveedorAdquiriente || adq.proveedor?.correo || 'N/A',
+        direccion_fiscal_proveedor_adquirente_au_au:
+          adq.direccionFiscalProveedorAdquirente || adq.proveedor?.direccionFiscal || 'N/A',
+        telefono_proveedor_adquirente_au_au:
+          adq.telefonoProveedorAdquirente || adq.proveedor?.telefono || 'N/A',
+        correo_proveedor_adquirente_au_au:
+          adq.correoProveedorAdquirente || adq.proveedor?.correo || 'N/A',
         datos_pago_pliego_au_au: adq.datosPagoPliego || 'N/A',
       })),
     };

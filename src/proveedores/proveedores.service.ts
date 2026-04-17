@@ -11,6 +11,7 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateProveedorDto } from './dto/create-proveedor.dto';
 import { UpdateProveedorDto } from './dto/update-proveedor.dto';
 import { QueryProveedoresDto } from './dto/query-proveedores.dto';
+import { RegistroRapidoProveedorDto } from './dto/registro-rapido-proveedor.dto';
 import type { IStorageService } from '../common/interfaces/storage-service.interface';
 
 // Mapeo de nombres de campo de archivo al enum TipoDocumentoProveedor
@@ -142,6 +143,63 @@ export class ProveedoresService {
       { timeout: 30000 },
     );
   }
+  /**
+   * Registro rápido (mínimo) de proveedor durante el acto de adquisición/oferta.
+   *
+   * - Si el proveedor ya existe por RIF en el Ente → retorna sus datos con `yaExistia: true`.
+   * - Si no existe → lo crea con los datos básicos disponibles y `estatusValidacion: PENDIENTE`.
+   *
+   * El correo se genera como placeholder único basado en el RIF para cumplir el NOT NULL
+   * sin riesgo de colisión entre proveedores. El ejecutor puede completar luego todos los
+   * datos desde el módulo de Proveedores.
+   */
+  async registroRapido(dto: RegistroRapidoProveedorDto, userId: string, enteId: string) {
+    // 1. Buscar si ya existe un proveedor con ese RIF en el Ente
+    const existente = await this.prisma.proveedor.findFirst({
+      where: {
+        rif: { equals: dto.rif, mode: 'insensitive' },
+        enteId,
+        deletedAt: null,
+      },
+    });
+
+    if (existente) {
+      return {
+        id: existente.id,
+        yaExistia: true,
+        message: `El proveedor con RIF ${dto.rif} ya está registrado en este Ente.`,
+        proveedor: existente,
+      };
+    }
+
+    // 2. Generar correo placeholder único derivado del RIF (evita colisiones)
+    const rifSanitizado = dto.rif.toLowerCase().replace(/\s/g, '');
+    const correoPendiente = `sin-correo.${rifSanitizado}@pendiente.ve`;
+
+    // 3. Crear el proveedor con datos mínimos
+    const nuevo = await this.prisma.proveedor.create({
+      data: {
+        enteId,
+        rif: dto.rif,
+        nombre: dto.nombre,
+        correo: correoPendiente,
+        tipoPersona: 'JURIDICA', // Default para licitaciones; el ejecutor puede ajustarlo luego
+        nombreRepLegal: dto.nombreRepLegal,
+        cedulaRepLegal: dto.cedulaRepLegal,
+        datosRegistroMercantil: dto.datosRegistroMercantil,
+        estatusValidacion: 'PENDIENTE',
+        createdBy: userId,
+      },
+    });
+
+    return {
+      id: nuevo.id,
+      yaExistia: false,
+      message: `Proveedor registrado exitosamente. Complete la información pendiente desde el módulo de Proveedores.`,
+      proveedor: nuevo,
+    };
+  }
+
   /**
    * Estadísticas generales de proveedores del Ente
    */
@@ -585,6 +643,30 @@ export class ProveedoresService {
     });
 
     return { message: 'Proveedor eliminado exitosamente' };
+  }
+
+  /**
+   * Buscar proveedor por RIF en el Ente
+   */
+  async findByRif(rif: string, enteId: string) {
+    const proveedor = await this.prisma.proveedor.findFirst({
+      where: {
+        rif: { equals: rif, mode: 'insensitive' },
+        enteId,
+        deletedAt: null,
+      },
+      include: {
+        documentos: {
+          where: { deletedAt: null },
+        },
+      },
+    });
+
+    if (!proveedor) {
+      throw new NotFoundException(`No se encontró un proveedor con RIF ${rif}`);
+    }
+
+    return proveedor;
   }
 
   /**
