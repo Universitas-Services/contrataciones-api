@@ -1,0 +1,155 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service';
+import { CreateOfertaPresentadaDto } from './dto/create-oferta-presentada.dto';
+import { UpdateOfertaPresentadaDto } from './dto/update-oferta-presentada.dto';
+
+@Injectable()
+export class OfertaPresentadaService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Crear una oferta presentada.
+   */
+  async create(dto: CreateOfertaPresentadaDto, userId: string, enteId: string) {
+    // 1. Verificar el expediente
+    const expediente = await this.prisma.expedienteContratacion.findFirst({
+      where: { id: dto.expedienteId, enteId, deletedAt: null },
+    });
+
+    if (!expediente) {
+      throw new NotFoundException('Expediente no encontrado o no pertenece a este ente');
+    }
+
+    // 2. Si se proporciona proveedorId, validar que exista
+    if (dto.proveedorId) {
+      const proveedor = await this.prisma.proveedor.findFirst({
+        where: { id: dto.proveedorId, enteId, deletedAt: null },
+      });
+      if (!proveedor) {
+        throw new NotFoundException('Proveedor no encontrado en este Ente');
+      }
+    }
+
+    // 3. Crear el registro con los campos mapeados
+    return this.prisma.ofertaPresentada.create({
+      data: {
+        expedienteId: dto.expedienteId,
+        proveedorId: dto.proveedorId,
+        rifProveedorOferente: dto.rifProveedorOferente,
+        nombreProveedorOferente: dto.nombreProveedorOferente,
+        nombreRepLegalOferente: dto.nombreRepLegalOferente,
+        cedulaRepLegalOferente: dto.cedulaRepLegalOferente,
+        datosRegistroMercantilProveedorOferente: dto.datosRegistroMercantilProveedorOferente,
+        numeroSobresEntregados: dto.numeroSobresEntregados,
+        montoOfertaBs: dto.montoOfertaBs,
+        createdBy: userId,
+      },
+      include: {
+        proveedor: { select: { nombre: true, rif: true } },
+      },
+    });
+  }
+
+  /**
+   * Listar ofertas por expediente.
+   */
+  async findAllByExpediente(expedienteId: string, enteId: string) {
+    // Validar expediente pertenencia
+    const expediente = await this.prisma.expedienteContratacion.findFirst({
+      where: { id: expedienteId, enteId, deletedAt: null },
+    });
+
+    if (!expediente) {
+      throw new NotFoundException('Expediente no encontrado');
+    }
+
+    return this.prisma.ofertaPresentada.findMany({
+      where: { expedienteId, deletedAt: null },
+      include: {
+        proveedor: { select: { nombre: true, rif: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Obtener una oferta por ID.
+   */
+  async findOne(id: string, enteId: string) {
+    const oferta = await this.prisma.ofertaPresentada.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+        expediente: { enteId },
+      },
+      include: {
+        proveedor: { select: { nombre: true, rif: true } },
+      },
+    });
+
+    if (!oferta) {
+      throw new NotFoundException('Oferta presentada no encontrada');
+    }
+
+    return oferta;
+  }
+
+  /**
+   * Actualizar oferta.
+   */
+  async update(id: string, dto: UpdateOfertaPresentadaDto, userId: string, enteId: string) {
+    const ofertaActual = await this.findOne(id, enteId);
+
+    const updateData: any = {
+      updatedBy: userId,
+    };
+
+    if (dto.rifProveedorOferente !== undefined)
+      updateData.rifProveedorOferente = dto.rifProveedorOferente;
+    if (dto.nombreProveedorOferente !== undefined)
+      updateData.nombreProveedorOferente = dto.nombreProveedorOferente;
+    if (dto.nombreRepLegalOferente !== undefined)
+      updateData.nombreRepLegalOferente = dto.nombreRepLegalOferente;
+    if (dto.cedulaRepLegalOferente !== undefined)
+      updateData.cedulaRepLegalOferente = dto.cedulaRepLegalOferente;
+    if (dto.datosRegistroMercantilProveedorOferente !== undefined)
+      updateData.datosRegistroMercantilProveedorOferente =
+        dto.datosRegistroMercantilProveedorOferente;
+    if (dto.numeroSobresEntregados !== undefined)
+      updateData.numeroSobresEntregados = dto.numeroSobresEntregados;
+    if (dto.montoOfertaBs !== undefined) updateData.montoOfertaBs = dto.montoOfertaBs;
+
+    if (dto.proveedorId) {
+      const proveedor = await this.prisma.proveedor.findFirst({
+        where: { id: dto.proveedorId, enteId, deletedAt: null },
+      });
+      if (!proveedor) throw new NotFoundException('Proveedor no encontrado');
+      updateData.proveedorId = dto.proveedorId;
+    }
+
+    return this.prisma.ofertaPresentada.update({
+      where: { id: ofertaActual.id },
+      data: updateData,
+      include: {
+        proveedor: { select: { nombre: true, rif: true } },
+      },
+    });
+  }
+
+  /**
+   * Eliminar oferta (soft delete).
+   */
+  async remove(id: string, userId: string, enteId: string) {
+    const oferta = await this.findOne(id, enteId);
+
+    await this.prisma.ofertaPresentada.update({
+      where: { id: oferta.id },
+      data: {
+        deletedAt: new Date(),
+        updatedBy: userId,
+      },
+    });
+
+    return { message: 'Oferta eliminada exitosamente' };
+  }
+}

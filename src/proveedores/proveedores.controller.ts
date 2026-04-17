@@ -31,6 +31,7 @@ import { CreateProveedorDto } from './dto/create-proveedor.dto';
 import { UpdateProveedorDto } from './dto/update-proveedor.dto';
 import { QueryProveedoresDto } from './dto/query-proveedores.dto';
 import { AprobarProveedorDto } from './dto/aprobar-proveedor.dto';
+import { RegistroRapidoProveedorDto } from './dto/registro-rapido-proveedor.dto';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { TenantGuard } from '../common/guards/tenant.guard';
@@ -330,6 +331,39 @@ export class ProveedoresController {
     return this.proveedoresService.getEstadisticas(user.enteId);
   }
 
+  @Post('registro-rapido')
+  @Roles('EJECUTOR', 'ADMIN_ENTE')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Registro rápido de proveedor',
+    description:
+      'Crea un proveedor con los datos mínimos disponibles durante el acto de adquisición ' +
+      'de pliego o recepción de ofertas. Si el proveedor ya existe por RIF, devuelve sus datos ' +
+      'con `yaExistia: true` sin generar error. El proveedor queda con estatus PENDIENTE y ' +
+      'puede completar su información luego desde el módulo de Proveedores.',
+  })
+  @ApiBody({
+    type: RegistroRapidoProveedorDto,
+    description: 'Datos mínimos del proveedor obtenidos durante el acto',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Proveedor creado o proveedor existente encontrado',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid', description: 'ID del proveedor (nuevo o existente)' },
+        yaExistia: { type: 'boolean', description: 'true si el proveedor ya estaba registrado' },
+        message: { type: 'string' },
+        proveedor: { type: 'object' },
+      },
+    },
+  })
+  @ApiResponse({ status: 403, description: 'No autorizado (solo EJECUTOR y ADMIN_ENTE)' })
+  registroRapido(@Body() dto: RegistroRapidoProveedorDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.proveedoresService.registroRapido(dto, user.id, user.enteId);
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Ver proveedor',
@@ -340,6 +374,18 @@ export class ProveedoresController {
   @ApiResponse({ status: 404, description: 'Proveedor no encontrado' })
   findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.proveedoresService.findOne(id, user.enteId);
+  }
+
+  @Get('rif/:rif')
+  @ApiOperation({
+    summary: 'Buscar proveedor por RIF',
+    description: 'Busca un proveedor específico por su RIF dentro del Ente del usuario.',
+  })
+  @ApiParam({ name: 'rif', description: 'RIF del proveedor' })
+  @ApiResponse({ status: 200, description: 'Detalles del proveedor' })
+  @ApiResponse({ status: 404, description: 'Proveedor no encontrado' })
+  findByRif(@Param('rif') rif: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.proveedoresService.findByRif(rif, user.enteId);
   }
 
   @Delete(':id')

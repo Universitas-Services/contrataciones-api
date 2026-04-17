@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
+  IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -21,24 +22,38 @@ export class CreateComisionContratacionesDto {
   @IsNotEmpty()
   denominacionComision: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Datos de designación de la comisión',
     example: 'Resolución Nro. 005',
-    required: false,
   })
   @IsString()
   @IsOptional()
   datosDesignacionComision?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Indica si la comisión está certificada',
     example: false,
     default: false,
-    required: false,
   })
   @IsBoolean()
   @IsOptional()
   comisionCertificada?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Número de teléfono de contacto de la comisión',
+    example: '0251-234-5678',
+  })
+  @IsString()
+  @IsOptional()
+  telefono?: string;
+
+  @ApiPropertyOptional({
+    description: 'Correo electrónico de contacto de la comisión',
+    example: 'comision@alcaldia.gob.ve',
+  })
+  @IsEmail({}, { message: 'El correo electrónico de la comisión no tiene un formato válido' })
+  @IsOptional()
+  correoElectronico?: string;
 
   @ApiProperty({
     description: 'Lista de los 8 miembros requeridos (1 principal y 1 suplente por cada área)',

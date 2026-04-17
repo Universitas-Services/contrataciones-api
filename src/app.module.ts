@@ -22,6 +22,7 @@ import { DirectorioActoresModule } from './directorio-actores/directorio-actores
 import { FasePreparatoriaModule } from './fase-preparatoria/fase-preparatoria.module';
 import { PresupuestoItemModule } from './presupuesto-item/presupuesto-item.module';
 import { GeneradorDocumentosModule } from './generador-documentos/generador-documentos.module';
+import { OfertaPresentadaModule } from './oferta-presentada/oferta-presentada.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { GeneradorDocumentosModule } from './generador-documentos/generador-docu
     FasePreparatoriaModule,
     PresupuestoItemModule,
     GeneradorDocumentosModule,
+    OfertaPresentadaModule,
   ],
   providers: [
     {

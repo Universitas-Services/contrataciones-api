@@ -90,6 +90,7 @@ enum TipoDocumento {
   ACTA_RECEPCION
   ACTA_INICIO
   LLAMADO_PARTICIPAR
+  REGISTRO_ADQUIRENTES
 }
 
 enum TipoDocumentoProveedor {
@@ -364,6 +365,8 @@ model ComisionContrataciones {
   datosDesignacionComision String? @map("datos_designacion_comision")
   comisionCertificada      Boolean @default(false) @map("ind_comision_certificado")
   activa                   Boolean @default(true) @map("ind_activa")
+  telefono                 String? @map("telefono_comision") @db.VarChar(50)
+  correoElectronico        String? @map("correo_electronico_comision") @db.VarChar(100)
 
   // Auditoría
   createdAt DateTime  @default(now())
@@ -752,13 +755,12 @@ model AdquirentePliego {
   expedienteId String @map("id_expediente_au_au")
   proveedorId  String @map("id_proveedor")
 
-  fechaAdquisicion                    DateTime @map("fec_adquisicion_pliego_au_au")
-  nombreContactoRetiro                String   @map("nombre_contacto_retiro")
-  datosPagoPliego                     String?  @map("datos_pago_pliego_au_au") @db.VarChar(255)
-  nombreProveedorAdquiriente          String?  @map("nombre_proveedor_adquiriente_au_au") @db.VarChar(100)
-  direccionFiscalProveedorAdquiriente String?  @map("direccion_fiscal_proveedor_adquiriente_au_au") @db.VarChar(100)
-  telefonoProveedorAdquiriente        String?  @map("telefono_proveedor_adquiriente_au_au") @db.VarChar(100)
-  correoProveedorAdquiriente          String?  @map("correo_proveedor_adquiriente_au_au") @db.VarChar(100)
+  fechaAdquisicion               DateTime @map("fec_adquisicion_pliego_au_au")
+  nombreProveedorAdquiriente     String   @map("nombre_proveedor_adquiriente_au_au") @db.VarChar(255)
+  direccionFiscalProveedorAdquirente String @map("direccion_fiscal_proveedor_adquirente_au_au") @db.VarChar(255)
+  telefonoProveedorAdquirente    String   @map("telefono_proveedor_adquirente_au_au") @db.VarChar(100)
+  correoProveedorAdquirente      String   @map("correo_proveedor_adquirente_au_au") @db.VarChar(100)
+  datosPagoPliego                String?  @map("datos_pago_pliego_au_au") @db.VarChar(255)
 
   // Auditoría
   createdAt DateTime  @default(now())
@@ -778,17 +780,17 @@ model AdquirentePliego {
 
 // Ofertas presentadas por proveedores
 model OfertaPresentada {
-  id           String @id @default(uuid())
+  id           String  @id @default(uuid())
   expedienteId String
-  proveedorId  String
+  proveedorId  String?
 
-  fechaPresentacion           DateTime
-  nombreRepLegalActo          String
-  cedulaRepLegalActo          String
-  datosRegistroMercantilTexto String?
-  numeroSobresEntregados      Int
-  montoOfertaBs               Decimal  @db.Decimal(15, 2)
-  presentoGarantiaOferta      Boolean  @default(false)
+  rifProveedorOferente                    String  @map("rif_proveedor_oferente_au_au") @db.VarChar(20)
+  nombreProveedorOferente                 String  @map("nombre_proveedor_oferente_au_au") @db.VarChar(255)
+  nombreRepLegalOferente                  String  @map("nombre_rep_legal_oferente_au_au") @db.VarChar(255)
+  cedulaRepLegalOferente                  String  @map("cedula_rep_legal_oferente_au_au") @db.VarChar(20)
+  datosRegistroMercantilProveedorOferente String? @map("datos_registro_mercantil_proveedor_oferente_au_au") @db.Text
+  numeroSobresEntregados                  Int     @map("num_sobres_entregados_au_au")
+  montoOfertaBs                           Decimal @map("monto_oferta_bs_au_au") @db.Decimal(15, 2)
 
   // Auditoría
   createdAt DateTime  @default(now())
@@ -800,7 +802,7 @@ model OfertaPresentada {
 
   // Relaciones
   expediente   ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
-  proveedor    Proveedor              @relation(fields: [proveedorId], references: [id])
+  proveedor    Proveedor?             @relation(fields: [proveedorId], references: [id])
   evaluacion   EvaluacionResultados?
   adjudicacion Adjudicacion?
 
