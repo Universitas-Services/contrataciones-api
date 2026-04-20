@@ -61,8 +61,47 @@ export class GeneradorDocumentosController {
   }
 
   // ==========================
-  // PREVISUALIZACIÓN (PREVIEW)
+  // GESTIÓN DE PARTICIPANTES
   // ==========================
+
+  @ApiOperation({ summary: 'Generar Registro de Adquirentes del Pliego' })
+  @Post('generar/registro-adquirentes/:expedienteId')
+  async generarRegistroAdquirentes(
+    @Param('expedienteId') expedienteId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const data = await this.generadorDocumentosService.generarRegistroAdquirentes(
+      expedienteId,
+      user.id,
+    );
+    return { message: 'Registro de Adquirentes generado exitosamente', data };
+  }
+
+  @ApiOperation({ summary: 'Generar Acta de Recepción de Sobres' })
+  @Post('generar/acta-recepcion-sobres/:expedienteId')
+  async generarActaRecepcionSobres(
+    @Param('expedienteId') expedienteId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const data = await this.generadorDocumentosService.generarActaRecepcionSobres(
+      expedienteId,
+      user.id,
+    );
+    return { message: 'Acta de Recepción de Sobres generada exitosamente', data };
+  }
+
+  @ApiOperation({ summary: 'Generar Acta de Apertura de Sobres' })
+  @Post('generar/acta-apertura-sobres/:expedienteId')
+  async generarActaAperturaSobres(
+    @Param('expedienteId') expedienteId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const data = await this.generadorDocumentosService.generarActaAperturaSobres(
+      expedienteId,
+      user.id,
+    );
+    return { message: 'Acta de Apertura de Sobres generada exitosamente', data };
+  }
 
   @ApiOperation({ summary: 'Obtener enlace de previsualización Acta de Inicio' })
   @Get('preview/acta-inicio/:expedienteId')
@@ -100,6 +139,42 @@ export class GeneradorDocumentosController {
   @Get('download/llamado-participar/:expedienteId')
   async downloadLlamadoParticipar(@Param('expedienteId') expedienteId: string) {
     return this.generadorDocumentosService.download(expedienteId, 'LLAMADO_PARTICIPAR');
+  }
+
+  @ApiOperation({ summary: 'Preview Registro de Adquirentes' })
+  @Get('preview/registro-adquirentes/:expedienteId')
+  async previewRegistroAdquirentes(@Param('expedienteId') expedienteId: string) {
+    return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'REGISTRO_ADQUIRENTES');
+  }
+
+  @ApiOperation({ summary: 'Preview Acta de Recepción de Sobres' })
+  @Get('preview/acta-recepcion-sobres/:expedienteId')
+  async previewActaRecepcionSobres(@Param('expedienteId') expedienteId: string) {
+    return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'ACTA_RECEPCION');
+  }
+
+  @ApiOperation({ summary: 'Preview Acta de Apertura de Sobres' })
+  @Get('preview/acta-apertura-sobres/:expedienteId')
+  async previewActaAperturaSobres(@Param('expedienteId') expedienteId: string) {
+    return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'ACTA_APERTURA');
+  }
+
+  @ApiOperation({ summary: 'Descargar Registro de Adquirentes' })
+  @Get('download/registro-adquirentes/:expedienteId')
+  async downloadRegistroAdquirentes(@Param('expedienteId') expedienteId: string) {
+    return this.generadorDocumentosService.download(expedienteId, 'REGISTRO_ADQUIRENTES');
+  }
+
+  @ApiOperation({ summary: 'Descargar Acta de Recepción de Sobres' })
+  @Get('download/acta-recepcion-sobres/:expedienteId')
+  async downloadActaRecepcionSobres(@Param('expedienteId') expedienteId: string) {
+    return this.generadorDocumentosService.download(expedienteId, 'ACTA_RECEPCION');
+  }
+
+  @ApiOperation({ summary: 'Descargar Acta de Apertura de Sobres' })
+  @Get('download/acta-apertura-sobres/:expedienteId')
+  async downloadActaAperturaSobres(@Param('expedienteId') expedienteId: string) {
+    return this.generadorDocumentosService.download(expedienteId, 'ACTA_APERTURA');
   }
 
   // ==========================

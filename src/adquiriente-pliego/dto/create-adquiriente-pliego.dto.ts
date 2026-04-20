@@ -6,9 +6,10 @@ export class CreateAdquirentePliegoDto {
   @IsUUID()
   expedienteId: string;
 
-  @ApiProperty({ description: 'ID del proveedor registrado', example: 'uuid-proveedor' })
+  @ApiPropertyOptional({ description: 'ID del proveedor registrado', example: 'uuid-proveedor' })
   @IsUUID()
-  proveedorId: string;
+  @IsOptional()
+  proveedorId?: string;
 
   @ApiProperty({
     description: 'Fecha de adquisición del pliego (fec_adquisicion_pliego_au_au)',

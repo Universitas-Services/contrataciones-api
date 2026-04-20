@@ -373,7 +373,235 @@ export class GeneradorDocumentosService {
     );
   }
 
-  // --- Funciones de Previsualización y Envío ---
+  // =========================================================================
+  // GESTIÓN DE PARTICIPANTES — Registro de Adquirentes, Recepción y Apertura
+  // =========================================================================
+
+  /**
+   * Obtiene datos mapeados para el Registro de Adquirentes del Pliego.
+   */
+  async getDatosRegistroAdquirentes(expedienteId: string) {
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      include: {
+        ente: true,
+        comision: { include: { miembros: true } },
+        adquirientesPliego: {
+          where: { deletedAt: null },
+          include: { proveedor: { select: { nombre: true, rif: true } } },
+          orderBy: { fechaAdquisicion: 'asc' },
+        },
+      },
+    });
+
+    if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
+
+    const { ente, comision } = expediente;
+
+    const getMiembro = (area: string, tipo?: string) => {
+      return (
+        comision?.miembros?.find(
+          (m) => m.areaRepresentacion === area && (!tipo || m.tipoMiembro === tipo),
+        ) || null
+      );
+    };
+
+    const secretario = getMiembro('SECRETARIO_A', 'MIEMBRO_PRINCIPAL');
+
+    return {
+      nom_ente_contratante: ente?.nombre || '___',
+      cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
+      desc_objeto_contratacion: expediente.descripcionObjeto || '___',
+      denominacion_comision: comision?.denominacionComision || '___',
+      datos_designacion_comision: comision?.datosDesignacionComision || '___',
+      fec_acto_adquisicion_pliego: formatDateToSpanishLong(new Date()),
+      // Loop de adquirientes — nombre "adquirientes" con "i" para coincidir con la plantilla
+      adquirientes: expediente.adquirientesPliego.map((adq, index) => ({
+        numero: index + 1,
+        fec_adquisicion_pliego_au_au: formatToDDMMYYYY(adq.fechaAdquisicion),
+        nombre_proveedor_adquiriente_au_au:
+          adq.nombreProveedorAdquiriente || adq.proveedor?.nombre || '___',
+        direccion_fiscal_proveedor_adquirente_au_au:
+          adq.direccionFiscalProveedorAdquirente || '___',
+        telefono_proveedor_adquirente_au_au: adq.telefonoProveedorAdquirente || '___',
+        correo_proveedor_adquirente_au_au: adq.correoProveedorAdquirente || '___',
+        datos_pago_pliego_au_au: adq.datosPagoPliego || '___',
+      })),
+      nom_completo_miembro_secretaria: secretario?.nombreCompletoMiembro || '___',
+      cedula_miembro_secretaria: secretario?.cedulaMiembro || '___',
+    };
+  }
+
+  async generarRegistroAdquirentes(expedienteId: string, userId: string) {
+    const data = await this.getDatosRegistroAdquirentes(expedienteId);
+    return this.generarDocumento(
+      expedienteId,
+      'REGISTRO_ADQUIRENTES',
+      'registro-adquirentes-template.docx',
+      userId,
+      data,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Obtiene datos mapeados para el Acta de Recepción de Sobres.
+   * No incluye monto — en este acto solo se recibe físicamente el sobre.
+   */
+  async getDatosActaRecepcionSobres(expedienteId: string) {
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      include: {
+        ente: true,
+        comision: { include: { miembros: true } },
+        fasePreparatoria: true,
+        cronograma: true,
+        ofertas: {
+          where: { deletedAt: null },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
+
+    const { ente, comision, fasePreparatoria, cronograma } = expediente;
+    const getMiembroPrincipal = (area: string) =>
+      comision?.miembros?.find(
+        (m) => m.areaRepresentacion === area && m.tipoMiembro === 'MIEMBRO_PRINCIPAL',
+      ) || null;
+
+    return {
+      nom_ente_contratante: ente?.nombre || '___',
+      cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
+      desc_objeto_contratacion: expediente.descripcionObjeto || '___',
+      denominacion_comision: comision?.denominacionComision || '___',
+      datos_designacion_comision: comision?.datosDesignacionComision || '___',
+      dir_fiscal_ente: ente?.direccionFiscal || '___',
+      fec_acto_recep_aper_sobres_au_au: formatDateToSpanishLong(
+        cronograma?.fechaActoRecepcionAperturaSobres,
+      ),
+      hora_acto_recep_aper_au_au: fasePreparatoria?.horaActoRecepAper || '___',
+      loc_ciudad_ente: ente?.ciudad || '___',
+      // Loop con clave "adquirientes" para coincidir con {#adquirientes} de la plantilla
+      adquirientes: expediente.ofertas.map((of, index) => ({
+        numero: index + 1,
+        nombre_proveedor_oferente_au_au: of.nombreProveedorOferente || '___',
+        rif_proveedor_oferente_au_au: of.rifProveedorOferente || '___',
+        nombre_rep_legal_oferente_au_au: of.nombreRepLegalOferente || '___',
+        cedula_rep_legal_oferente_au_au: of.cedulaRepLegalOferente || '___',
+        num_sobres_entregados_au_au: of.numeroSobresEntregados,
+      })),
+      nom_completo_miembro_juridica:
+        getMiembroPrincipal('AREA_JURIDICA')?.nombreCompletoMiembro || '___',
+      cedula_miembro_juridica: getMiembroPrincipal('AREA_JURIDICA')?.cedulaMiembro || '___',
+      // Alias para {cedula_miembro_juridico} (sin "a") que aparece en el texto narrativo
+      cedula_miembro_juridico: getMiembroPrincipal('AREA_JURIDICA')?.cedulaMiembro || '___',
+      nom_completo_miembro_economica:
+        getMiembroPrincipal('AREA_ECONOMICA_FINANCIERA')?.nombreCompletoMiembro || '___',
+      cedula_miembro_economica:
+        getMiembroPrincipal('AREA_ECONOMICA_FINANCIERA')?.cedulaMiembro || '___',
+      nom_completo_miembro_tecnica:
+        getMiembroPrincipal('AREA_TECNICA')?.nombreCompletoMiembro || '___',
+      cedula_miembro_tecnica: getMiembroPrincipal('AREA_TECNICA')?.cedulaMiembro || '___',
+      nom_completo_miembro_secretaria:
+        getMiembroPrincipal('SECRETARIO_A')?.nombreCompletoMiembro || '___',
+      cedula_miembro_secretaria: getMiembroPrincipal('SECRETARIO_A')?.cedulaMiembro || '___',
+    };
+  }
+
+  async generarActaRecepcionSobres(expedienteId: string, userId: string) {
+    const data = await this.getDatosActaRecepcionSobres(expedienteId);
+    return this.generarDocumento(
+      expedienteId,
+      'ACTA_RECEPCION',
+      'acta-recepcion-sobres-template.docx',
+      userId,
+      data,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Obtiene datos mapeados para el Acta de Apertura de Sobres.
+   * Incluye los montos de cada oferta (se abre el sobre en este acto).
+   */
+  async getDatosActaAperturaSobres(expedienteId: string) {
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      include: {
+        ente: true,
+        comision: { include: { miembros: true } },
+        fasePreparatoria: true,
+        cronograma: true,
+        ofertas: {
+          where: { deletedAt: null },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
+
+    const { ente, comision, fasePreparatoria, cronograma } = expediente;
+    const getMiembroPrincipal = (area: string) =>
+      comision?.miembros?.find(
+        (m) => m.areaRepresentacion === area && m.tipoMiembro === 'MIEMBRO_PRINCIPAL',
+      ) || null;
+
+    return {
+      nom_ente_contratante: ente?.nombre || '___',
+      cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
+      desc_objeto_contratacion: expediente.descripcionObjeto || '___',
+      denominacion_comision: comision?.denominacionComision || '___',
+      datos_designacion_comision: comision?.datosDesignacionComision || '___',
+      dir_fiscal_ente: ente?.direccionFiscal || '___',
+      fec_acto_recep_aper_sobres_au_au: formatDateToSpanishLong(
+        cronograma?.fechaActoRecepcionAperturaSobres,
+      ),
+      hora_acto_recep_aper_au_au: fasePreparatoria?.horaActoRecepAper || '___',
+      loc_ciudad_ente: ente?.ciudad || '___',
+      // Loop con clave "adquirientes" para coincidir con {#adquirientes} de la plantilla
+      adquirientes: expediente.ofertas.map((of, index) => ({
+        numero: index + 1,
+        nombre_proveedor_oferente_au_au: of.nombreProveedorOferente || '___',
+        rif_proveedor_oferente_au_au: of.rifProveedorOferente || '___',
+        nombre_rep_legal_oferente_au_au: of.nombreRepLegalOferente || '___',
+        cedula_rep_legal_oferente_au_au: of.cedulaRepLegalOferente || '___',
+        datos_registro_mercantil_proveedor_oferente_au_au:
+          of.datosRegistroMercantilProveedorOferente || '___',
+        monto_oferta_bs_au_au: formatCurrencyVE(Number(of.montoOfertaBs)),
+      })),
+      nom_completo_miembro_juridica:
+        getMiembroPrincipal('AREA_JURIDICA')?.nombreCompletoMiembro || '___',
+      cedula_miembro_juridica: getMiembroPrincipal('AREA_JURIDICA')?.cedulaMiembro || '___',
+      // Alias para el marcador con typo {cedula_miembro_juridico} (sin "a") que aparece en el texto narrativo
+      cedula_miembro_juridico: getMiembroPrincipal('AREA_JURIDICA')?.cedulaMiembro || '___',
+      nom_completo_miembro_economica:
+        getMiembroPrincipal('AREA_ECONOMICA_FINANCIERA')?.nombreCompletoMiembro || '___',
+      cedula_miembro_economica:
+        getMiembroPrincipal('AREA_ECONOMICA_FINANCIERA')?.cedulaMiembro || '___',
+      nom_completo_miembro_tecnica:
+        getMiembroPrincipal('AREA_TECNICA')?.nombreCompletoMiembro || '___',
+      cedula_miembro_tecnica: getMiembroPrincipal('AREA_TECNICA')?.cedulaMiembro || '___',
+      nom_completo_miembro_secretaria:
+        getMiembroPrincipal('SECRETARIO_A')?.nombreCompletoMiembro || '___',
+      cedula_miembro_secretaria: getMiembroPrincipal('SECRETARIO_A')?.cedulaMiembro || '___',
+    };
+  }
+
+  async generarActaAperturaSobres(expedienteId: string, userId: string) {
+    const data = await this.getDatosActaAperturaSobres(expedienteId);
+    return this.generarDocumento(
+      expedienteId,
+      'ACTA_APERTURA',
+      'acta-apertura-sobres-template.docx',
+      userId,
+      data,
+    );
+  }
 
   async findByExpedienteYTipo(expedienteId: string, tipoDocumento: TipoDocumento) {
     const doc = await this.prisma.documentoGenerado.findFirst({

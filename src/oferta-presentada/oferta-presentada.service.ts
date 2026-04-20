@@ -2,10 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateOfertaPresentadaDto } from './dto/create-oferta-presentada.dto';
 import { UpdateOfertaPresentadaDto } from './dto/update-oferta-presentada.dto';
+import { ProveedoresService } from '../proveedores/proveedores.service';
 
 @Injectable()
 export class OfertaPresentadaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly proveedoresService: ProveedoresService,
+  ) {}
 
   /**
    * Crear una oferta presentada.
@@ -20,10 +24,27 @@ export class OfertaPresentadaService {
       throw new NotFoundException('Expediente no encontrado o no pertenece a este ente');
     }
 
-    // 2. Si se proporciona proveedorId, validar que exista
-    if (dto.proveedorId) {
+    // 2. Manejo de Proveedor y Registro Express
+    let proveedorId = dto.proveedorId;
+
+    if (!proveedorId) {
+      // Si no viene el ID, intentamos registro expreso usando los datos de la oferta
+      const resRegistro = await this.proveedoresService.registroRapido(
+        {
+          rif: dto.rifProveedorOferente,
+          nombre: dto.nombreProveedorOferente,
+          nombreRepLegal: dto.nombreRepLegalOferente,
+          cedulaRepLegal: dto.cedulaRepLegalOferente,
+          datosRegistroMercantil: dto.datosRegistroMercantilProveedorOferente,
+        },
+        userId,
+        enteId,
+      );
+      proveedorId = resRegistro.id;
+    } else {
+      // Si viene el ID, validar que exista
       const proveedor = await this.prisma.proveedor.findFirst({
-        where: { id: dto.proveedorId, enteId, deletedAt: null },
+        where: { id: proveedorId, enteId, deletedAt: null },
       });
       if (!proveedor) {
         throw new NotFoundException('Proveedor no encontrado en este Ente');
@@ -34,7 +55,7 @@ export class OfertaPresentadaService {
     return this.prisma.ofertaPresentada.create({
       data: {
         expedienteId: dto.expedienteId,
-        proveedorId: dto.proveedorId,
+        proveedorId: proveedorId, // Usamos el ID (proporcionado o generado)
         rifProveedorOferente: dto.rifProveedorOferente,
         nombreProveedorOferente: dto.nombreProveedorOferente,
         nombreRepLegalOferente: dto.nombreRepLegalOferente,

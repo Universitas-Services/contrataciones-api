@@ -39,13 +39,15 @@ export class AdquirentePliegoService {
       );
     }
 
-    // Verificar que el proveedor exista
-    const proveedor = await this.prisma.proveedor.findFirst({
-      where: { id: dto.proveedorId, enteId, deletedAt: null },
-    });
+    // Verificar que el proveedor exista (solo si se proporciona el ID)
+    if (dto.proveedorId) {
+      const proveedor = await this.prisma.proveedor.findFirst({
+        where: { id: dto.proveedorId, enteId, deletedAt: null },
+      });
 
-    if (!proveedor) {
-      throw new NotFoundException('Proveedor no encontrado o no pertenece a este ente');
+      if (!proveedor) {
+        throw new NotFoundException('Proveedor no encontrado o no pertenece a este ente');
+      }
     }
 
     return this.prisma.adquirentePliego.create({
