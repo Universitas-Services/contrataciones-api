@@ -2,13 +2,15 @@ import { IsString, IsOptional, IsUUID, IsNumber } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateOfertaPresentadaDto {
-  @ApiProperty({ description: 'ID del expediente de contratación', example: 'uuid-expediente' })
+  @ApiProperty({
+    description: 'ID del expediente de contratación',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
   @IsUUID()
   expedienteId: string;
 
   @ApiPropertyOptional({
     description: 'ID del proveedor si ya está registrado en el sistema',
-    example: 'uuid-proveedor',
   })
   @IsUUID()
   @IsOptional()
@@ -30,14 +32,14 @@ export class CreateOfertaPresentadaDto {
 
   @ApiProperty({
     description: 'Nombre y apellido del Representante Legal (nombre_rep_legal_oferente_au_au)',
-    example: 'Juan Pérez',
+    example: 'Jesús Alberto Rodríguez',
   })
   @IsString()
   nombreRepLegalOferente: string;
 
   @ApiProperty({
     description: 'Cédula de identidad del Representante Legal (cedula_rep_legal_oferente_au_au)',
-    example: 'V-12345678',
+    example: 'V-15.845.210',
   })
   @IsString()
   cedulaRepLegalOferente: string;
@@ -45,7 +47,6 @@ export class CreateOfertaPresentadaDto {
   @ApiPropertyOptional({
     description:
       'Datos del Registro Mercantil de la empresa oferente (datos_registro_mercantil_proveedor_oferente_au_au)',
-    example: 'Registro Mercantil Segundo del Estado Lara, bajo el N° 5, Tomo 10-A del Año 2010',
   })
   @IsString()
   @IsOptional()
