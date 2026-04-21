@@ -226,7 +226,7 @@ export class AdquirentePliegoController {
       properties: {
         emailDestino: {
           type: 'string',
-          example: 'destinatario@ejemplo.com',
+          example: 'representante.legal@corporaciontec.com.ve',
           description: 'Correo electrónico del destinatario',
         },
       },

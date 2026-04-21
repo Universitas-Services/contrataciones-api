@@ -2,25 +2,28 @@ import { IsString, IsOptional, IsUUID, IsDateString, IsEmail } from 'class-valid
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateAdquirentePliegoDto {
-  @ApiProperty({ description: 'ID del expediente de contratación', example: 'uuid-expediente' })
+  @ApiProperty({
+    description: 'ID del expediente de contratación',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
   @IsUUID()
   expedienteId: string;
 
-  @ApiPropertyOptional({ description: 'ID del proveedor registrado', example: 'uuid-proveedor' })
+  @ApiPropertyOptional({ description: 'ID del proveedor registrado' })
   @IsUUID()
   @IsOptional()
   proveedorId?: string;
 
   @ApiProperty({
     description: 'Fecha de adquisición del pliego (fec_adquisicion_pliego_au_au)',
-    example: '2026-03-09',
+    example: '2026-04-20',
   })
   @IsDateString()
   fechaAdquisicion: string;
 
   @ApiProperty({
     description: 'Nombre de la empresa que adquiere el pliego (nombre_proveedor_adquiriente_au_au)',
-    example: 'Constructora Los Andes C.A.',
+    example: 'CORPORACIÓN TECNOLÓGICA DEL CENTRO, C.A.',
   })
   @IsString()
   nombreProveedorAdquiriente: string;
@@ -51,7 +54,6 @@ export class CreateAdquirentePliegoDto {
 
   @ApiPropertyOptional({
     description: 'Número de referencia del depósito o transferencia (datos_pago_pliego_au_au)',
-    example: 'REF-0001234567890',
   })
   @IsString()
   @IsOptional()

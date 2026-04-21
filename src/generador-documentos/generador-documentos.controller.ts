@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, UseGuards, Body } from '@nestjs/common';
+import { Controller, Post, Get, Param, UseGuards, Body, Res } from '@nestjs/common';
 import { GeneradorDocumentosService } from './generador-documentos.service';
 import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -127,18 +127,27 @@ export class GeneradorDocumentosController {
 
   @ApiOperation({ summary: 'Descargar Acta de Inicio generada' })
   @Get('download/acta-inicio/:expedienteId')
-  async downloadActaInicio(@Param('expedienteId') expedienteId: string) {
-    return this.generadorDocumentosService.download(expedienteId, 'ACTA_INICIO');
+  async downloadActaInicio(
+    @Param('expedienteId') expedienteId: string,
+    @Res({ passthrough: false }) res: any,
+  ) {
+    return this.downloadDocumentoInternal(expedienteId, 'ACTA_INICIO', res);
   }
 
   @Get('download/pliego-condiciones/:expedienteId')
-  async downloadPliegoCondiciones(@Param('expedienteId') expedienteId: string) {
-    return this.generadorDocumentosService.download(expedienteId, 'PLIEGO_CONDICIONES');
+  async downloadPliegoCondiciones(
+    @Param('expedienteId') expedienteId: string,
+    @Res({ passthrough: false }) res: any,
+  ) {
+    return this.downloadDocumentoInternal(expedienteId, 'PLIEGO_CONDICIONES', res);
   }
 
   @Get('download/llamado-participar/:expedienteId')
-  async downloadLlamadoParticipar(@Param('expedienteId') expedienteId: string) {
-    return this.generadorDocumentosService.download(expedienteId, 'LLAMADO_PARTICIPAR');
+  async downloadLlamadoParticipar(
+    @Param('expedienteId') expedienteId: string,
+    @Res({ passthrough: false }) res: any,
+  ) {
+    return this.downloadDocumentoInternal(expedienteId, 'LLAMADO_PARTICIPAR', res);
   }
 
   @ApiOperation({ summary: 'Preview Registro de Adquirentes' })
@@ -161,20 +170,41 @@ export class GeneradorDocumentosController {
 
   @ApiOperation({ summary: 'Descargar Registro de Adquirentes' })
   @Get('download/registro-adquirentes/:expedienteId')
-  async downloadRegistroAdquirentes(@Param('expedienteId') expedienteId: string) {
-    return this.generadorDocumentosService.download(expedienteId, 'REGISTRO_ADQUIRENTES');
+  async downloadRegistroAdquirentes(
+    @Param('expedienteId') expedienteId: string,
+    @Res({ passthrough: false }) res: any,
+  ) {
+    return this.downloadDocumentoInternal(expedienteId, 'REGISTRO_ADQUIRENTES', res);
   }
 
   @ApiOperation({ summary: 'Descargar Acta de Recepción de Sobres' })
   @Get('download/acta-recepcion-sobres/:expedienteId')
-  async downloadActaRecepcionSobres(@Param('expedienteId') expedienteId: string) {
-    return this.generadorDocumentosService.download(expedienteId, 'ACTA_RECEPCION');
+  async downloadActaRecepcionSobres(
+    @Param('expedienteId') expedienteId: string,
+    @Res({ passthrough: false }) res: any,
+  ) {
+    return this.downloadDocumentoInternal(expedienteId, 'ACTA_RECEPCION', res);
   }
 
   @ApiOperation({ summary: 'Descargar Acta de Apertura de Sobres' })
   @Get('download/acta-apertura-sobres/:expedienteId')
-  async downloadActaAperturaSobres(@Param('expedienteId') expedienteId: string) {
-    return this.generadorDocumentosService.download(expedienteId, 'ACTA_APERTURA');
+  async downloadActaAperturaSobres(
+    @Param('expedienteId') expedienteId: string,
+    @Res({ passthrough: false }) res: any,
+  ) {
+    return this.downloadDocumentoInternal(expedienteId, 'ACTA_APERTURA', res);
+  }
+
+  @ApiOperation({
+    summary: 'Obtener el estado de generación de todos los documentos de un expediente',
+  })
+  @Get('status-expediente/:expedienteId')
+  async getStatusExpediente(@Param('expedienteId') expedienteId: string) {
+    const data = await this.generadorDocumentosService.getStatusPorExpediente(expedienteId);
+    return {
+      message: 'Estado de documentos obtenido exitosamente',
+      data,
+    };
   }
 
   // ==========================
@@ -215,5 +245,42 @@ export class GeneradorDocumentosController {
       'LLAMADO_PARTICIPAR',
       emailDestino,
     );
+  }
+
+  // ==========================
+  // MÉTODO INTERNO — Lógica compartida de descarga proxy
+  // ==========================
+
+  private async downloadDocumentoInternal(expedienteId: string, tipoDocumento: any, res: any) {
+    const result = await this.generadorDocumentosService.download(expedienteId, tipoDocumento);
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const axios = require('axios');
+
+      const response = await axios.get(result.url, {
+        responseType: 'arraybuffer',
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+      });
+
+      const fileBuffer = Buffer.from(response.data);
+
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      );
+      res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
+      res.setHeader('Content-Length', fileBuffer.length.toString());
+      res.setHeader('Cache-Control', 'no-cache');
+
+      res.end(fileBuffer);
+    } catch (error: any) {
+      res.status(500).json({
+        statusCode: 500,
+        message: 'Error al descargar el archivo desde Cloudinary',
+        error: error.message,
+      });
+    }
   }
 }

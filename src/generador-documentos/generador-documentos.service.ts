@@ -612,22 +612,35 @@ export class GeneradorDocumentosService {
     return doc;
   }
 
+  private formatTituloDocumento(tipo: string): string {
+    const dicc: Record<string, string> = {
+      ACTA_INICIO: 'Acta de Inicio',
+      PLIEGO_CONDICIONES: 'Pliego de Condiciones',
+      LLAMADO_PARTICIPAR: 'Llamado a Participar',
+      REGISTRO_ADQUIRENTES: 'Registro de Adquirentes del Pliego',
+      ACTA_RECEPCION: 'Acta de Recepción de Sobres',
+      ACTA_APERTURA: 'Acta de Apertura de Sobres',
+      ACTA_ADJUDICACION: 'Acta de Adjudicación',
+      CONTRATO: 'Contrato Formalizado',
+    };
+    return dicc[tipo] || tipo;
+  }
+
   async getPreviewUrl(expedienteId: string, tipoDocumento: TipoDocumento) {
     const doc = await this.findByExpedienteYTipo(expedienteId, tipoDocumento);
-    const urlCorregida = doc.urlArchivo.endsWith('.docx')
-      ? doc.urlArchivo
-      : `${doc.urlArchivo}.docx`;
-    const previewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(urlCorregida)}&embedded=true`;
-    return { previewUrl, urlArchivo: urlCorregida, tipoDocumento };
+    const previewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(doc.urlArchivo)}&embedded=true`;
+    return {
+      previewUrl,
+      tituloDocumento: `Documento - ${this.formatTituloDocumento(tipoDocumento)}`,
+      urlArchivo: doc.urlArchivo,
+      tipoDocumento,
+    };
   }
 
   async download(expedienteId: string, tipoDocumento: TipoDocumento) {
     const doc = await this.findByExpedienteYTipo(expedienteId, tipoDocumento);
-    const urlCorregida = doc.urlArchivo.endsWith('.docx')
-      ? doc.urlArchivo
-      : `${doc.urlArchivo}.docx`;
     return {
-      url: urlCorregida,
+      url: doc.urlArchivo,
       fileName: `${tipoDocumento.toLowerCase()}.docx`,
     };
   }
@@ -665,6 +678,46 @@ export class GeneradorDocumentosService {
     return {
       message: `Enviando correo a ${emailDestino} en background`,
     };
+  }
+
+  async getStatusPorExpediente(expedienteId: string) {
+    // Lista de tipos de documentos que manejamos actualmente
+    const tiposSoportados = [
+      { tipo: 'ACTA_INICIO', label: 'Acta de Inicio' },
+      { tipo: 'PLIEGO_CONDICIONES', label: 'Pliego de Condiciones' },
+      { tipo: 'LLAMADO_PARTICIPAR', label: 'Llamado a Participar' },
+      { tipo: 'REGISTRO_ADQUIRENTES', label: 'Registro de Adquirentes del Pliego' },
+      { tipo: 'ACTA_RECEPCION', label: 'Acta de Recepción de Sobres' },
+      { tipo: 'ACTA_APERTURA', label: 'Acta de Apertura de Sobres' },
+    ];
+
+    // Buscamos los documentos ya generados para este expediente
+    const documentosGenerados = await this.prisma.documentoGenerado.findMany({
+      where: { expedienteId, deletedAt: null },
+    });
+
+    // Mapeamos los tipos soportados con la info del documento si existe
+    return tiposSoportados.map((item) => {
+      const doc = documentosGenerados.find((d) => d.tipoDocumento === item.tipo);
+
+      let infoDoc: any = null;
+      if (doc) {
+        infoDoc = {
+          id: doc.id,
+          urlArchivo: doc.urlArchivo,
+          previewUrl: `https://docs.google.com/gview?url=${encodeURIComponent(doc.urlArchivo)}&embedded=true`,
+          version: doc.versionDocumento,
+          fechaGeneracion: doc.createdAt,
+        };
+      }
+
+      return {
+        tipo: item.tipo,
+        label: item.label,
+        generado: !!doc,
+        documento: infoDoc,
+      };
+    });
   }
 
   private extractCloudinaryPublicId(url: string): string | null {
