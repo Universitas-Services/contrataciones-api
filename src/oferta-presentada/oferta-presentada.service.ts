@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateOfertaPresentadaDto } from './dto/create-oferta-presentada.dto';
 import { UpdateOfertaPresentadaDto } from './dto/update-oferta-presentada.dto';
@@ -22,6 +22,21 @@ export class OfertaPresentadaService {
 
     if (!expediente) {
       throw new NotFoundException('Expediente no encontrado o no pertenece a este ente');
+    }
+
+    // 1.5. Verificar que no exista otra oferta con el mismo RIF para este expediente
+    const ofertaExistente = await this.prisma.ofertaPresentada.findFirst({
+      where: {
+        expedienteId: dto.expedienteId,
+        rifProveedorOferente: dto.rifProveedorOferente,
+        deletedAt: null,
+      },
+    });
+
+    if (ofertaExistente) {
+      throw new ConflictException(
+        `El proveedor con RIF ${dto.rifProveedorOferente} ya ha presentado una oferta para este expediente.`,
+      );
     }
 
     // 2. Manejo de Proveedor y Registro Express
@@ -139,6 +154,27 @@ export class OfertaPresentadaService {
     if (dto.numeroSobresEntregados !== undefined)
       updateData.numeroSobresEntregados = dto.numeroSobresEntregados;
     if (dto.montoOfertaBs !== undefined) updateData.montoOfertaBs = dto.montoOfertaBs;
+
+    // 1.5. Verificar unicidad del RIF si se está intentando cambiar
+    if (
+      dto.rifProveedorOferente &&
+      dto.rifProveedorOferente !== ofertaActual.rifProveedorOferente
+    ) {
+      const existeOtro = await this.prisma.ofertaPresentada.findFirst({
+        where: {
+          expedienteId: ofertaActual.expedienteId,
+          rifProveedorOferente: dto.rifProveedorOferente,
+          deletedAt: null,
+          NOT: { id: id },
+        },
+      });
+
+      if (existeOtro) {
+        throw new ConflictException(
+          `Ya existe otra oferta con el RIF ${dto.rifProveedorOferente} para este expediente.`,
+        );
+      }
+    }
 
     if (dto.proveedorId) {
       const proveedor = await this.prisma.proveedor.findFirst({
