@@ -368,6 +368,16 @@ export class ExpedienteContratacionService {
           }
         }
 
+        // Invalidar documentos generados
+        await tx.documentoGenerado.updateMany({
+          where: { expedienteId: id, deletedAt: null },
+          data: { estaDesactualizado: true },
+        });
+        await tx.pliegoGenerado.updateMany({
+          where: { expedienteId: id, deletedAt: null },
+          data: { estaDesactualizado: true },
+        });
+
         return {
           message: 'Expediente actualizado exitosamente',
           data: {
@@ -666,6 +676,16 @@ export class ExpedienteContratacionService {
             ...objUpdateExp,
             updatedBy: userId,
           },
+        });
+
+        // Invalidar documentos generados
+        await tx.documentoGenerado.updateMany({
+          where: { expedienteId: id, deletedAt: null },
+          data: { estaDesactualizado: true },
+        });
+        await tx.pliegoGenerado.updateMany({
+          where: { expedienteId: id, deletedAt: null },
+          data: { estaDesactualizado: true },
         });
 
         return {

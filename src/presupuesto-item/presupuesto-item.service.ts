@@ -11,11 +11,22 @@ export class PresupuestoItemService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  private async invalidarDocumentos(expedienteId: string) {
+    await this.prisma.documentoGenerado.updateMany({
+      where: { expedienteId, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+    await this.prisma.pliegoGenerado.updateMany({
+      where: { expedienteId, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+  }
+
   async create(expedienteId: string, dto: CreatePresupuestoItemDto) {
     // Calculo automático del total del item
     const totalItem = dto.cantidadRequerida * dto.precioUnitarioEstimado;
 
-    return this.prisma.presupuestoItem.create({
+    const result = await this.prisma.presupuestoItem.create({
       data: {
         expedienteId,
         descripcionItem: dto.descripcionItem,
@@ -26,6 +37,9 @@ export class PresupuestoItemService {
         totalItem,
       },
     });
+
+    await this.invalidarDocumentos(expedienteId);
+    return result;
   }
 
   async findAllByExpedienteId(expedienteId: string) {
@@ -93,21 +107,27 @@ export class PresupuestoItemService {
     const newPrecio = dto.precioUnitarioEstimado ?? Number(existing.precioUnitarioEstimado);
     const totalItem = newCantidad * newPrecio;
 
-    return this.prisma.presupuestoItem.update({
+    const result = await this.prisma.presupuestoItem.update({
       where: { id },
       data: {
         ...dto,
         totalItem,
       },
     });
+
+    await this.invalidarDocumentos(existing.expedienteId);
+    return result;
   }
 
   async remove(id: string) {
     const existing = await this.prisma.presupuestoItem.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Item de presupuesto no encontrado');
 
-    return this.prisma.presupuestoItem.delete({
+    const result = await this.prisma.presupuestoItem.delete({
       where: { id },
     });
+
+    await this.invalidarDocumentos(existing.expedienteId);
+    return result;
   }
 }

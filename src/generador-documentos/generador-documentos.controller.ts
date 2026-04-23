@@ -103,6 +103,16 @@ export class GeneradorDocumentosController {
     return { message: 'Acta de Apertura de Sobres generada exitosamente', data };
   }
 
+  @ApiOperation({ summary: 'Regenerar un documento existente' })
+  @Post('regenerar/:id')
+  async regenerarDocumento(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+    const data = await this.generadorDocumentosService.regenerarDocumento(id, user.id);
+    return {
+      message: 'Documento regenerado exitosamente',
+      data,
+    };
+  }
+
   @ApiOperation({ summary: 'Obtener enlace de previsualización Acta de Inicio' })
   @Get('preview/acta-inicio/:expedienteId')
   async previewActaInicio(@Param('expedienteId') expedienteId: string) {
