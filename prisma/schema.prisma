@@ -608,6 +608,7 @@ model DocumentoGenerado {
   updatedAt        DateTime               @updatedAt
   deletedAt        DateTime?
   createdBy        String?
+  estaDesactualizado Boolean              @default(false)
   expediente       ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
   sesionesEdicion  SessionEdicion[]
 
@@ -646,6 +647,7 @@ model PliegoGenerado {
   deletedAt        DateTime?
   createdBy        String?
   updatedBy        String?
+  estaDesactualizado Boolean              @default(false)
   ente             EntePublico            @relation(fields: [enteId], references: [id])
   expediente       ExpedienteContratacion @relation(fields: [expedienteId], references: [id])
 

@@ -42,7 +42,7 @@ export class FasePreparatoriaService {
     };
 
     // Upsert using expedienteId (which is @unique in schema)
-    return this.prisma.fasePreparatoria.upsert({
+    const result = await this.prisma.fasePreparatoria.upsert({
       where: { expedienteId },
       create: {
         ...data,
@@ -55,5 +55,17 @@ export class FasePreparatoriaService {
       //   presupuestoItems: true,
       // }
     });
+
+    // Invalidar documentos generados
+    await this.prisma.documentoGenerado.updateMany({
+      where: { expedienteId, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+    await this.prisma.pliegoGenerado.updateMany({
+      where: { expedienteId, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+
+    return result;
   }
 }

@@ -680,6 +680,47 @@ export class GeneradorDocumentosService {
     };
   }
 
+  async marcarDocumentosComoDesactualizados(expedienteId: string) {
+    await this.prisma.documentoGenerado.updateMany({
+      where: { expedienteId, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+
+    await this.prisma.pliegoGenerado.updateMany({
+      where: { expedienteId, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+  }
+
+  async regenerarDocumento(id: string, userId: string) {
+    const docAnterior = await this.prisma.documentoGenerado.findUnique({
+      where: { id },
+    });
+
+    if (!docAnterior) {
+      throw new NotFoundException(`Documento con ID ${id} no encontrado`);
+    }
+
+    switch (docAnterior.tipoDocumento) {
+      case 'ACTA_INICIO':
+        return this.generarActaInicio(docAnterior.expedienteId, userId);
+      case 'PLIEGO_CONDICIONES':
+        return this.generarPliegoCondiciones(docAnterior.expedienteId, userId);
+      case 'LLAMADO_PARTICIPAR':
+        return this.generarLlamadoParticipar(docAnterior.expedienteId, userId);
+      case 'REGISTRO_ADQUIRENTES':
+        return this.generarRegistroAdquirentes(docAnterior.expedienteId, userId);
+      case 'ACTA_RECEPCION':
+        return this.generarActaRecepcionSobres(docAnterior.expedienteId, userId);
+      case 'ACTA_APERTURA':
+        return this.generarActaAperturaSobres(docAnterior.expedienteId, userId);
+      default:
+        throw new BadRequestException(
+          `No se puede regenerar el documento de tipo ${docAnterior.tipoDocumento}`,
+        );
+    }
+  }
+
   async getStatusPorExpediente(expedienteId: string) {
     // Lista de tipos de documentos que manejamos actualmente
     const tiposSoportados = [
@@ -708,6 +749,7 @@ export class GeneradorDocumentosService {
           previewUrl: `https://docs.google.com/gview?url=${encodeURIComponent(doc.urlArchivo)}&embedded=true`,
           version: doc.versionDocumento,
           fechaGeneracion: doc.createdAt,
+          estaDesactualizado: doc.estaDesactualizado,
         };
       }
 
@@ -715,6 +757,7 @@ export class GeneradorDocumentosService {
         tipo: item.tipo,
         label: item.label,
         generado: !!doc,
+        estaDesactualizado: doc ? !!doc.estaDesactualizado : false,
         documento: infoDoc,
       };
     });
