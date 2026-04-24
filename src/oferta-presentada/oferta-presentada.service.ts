@@ -11,6 +11,17 @@ export class OfertaPresentadaService {
     private readonly proveedoresService: ProveedoresService,
   ) {}
 
+  private async invalidarDocumentos(expedienteId: string) {
+    await this.prisma.documentoGenerado.updateMany({
+      where: { expedienteId, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+    await this.prisma.pliegoGenerado.updateMany({
+      where: { expedienteId, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+  }
+
   /**
    * Crear una oferta presentada.
    */
@@ -67,7 +78,7 @@ export class OfertaPresentadaService {
     }
 
     // 3. Crear el registro con los campos mapeados
-    return this.prisma.ofertaPresentada.create({
+    const result = await this.prisma.ofertaPresentada.create({
       data: {
         expedienteId: dto.expedienteId,
         proveedorId: proveedorId, // Usamos el ID (proporcionado o generado)
@@ -84,6 +95,10 @@ export class OfertaPresentadaService {
         proveedor: { select: { nombre: true, rif: true } },
       },
     });
+
+    await this.invalidarDocumentos(dto.expedienteId);
+
+    return result;
   }
 
   /**
@@ -184,13 +199,20 @@ export class OfertaPresentadaService {
       updateData.proveedorId = dto.proveedorId;
     }
 
-    return this.prisma.ofertaPresentada.update({
+    const result = await this.prisma.ofertaPresentada.update({
       where: { id: ofertaActual.id },
       data: updateData,
       include: {
         proveedor: { select: { nombre: true, rif: true } },
       },
     });
+
+    await this.invalidarDocumentos(result.expedienteId);
+    if (ofertaActual.expedienteId !== result.expedienteId) {
+      await this.invalidarDocumentos(ofertaActual.expedienteId);
+    }
+
+    return result;
   }
 
   /**
@@ -206,6 +228,8 @@ export class OfertaPresentadaService {
         updatedBy: userId,
       },
     });
+
+    await this.invalidarDocumentos(oferta.expedienteId);
 
     return { message: 'Oferta eliminada exitosamente' };
   }

@@ -24,6 +24,17 @@ export class AdquirentePliegoService {
   // CRUD
   // =========================================================================
 
+  private async invalidarDocumentos(expedienteId: string) {
+    await this.prisma.documentoGenerado.updateMany({
+      where: { expedienteId, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+    await this.prisma.pliegoGenerado.updateMany({
+      where: { expedienteId, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+  }
+
   /**
    * Crear un registro de adquiriente pliego.
    */
@@ -50,7 +61,7 @@ export class AdquirentePliegoService {
       }
     }
 
-    return this.prisma.adquirentePliego.create({
+    const result = await this.prisma.adquirentePliego.create({
       data: {
         expedienteId: dto.expedienteId,
         proveedorId: dto.proveedorId,
@@ -67,6 +78,10 @@ export class AdquirentePliegoService {
         proveedor: { select: { nombre: true, rif: true } },
       },
     });
+
+    await this.invalidarDocumentos(dto.expedienteId);
+
+    return result;
   }
 
   /**
@@ -121,7 +136,7 @@ export class AdquirentePliegoService {
    */
   async update(id: string, dto: UpdateAdquirentePliegoDto, userId: string, enteId: string) {
     // Verificar que exista
-    await this.findOne(id, enteId);
+    const existente = await this.findOne(id, enteId);
 
     const updateData: any = { updatedBy: userId };
 
@@ -157,7 +172,7 @@ export class AdquirentePliegoService {
       updateData.proveedorId = dto.proveedorId;
     }
 
-    return this.prisma.adquirentePliego.update({
+    const result = await this.prisma.adquirentePliego.update({
       where: { id },
       data: updateData,
       include: {
@@ -165,13 +180,20 @@ export class AdquirentePliegoService {
         proveedor: { select: { nombre: true, rif: true } },
       },
     });
+
+    await this.invalidarDocumentos(result.expedienteId);
+    if (existente.expedienteId !== result.expedienteId) {
+      await this.invalidarDocumentos(existente.expedienteId);
+    }
+
+    return result;
   }
 
   /**
    * Eliminar un adquiriente pliego (soft delete).
    */
   async remove(id: string, userId: string, enteId: string) {
-    await this.findOne(id, enteId);
+    const existente = await this.findOne(id, enteId);
 
     await this.prisma.adquirentePliego.update({
       where: { id },
@@ -180,6 +202,8 @@ export class AdquirentePliegoService {
         updatedBy: userId,
       },
     });
+
+    await this.invalidarDocumentos(existente.expedienteId);
 
     return { message: 'Registro de adquiriente pliego eliminado exitosamente' };
   }
