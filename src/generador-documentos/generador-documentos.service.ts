@@ -117,6 +117,7 @@ export class GeneradorDocumentosService {
         fasePreparatoria: true,
         cronograma: true,
         modalidad: true,
+        comision: true,
       },
     });
 
@@ -154,8 +155,8 @@ export class GeneradorDocumentosService {
         ? formatDateToSpanishLong(c.fechaFinDisponibilidadPliego)
         : '___',
       horario_retiro_pliego: f.horarioRetiroPliego || '___',
-      correo_comision: f.correoComision || '___',
-      telefono_comision: f.telefonoComision || '___',
+      correo_comision: e.comision?.correoElectronico || '___',
+      telefono_comision: e.comision?.telefono || '___',
       pliego_gratuito_au_au: textoPliegoGratuito,
       fec_solicitud_aclaratorias_au_au: c.fechaSolicitudAclaratorias
         ? formatDateToSpanishLong(c.fechaSolicitudAclaratorias)
@@ -202,8 +203,8 @@ export class GeneradorDocumentosService {
         e.comision?.denominacionComision || 'Comisión de Contrataciones Públicas',
       dir_fiscal_ente: e.ente?.direccionFiscal || '___',
       loc_estado_ente: e.ente?.estado || '___',
-      correo_comision: f.correoComision || '___',
-      telefono_comision: f.telefonoComision || '___',
+      correo_comision: e.comision?.correoElectronico || '___',
+      telefono_comision: e.comision?.telefono || '___',
       pag_web_ente: 'www.snd.gob.ve',
       fec_acto_recep_aper_sobres_au_au: c.fechaActoRecepcionAperturaSobres
         ? formatDateToSpanishLong(c.fechaActoRecepcionAperturaSobres)

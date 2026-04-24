@@ -187,22 +187,6 @@ export class CreateFasePreparatoriaDto {
   @IsString({ message: 'La hora del acto debe ser texto' })
   horaActoRecepAper?: string;
 
-  @ApiPropertyOptional({
-    example: 'comision.compras@entes.gob.ve',
-    description: 'Correo de contacto de la comisión',
-  })
-  @IsOptional()
-  @IsString({ message: 'El correo debe ser un texto' })
-  correoComision?: string;
-
-  @ApiPropertyOptional({
-    example: '0212-5555555',
-    description: 'Teléfono de contacto de la comisión',
-  })
-  @IsOptional()
-  @IsString({ message: 'El teléfono debe ser un texto' })
-  telefonoComision?: string;
-
   // --- Página 6: Observaciones Finales ---
   @ApiPropertyOptional({
     example: 'Gasto contemplado para los ejercicios fiscales 2026-2027',

@@ -42,13 +42,39 @@ export class PresupuestoItemService {
     return result;
   }
 
-  async findAllByExpedienteId(expedienteId: string) {
-    const items = await this.prisma.presupuestoItem.findMany({
-      where: { expedienteId },
+  async findAllByExpedienteId(expedienteId: string, query: QueryPresupuestoItemDto) {
+    const { page = 1, limit = 10, search } = query;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.PresupuestoItemWhereInput = {
+      expedienteId,
+      deletedAt: null,
+      ...(search && {
+        OR: [
+          { descripcionItem: { contains: search, mode: 'insensitive' } },
+          { codigoPartida: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+    };
+
+    // 1. Obtener items paginados y conteo total para la meta
+    const [total, items] = await Promise.all([
+      this.prisma.presupuestoItem.count({ where }),
+      this.prisma.presupuestoItem.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    // 2. Calcular Totales del Expediente (siempre del expediente completo, no solo de lo filtrado/paginado)
+    const aggregate = await this.prisma.presupuestoItem.aggregate({
+      where: { expedienteId, deletedAt: null },
+      _sum: { totalItem: true },
     });
 
-    // Calcular Subtotal sumando todos los items
-    const subtotal = items.reduce((acc, item) => acc + Number(item.totalItem), 0);
+    const subtotal = Number(aggregate._sum.totalItem || 0);
 
     // Calcular Impuesto y Total "Al Vuelo"
     const impuestoMonto = subtotal * this.IVA_RATE;
@@ -56,9 +82,14 @@ export class PresupuestoItemService {
 
     return {
       items,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit),
+      },
       totales: {
         subtotal,
-        porcentajeIvaApicado: this.IVA_RATE * 100, // Ej: 16
+        porcentajeIvaApicado: this.IVA_RATE * 100,
         montoIva: impuestoMonto,
         montoTotal,
       },

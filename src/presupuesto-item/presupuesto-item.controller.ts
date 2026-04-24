@@ -27,8 +27,12 @@ export class PresupuestoItemController {
   }
 
   @Get(':expedienteId/presupuesto-items')
-  findAllByExpediente(@Param('expedienteId') expedienteId: string) {
-    return this.presupuestoItemService.findAllByExpedienteId(expedienteId);
+  @ApiOperation({ summary: 'Listar ítems de presupuesto por expediente con paginación y filtros' })
+  findAllByExpediente(
+    @Param('expedienteId') expedienteId: string,
+    @Query() query: QueryPresupuestoItemDto,
+  ) {
+    return this.presupuestoItemService.findAllByExpedienteId(expedienteId, query);
   }
 
   @Patch('presupuesto-items/:itemId')
