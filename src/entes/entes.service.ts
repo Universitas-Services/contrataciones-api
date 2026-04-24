@@ -13,6 +13,24 @@ import { UpdateEnteUsuarioDto } from './dto/update-ente-usuario.dto';
 export class EntesService {
   constructor(private prisma: PrismaService) {}
 
+  private async invalidarDocumentosExpedientes(enteId: string) {
+    const expedientes = await this.prisma.expedienteContratacion.findMany({
+      where: { enteId, deletedAt: null },
+      select: { id: true },
+    });
+    const expIds = expedientes.map((e) => e.id);
+    if (expIds.length === 0) return;
+
+    await this.prisma.documentoGenerado.updateMany({
+      where: { expedienteId: { in: expIds }, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+    await this.prisma.pliegoGenerado.updateMany({
+      where: { expedienteId: { in: expIds }, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+  }
+
   async create(createEnteDto: CreateEnteDto, universitasId: string) {
     const { emailContacto, password, nombreAdmin, apellidoAdmin, ...enteData } = createEnteDto;
 
@@ -444,9 +462,30 @@ export class EntesService {
 
   async update(id: string, updateEnteDto: UpdateEnteDto, userId: string) {
     // Verificar que el Ente existe
-    await this.findOne(id);
+    const ente = await this.findOne(id);
 
-    return this.prisma.entePublico.update({
+    let requiereInvalidacion = false;
+    const criticos = [
+      'nombre',
+      'rif',
+      'siglas',
+      'direccionFiscal',
+      'estado',
+      'municipio',
+      'ciudad',
+      'nombreUnidadAdminFinanciera',
+      'nombreUnidadContratante',
+      'organoAdscripcion',
+    ] as const;
+
+    for (const key of criticos) {
+      if (updateEnteDto[key] !== undefined && updateEnteDto[key] !== (ente as any)[key]) {
+        requiereInvalidacion = true;
+        break;
+      }
+    }
+
+    const actualizado = await this.prisma.entePublico.update({
       where: { id },
       data: {
         ...updateEnteDto,
@@ -454,6 +493,12 @@ export class EntesService {
         updatedBy: userId,
       },
     });
+
+    if (requiereInvalidacion) {
+      await this.invalidarDocumentosExpedientes(id);
+    }
+
+    return actualizado;
   }
 
   async updateLogo(id: string, logoUrl: string, userId: string) {

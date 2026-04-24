@@ -9,6 +9,24 @@ import { CreateMiembroComisionDto } from './dto/create-miembro-comision.dto';
 export class ComisionContratacionesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async invalidarDocumentosExpedientes(comisionId: string) {
+    const expedientes = await this.prisma.expedienteContratacion.findMany({
+      where: { comisionId, deletedAt: null },
+      select: { id: true },
+    });
+    const expIds = expedientes.map((e) => e.id);
+    if (expIds.length === 0) return;
+
+    await this.prisma.documentoGenerado.updateMany({
+      where: { expedienteId: { in: expIds }, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+    await this.prisma.pliegoGenerado.updateMany({
+      where: { expedienteId: { in: expIds }, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+  }
+
   private validate8Miembros(miembros: CreateMiembroComisionDto[]) {
     if (!miembros || miembros.length !== 8) {
       throw new BadRequestException(
@@ -99,14 +117,28 @@ export class ComisionContratacionesService {
     enteId: string,
     userId: string,
   ) {
-    await this.findOne(id, enteId);
+    const comision = await this.findOne(id, enteId);
 
     const { miembros, ...comisionData } = updateDto;
 
+    let requiereInvalidacion = false;
+    if (miembros && miembros.length > 0) {
+      requiereInvalidacion = true;
+    } else {
+      const criticos = ['denominacionComision', 'datosDesignacionComision'] as const;
+      for (const key of criticos) {
+        if (comisionData[key] !== undefined && comisionData[key] !== (comision as any)[key]) {
+          requiereInvalidacion = true;
+          break;
+        }
+      }
+    }
+
+    let actualizada;
     if (miembros) {
       this.validate8Miembros(miembros);
 
-      return this.prisma.comisionContrataciones.update({
+      actualizada = await this.prisma.comisionContrataciones.update({
         where: { id },
         data: {
           ...comisionData,
@@ -123,19 +155,25 @@ export class ComisionContratacionesService {
           miembros: true,
         },
       });
+    } else {
+      // Si no enviaron miembros, solo actualizamos los datos básicos
+      actualizada = await this.prisma.comisionContrataciones.update({
+        where: { id },
+        data: {
+          ...comisionData,
+          updatedBy: userId,
+        },
+        include: {
+          miembros: true,
+        },
+      });
     }
 
-    // Si no enviaron miembros, solo actualizamos los datos básicos
-    return this.prisma.comisionContrataciones.update({
-      where: { id },
-      data: {
-        ...comisionData,
-        updatedBy: userId,
-      },
-      include: {
-        miembros: true,
-      },
-    });
+    if (requiereInvalidacion) {
+      await this.invalidarDocumentosExpedientes(id);
+    }
+
+    return actualizada;
   }
 
   async remove(id: string, enteId: string, userId: string) {

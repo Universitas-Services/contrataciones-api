@@ -33,6 +33,18 @@ export class ProveedoresService {
     private readonly storageService: IStorageService,
   ) {}
 
+  private async invalidarDocumentosExpedientes(expedienteIds: string[]) {
+    if (!expedienteIds || expedienteIds.length === 0) return;
+    await this.prisma.documentoGenerado.updateMany({
+      where: { expedienteId: { in: expedienteIds }, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+    await this.prisma.pliegoGenerado.updateMany({
+      where: { expedienteId: { in: expedienteIds }, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+  }
+
   /**
    * Crear proveedor con documentos PDF en una transacción
    */
@@ -441,6 +453,25 @@ export class ProveedoresService {
       }
     }
 
+    let requiereInvalidacion = false;
+    const criticos = [
+      'nombre',
+      'rif',
+      'nombreRepLegal',
+      'cedulaRepLegal',
+      'datosRegistroMercantil',
+      'direccionFiscal',
+      'telefono',
+      'correo',
+    ] as const;
+
+    for (const key of criticos) {
+      if (updateDto[key] !== undefined && updateDto[key] !== (proveedor as any)[key]) {
+        requiereInvalidacion = true;
+        break;
+      }
+    }
+
     // 2. Extraer observaciones de documentos del DTO
     const observaciones: Record<string, string> = {};
     const dataToUpdate: Record<string, string | number | boolean | Date> = { ...updateDto } as any;
@@ -541,6 +572,24 @@ export class ProveedoresService {
 
         documentosCreados.push(nuevoDocumento);
       }
+    }
+
+    if (requiereInvalidacion) {
+      const ofertas = await this.prisma.ofertaPresentada.findMany({
+        where: { proveedorId: proveedor.id, deletedAt: null },
+        select: { expedienteId: true },
+      });
+      const adquirentes = await this.prisma.adquirentePliego.findMany({
+        where: { proveedorId: proveedor.id, deletedAt: null },
+        select: { expedienteId: true },
+      });
+      const expIds = [
+        ...new Set([
+          ...ofertas.map((o) => o.expedienteId),
+          ...adquirentes.map((a) => a.expedienteId),
+        ]),
+      ];
+      await this.invalidarDocumentosExpedientes(expIds);
     }
 
     // Retornar el proveedor actualizado con todos sus campos y documentos vigentes

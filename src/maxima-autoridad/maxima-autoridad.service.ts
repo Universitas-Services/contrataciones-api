@@ -7,6 +7,24 @@ import { UpdateMaximaAutoridadDto } from './dto/update-maxima-autoridad.dto';
 export class MaximaAutoridadService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async invalidarDocumentosExpedientes(autoridadId: string) {
+    const expedientes = await this.prisma.expedienteContratacion.findMany({
+      where: { autoridadId, deletedAt: null },
+      select: { id: true },
+    });
+    const expIds = expedientes.map((e) => e.id);
+    if (expIds.length === 0) return;
+
+    await this.prisma.documentoGenerado.updateMany({
+      where: { expedienteId: { in: expIds }, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+    await this.prisma.pliegoGenerado.updateMany({
+      where: { expedienteId: { in: expIds }, deletedAt: null },
+      data: { estaDesactualizado: true },
+    });
+  }
+
   async create(createDto: CreateMaximaAutoridadDto, enteId: string, userId: string) {
     return this.prisma.maximaAutoridad.create({
       data: {
@@ -48,15 +66,36 @@ export class MaximaAutoridadService {
 
   async update(id: string, updateDto: UpdateMaximaAutoridadDto, enteId: string, userId: string) {
     // Verificar existencia y pertenencia
-    await this.findOne(id, enteId);
+    const autoridad = await this.findOne(id, enteId);
 
-    return this.prisma.maximaAutoridad.update({
+    let requiereInvalidacion = false;
+    const criticos = [
+      'nombreCompletoAutoridad',
+      'cedulaAutoridad',
+      'cargoOficialAutoridad',
+      'datosDesignacionAutoridad',
+    ] as const;
+
+    for (const key of criticos) {
+      if (updateDto[key] !== undefined && updateDto[key] !== (autoridad as any)[key]) {
+        requiereInvalidacion = true;
+        break;
+      }
+    }
+
+    const actualizada = await this.prisma.maximaAutoridad.update({
       where: { id },
       data: {
         ...updateDto,
         updatedBy: userId,
       },
     });
+
+    if (requiereInvalidacion) {
+      await this.invalidarDocumentosExpedientes(id);
+    }
+
+    return actualizada;
   }
 
   async remove(id: string, enteId: string, userId: string) {
