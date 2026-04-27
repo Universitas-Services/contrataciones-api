@@ -3,6 +3,7 @@ import { GeneradorDocumentosService } from './generador-documentos.service';
 import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { TipoDocumento } from '@prisma/client';
 
 @ApiTags('📄 Generador de Documentos')
 @ApiBearerAuth('JWT-auth')
@@ -218,6 +219,68 @@ export class GeneradorDocumentosController {
   }
 
   // ==========================
+  // FASE 3 — Lista de Cotejo e Informe de Recomendación
+  // ==========================
+
+  @ApiOperation({ summary: 'Generar Lista de Cotejo para un oferente evaluado' })
+  @Post('generar/lista-cotejo/:expedienteId/:evaluacionId')
+  async generarListaCotejo(
+    @Param('expedienteId') expedienteId: string,
+    @Param('evaluacionId') evaluacionId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const data = await this.generadorDocumentosService.generarListaCotejo(
+      expedienteId,
+      evaluacionId,
+      user.id,
+    );
+    return { message: 'Lista de Cotejo generada exitosamente', data };
+  }
+
+  @ApiOperation({ summary: 'Generar Informe de Recomendación del expediente' })
+  @Post('generar/informe-recomendacion/:expedienteId')
+  async generarInformeRecomendacion(
+    @Param('expedienteId') expedienteId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const data = await this.generadorDocumentosService.generarInformeRecomendacion(
+      expedienteId,
+      user.id,
+    );
+    return { message: 'Informe de Recomendación generado exitosamente', data };
+  }
+
+  @ApiOperation({ summary: 'Preview Lista de Cotejo' })
+  @Get('preview/lista-cotejo/:expedienteId')
+  async previewListaCotejo(@Param('expedienteId') expedienteId: string) {
+    return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'LISTA_COTEJO');
+  }
+
+  @ApiOperation({ summary: 'Preview Informe de Recomendación' })
+  @Get('preview/informe-recomendacion/:expedienteId')
+  async previewInformeRecomendacion(@Param('expedienteId') expedienteId: string) {
+    return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'INFORME_RECOMENDACION');
+  }
+
+  @ApiOperation({ summary: 'Descargar Lista de Cotejo' })
+  @Get('download/lista-cotejo/:expedienteId')
+  async downloadListaCotejo(
+    @Param('expedienteId') expedienteId: string,
+    @Res({ passthrough: false }) res: any,
+  ) {
+    return this.downloadDocumentoInternal(expedienteId, 'LISTA_COTEJO', res);
+  }
+
+  @ApiOperation({ summary: 'Descargar Informe de Recomendación' })
+  @Get('download/informe-recomendacion/:expedienteId')
+  async downloadInformeRecomendacion(
+    @Param('expedienteId') expedienteId: string,
+    @Res({ passthrough: false }) res: any,
+  ) {
+    return this.downloadDocumentoInternal(expedienteId, 'INFORME_RECOMENDACION', res);
+  }
+
+  // ==========================
   // ENVIAR POR EMAIL
   // ==========================
 
@@ -261,7 +324,11 @@ export class GeneradorDocumentosController {
   // MÉTODO INTERNO — Lógica compartida de descarga proxy
   // ==========================
 
-  private async downloadDocumentoInternal(expedienteId: string, tipoDocumento: any, res: any) {
+  private async downloadDocumentoInternal(
+    expedienteId: string,
+    tipoDocumento: TipoDocumento,
+    res: any,
+  ) {
     const result = await this.generadorDocumentosService.download(expedienteId, tipoDocumento);
 
     try {

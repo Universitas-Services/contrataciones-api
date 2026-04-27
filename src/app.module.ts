@@ -23,6 +23,7 @@ import { FasePreparatoriaModule } from './fase-preparatoria/fase-preparatoria.mo
 import { PresupuestoItemModule } from './presupuesto-item/presupuesto-item.module';
 import { GeneradorDocumentosModule } from './generador-documentos/generador-documentos.module';
 import { OfertaPresentadaModule } from './oferta-presentada/oferta-presentada.module';
+import { EvaluacionFase3Module } from './evaluacion-fase3/evaluacion-fase3.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { OfertaPresentadaModule } from './oferta-presentada/oferta-presentada.mo
     PresupuestoItemModule,
     GeneradorDocumentosModule,
     OfertaPresentadaModule,
+    EvaluacionFase3Module,
   ],
   providers: [
     {
