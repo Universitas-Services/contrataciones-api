@@ -355,6 +355,7 @@ model ExpedienteContratacion {
   fasePreparatoria           FasePreparatoria?
   pliegosGenerados           PliegoGenerado[]
   presupuestoItems           PresupuestoItem[]
+  informeRecomendacion       InformeRecomendacion?
 
   @@index([enteId, estatusProceso])
   @@index([codigoNomenclatura])
@@ -515,25 +516,156 @@ model OfertaPresentada {
   @@index([expedienteId, rifProveedorOferente])
 }
 
+// Tabla 19 — Resultado raíz de evaluación por oferente (Fase 3)
 model EvaluacionResultados {
-  id                       String           @id @default(uuid())
-  ofertaId                 String           @unique
-  cumpleRecaudosLegales    Boolean
-  cumpleOfertaTecnica      Boolean
-  puntajeTecnicoObtenido   Decimal          @db.Decimal(5, 2)
-  puntajeEconomicoObtenido Decimal          @db.Decimal(5, 2)
-  porcentajeVan            Decimal?         @db.Decimal(5, 2)
-  puntajeTotalFinal        Decimal          @db.Decimal(5, 2)
-  posicionPrelacion        Int
-  observaciones            String?
-  createdAt                DateTime         @default(now())
-  updatedAt                DateTime         @updatedAt
-  deletedAt                DateTime?
-  createdBy                String?
-  updatedBy                String?
-  oferta                   OfertaPresentada @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  id                      String           @id @default(uuid())
+  ofertaId                String           @unique
+
+  // Datos copiados del oferente al momento de evaluar
+  nombreProveedorEvaluado String           @map("nombre_proveedor_evaluado_au_au") @db.VarChar(255)
+  rifProveedorEvaluado    String           @map("rif_proveedor_evaluado_au_au") @db.VarChar(20)
+  nombreRepLegalEvaluado  String           @map("nombre_rep_legal_evaluado_au_au") @db.VarChar(255)
+  cedulaRepLegalEvaluado  String           @map("cedula_rep_legal_evaluado_au_au") @db.VarChar(20)
+
+  // Calificación del oferente
+  oferenteCalificado      Boolean?         @map("oferente_calificado_au_au")
+  motivoDescalificacion   String?          @map("motivo_descalificacion_oferente_au_au")
+
+  // Posición de prelación (texto: "Primera Opción", etc.)
+  posicionPrelacion       String?          @map("posicion_prelacion_au_au") @db.VarChar(50)
+
+  // Totales calculados
+  totalTecnica            Decimal?         @map("total_tecnica_au_au") @db.Decimal(5, 2)
+  totalEconomica          Decimal?         @map("total_economica_au_au") @db.Decimal(5, 2)
+  totalVan                Decimal?         @map("total_van_au_au") @db.Decimal(5, 2)
+  totalEvaluacion         Decimal?         @map("total_evaluacion_oferente_au_au") @db.Decimal(6, 2)
+
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  deletedAt               DateTime?
+  createdBy               String?
+  updatedBy               String?
+
+  oferta                  OfertaPresentada @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  sobre1                  Sobre1?
+  sobre2                  Sobre2?
 
   @@index([ofertaId])
+  @@map("tb_evaluacion_resultados")
+}
+
+// Tabla 20 — Sección A: Sobre N°1 (recaudos legales y financieros)
+model Sobre1 {
+  id                                  String               @id @default(uuid())
+  evaluacionId                        String               @unique
+
+  // 11 ítems booleanos + observación opcional
+  cartaManifestacionVoluntad          Boolean?             @map("carta_manifestacion_voluntad_au_au")
+  obsCartaManifestacionVoluntad       String?              @map("obs_carta_manifestacion_voluntad_au_au")
+  cartaAutorizacion                   Boolean?             @map("carta_autorizacion_au_au")
+  obsCartaAutorizacion                String?              @map("obs_carta_autorizacion_au_au")
+  copiaRifVigente                     Boolean?             @map("copia_rif_vigente_au_au")
+  obsCopiaRifVigente                  String?              @map("obs_copia_rif_vigente_au_au")
+  certificadoRnc                      Boolean?             @map("certificado_rnc_au_au")
+  obsCertificadoRnc                   String?              @map("obs_certificado_rnc_au_au")
+  solvenciaLaboral                    Boolean?             @map("solvencia_laboral_au_au")
+  obsSolvenciaLaboral                 String?              @map("obs_solvencia_laboral_au_au")
+  declaracionSociosNoInhabilitados    Boolean?             @map("declaracion_socios_no_inhabilitados_au_au")
+  obsDeclaracionSociosNoInhabilitados String?              @map("obs_declaracion_socios_no_inhabilitados_au_au")
+  declaracionNoDeudas                 Boolean?             @map("declaracion_no_deudas_ente_au_au")
+  obsDeclaracionNoDeudas              String?              @map("obs_declaracion_no_deudas_ente_au_au")
+  declaracionNoImpedimentosLcp        Boolean?             @map("declaracion_no_impedimentos_lcp_au_au")
+  obsDeclaracionNoImpedimentosLcp     String?              @map("obs_declaracion_no_impedimentos_lcp_au_au")
+  declaracionInfoFinanciera           Boolean?             @map("declaracion_info_financiera_au_au")
+  obsDeclaracionInfoFinanciera        String?              @map("obs_declaracion_info_financiera_au_au")
+  relacionServiciosPrestados          Boolean?             @map("relacion_servicios_prestados_au_au")
+  obsRelacionServiciosPrestados       String?              @map("obs_relacion_servicios_prestados_au_au")
+  referenciasComerciales              Boolean?             @map("referencias_comerciales_au_au")
+  obsReferenciasComerciales           String?              @map("obs_referencias_comerciales_au_au")
+
+  createdAt                           DateTime             @default(now())
+  updatedAt                           DateTime             @updatedAt
+  deletedAt                           DateTime?
+  createdBy                           String?
+  updatedBy                           String?
+
+  evaluacion                          EvaluacionResultados @relation(fields: [evaluacionId], references: [id], onDelete: Cascade)
+
+  @@map("tb_sobre_1")
+}
+
+// Tabla 21 — Sección B: Sobre N°2 (oferta técnica y económica) + Matriz
+model Sobre2 {
+  id                                 String               @id @default(uuid())
+  evaluacionId                       String               @unique
+
+  // 6 ítems booleanos + observación opcional
+  ofertaTecnicoEconomica             Boolean?             @map("oferta_tecnico_economica_au_au")
+  obsOfertaTecnicoEconomica          String?              @map("obs_oferta_tecnico_economica_au_au")
+  cartaOferta                        Boolean?             @map("carta_oferta_au_au")
+  obsCartaOferta                     String?              @map("obs_carta_oferta_au_au")
+  declaracionCapacidadFinanciera     Boolean?             @map("declaracion_capacidad_financiera_au_au")
+  obsDeclaracionCapacidadFinanciera  String?              @map("obs_declaracion_capacidad_financiera_au_au")
+  declaracionCompromisoRespSocial    Boolean?             @map("declaracion_compromiso_resp_social_au_au")
+  obsDeclaracionCompromisoRespSocial String?              @map("obs_declaracion_compromiso_resp_social_au_au")
+  garantiaMantenimientoOferta        Boolean?             @map("garantia_mantenimiento_oferta_au_au")
+  obsGarantiaMantenimientoOferta     String?              @map("obs_garantia_mantenimiento_oferta_au_au")
+  declaracionAutocalculoVan          Boolean?             @map("declaracion_autocalculo_van_au_au")
+  obsDeclaracionAutocalculoVan       String?              @map("obs_declaracion_autocalculo_van_au_au")
+
+  // Evaluación técnica — 4 criterios dinámicos según tipo_objeto_contratacion (VarChar)
+  criterio1Evaluacion                String?              @map("criterio_1_evaluacion_au_au") @db.VarChar(255)
+  puntuacionCriterio1                Decimal?             @map("puntuacion_criterio_1_au_au") @db.Decimal(5, 2)
+  criterio2Evaluacion                String?              @map("criterio_2_evaluacion_au_au") @db.VarChar(255)
+  puntuacionCriterio2                Decimal?             @map("puntuacion_criterio_2_au_au") @db.Decimal(5, 2)
+  criterio3Evaluacion                String?              @map("criterio_3_evaluacion_au_au") @db.VarChar(255)
+  puntuacionCriterio3                Decimal?             @map("puntuacion_criterio_3_au_au") @db.Decimal(5, 2)
+  criterio4Evaluacion                String?              @map("criterio_4_evaluacion_au_au") @db.VarChar(255)
+  puntuacionCriterio4                Decimal?             @map("puntuacion_criterio_4_au_au") @db.Decimal(5, 2)
+
+  // Evaluación económica
+  montoOfertaBs                      Decimal?             @map("monto_oferta_au_au") @db.Decimal(15, 2)
+  porcentajeVan                      Decimal?             @map("porcentaje_van_au_au") @db.Decimal(5, 2)
+
+  createdAt                          DateTime             @default(now())
+  updatedAt                          DateTime             @updatedAt
+  deletedAt                          DateTime?
+  createdBy                          String?
+  updatedBy                          String?
+
+  evaluacion                         EvaluacionResultados @relation(fields: [evaluacionId], references: [id], onDelete: Cascade)
+
+  @@map("tb_sobre_2")
+}
+
+// Tabla de Informe de Recomendación — datos adicionales a nivel de expediente
+model InformeRecomendacion {
+  id                               String                 @id @default(uuid())
+  expedienteId                     String                 @unique
+
+  actualizacionPresupuesto         Boolean?               @map("actualizacion_presupuesto_au_au")
+  montoNuevoPresupuesto            Decimal?               @map("monto_nuevo_presupuesto_au_au") @db.Decimal(15, 2)
+  justificacionActualizacionPresup String?                @map("justificacion_actualizacion_presupuesto_au_au")
+
+  indVerificadoGarantia            Boolean?               @map("ind_verificado_garantia_au_au")
+  indVerificadoCrs                 Boolean?               @map("ind_verificado_crs_au_au")
+
+  observacionFormalidades          Boolean?               @map("observacion_formalidades_au_au")
+  omisionFormalidades              String?                @map("omision_formalidades_au_au")
+  subsanacionActo                  String?                @map("subsanacion_acto_au_au")
+  datosActoSubsanacion             String?                @map("datos_acto_subsanacion_au_au")
+
+  plazoEjecucionOfertaGanadora     Int?                   @map("plazo_ejecucion_oferta_ganadora_au_au")
+
+  createdAt                        DateTime               @default(now())
+  updatedAt                        DateTime               @updatedAt
+  deletedAt                        DateTime?
+  createdBy                        String?
+  updatedBy                        String?
+
+  expediente                       ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+
+  @@map("tb_informe_recomendacion")
 }
 
 model Adjudicacion {
@@ -764,6 +896,8 @@ enum TipoDocumento {
   ACTA_INICIO
   LLAMADO_PARTICIPAR
   REGISTRO_ADQUIRENTES
+  LISTA_COTEJO
+  INFORME_RECOMENDACION
 }
 
 enum TipoDocumentoProveedor {
