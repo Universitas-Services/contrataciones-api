@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -17,6 +18,7 @@ import { CreateEvaluacionDto } from './dto/create-evaluacion.dto';
 import { UpdateSobre1Dto } from './dto/update-sobre1.dto';
 import { UpdateSobre2Dto } from './dto/update-sobre2.dto';
 import { CreateInformeDto } from './dto/create-informe.dto';
+import { ListarEvaluacionesQueryDto } from './dto/listar-evaluaciones-query.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -52,15 +54,32 @@ export class EvaluacionFase3Controller {
   @Get('expediente/:expedienteId')
   @Roles('ADMIN_ENTE', 'EJECUTOR', 'VISUALIZADOR')
   @ApiOperation({
-    summary: 'Listar todas las evaluaciones de un expediente',
-    description: 'Retorna todas las evaluaciones activas con Sobre1 y Sobre2 incluidos.',
+    summary: 'Listar evaluaciones de un expediente (Paginado y Filtrado)',
+    description:
+      'Retorna evaluaciones con Sobre1 y Sobre2, soportando paginación, búsqueda por RIF y filtro por estatus.',
   })
   @ApiParam({ name: 'expedienteId', description: 'ID del expediente de contratación' })
   async findAllByExpediente(
     @Param('expedienteId') expedienteId: string,
+    @Query() query: ListarEvaluacionesQueryDto,
     @CurrentUser() user: { enteId: string },
   ) {
-    return this.evaluacionFase3Service.findAllByExpediente(expedienteId, user.enteId);
+    return this.evaluacionFase3Service.findAllByExpediente(expedienteId, user.enteId, query);
+  }
+
+  @Get('expediente/:expedienteId/stats')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'VISUALIZADOR')
+  @ApiOperation({
+    summary: 'Obtener estadísticas de evaluación del expediente',
+    description:
+      'Retorna contadores de ofertas recibidas, evaluadas, descalificadas y por evaluar.',
+  })
+  @ApiParam({ name: 'expedienteId', description: 'ID del expediente' })
+  async getStats(
+    @Param('expedienteId') expedienteId: string,
+    @CurrentUser() user: { enteId: string },
+  ) {
+    return this.evaluacionFase3Service.getStatsByExpediente(expedienteId, user.enteId);
   }
 
   @Get(':evaluacionId')

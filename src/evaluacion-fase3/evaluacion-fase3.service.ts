@@ -4,6 +4,7 @@ import { CreateEvaluacionDto } from './dto/create-evaluacion.dto';
 import { UpdateSobre1Dto } from './dto/update-sobre1.dto';
 import { UpdateSobre2Dto } from './dto/update-sobre2.dto';
 import { CreateInformeDto } from './dto/create-informe.dto';
+import { ListarEvaluacionesQueryDto, EstatusEvaluacion } from './dto/listar-evaluaciones-query.dto';
 
 @Injectable()
 export class EvaluacionFase3Service {
@@ -148,9 +149,16 @@ export class EvaluacionFase3Service {
   }
 
   // ============================================================
-  // 2. LISTAR EVALUACIONES por expediente
+  // 2. LISTAR EVALUACIONES por expediente (Paginado y Filtrado)
   // ============================================================
-  async findAllByExpediente(expedienteId: string, enteId: string) {
+  async findAllByExpediente(
+    expedienteId: string,
+    enteId: string,
+    query: ListarEvaluacionesQueryDto,
+  ) {
+    const { page = 1, limit = 10, rif, estatus } = query;
+    const skip = (page - 1) * limit;
+
     // Validar que el expediente pertenezca al ente
     const expediente = await this.prisma.expedienteContratacion.findFirst({
       where: { id: expedienteId, enteId, deletedAt: null },
@@ -159,24 +167,94 @@ export class EvaluacionFase3Service {
       throw new NotFoundException('Expediente no encontrado');
     }
 
-    return this.prisma.evaluacionResultados.findMany({
-      where: {
-        deletedAt: null,
-        oferta: { expedienteId, deletedAt: null },
-      },
-      include: {
-        sobre1: true,
-        sobre2: true,
-        oferta: {
-          select: {
-            nombreProveedorOferente: true,
-            rifProveedorOferente: true,
-            expedienteId: true,
+    const where: any = {
+      deletedAt: null,
+      oferta: { expedienteId, deletedAt: null },
+    };
+
+    // Filtro por RIF
+    if (rif) {
+      where.rifProveedorEvaluado = { contains: rif, mode: 'insensitive' };
+    }
+
+    // Filtro por Estatus
+    if (estatus) {
+      if (estatus === EstatusEvaluacion.CALIFICADO) where.oferenteCalificado = true;
+      if (estatus === EstatusEvaluacion.DESCALIFICADO) where.oferenteCalificado = false;
+      if (estatus === EstatusEvaluacion.PENDIENTE) where.oferenteCalificado = null;
+    }
+
+    const [total, data] = await Promise.all([
+      this.prisma.evaluacionResultados.count({ where }),
+      this.prisma.evaluacionResultados.findMany({
+        where,
+        include: {
+          sobre1: true,
+          sobre2: true,
+          oferta: {
+            select: {
+              nombreProveedorOferente: true,
+              rifProveedorOferente: true,
+              expedienteId: true,
+            },
           },
         },
+        orderBy: { createdAt: 'asc' },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        lastPage: Math.ceil(total / limit),
       },
-      orderBy: { createdAt: 'asc' },
+    };
+  }
+
+  // ============================================================
+  // 2.1 OBTENER ESTADÍSTICAS por expediente
+  // ============================================================
+  async getStatsByExpediente(expedienteId: string, enteId: string) {
+    const expediente = await this.prisma.expedienteContratacion.findFirst({
+      where: { id: expedienteId, enteId, deletedAt: null },
     });
+    if (!expediente) {
+      throw new NotFoundException('Expediente no encontrado');
+    }
+
+    const [totalOfertas, calificadas, descalificadas] = await Promise.all([
+      // Total de ofertas recibidas en el expediente
+      this.prisma.ofertaPresentada.count({
+        where: { expedienteId, deletedAt: null },
+      }),
+      // Calificadas (Pass)
+      this.prisma.evaluacionResultados.count({
+        where: {
+          deletedAt: null,
+          oferta: { expedienteId, deletedAt: null },
+          oferenteCalificado: true,
+        },
+      }),
+      // Descalificadas (Fail)
+      this.prisma.evaluacionResultados.count({
+        where: {
+          deletedAt: null,
+          oferta: { expedienteId, deletedAt: null },
+          oferenteCalificado: false,
+        },
+      }),
+    ]);
+
+    return {
+      ofertasRecibidas: totalOfertas,
+      evaluadas: calificadas,
+      descalificadas: descalificadas,
+      porEvaluar: totalOfertas - (calificadas + descalificadas),
+    };
   }
 
   // ============================================================
