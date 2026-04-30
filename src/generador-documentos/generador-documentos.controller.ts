@@ -250,10 +250,10 @@ export class GeneradorDocumentosController {
     return { message: 'Informe de Recomendación generado exitosamente', data };
   }
 
-  @ApiOperation({ summary: 'Preview Lista de Cotejo' })
-  @Get('preview/lista-cotejo/:expedienteId')
-  async previewListaCotejo(@Param('expedienteId') expedienteId: string) {
-    return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'LISTA_COTEJO');
+  @ApiOperation({ summary: 'Preview Lista de Cotejo por evaluación' })
+  @Get('preview/lista-cotejo/evaluacion/:evaluacionId')
+  async previewListaCotejoByEvaluacion(@Param('evaluacionId') evaluacionId: string) {
+    return this.generadorDocumentosService.getPreviewUrlByEvaluacion(evaluacionId, 'LISTA_COTEJO');
   }
 
   @ApiOperation({ summary: 'Preview Informe de Recomendación' })
@@ -262,13 +262,17 @@ export class GeneradorDocumentosController {
     return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'INFORME_RECOMENDACION');
   }
 
-  @ApiOperation({ summary: 'Descargar Lista de Cotejo' })
-  @Get('download/lista-cotejo/:expedienteId')
-  async downloadListaCotejo(
-    @Param('expedienteId') expedienteId: string,
+  @ApiOperation({ summary: 'Descargar Lista de Cotejo por evaluación' })
+  @Get('download/lista-cotejo/evaluacion/:evaluacionId')
+  async downloadListaCotejoByEvaluacion(
+    @Param('evaluacionId') evaluacionId: string,
     @Res({ passthrough: false }) res: any,
   ) {
-    return this.downloadDocumentoInternal(expedienteId, 'LISTA_COTEJO', res);
+    const result = await this.generadorDocumentosService.downloadByEvaluacion(
+      evaluacionId,
+      'LISTA_COTEJO',
+    );
+    return this.proxyCloudinaryDownload(result, res);
   }
 
   @ApiOperation({ summary: 'Descargar Informe de Recomendación' })
@@ -330,7 +334,10 @@ export class GeneradorDocumentosController {
     res: any,
   ) {
     const result = await this.generadorDocumentosService.download(expedienteId, tipoDocumento);
+    return this.proxyCloudinaryDownload(result, res);
+  }
 
+  private async proxyCloudinaryDownload(result: { url: string; fileName: string }, res: any) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const axios = require('axios');
