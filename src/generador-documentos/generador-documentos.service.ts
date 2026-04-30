@@ -245,10 +245,16 @@ export class GeneradorDocumentosService {
     templateName: string,
     userId: string,
     jsonData: any,
+    evaluacionId?: string,
   ) {
     // 1. Eliminar documento anterior si existe
     const docAnterior = await this.prisma.documentoGenerado.findFirst({
-      where: { expedienteId, tipoDocumento, deletedAt: null },
+      where: {
+        expedienteId,
+        tipoDocumento,
+        deletedAt: null,
+        evaluacionId: evaluacionId || null,
+      },
     });
 
     if (docAnterior) {
@@ -322,6 +328,7 @@ export class GeneradorDocumentosService {
       data: {
         expedienteId,
         tipoDocumento,
+        evaluacionId: evaluacionId || null,
         urlArchivo: fileUrl,
         versionDocumento: docAnterior ? docAnterior.versionDocumento + 1 : 1,
         createdBy: userId,
@@ -887,6 +894,7 @@ export class GeneradorDocumentosService {
       'lista-cotejo-template.docx',
       userId,
       data,
+      evaluacionId,
     );
   }
 
