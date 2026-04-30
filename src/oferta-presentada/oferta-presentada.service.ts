@@ -13,11 +13,11 @@ export class OfertaPresentadaService {
 
   private async invalidarDocumentos(expedienteId: string) {
     await this.prisma.documentoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
-    await this.prisma.pliegoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
+      where: {
+        expedienteId,
+        deletedAt: null,
+        tipoDocumento: { in: ['ACTA_RECEPCION', 'ACTA_APERTURA'] },
+      },
       data: { estaDesactualizado: true },
     });
   }
@@ -206,6 +206,34 @@ export class OfertaPresentadaService {
         proveedor: { select: { nombre: true, rif: true } },
       },
     });
+
+    // Sincronizar los cambios con la Evaluación de la Fase 3 (Si ya fue iniciada)
+    if (
+      dto.nombreProveedorOferente !== undefined ||
+      dto.rifProveedorOferente !== undefined ||
+      dto.nombreRepLegalOferente !== undefined ||
+      dto.cedulaRepLegalOferente !== undefined
+    ) {
+      const evaluacionAsociada = await this.prisma.evaluacionResultados.findUnique({
+        where: { ofertaId: result.id },
+      });
+
+      if (evaluacionAsociada) {
+        await this.prisma.evaluacionResultados.update({
+          where: { ofertaId: result.id },
+          data: {
+            nombreProveedorEvaluado:
+              dto.nombreProveedorOferente ?? evaluacionAsociada.nombreProveedorEvaluado,
+            rifProveedorEvaluado:
+              dto.rifProveedorOferente ?? evaluacionAsociada.rifProveedorEvaluado,
+            nombreRepLegalEvaluado:
+              dto.nombreRepLegalOferente ?? evaluacionAsociada.nombreRepLegalEvaluado,
+            cedulaRepLegalEvaluado:
+              dto.cedulaRepLegalOferente ?? evaluacionAsociada.cedulaRepLegalEvaluado,
+          },
+        });
+      }
+    }
 
     await this.invalidarDocumentos(result.expedienteId);
     if (ofertaActual.expedienteId !== result.expedienteId) {

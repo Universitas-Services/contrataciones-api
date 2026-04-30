@@ -26,11 +26,11 @@ export class AdquirentePliegoService {
 
   private async invalidarDocumentos(expedienteId: string) {
     await this.prisma.documentoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
-    await this.prisma.pliegoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
+      where: {
+        expedienteId,
+        deletedAt: null,
+        tipoDocumento: 'REGISTRO_ADQUIRENTES',
+      },
       data: { estaDesactualizado: true },
     });
   }
