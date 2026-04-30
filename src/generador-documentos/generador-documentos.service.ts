@@ -620,6 +620,15 @@ export class GeneradorDocumentosService {
     return doc;
   }
 
+  async findByEvaluacionYTipo(evaluacionId: string, tipoDocumento: TipoDocumento) {
+    const doc = await this.prisma.documentoGenerado.findFirst({
+      where: { evaluacionId, tipoDocumento, deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!doc) throw new NotFoundException('Documento no generado para esta evaluación');
+    return doc;
+  }
+
   private formatTituloDocumento(tipo: string): string {
     const dicc: Record<string, string> = {
       ACTA_INICIO: 'Acta de Inicio',
@@ -638,6 +647,15 @@ export class GeneradorDocumentosService {
 
   async getPreviewUrl(expedienteId: string, tipoDocumento: TipoDocumento) {
     const doc = await this.findByExpedienteYTipo(expedienteId, tipoDocumento);
+    return this.mapDocToPreview(doc, tipoDocumento);
+  }
+
+  async getPreviewUrlByEvaluacion(evaluacionId: string, tipoDocumento: TipoDocumento) {
+    const doc = await this.findByEvaluacionYTipo(evaluacionId, tipoDocumento);
+    return this.mapDocToPreview(doc, tipoDocumento);
+  }
+
+  private mapDocToPreview(doc: any, tipoDocumento: TipoDocumento) {
     const previewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(doc.urlArchivo)}&embedded=true`;
     return {
       previewUrl,
@@ -652,6 +670,14 @@ export class GeneradorDocumentosService {
     return {
       url: doc.urlArchivo,
       fileName: `${tipoDocumento.toLowerCase()}.docx`,
+    };
+  }
+
+  async downloadByEvaluacion(evaluacionId: string, tipoDocumento: TipoDocumento) {
+    const doc = await this.findByEvaluacionYTipo(evaluacionId, tipoDocumento);
+    return {
+      url: doc.urlArchivo,
+      fileName: `${tipoDocumento.toLowerCase()}-evaluacion.docx`,
     };
   }
 
@@ -752,26 +778,29 @@ export class GeneradorDocumentosService {
 
     // Mapeamos los tipos soportados con la info del documento si existe
     return tiposSoportados.map((item) => {
-      const doc = documentosGenerados.find((d) => d.tipoDocumento === item.tipo);
+      // Filtramos todos los documentos de este tipo
+      const docs = documentosGenerados.filter((d) => d.tipoDocumento === item.tipo);
 
-      let infoDoc: any = null;
-      if (doc) {
-        infoDoc = {
-          id: doc.id,
-          urlArchivo: doc.urlArchivo,
-          previewUrl: `https://docs.google.com/gview?url=${encodeURIComponent(doc.urlArchivo)}&embedded=true`,
-          version: doc.versionDocumento,
-          fechaGeneracion: doc.createdAt,
-          estaDesactualizado: doc.estaDesactualizado,
-        };
-      }
+      const documentosInfo = docs.map((doc) => ({
+        id: doc.id,
+        urlArchivo: doc.urlArchivo,
+        previewUrl: `https://docs.google.com/gview?url=${encodeURIComponent(doc.urlArchivo)}&embedded=true`,
+        version: doc.versionDocumento,
+        fechaGeneracion: doc.createdAt,
+        estaDesactualizado: doc.estaDesactualizado,
+        evaluacionId: doc.evaluacionId,
+      }));
+
+      // Tomamos el último para compatibilidad con el frontend actual
+      const lastDoc = docs.length > 0 ? docs[docs.length - 1] : null;
 
       return {
         tipo: item.tipo,
         label: item.label,
-        generado: !!doc,
-        estaDesactualizado: doc ? !!doc.estaDesactualizado : false,
-        documento: infoDoc,
+        generado: docs.length > 0,
+        estaDesactualizado: lastDoc ? !!lastDoc.estaDesactualizado : false,
+        documento: documentosInfo.length > 0 ? documentosInfo[documentosInfo.length - 1] : null,
+        documentos: documentosInfo, // Enviamos el array completo para que el front pueda listarlos todos
       };
     });
   }
