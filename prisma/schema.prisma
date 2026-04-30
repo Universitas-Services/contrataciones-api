@@ -549,6 +549,7 @@ model EvaluacionResultados {
   oferta                  OfertaPresentada @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
   sobre1                  Sobre1?
   sobre2                  Sobre2?
+  documentosGenerados     DocumentoGenerado[]
 
   @@index([ofertaId])
   @@map("tb_evaluacion_resultados")
@@ -741,10 +742,15 @@ model DocumentoGenerado {
   deletedAt        DateTime?
   createdBy        String?
   estaDesactualizado Boolean              @default(false)
+  
+  evaluacionId     String?
+  evaluacion       EvaluacionResultados?  @relation(fields: [evaluacionId], references: [id], onDelete: Cascade)
+
   expediente       ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
   sesionesEdicion  SessionEdicion[]
 
   @@index([expedienteId, tipoDocumento])
+  @@index([evaluacionId])
 }
 
 model ManualGenerado {
