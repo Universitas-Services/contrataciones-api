@@ -533,4 +533,159 @@ export class EntesService {
       },
     });
   }
+
+  async getUniversitasMetrics() {
+    const [totalEntes, totalSupervisores, completados, porCompletar] = await Promise.all([
+      // 1. Total de Entes
+      this.prisma.entePublico.count({
+        where: { deletedAt: null },
+      }),
+      // 2. Total de Supervisores (Usuarios con rol SUPERVISOR)
+      this.prisma.usuario.count({
+        where: {
+          rol: 'SUPERVISOR',
+          deletedAt: null,
+        },
+      }),
+      // 3. Completados (Ente con datosConfirmados: true)
+      this.prisma.entePublico.count({
+        where: {
+          datosConfirmados: true,
+          deletedAt: null,
+        },
+      }),
+      // 4. Por completar (Ente con datosConfirmados: false)
+      this.prisma.entePublico.count({
+        where: {
+          datosConfirmados: false,
+          deletedAt: null,
+        },
+      }),
+    ]);
+
+    return {
+      totalEntes,
+      totalSupervisores,
+      completados,
+      porCompletar,
+    };
+  }
+
+  async getEnteOperationalMetrics(enteId: string) {
+    const [
+      usuariosTotal,
+      usuariosEjecutores,
+      usuariosVisualizadores,
+      proveedoresTotal,
+      expedientesCompliance,
+    ] = await Promise.all([
+      // 1. Usuarios del Ente
+      this.prisma.usuario.count({
+        where: { enteId, deletedAt: null },
+      }),
+      this.prisma.usuario.count({
+        where: { enteId, rol: 'EJECUTOR', deletedAt: null },
+      }),
+      this.prisma.usuario.count({
+        where: { enteId, rol: 'VISUALIZADOR', deletedAt: null },
+      }),
+      // 2. Proveedores del Ente
+      this.prisma.proveedor.count({
+        where: { enteId, deletedAt: null },
+      }),
+      // 3. Expedientes Compliance (con LISTA_COTEJO)
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          documentosGenerados: {
+            some: { tipoDocumento: 'LISTA_COTEJO', deletedAt: null },
+          },
+        },
+      }),
+    ]);
+
+    // 4. Expedientes en Proceso (Desglose por tipo)
+    const statusEnProceso = { notIn: ['CONTRATADO', 'ANULADO'] } as any;
+    const [procesoBienes, procesoObras, procesoServicios] = await Promise.all([
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          estatusProceso: statusEnProceso,
+          modalidad: { tipoContratacion: 'BIENES' },
+        },
+      }),
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          estatusProceso: statusEnProceso,
+          modalidad: { tipoContratacion: 'OBRAS' },
+        },
+      }),
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          estatusProceso: statusEnProceso,
+          modalidad: { tipoContratacion: 'SERVICIOS' },
+        },
+      }),
+    ]);
+
+    // 5. Expedientes Terminados (Desglose por tipo)
+    const [terminadoBienes, terminadoObras, terminadoServicios] = await Promise.all([
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          estatusProceso: 'CONTRATADO',
+          modalidad: { tipoContratacion: 'BIENES' },
+        },
+      }),
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          estatusProceso: 'CONTRATADO',
+          modalidad: { tipoContratacion: 'OBRAS' },
+        },
+      }),
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          estatusProceso: 'CONTRATADO',
+          modalidad: { tipoContratacion: 'SERVICIOS' },
+        },
+      }),
+    ]);
+
+    return {
+      usuarios: {
+        total: usuariosTotal,
+        ejecutores: usuariosEjecutores,
+        visualizadores: usuariosVisualizadores,
+      },
+      expedientesEnProceso: {
+        total: procesoBienes + procesoObras + procesoServicios,
+        bienes: procesoBienes,
+        obras: procesoObras,
+        servicios: procesoServicios,
+      },
+      expedientesTerminados: {
+        total: terminadoBienes + terminadoObras + terminadoServicios,
+        bienes: terminadoBienes,
+        obras: terminadoObras,
+        servicios: terminadoServicios,
+      },
+      proveedores: {
+        total: proveedoresTotal,
+      },
+      compliance: {
+        total: expedientesCompliance,
+      },
+    };
+  }
 }

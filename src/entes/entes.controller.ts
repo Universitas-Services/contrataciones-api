@@ -274,6 +274,40 @@ export class EntesController {
     }
   }
 
+  @Get('dashboard/metrics')
+  @Roles('UNIVERSITAS')
+  @ApiOperation({
+    summary: 'Obtener métricas globales (Universitas)',
+    description:
+      'Retorna estadísticas de entes totales, supervisores, completados y por completar.',
+  })
+  @ApiResponse({ status: 200, description: 'Métricas obtenidas correctamente' })
+  @ApiResponse({ status: 403, description: 'No autorizado' })
+  getMetrics() {
+    return this.entesService.getUniversitasMetrics();
+  }
+
+  @Get('dashboard/operativo')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'VISUALIZADOR', 'UNIVERSITAS')
+  @ApiOperation({
+    summary: 'Obtener resumen operativo del ente logueado',
+    description:
+      'Retorna estadísticas detalladas de usuarios, expedientes y proveedores del ente actual.',
+  })
+  @ApiResponse({ status: 200, description: 'Métricas obtenidas correctamente' })
+  @ApiResponse({ status: 403, description: 'No autorizado o el usuario no tiene un ente asociado' })
+  getOperationalMetrics(@CurrentUser() user: { rol: string; enteId?: string }) {
+    if (!user.enteId) {
+      if (user.rol === 'UNIVERSITAS') {
+        throw new ForbiddenException(
+          'Los usuarios Universitas deben consultar métricas globales o por ente específico.',
+        );
+      }
+      throw new ForbiddenException('El usuario no tiene un ente asociado.');
+    }
+    return this.entesService.getEnteOperationalMetrics(user.enteId);
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Ver Ente',
