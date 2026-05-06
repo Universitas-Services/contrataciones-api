@@ -24,6 +24,7 @@ import { PresupuestoItemModule } from './presupuesto-item/presupuesto-item.modul
 import { GeneradorDocumentosModule } from './generador-documentos/generador-documentos.module';
 import { OfertaPresentadaModule } from './oferta-presentada/oferta-presentada.module';
 import { EvaluacionFase3Module } from './evaluacion-fase3/evaluacion-fase3.module';
+import { SoporteModule } from './soporte/soporte.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { EvaluacionFase3Module } from './evaluacion-fase3/evaluacion-fase3.modul
     GeneradorDocumentosModule,
     OfertaPresentadaModule,
     EvaluacionFase3Module,
+    SoporteModule,
   ],
   providers: [
     {
