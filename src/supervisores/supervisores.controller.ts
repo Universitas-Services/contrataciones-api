@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
@@ -18,16 +19,59 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CreateSupervisorDto } from './dto/create-supervisor.dto';
 import { AsignarEntesDto } from './dto/asignar-entes.dto';
+import { EntesService } from '../entes/entes.service';
 
 @ApiTags('👨‍💼 Supervisores')
 @ApiBearerAuth('JWT-auth')
 @Controller('supervisores')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
-@Roles('UNIVERSITAS') // Solo UNIVERSITAS puede gestionar supervisores
+@Roles('UNIVERSITAS', 'SUPERVISOR')
 export class SupervisoresController {
-  constructor(private readonly supervisoresService: SupervisoresService) {}
+  constructor(
+    private readonly supervisoresService: SupervisoresService,
+    private readonly entesService: EntesService,
+  ) {}
+
+  // ---------------------------------------------------------
+  // ENDPOINTS PARA ROL SUPERVISOR
+  // ---------------------------------------------------------
+
+  @Get('mis-entes')
+  @Roles('SUPERVISOR')
+  @ApiOperation({
+    summary: 'Listar mis Entes asignados',
+    description: 'Permite a un supervisor ver la lista de Entes que tiene bajo su supervisión',
+  })
+  @ApiResponse({ status: 200, description: 'Lista de Entes asignados' })
+  getMisEntes(@CurrentUser() user: { id: string }) {
+    return this.supervisoresService.getMisEntes(user.id);
+  }
+
+  @Get('mis-entes/:enteId/metrics')
+  @Roles('SUPERVISOR')
+  @ApiOperation({
+    summary: 'Ver métricas de un Ente asignado',
+    description: 'Obtiene las métricas operativas de un Ente específico supervisado',
+  })
+  @ApiParam({ name: 'enteId', description: 'ID del Ente' })
+  @ApiResponse({ status: 200, description: 'Métricas del Ente' })
+  @ApiResponse({ status: 403, description: 'No tiene acceso a este Ente' })
+  async getEnteMetrics(@Param('enteId') enteId: string, @CurrentUser() user: { id: string }) {
+    // Validar acceso
+    const tieneAcceso = await this.supervisoresService.tieneAccesoAEnte(user.id, enteId);
+    if (!tieneAcceso) {
+      throw new ForbiddenException('No tiene permisos para supervisar este Ente');
+    }
+
+    return this.entesService.getEnteOperationalMetrics(enteId);
+  }
+
+  // ---------------------------------------------------------
+  // ENDPOINTS ADMINISTRATIVOS (Solo UNIVERSITAS)
+  // ---------------------------------------------------------
 
   @Post()
+  @Roles('UNIVERSITAS')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Crear supervisor',
@@ -40,6 +84,7 @@ export class SupervisoresController {
   }
 
   @Get()
+  @Roles('UNIVERSITAS')
   @ApiOperation({
     summary: 'Listar supervisores',
     description: 'Obtiene la lista de todos los supervisores del sistema',
@@ -50,6 +95,7 @@ export class SupervisoresController {
   }
 
   @Get(':id')
+  @Roles('UNIVERSITAS')
   @ApiOperation({
     summary: 'Ver supervisor',
     description: 'Obtiene los detalles de un supervisor específico incluyendo sus Entes asignados',
@@ -62,6 +108,7 @@ export class SupervisoresController {
   }
 
   @Put(':id/asignar-entes')
+  @Roles('UNIVERSITAS')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Asignar/Remover Entes',
@@ -79,6 +126,7 @@ export class SupervisoresController {
   }
 
   @Delete(':id')
+  @Roles('UNIVERSITAS')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Eliminar supervisor',
