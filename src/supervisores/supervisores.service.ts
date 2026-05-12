@@ -294,4 +294,40 @@ export class SupervisoresService {
 
     return asignaciones.map((a) => a.enteId);
   }
+
+  // Nuevo: Obtener detalles de los entes asignados al supervisor actual
+  async getMisEntes(supervisorId: string) {
+    const asignaciones = await this.prisma.supervisorAsignacion.findMany({
+      where: { supervisorId },
+      include: {
+        ente: {
+          select: {
+            id: true,
+            nombre: true,
+            rif: true,
+            siglas: true,
+            logoUrl: true,
+            estado: true,
+            municipio: true,
+            _count: {
+              select: {
+                expedientes: true,
+                usuarios: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        ente: {
+          nombre: 'asc',
+        },
+      },
+    });
+
+    return asignaciones.map((a) => ({
+      ...a.ente,
+      asignadoEn: a.createdAt,
+    }));
+  }
 }
