@@ -962,6 +962,7 @@ model TicketSoporte {
   estado      EstadoTicket @default(ABIERTO)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
 
   ente     EntePublico     @relation(fields: [enteId], references: [id])
   creador  Usuario         @relation("TicketsCreados", fields: [creadorId], references: [id])

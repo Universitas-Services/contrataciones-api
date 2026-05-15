@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -8,6 +8,7 @@ import { SoporteService } from './soporte.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { CreateMensajeDto } from './dto/create-mensaje.dto';
 import { UpdateTicketEstadoDto } from './dto/update-ticket-estado.dto';
+import { UpdateTicketDto } from './dto/update-ticket.dto';
 
 @ApiTags('Soporte')
 @ApiBearerAuth('JWT-auth')
@@ -30,7 +31,8 @@ export class SoporteController {
   findAllTickets(@CurrentUser() user: { id: string; rol: string; enteId?: string }) {
     // Si es UNIVERSITAS, no se filtra por Ente. Si no, solo ve los de su Ente.
     const enteId = user.rol === 'UNIVERSITAS' ? undefined : user.enteId;
-    return this.soporteService.listarTickets({ enteId });
+    const incluirEliminados = user.rol === 'UNIVERSITAS';
+    return this.soporteService.listarTickets({ enteId, incluirEliminados });
   }
 
   @Get('tickets/:id')
@@ -40,7 +42,8 @@ export class SoporteController {
     @CurrentUser() user: { id: string; rol: string; enteId?: string },
   ) {
     const enteId = user.rol === 'UNIVERSITAS' ? undefined : user.enteId;
-    return this.soporteService.obtenerTicket(id, enteId);
+    const incluirEliminados = user.rol === 'UNIVERSITAS';
+    return this.soporteService.obtenerTicket(id, enteId, incluirEliminados);
   }
 
   @Post('tickets/:id/mensajes')
@@ -59,5 +62,26 @@ export class SoporteController {
   @ApiOperation({ summary: 'Cambiar el estado de un ticket (Solo Universitas)' })
   updateTicketEstado(@Param('id') id: string, @Body() dto: UpdateTicketEstadoDto) {
     return this.soporteService.cambiarEstado(id, dto);
+  }
+
+  @Patch('tickets/:id')
+  @ApiOperation({ summary: 'Editar el asunto o descripción de un ticket abierto (Solo creador)' })
+  updateTicket(
+    @Param('id') id: string,
+    @Body() dto: UpdateTicketDto,
+    @CurrentUser() user: { id: string; rol: string; enteId?: string },
+  ) {
+    const enteId = user.rol === 'UNIVERSITAS' ? undefined : user.enteId;
+    return this.soporteService.editarTicket(id, dto, user.id, enteId);
+  }
+
+  @Delete('tickets/:id')
+  @ApiOperation({ summary: 'Eliminar un ticket pasivamente (Creador o Universitas)' })
+  removeTicket(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string; rol: string; enteId?: string },
+  ) {
+    const enteId = user.rol === 'UNIVERSITAS' ? undefined : user.enteId;
+    return this.soporteService.eliminarTicket(id, user.id, user.rol, enteId);
   }
 }
