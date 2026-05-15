@@ -3,6 +3,7 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { CreateMensajeDto } from './dto/create-mensaje.dto';
 import { UpdateTicketEstadoDto } from './dto/update-ticket-estado.dto';
+import { UpdateTicketDto } from './dto/update-ticket.dto';
 
 @Injectable()
 export class SoporteService {
@@ -19,8 +20,13 @@ export class SoporteService {
     });
   }
 
-  async listarTickets(filtros: { enteId?: string }) {
-    const where = filtros.enteId ? { enteId: filtros.enteId } : {};
+  async listarTickets(filtros: { enteId?: string; incluirEliminados?: boolean }) {
+    const where: any = filtros.enteId ? { enteId: filtros.enteId } : {};
+
+    if (!filtros.incluirEliminados) {
+      where.deletedAt = null;
+    }
+
     return this.prisma.ticketSoporte.findMany({
       where,
       orderBy: { updatedAt: 'desc' },
@@ -38,11 +44,15 @@ export class SoporteService {
     });
   }
 
-  async obtenerTicket(id: string, enteId?: string) {
+  async obtenerTicket(id: string, enteId?: string, incluirEliminados = false) {
     const where: any = { id };
     // Si se provee enteId, significa que es un usuario de un Ente y solo puede ver los suyos
     if (enteId) {
       where.enteId = enteId;
+    }
+
+    if (!incluirEliminados) {
+      where.deletedAt = null;
     }
 
     const ticket = await this.prisma.ticketSoporte.findFirst({
@@ -117,6 +127,41 @@ export class SoporteService {
     return this.prisma.ticketSoporte.update({
       where: { id: ticketId },
       data: { estado: dto.estado },
+    });
+  }
+
+  async editarTicket(ticketId: string, dto: UpdateTicketDto, usuarioId: string, enteId?: string) {
+    const ticket = await this.obtenerTicket(ticketId, enteId);
+
+    if (ticket.creadorId !== usuarioId) {
+      throw new NotFoundException('No tienes permisos para editar este ticket'); // o ForbiddenException
+    }
+
+    if (ticket.estado === 'CERRADO') {
+      throw new NotFoundException('No puedes editar un ticket cerrado');
+    }
+
+    return this.prisma.ticketSoporte.update({
+      where: { id: ticketId },
+      data: {
+        ...(dto.asunto && { asunto: dto.asunto }),
+        ...(dto.descripcion && { descripcion: dto.descripcion }),
+      },
+    });
+  }
+
+  async eliminarTicket(ticketId: string, usuarioId: string, rol: string, enteId?: string) {
+    // Universitas (no tiene enteId) puede ver y eliminar eliminados, pero obtenerTicket asume no eliminados por defecto
+    const incluirEliminados = rol === 'UNIVERSITAS';
+    const ticket = await this.obtenerTicket(ticketId, enteId, incluirEliminados);
+
+    if (rol !== 'UNIVERSITAS' && ticket.creadorId !== usuarioId) {
+      throw new NotFoundException('No tienes permisos para eliminar este ticket');
+    }
+
+    return this.prisma.ticketSoporte.update({
+      where: { id: ticketId },
+      data: { deletedAt: new Date() },
     });
   }
 }
