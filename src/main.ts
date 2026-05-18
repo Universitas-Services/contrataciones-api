@@ -18,7 +18,7 @@ async function bootstrap() {
 
   // Configurar CORS
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: true, // Permite que cualquier frontend (local o en producción) se conecte dinámicamente
     credentials: true,
   });
 
@@ -97,4 +97,6 @@ async function bootstrap() {
   console.log('');
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Error durante el inicio de la aplicación:', err);
+});

@@ -285,6 +285,88 @@ export class GeneradorDocumentosController {
   }
 
   // ==========================
+  // FASE 4 — Adjudicación, Contrato Formalizado y Notificaciones
+  // ==========================
+
+  @ApiOperation({ summary: 'Generar Acta de Adjudicación' })
+  @Post('generar/acta-adjudicacion/:expedienteId')
+  async generarActaAdjudicacion(
+    @Param('expedienteId') expedienteId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const data = await this.generadorDocumentosService.generarAdjudicacion(expedienteId, user.id);
+    return { message: 'Acta de Adjudicación generada exitosamente', data };
+  }
+
+  @ApiOperation({ summary: 'Generar Contrato Formalizado' })
+  @Post('generar/contrato/:expedienteId')
+  async generarContrato(
+    @Param('expedienteId') expedienteId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const data = await this.generadorDocumentosService.generarContrato(expedienteId, user.id);
+    return { message: 'Contrato Formalizado generado exitosamente', data };
+  }
+
+  @ApiOperation({ summary: 'Generar Notificaciones Masivas Fase 4' })
+  @Post('generar/notificaciones-fase4/:expedienteId')
+  async generarNotificacionesFase4(
+    @Param('expedienteId') expedienteId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const data = await this.generadorDocumentosService.generarNotificacionesFase4(
+      expedienteId,
+      user.id,
+    );
+    return { message: 'Notificaciones Masivas generadas exitosamente', data };
+  }
+
+  @ApiOperation({ summary: 'Preview Acta de Adjudicación' })
+  @Get('preview/acta-adjudicacion/:expedienteId')
+  async previewActaAdjudicacion(@Param('expedienteId') expedienteId: string) {
+    return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'ACTA_ADJUDICACION');
+  }
+
+  @ApiOperation({ summary: 'Preview Contrato Formalizado' })
+  @Get('preview/contrato/:expedienteId')
+  async previewContrato(@Param('expedienteId') expedienteId: string) {
+    return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'CONTRATO');
+  }
+
+  @ApiOperation({ summary: 'Descargar Acta de Adjudicación' })
+  @Get('download/acta-adjudicacion/:expedienteId')
+  async downloadActaAdjudicacion(
+    @Param('expedienteId') expedienteId: string,
+    @Res({ passthrough: false }) res: any,
+  ) {
+    return this.downloadDocumentoInternal(expedienteId, 'ACTA_ADJUDICACION', res);
+  }
+
+  @ApiOperation({ summary: 'Descargar Contrato Formalizado' })
+  @Get('download/contrato/:expedienteId')
+  async downloadContrato(
+    @Param('expedienteId') expedienteId: string,
+    @Res({ passthrough: false }) res: any,
+  ) {
+    return this.downloadDocumentoInternal(expedienteId, 'CONTRATO', res);
+  }
+
+  @ApiOperation({ summary: 'Obtener estado de notificaciones' })
+  @Get('expedientes/:expedienteId/estado-notificaciones')
+  async getEstadoNotificaciones(@Param('expedienteId') expedienteId: string) {
+    const estado = await this.generadorDocumentosService.getStatusPorExpediente(expedienteId);
+    const notificacionesGeneradas = estado.some(
+      (e) =>
+        (e.tipo === 'NOTIFICACION_ADJUDICADO' || e.tipo === 'NOTIFICACION_NO_ADJUDICADO') &&
+        e.generado,
+    );
+    return {
+      message: 'Estado de notificaciones',
+      generadas: notificacionesGeneradas,
+    };
+  }
+
+  // ==========================
   // ENVIAR POR EMAIL
   // ==========================
 

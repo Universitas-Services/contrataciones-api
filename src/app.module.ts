@@ -25,6 +25,8 @@ import { GeneradorDocumentosModule } from './generador-documentos/generador-docu
 import { OfertaPresentadaModule } from './oferta-presentada/oferta-presentada.module';
 import { EvaluacionFase3Module } from './evaluacion-fase3/evaluacion-fase3.module';
 import { SoporteModule } from './soporte/soporte.module';
+import { AdjudicacionModule } from './adjudicacion/adjudicacion.module';
+import { ContratoFormalizadoModule } from './contrato-formalizado/contrato-formalizado.module';
 
 @Module({
   imports: [
@@ -54,6 +56,8 @@ import { SoporteModule } from './soporte/soporte.module';
     OfertaPresentadaModule,
     EvaluacionFase3Module,
     SoporteModule,
+    AdjudicacionModule,
+    ContratoFormalizadoModule,
   ],
   providers: [
     {
