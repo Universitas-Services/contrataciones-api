@@ -673,44 +673,81 @@ model InformeRecomendacion {
 }
 
 model Adjudicacion {
-  id                      String                 @id @default(uuid())
-  expedienteId            String                 @unique
-  ofertaGanadoraId        String                 @unique
-  fechaActoAdjudicacion   DateTime
-  montoAdjudicadoBs       Decimal                @db.Decimal(15, 2)
-  criteriosSeleccionTexto String?
-  createdAt               DateTime               @default(now())
-  updatedAt               DateTime               @updatedAt
-  deletedAt               DateTime?
-  createdBy               String?
-  updatedBy               String?
-  version                 Int                    @default(1)
-  expediente              ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
-  ofertaGanadora          OfertaPresentada       @relation(fields: [ofertaGanadoraId], references: [id])
-  contrato                ContratoFormalizado?
+  id                         String                 @id @default(uuid())
+  expedienteId               String                 @unique
+  ofertaGanadoraId           String                 @unique
+  fechaActoAdjudicacion      DateTime
+  montoAdjudicadoBs          Decimal                @db.Decimal(15, 2)
+  partidaPresupuestariaGasto String                 @map("partida_presupuest_gasto_au_au") @db.VarChar(50)
+  montoCrsBs                 Decimal                @map("monto_crs_bs_au_au") @db.Decimal(10, 2)
+  referenciaRecomendacion    String                 @map("referencia_recomendacion_au_au") @db.Text
+  criteriosSeleccionTexto    String?
+  createdAt                  DateTime               @default(now())
+  updatedAt                  DateTime               @updatedAt
+  deletedAt                  DateTime?
+  createdBy                  String?
+  updatedBy                  String?
+  version                    Int                    @default(1)
+  expediente                 ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  ofertaGanadora             OfertaPresentada       @relation(fields: [ofertaGanadoraId], references: [id])
+  contrato                   ContratoFormalizado?
 
   @@index([expedienteId])
 }
 
 model ContratoFormalizado {
-  id                         String             @id @default(uuid())
-  adjudicacionId             String             @unique
-  supervisorId               String?
-  numeroContratoFisico       String
-  fechaFirmaContrato         DateTime
-  fechaInicioVigencia        DateTime
-  fechaFinVigencia           DateTime
-  plazoEjecucionDias         Int
-  montoContratoTotal         Decimal            @db.Decimal(15, 2)
-  porcentajeAnticipoOtorgado Decimal?           @db.Decimal(5, 2)
-  createdAt                  DateTime           @default(now())
-  updatedAt                  DateTime           @updatedAt
-  deletedAt                  DateTime?
-  createdBy                  String?
-  updatedBy                  String?
-  version                    Int                @default(1)
-  adjudicacion               Adjudicacion       @relation(fields: [adjudicacionId], references: [id], onDelete: Cascade)
-  garantias                  GarantiaContrato[]
+  id                                 String             @id @default(uuid())
+  adjudicacionId                     String             @unique
+  supervisorId                       String?
+  numeroContratoFisico               String
+  fechaFirmaContrato                 DateTime
+
+  // --- Sección A: Tiempos de ejecución y montos ---
+  fechaInicioVigencia                DateTime           @map("fec_inicio_vigencia_au_au")
+  fechaFinVigencia                   DateTime           @map("fec_fin_vigencia_au_au")
+  montoContratoBs                    Decimal            @map("monto_contrato_bs_au_au") @db.Decimal(15, 2)
+  valorUcauContrato                  Decimal            @map("valor_ucau_contrato_au_au") @db.Decimal(15, 2)
+  plazoEjecucionDias                 Int                @map("plazo_ejecucion_dias_au_au")
+  plazoGarantiaCalidadFuncionamiento String             @map("plazo_garantia_calidad_funcionamiento_au_au") @db.VarChar(255)
+
+  // --- Sección B: Supervisión, aceptación y pago ---
+  nombreSupervisor                   String             @map("nombre_supervisor_au_au") @db.VarChar(500)
+  cedulaSupervisor                   String             @map("cedula_supervisor_au_au") @db.VarChar(50)
+  cargoSupervisor                    String             @map("cargo_supervisor_au_au") @db.VarChar(255)
+  criterioAceptacionContrato         String             @map("criterio_aceptacion_contrato_au_au") @db.VarChar(500)
+  plazoConsignacionFacturas          Int                @map("plazo_consignacion_facturas_au_au")
+
+  // --- Sección C: Finanzas contractuales y compromiso social ---
+  montoFielCumplimientoBs            Decimal            @map("monto_fiel_cumplimiento_bs_au_au") @db.Decimal(20, 2)
+  requiereGarantiaLaboral            Boolean            @map("requiere_garantia_laboral_au_au")
+  porcentajeGarantiaLaboral          Decimal?           @map("porcentaje_garantia_laboral_au_au") @db.Decimal(5, 2)
+  montoGarantiaLaboralBs             Decimal?           @map("monto_garantia_laboral_bs_au_au") @db.Decimal(15, 2)
+  polizaResponsabilidadCivil         Boolean            @map("poliza_responsabilidad_civil_au_au")
+  porcentajeResponsabilidadCivil     Decimal?           @map("porcentaje_responsabilidad_civil_au_au") @db.Decimal(5, 2)
+  montoResponsabilidadCivilBs        Decimal?           @map("monto_responsabilidad_civil_bs_au_au") @db.Decimal(15, 2)
+  anticipoContrato                   Boolean            @map("anticipo_contrato_au_au")
+  formaCumplimientoCrs               String             @map("forma_cumplimiento_crs_au_au") @db.VarChar(255)
+  unidadRespCumplimientoCrs          String             @map("unidad_resp_cumplimiento_crs_au_au") @db.VarChar(255)
+  porcentajeAnticipoOtorgado         Decimal?           @db.Decimal(5, 2)
+
+  // --- Sección D: Penalidades, ajustes y cierre legal ---
+  porcentajeMultaDiaria              Decimal            @map("porcentaje_multa_diaria_au_au") @db.Decimal(5, 2)
+  baseCalculoMultaDiaria             Decimal            @map("base_calculo_multa_diaria_au_au") @db.Decimal(15, 2)
+  plazoRegularizarIncumplimiento     String             @map("plazo_regularizar_incumplimiento_au_au") @db.VarChar(50)
+  porcentajeProcedimientoRescision   Decimal            @map("porcentaje_procedimiento_rescision_au_au") @db.Decimal(5, 2)
+  formulaAjustePrecios               String             @map("formula_ajuste_precios_au_au") @db.VarChar(255)
+  evaluacionDesempeno                String             @map("evaluacion_desempeño_au_au") @db.VarChar(255)
+  garantiaPostEjecucion              String             @map("garantia_post_ejecucion_au_au") @db.VarChar(255)
+  lugarTribunal                      String             @map("lugar_tribunal_au_au") @db.VarChar(255)
+
+  createdAt                          DateTime           @default(now())
+  updatedAt                          DateTime           @updatedAt
+  deletedAt                          DateTime?
+  createdBy                          String?
+  updatedBy                          String?
+  version                            Int                @default(1)
+  adjudicacion                       Adjudicacion       @relation(fields: [adjudicacionId], references: [id], onDelete: Cascade)
+  garantias                          GarantiaContrato[]
 
   @@index([adjudicacionId])
   @@index([numeroContratoFisico])
@@ -907,6 +944,8 @@ enum TipoDocumento {
   REGISTRO_ADQUIRENTES
   LISTA_COTEJO
   INFORME_RECOMENDACION
+  NOTIFICACION_ADJUDICADO
+  NOTIFICACION_NO_ADJUDICADO
 }
 
 enum TipoDocumentoProveedor {

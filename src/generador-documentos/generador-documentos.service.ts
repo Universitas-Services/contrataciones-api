@@ -655,7 +655,7 @@ export class GeneradorDocumentosService {
     return this.mapDocToPreview(doc, tipoDocumento);
   }
 
-  private mapDocToPreview(doc: any, tipoDocumento: TipoDocumento) {
+  private mapDocToPreview(doc: { urlArchivo: string }, tipoDocumento: TipoDocumento) {
     const previewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(doc.urlArchivo)}&embedded=true`;
     return {
       previewUrl,
@@ -752,6 +752,10 @@ export class GeneradorDocumentosService {
         return this.generarActaAperturaSobres(docAnterior.expedienteId, userId);
       case 'INFORME_RECOMENDACION':
         return this.generarInformeRecomendacion(docAnterior.expedienteId, userId);
+      case 'ACTA_ADJUDICACION':
+        return this.generarAdjudicacion(docAnterior.expedienteId, userId);
+      case 'CONTRATO':
+        return this.generarContrato(docAnterior.expedienteId, userId);
       default:
         throw new BadRequestException(
           `No se puede regenerar el documento de tipo ${docAnterior.tipoDocumento}`,
@@ -769,6 +773,8 @@ export class GeneradorDocumentosService {
       { tipo: 'ACTA_RECEPCION', label: 'Acta de Recepción de Sobres' },
       { tipo: 'ACTA_APERTURA', label: 'Acta de Apertura de Sobres' },
       { tipo: 'INFORME_RECOMENDACION', label: 'Informe de Recomendación' },
+      { tipo: 'ACTA_ADJUDICACION', label: 'Acta de Adjudicación' },
+      { tipo: 'CONTRATO', label: 'Contrato Formalizado' },
     ];
 
     // Buscamos los documentos ya generados para este expediente
@@ -1264,5 +1270,302 @@ export class GeneradorDocumentosService {
     } catch {
       return null;
     }
+  }
+
+  // =========================================================================
+  // FASE 4 — Adjudicación, Contrato Formalizado y Notificaciones
+  // =========================================================================
+
+  private async getFirmasExpediente(expediente: any) {
+    const autoridad = expediente.autoridad;
+    const esDelegado = expediente.autoridadFirmaComoDelegado;
+
+    return {
+      nom_completo_autoridad: esDelegado ? '' : autoridad?.nombreCompletoAutoridad || '___',
+      cedula_autoridad: esDelegado ? '' : autoridad?.cedulaAutoridad || '___',
+      cargo_oficial_autoridad: esDelegado ? '' : autoridad?.cargoOficialAutoridad || '___',
+      datos_designacion_autoridad: esDelegado ? '' : autoridad?.datosDesignacionAutoridad || '___',
+      leyes_atribuciones_suscribir_autoridad: esDelegado
+        ? ''
+        : autoridad?.leyesAtribucionesSuscribirAutoridad || '___',
+
+      nom_completo_delegado: esDelegado ? autoridad?.nombreCompletoDelegado || '___' : '',
+      cedula_delegado: esDelegado ? autoridad?.cedulaDelegado || '___' : '',
+      cargo_oficial_delegado: esDelegado ? autoridad?.cargoOficialDelegado || '___' : '',
+      datos_designacion_delegado: esDelegado ? autoridad?.datosDesignacionDelegado || '___' : '',
+      leyes_atribuciones_suscribir_delegado: esDelegado
+        ? autoridad?.leyesAtribucionesSuscribirDelegado || '___'
+        : '',
+    };
+  }
+
+  async getDatosAdjudicacion(expedienteId: string) {
+    const adjudicacion = await this.prisma.adjudicacion.findUnique({
+      where: { expedienteId },
+      include: {
+        expediente: {
+          include: {
+            autoridad: true,
+            ente: true,
+            cronograma: true,
+            fasePreparatoria: true,
+            modalidad: true,
+          },
+        },
+        ofertaGanadora: {
+          include: { evaluacion: true },
+        },
+      },
+    });
+
+    if (!adjudicacion) throw new NotFoundException('Adjudicación no encontrada');
+
+    const firmas = await this.getFirmasExpediente(adjudicacion.expediente);
+    const exp = adjudicacion.expediente;
+    const crono = exp.cronograma;
+    const fasePrep = exp.fasePreparatoria;
+
+    // Criterios fijos por tipo
+    const tipoContratacion = exp.modalidad?.tipoContratacion || 'SERVICIOS';
+    const criteriosPorTipo: Record<string, string[]> = {
+      BIENES: [
+        'Tiempo de entrega a partir de la recepción de la Orden de compra.',
+        'Garantía de los insumos.',
+        'Características de los insumos.',
+        'Disponibilidad de los insumos requeridos.',
+      ],
+      SERVICIOS: [
+        'Plan de trabajo y metodología propuesta.',
+        'Perfil del personal Técnico clave.',
+        'Disponibilidad de Equipos y Herramientas.',
+        'Tiempo de respuesta ante fallas.',
+      ],
+      OBRAS: [
+        'Cronograma de Ejecución y Plan de Trabajo.',
+        'Experiencia de Ingeniero Residente.',
+        'Maquinaria y Equipos disponibles (propios / alquilados).',
+        'Memoria Descriptiva / Metodología de Ejecución.',
+      ],
+    };
+    const criterios = criteriosPorTipo[tipoContratacion] || criteriosPorTipo['SERVICIOS'];
+
+    return {
+      ...firmas,
+      nom_ente_contratante: exp.ente?.nombre || '___',
+      cod_nomenclatura_proceso: exp.codigoNomenclatura || '___',
+      cod_nomenclatura_proceso_au_au: exp.codigoNomenclatura || '___',
+      desc_objeto_contratacion: exp.descripcionObjeto || '___',
+      desc_objeto_contratacion_au_au: exp.descripcionObjeto || '___',
+      normativa_legal: fasePrep?.normativaLegal || 'Decreto de Ley de Contrataciones vigente',
+
+      fec_llamado_participar_au_au: crono?.fechaLlamadoParticipar
+        ? formatDateToSpanishLong(crono.fechaLlamadoParticipar)
+        : '___',
+      fec_acto_recep_aper_sobres_au_au: crono?.fechaActoRecepcionAperturaSobres
+        ? formatDateToSpanishLong(crono.fechaActoRecepcionAperturaSobres)
+        : '___',
+      dir_fiscal_ente: exp.ente?.direccionFiscal || '___',
+      fec_limite_evaluacion_au_au: crono?.fechaLimiteEvaluacion
+        ? formatDateToSpanishLong(crono.fechaLimiteEvaluacion)
+        : '___',
+      fec_limite_adjudicacion_au_au: crono?.fechaLimiteAdjudicacion
+        ? formatDateToSpanishLong(crono.fechaLimiteAdjudicacion)
+        : '___',
+      loc_ciudad_ente: exp.ente?.ciudad || '___',
+
+      criterio_1_evaluacion_au_au: criterios[0] || '___',
+      criterio_2_evaluacion_au_au: criterios[1] || '___',
+      criterio_3_evaluacion_au_au: criterios[2] || '___',
+      criterio_4_evaluacion_au_au: criterios[3] || '___',
+
+      oferente_primera_opción_au_au:
+        adjudicacion.ofertaGanadora?.evaluacion?.nombreProveedorEvaluado ||
+        adjudicacion.ofertaGanadora?.nombreProveedorOferente ||
+        '___',
+      rif_proveedor_evaluado_au_au:
+        adjudicacion.ofertaGanadora?.evaluacion?.rifProveedorEvaluado ||
+        adjudicacion.ofertaGanadora?.rifProveedorOferente ||
+        '___',
+
+      monto_adjudicado_bs_au_au: formatCurrencyVE(Number(adjudicacion.montoAdjudicadoBs)),
+      partida_presupuest_gasto_au_au: adjudicacion.partidaPresupuestariaGasto || '___',
+      monto_crs_bs_au_au: formatCurrencyVE(Number(adjudicacion.montoCrsBs)),
+      referencia_recomendacion_au_au: adjudicacion.referenciaRecomendacion || '___',
+
+      // Mapeo adaptado para el loop {#adquirientes} que solicita la plantilla para mostrar la partida
+      adquirientes: [
+        {
+          codigo_partida_au_au: adjudicacion.partidaPresupuestariaGasto || '___',
+          total_items_au_au: formatCurrencyVE(Number(adjudicacion.montoAdjudicadoBs)),
+        },
+      ],
+    };
+  }
+
+  async generarAdjudicacion(expedienteId: string, userId: string) {
+    const data = await this.getDatosAdjudicacion(expedienteId);
+    return this.generarDocumento(
+      expedienteId,
+      'ACTA_ADJUDICACION',
+      'acta-adjudicacion-template.docx',
+      userId,
+      data,
+    );
+  }
+
+  async getDatosContrato(expedienteId: string) {
+    const contrato = await this.prisma.contratoFormalizado.findFirst({
+      where: { adjudicacion: { expedienteId } },
+      include: {
+        adjudicacion: {
+          include: {
+            expediente: { include: { modalidad: true, autoridad: true } },
+          },
+        },
+      },
+    });
+
+    if (!contrato) throw new NotFoundException('Contrato Formalizado no encontrado');
+
+    const exp = contrato.adjudicacion.expediente;
+    const firmas = await this.getFirmasExpediente(exp);
+    const tipo = exp.modalidad?.tipoContratacion || 'SERVICIOS';
+
+    let soporteEjecucion = '___';
+    if (tipo === 'BIENES') soporteEjecucion = 'El Acta de Entrega y Recepción Conforme';
+    else if (tipo === 'SERVICIOS')
+      soporteEjecucion =
+        'El Informe de Actividades o la certificación de cumplimiento del servicio correspondiente al período';
+    else if (tipo === 'OBRAS') soporteEjecucion = 'La Valuación de Obra ejecutada';
+
+    let textoGarantiaLaboral = '';
+    if (contrato.requiereGarantiaLaboral) {
+      textoGarantiaLaboral = `c) Garantía Laboral (si aplica): “LA CONTRATISTA” deberá constituir a favor y a satisfacción de “EL CONTRATANTE”, debidamente autenticada y emitida por una Institución Bancaria o Compañía de Seguros debidamente inscrita por ante la Superintendencia respectiva o Sociedad Nacional de Garantías Recíprocas para la Mediana y Pequeña Industria, por un monto equivalente al ${Number(contrato.porcentajeGarantiaLaboral)}% del costo total de la mano de obra mensual incluida en la estructura de costos de su oferta, la fianza es de ${formatCurrencyVE(Number(contrato.montoGarantiaLaboralBs))} bolívares la cual deberá permanecer vigente por la duración del contrato y/o que se verifique el definitivo cumplimiento de la obligación afianzada, de acuerdo al artículo 124 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas.`;
+    }
+
+    let textoRespCivil = '';
+    if (contrato.polizaResponsabilidadCivil) {
+      textoRespCivil = `d) Póliza de Responsabilidad Civil: “LA CONTRATISTA” se obliga a constituir y mantener vigente durante todo el plazo de ejecución del contrato, una Póliza de Responsabilidad Civil que ampare los daños, pérdidas o perjuicios que pudieren ocasionarse a personas o a la propiedad de terceros, con ocasión de ${exp.descripcionObjeto || '___'}. Dicha cobertura deberá incluir, sin limitarse a, los daños derivados de los trabajos, el uso de maquinaria, las acciones del personal del contratista y, en caso de que aplique a la naturaleza del servicio, la Responsabilidad Civil Profesional por errores u omisiones. La póliza deberá ser emitida por una empresa de seguros de reconocida solvencia en la República, por un monto no menor a ${formatCurrencyVE(Number(contrato.montoResponsabilidadCivilBs))}. o al ${Number(contrato.porcentajeResponsabilidadCivil)} % del Contrato. Este instrumento deberá ser consignado y aprobado por “EL CONTRATANTE” antes de la firma del Acta de Inicio. El incumplimiento de esta obligación será causal de decaimiento de la adjudicación, sin que ello genere derecho a indemnización alguna para “LA CONTRATISTA”.`;
+    }
+
+    let textoAnticipo = '';
+    if (contrato.anticipoContrato) {
+      textoAnticipo = `b) Garantía de Anticipo: En caso de que “EL CONTRATANTE” otorgue un anticipo, el cual no podrá exceder el 50% del monto del contrato conforme al artículo 122 de la Ley de Contrataciones Públicas, “LA CONTRATISTA” deberá constituir previamente una garantía por el cien por ciento (100%) del monto otorgado. Dicha garantía deberá mantenerse vigente hasta la total amortización del anticipo, la cual se efectuará mediante deducciones proporcionales en los pagos correspondientes.`;
+    }
+
+    return {
+      ...firmas,
+      desc_objeto_contratacion_au_au: exp.descripcionObjeto || '___',
+      fec_inicio_vigencia_au_au: contrato.fechaInicioVigencia
+        ? formatDateToSpanishLong(contrato.fechaInicioVigencia)
+        : '___',
+      fec_fin_vigencia_au_au: contrato.fechaFinVigencia
+        ? formatDateToSpanishLong(contrato.fechaFinVigencia)
+        : '___',
+      monto_contrato_bs_au_au: formatCurrencyVE(Number(contrato.montoContratoBs)),
+      valor_ucau_contrato_au_au: formatCurrencyVE(Number(contrato.valorUcauContrato)),
+      plazo_ejecucion_dias_au_au: contrato.plazoEjecucionDias || '___',
+      plazo_garantia_calidad_funcionamiento_au_au:
+        contrato.plazoGarantiaCalidadFuncionamiento || '___',
+      soporte_ejecucion_contrato_au_au: soporteEjecucion,
+
+      nombre_supervisor_au_au: contrato.nombreSupervisor || '___',
+      cedula_supervisor_au_au: contrato.cedulaSupervisor || '___',
+      cargo_supervisor_au_au: contrato.cargoSupervisor || '___',
+      criterio_aceptacion_contrato_au_au: contrato.criterioAceptacionContrato || '___',
+      plazo_consignacion_facturas_au_au: contrato.plazoConsignacionFacturas || '___',
+
+      monto_fiel_cumplimiento_bs_au_au: formatCurrencyVE(Number(contrato.montoFielCumplimientoBs)),
+      garantia_laboral_au_au: textoGarantiaLaboral,
+      poliza_responsabilidad_civil_au_au: textoRespCivil,
+      anticipo_contrato_au_au: textoAnticipo,
+
+      forma_cumplimiento_crs_au_au: contrato.formaCumplimientoCrs || '___',
+      unidad_resp_cumplimiento_crs_au_au: contrato.unidadRespCumplimientoCrs || '___',
+
+      porcentaje_multa_diaria_au_au: contrato.porcentajeMultaDiaria || '___',
+      base_calculo_multa_diaria_au_au: formatCurrencyVE(Number(contrato.baseCalculoMultaDiaria)),
+      plazo_regularizar_incumplimiento_au_au: contrato.plazoRegularizarIncumplimiento || '___',
+      porcentaje_procedimiento_rescision_au_au: contrato.porcentajeProcedimientoRescision || '___',
+      formula_ajuste_precios_au_au: contrato.formulaAjustePrecios || '___',
+      evaluacion_desempeño_au_au: contrato.evaluacionDesempeno || '___',
+      garantia_post_ejecucion_au_au: contrato.garantiaPostEjecucion || '___',
+      lugar_tribunal_au_au: contrato.lugarTribunal || '___',
+    };
+  }
+
+  async generarContrato(expedienteId: string, userId: string) {
+    const data = await this.getDatosContrato(expedienteId);
+    return this.generarDocumento(
+      expedienteId,
+      'CONTRATO',
+      'contrato-formalizado-template.docx',
+      userId,
+      data,
+    );
+  }
+
+  async generarNotificacionesFase4(expedienteId: string, userId: string) {
+    const evaluaciones = await this.prisma.evaluacionResultados.findMany({
+      where: { oferta: { expedienteId } },
+      include: { oferta: true },
+    });
+
+    const ganadora = evaluaciones.find((e) => e.posicionPrelacion === 'Primera Opción');
+    const perdedoras = evaluaciones.filter(
+      (e) => e.posicionPrelacion && e.posicionPrelacion !== 'Primera Opción',
+    );
+
+    const documentosGenerados: any[] = [];
+
+    // Generar Notificación Adjudicado
+    if (ganadora) {
+      const dataAdjudicado = {
+        oferente_primera_opción_au_au: ganadora.nombreProveedorEvaluado || '___',
+        rif_proveedor_evaluado_au_au: ganadora.rifProveedorEvaluado || '___',
+        correo_proveedor_evaluado_au_au: ganadora.oferta.proveedorId
+          ? (await this.prisma.proveedor.findUnique({ where: { id: ganadora.oferta.proveedorId } }))
+              ?.correo || '___'
+          : '___',
+      };
+
+      const res = await this.generarDocumento(
+        expedienteId,
+        'NOTIFICACION_ADJUDICADO',
+        'notificacion-adjudicado-template.docx',
+        userId,
+        dataAdjudicado,
+        ganadora.id,
+      );
+      documentosGenerados.push(res);
+    }
+
+    // Generar Notificaciones No Adjudicados
+    for (const perdedora of perdedoras) {
+      const dataNoAdjudicado = {
+        oferente_no_adjudicado_au_au: perdedora.nombreProveedorEvaluado || '___',
+        oferente_primera_opción_au_au: ganadora?.nombreProveedorEvaluado || '___',
+        rif_proveedor_evaluado_au_au: perdedora.rifProveedorEvaluado || '___',
+        correo_proveedor_evaluado_au_au: perdedora.oferta.proveedorId
+          ? (
+              await this.prisma.proveedor.findUnique({
+                where: { id: perdedora.oferta.proveedorId },
+              })
+            )?.correo || '___'
+          : '___',
+      };
+
+      const res = await this.generarDocumento(
+        expedienteId,
+        'NOTIFICACION_NO_ADJUDICADO',
+        'notificacion-no-adjudicado-template.docx',
+        userId,
+        dataNoAdjudicado,
+        perdedora.id,
+      );
+      documentosGenerados.push(res);
+    }
+
+    return documentosGenerados;
   }
 }
