@@ -57,6 +57,20 @@ export class ManualesController {
     );
   }
 
+  @Get('estado-requisitos')
+  @ApiOperation({
+    summary: 'Consultar estado de requisitos para el manual',
+    description:
+      'Verifica si el ente del usuario autenticado cumple con todos los requisitos (Máxima Autoridad, Comisión, etc.) para poder generar su manual.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Estado de los requisitos devuelto exitosamente',
+  })
+  verificarMisRequisitos(@CurrentUser() user: { enteId: string }) {
+    return this.manualesService.verificarRequisitosManual(user.enteId);
+  }
+
   @Get()
   @ApiOperation({
     summary: 'Ver manual de mi ente',
