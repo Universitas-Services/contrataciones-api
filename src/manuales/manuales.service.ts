@@ -28,6 +28,11 @@ export class ManualesService {
     // 1. Obtener datos del Ente
     const ente = await this.prisma.entePublico.findUnique({
       where: { id: enteId, deletedAt: null },
+      include: {
+        comisiones: { where: { activa: true, deletedAt: null }, take: 1 },
+        maximasAutoridades: { where: { vigente: true, deletedAt: null }, take: 1 },
+        unidadesContratantes: { where: { activa: true, deletedAt: null }, take: 1 },
+      },
     });
 
     if (!ente) {
@@ -104,14 +109,28 @@ export class ManualesService {
 
     // 4. Preparar datos para reemplazo
     const now = new Date();
+
+    // Extraer valores de las relaciones o usar valores por defecto
+    const denominacion_comision =
+      ente.comisiones?.[0]?.denominacionComision || 'Comisión de Contrataciones';
+    const cargo_oficial_autoridad =
+      ente.maximasAutoridades?.[0]?.cargoOficialAutoridad || 'Máxima Autoridad';
+    const nom_unidad_contratante =
+      ente.unidadesContratantes?.[0]?.nombreUnidadContratante ||
+      ente.nombreUnidadContratante ||
+      'Unidad de Contrataciones';
+
     const data = {
       nom_ente_contratante: ente.nombre,
       siglas_ente: ente.siglas || 'N/A',
       logo_ente: ente.logoUrl || 'N/A', // Marcador para la imagen
       nom_unidad_admin_financiera:
         ente.nombreUnidadAdminFinanciera || 'Dirección de Administración',
-      nom_unidad_contratante: ente.nombreUnidadContratante || 'Unidad de Contrataciones',
+      nom_unidad_contratante,
       nom_unidad_tecnologia: ente.nombreUnidadTecnologia || 'Dirección de Tecnología',
+
+      denominacion_comision,
+      cargo_oficial_autoridad,
 
       // Datos adicionales
       fecha_generacion: now.toLocaleDateString('es-VE', {
@@ -271,20 +290,63 @@ export class ManualesService {
   }
 
   private validarDatosCompletos(ente: any) {
-    const camposFaltantes: string[] = [];
+    const requisitos = this.evaluarRequisitosInterno(ente);
 
-    if (!ente.nombre) camposFaltantes.push('Nombre del Ente');
-    if (!ente.nombreUnidadAdminFinanciera)
-      camposFaltantes.push('Nombre de Unidad Administrativa y Financiera');
-    if (!ente.nombreUnidadContratante) camposFaltantes.push('Nombre de Unidad Contratante');
-    if (!ente.nombreUnidadTecnologia) camposFaltantes.push('Nombre de Unidad de Tecnología');
-
-    if (camposFaltantes.length > 0) {
+    if (!requisitos.puedeGenerarManual) {
       throw new BadRequestException(
-        `El Ente no tiene configurados los siguientes campos obligatorios: ${camposFaltantes.join(', ')}. ` +
+        `El Ente no cumple con los requisitos para generar el manual: ${requisitos.requisitosFaltantes.join(' ')} ` +
           'Por favor, actualice la configuración del Ente antes de generar el manual.',
       );
     }
+  }
+
+  /**
+   * Endpoint-ready function para verificar los requisitos faltantes.
+   * Busca al ente de nuevo con relaciones, ya que podría llamarse desde el controller directo.
+   */
+  async verificarRequisitosManual(enteId: string) {
+    const ente = await this.prisma.entePublico.findUnique({
+      where: { id: enteId, deletedAt: null },
+      include: {
+        comisiones: { where: { activa: true, deletedAt: null }, take: 1 },
+        maximasAutoridades: { where: { vigente: true, deletedAt: null }, take: 1 },
+        unidadesContratantes: { where: { activa: true, deletedAt: null }, take: 1 },
+      },
+    });
+
+    if (!ente) {
+      throw new NotFoundException('Ente no encontrado');
+    }
+
+    return this.evaluarRequisitosInterno(ente);
+  }
+
+  private evaluarRequisitosInterno(ente: any) {
+    const camposFaltantes: string[] = [];
+
+    if (!ente.nombre) camposFaltantes.push('Nombre del Ente.');
+    if (!ente.nombreUnidadAdminFinanciera)
+      camposFaltantes.push('Nombre de Unidad Administrativa y Financiera.');
+    if (!ente.nombreUnidadTecnologia) camposFaltantes.push('Nombre de Unidad de Tecnología.');
+
+    // Verificar arreglos relacionales (los incluimos en el findUnique previo)
+    if (!ente.maximasAutoridades || ente.maximasAutoridades.length === 0) {
+      camposFaltantes.push('No se ha configurado una Máxima Autoridad vigente.');
+    }
+    if (!ente.comisiones || ente.comisiones.length === 0) {
+      camposFaltantes.push('Falta registrar al menos una Comisión de Contrataciones activa.');
+    }
+    if (!ente.unidadesContratantes || ente.unidadesContratantes.length === 0) {
+      // También podríamos perdonarlo si tiene el nombre básico: ente.nombreUnidadContratante
+      if (!ente.nombreUnidadContratante) {
+        camposFaltantes.push('Falta registrar al menos una Unidad Contratante activa.');
+      }
+    }
+
+    return {
+      puedeGenerarManual: camposFaltantes.length === 0,
+      requisitosFaltantes: camposFaltantes,
+    };
   }
 
   /**

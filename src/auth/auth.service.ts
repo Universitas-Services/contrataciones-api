@@ -7,6 +7,7 @@ import { PrismaService } from '../database/prisma.service';
 import { EmailService } from '../email/email.service';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
@@ -151,6 +152,102 @@ export class AuthService {
     }
 
     throw new UnauthorizedException('Usuario no encontrado');
+  }
+
+  async changeUserPassword(
+    adminUserId: string,
+    adminRole: string,
+    changeUserPasswordDto: ChangeUserPasswordDto,
+  ) {
+    const { targetUserId, currentPassword, newPassword } = changeUserPasswordDto;
+    let adminName = '';
+
+    // 1. Verificar identidad del administrador
+    if (adminRole === 'UNIVERSITAS') {
+      const universitas = await this.prisma.universitas.findUnique({
+        where: { id: adminUserId },
+      });
+      if (!universitas) throw new UnauthorizedException('Administrador no encontrado');
+
+      const isPasswordValid = await bcrypt.compare(currentPassword, universitas.passwordHash);
+      if (!isPasswordValid)
+        throw new UnauthorizedException('La contraseña actual del administrador es incorrecta');
+      adminName = universitas.nombre;
+    } else {
+      const adminUser = await this.prisma.usuario.findUnique({
+        where: { id: adminUserId, deletedAt: null },
+      });
+      if (!adminUser) throw new UnauthorizedException('Administrador no encontrado');
+
+      const isPasswordValid = await bcrypt.compare(currentPassword, adminUser.passwordHash);
+      if (!isPasswordValid)
+        throw new UnauthorizedException('La contraseña actual del administrador es incorrecta');
+      adminName = `${adminUser.nombre} ${adminUser.apellido}`;
+    }
+
+    // 2. Buscar al usuario objetivo
+    const targetUser = await this.prisma.usuario.findUnique({
+      where: { id: targetUserId, deletedAt: null },
+    });
+
+    if (!targetUser) {
+      throw new BadRequestException('El usuario objetivo no existe');
+    }
+
+    // 3. Validar permisos según reglas de negocio
+    if (adminRole === 'UNIVERSITAS') {
+      if (targetUser.rol !== 'SUPERVISOR' && targetUser.rol !== 'ADMIN_ENTE') {
+        throw new UnauthorizedException(
+          'UNIVERSITAS solo puede cambiar contraseñas de SUPERVISOR o ADMIN_ENTE',
+        );
+      }
+    } else if (adminRole === 'ADMIN_ENTE') {
+      if (
+        targetUser.rol !== 'EJECUTOR' &&
+        targetUser.rol !== 'VISUALIZADOR' &&
+        targetUser.rol !== 'SUPERVISOR'
+      ) {
+        throw new UnauthorizedException(
+          'ADMIN_ENTE solo puede cambiar contraseñas de EJECUTOR, VISUALIZADOR o SUPERVISOR',
+        );
+      }
+
+      // Validar restricción de Ente: el administrador y el objetivo deben pertenecer al mismo ente.
+      // Primero, traemos al admin_ente completo para obtener su enteId.
+      const adminUserFull = await this.prisma.usuario.findUnique({
+        where: { id: adminUserId },
+      });
+
+      if (!adminUserFull || !adminUserFull.enteId) {
+        throw new UnauthorizedException('El administrador no tiene un Ente asignado válido');
+      }
+
+      if (targetUser.enteId !== adminUserFull.enteId) {
+        throw new UnauthorizedException(
+          'No tienes permisos para modificar usuarios fuera de tu Ente',
+        );
+      }
+    } else {
+      throw new UnauthorizedException('No tienes permisos suficientes para realizar esta acción');
+    }
+
+    // 4. Actualizar contraseña
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.usuario.update({
+      where: { id: targetUserId },
+      data: {
+        passwordHash: newPasswordHash,
+        cambioPasswordDefault: true,
+      },
+    });
+
+    // 5. Enviar notificación por correo de forma asíncrona (sin bloquear la respuesta)
+    this.emailService
+      .sendPasswordChangedByAdminEmail(targetUser.email, targetUser.nombre, adminName)
+      .catch((e) => console.error('Error enviando correo de cambio de contraseña: ', e));
+
+    return { message: 'Contraseña del usuario actualizada correctamente' };
   }
 
   /**

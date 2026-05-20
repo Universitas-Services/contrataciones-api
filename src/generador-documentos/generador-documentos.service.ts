@@ -1419,7 +1419,10 @@ export class GeneradorDocumentosService {
       include: {
         adjudicacion: {
           include: {
-            expediente: { include: { modalidad: true, autoridad: true } },
+            ofertaGanadora: { include: { evaluacion: true } },
+            expediente: {
+              include: { modalidad: true, autoridad: true, ente: true, cronograma: true },
+            },
           },
         },
       },
@@ -1428,6 +1431,7 @@ export class GeneradorDocumentosService {
     if (!contrato) throw new NotFoundException('Contrato Formalizado no encontrado');
 
     const exp = contrato.adjudicacion.expediente;
+    const adjudicacion = contrato.adjudicacion;
     const firmas = await this.getFirmasExpediente(exp);
     const tipo = exp.modalidad?.tipoContratacion || 'SERVICIOS';
 
@@ -1455,16 +1459,48 @@ export class GeneradorDocumentosService {
 
     return {
       ...firmas,
+      nom_ente_contratante: exp.ente?.nombre || '___',
+      organo_adscripcion: exp.ente?.organoAdscripcion || '___',
+      rif_ente: exp.ente?.rif || '___',
+      loc_ciudad_ente: exp.ente?.ciudad || '___',
+
+      cod_nomenclatura_proceso_au_au: exp.codigoNomenclatura || '___',
       desc_objeto_contratacion_au_au: exp.descripcionObjeto || '___',
+
+      oferente_primera_opción_au_au:
+        adjudicacion.ofertaGanadora?.evaluacion?.nombreProveedorEvaluado ||
+        adjudicacion.ofertaGanadora?.nombreProveedorOferente ||
+        '___',
+      rif_proveedor_evaluado_au_au:
+        adjudicacion.ofertaGanadora?.evaluacion?.rifProveedorEvaluado ||
+        adjudicacion.ofertaGanadora?.rifProveedorOferente ||
+        '___',
+      datos_registro_mercantil_proveedor_evaluado_au_au:
+        adjudicacion.ofertaGanadora?.datosRegistroMercantilProveedorOferente || '___',
+      nombre_rep_legal_evaluado_au_au:
+        adjudicacion.ofertaGanadora?.evaluacion?.nombreRepLegalEvaluado ||
+        adjudicacion.ofertaGanadora?.nombreRepLegalOferente ||
+        '___',
+      cedula_rep_legal_evaluado_au_au:
+        adjudicacion.ofertaGanadora?.evaluacion?.cedulaRepLegalEvaluado ||
+        adjudicacion.ofertaGanadora?.cedulaRepLegalOferente ||
+        '___',
+
       fec_inicio_vigencia_au_au: contrato.fechaInicioVigencia
         ? formatDateToSpanishLong(contrato.fechaInicioVigencia)
         : '___',
       fec_fin_vigencia_au_au: contrato.fechaFinVigencia
         ? formatDateToSpanishLong(contrato.fechaFinVigencia)
         : '___',
+      fec_limite_firma_contrato_au_au: exp.cronograma?.fechaLimiteFirmaContrato
+        ? formatDateToSpanishLong(exp.cronograma.fechaLimiteFirmaContrato)
+        : '___',
+
       monto_contrato_bs_au_au: formatCurrencyVE(Number(contrato.montoContratoBs)),
       valor_ucau_contrato_au_au: formatCurrencyVE(Number(contrato.valorUcauContrato)),
+
       plazo_ejecucion_dias_au_au: contrato.plazoEjecucionDias || '___',
+
       plazo_garantia_calidad_funcionamiento_au_au:
         contrato.plazoGarantiaCalidadFuncionamiento || '___',
       soporte_ejecucion_contrato_au_au: soporteEjecucion,
@@ -1488,9 +1524,17 @@ export class GeneradorDocumentosService {
       plazo_regularizar_incumplimiento_au_au: contrato.plazoRegularizarIncumplimiento || '___',
       porcentaje_procedimiento_rescision_au_au: contrato.porcentajeProcedimientoRescision || '___',
       formula_ajuste_precios_au_au: contrato.formulaAjustePrecios || '___',
+
       evaluacion_desempeño_au_au: contrato.evaluacionDesempeno || '___',
       garantia_post_ejecucion_au_au: contrato.garantiaPostEjecucion || '___',
       lugar_tribunal_au_au: contrato.lugarTribunal || '___',
+
+      adquirientes: [
+        {
+          codigo_partida_au_au: adjudicacion.partidaPresupuestariaGasto || '___',
+          total_items_au_au: formatCurrencyVE(Number(contrato.montoContratoBs)),
+        },
+      ],
     };
   }
 
@@ -1506,6 +1550,37 @@ export class GeneradorDocumentosService {
   }
 
   async generarNotificacionesFase4(expedienteId: string, userId: string) {
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      include: {
+        ente: true,
+        cronograma: true,
+        comision: {
+          include: { miembros: true },
+        },
+      },
+    });
+
+    if (!expediente) throw new NotFoundException('Expediente no encontrado');
+
+    const secretaria = expediente.comision?.miembros?.find((m) => m.tipoMiembro === 'SECRETARIO');
+
+    const commonData = {
+      nom_ente_contratante: expediente.ente?.nombre || '___',
+      cod_nomenclatura_proceso_au_au: expediente.codigoNomenclatura || '___',
+      desc_objeto_contratacion_au_au: expediente.descripcionObjeto || '___',
+      loc_ciudad_ente: expediente.ente?.ciudad || '___',
+      fec_limite_notificacion_au_au: expediente.cronograma?.fechaLimiteNotificacion
+        ? formatDateToSpanishLong(expediente.cronograma.fechaLimiteNotificacion)
+        : '___',
+      nom_completo_miembro_secretaria: secretaria?.nombreCompletoMiembro || '___',
+      cedula_miembro_secretaria: secretaria?.cedulaMiembro || '___',
+      datos_designacion_comision: expediente.comision?.datosDesignacionComision || '___',
+      fec_limite_adjudicacion_au_au: expediente.cronograma?.fechaLimiteAdjudicacion
+        ? formatDateToSpanishLong(expediente.cronograma.fechaLimiteAdjudicacion)
+        : '___',
+    };
+
     const evaluaciones = await this.prisma.evaluacionResultados.findMany({
       where: { oferta: { expedienteId } },
       include: { oferta: true },
@@ -1521,6 +1596,7 @@ export class GeneradorDocumentosService {
     // Generar Notificación Adjudicado
     if (ganadora) {
       const dataAdjudicado = {
+        ...commonData,
         oferente_primera_opción_au_au: ganadora.nombreProveedorEvaluado || '___',
         rif_proveedor_evaluado_au_au: ganadora.rifProveedorEvaluado || '___',
         correo_proveedor_evaluado_au_au: ganadora.oferta.proveedorId
@@ -1543,6 +1619,7 @@ export class GeneradorDocumentosService {
     // Generar Notificaciones No Adjudicados
     for (const perdedora of perdedoras) {
       const dataNoAdjudicado = {
+        ...commonData,
         oferente_no_adjudicado_au_au: perdedora.nombreProveedorEvaluado || '___',
         oferente_primera_opción_au_au: ganadora?.nombreProveedorEvaluado || '___',
         rif_proveedor_evaluado_au_au: perdedora.rifProveedorEvaluado || '___',

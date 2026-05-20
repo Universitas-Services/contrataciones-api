@@ -93,6 +93,23 @@ export class EmailService {
   }
 
   /**
+   * Envía correo notificando que el administrador ha cambiado la contraseña del usuario.
+   */
+  async sendPasswordChangedByAdminEmail(to: string, nombreUsuario: string, nombreAdmin: string) {
+    const html = this.loadTemplate('password-changed-admin.html', {
+      nombreUsuario,
+      nombreAdmin,
+    });
+
+    return this.sendEmail({
+      to,
+      subject: 'Aviso de Seguridad: Contraseña Actualizada - Sistema de Contrataciones',
+      html,
+      text: `Hola ${nombreUsuario}, te informamos que tu administrador ${nombreAdmin} ha restablecido tu contraseña. En tu próximo inicio de sesión deberás configurar una nueva clave.`,
+    });
+  }
+
+  /**
    * Envía un manual generado como archivo adjunto por correo electrónico.
    */
   async sendManualByEmail(to: string, nombre: string, manualBuffer: Buffer, filename: string) {

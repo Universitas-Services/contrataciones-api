@@ -5,6 +5,7 @@ import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
@@ -89,6 +90,34 @@ export class AuthController {
   changePassword(@Body() changePasswordDto: ChangePasswordDto, @CurrentUser() user: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.authService.changePassword(user.id, changePasswordDto);
+  }
+
+  @Post('change-user-password')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Cambiar contraseña de otro usuario',
+    description:
+      'Permite a un administrador (UNIVERSITAS o ADMIN_ENTE) cambiar la contraseña de otro usuario de menor jerarquía.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Contraseña del usuario actualizada correctamente',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No autorizado o contraseña actual incorrecta',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'El usuario objetivo no existe',
+  })
+  changeUserPassword(
+    @Body() changeUserPasswordDto: ChangeUserPasswordDto,
+    @CurrentUser() user: any,
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return this.authService.changeUserPassword(user.id, user.rol, changeUserPasswordDto);
   }
 
   @Post('forgot-password')
