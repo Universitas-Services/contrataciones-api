@@ -17,38 +17,8 @@ const LOGO_NEUTRO =
 async function main() {
   console.log('🌱 Iniciando seeder (Limpieza Total)...\n');
 
-  // 0. Limpiar base de datos
-  console.log('🧹 Limpiando base de datos...');
-  await prisma.auditLog.deleteMany();
-  await prisma.sessionEdicion.deleteMany();
-  await prisma.garantiaContrato.deleteMany();
-  await prisma.contratoFormalizado.deleteMany();
-  await prisma.adjudicacion.deleteMany();
-  await prisma.evaluacionResultados.deleteMany();
-  await prisma.ofertaPresentada.deleteMany();
-  await prisma.adquirentePliego.deleteMany();
-  await prisma.partidaPresupuestaria.deleteMany();
-  await prisma.presupuestoItem.deleteMany();
-  await prisma.cronogramaExpediente.deleteMany();
-  await prisma.fasePreparatoria.deleteMany();
-  await prisma.documentoProveedor.deleteMany();
-  await prisma.proveedor.deleteMany();
-  await prisma.expedienteContratacion.deleteMany();
-  await prisma.modalidadContratacion.deleteMany();
-  await prisma.unidadContratante.deleteMany();
-  await prisma.unidadUsuaria.deleteMany();
-  await prisma.miembroComision.deleteMany();
-  await prisma.comisionContrataciones.deleteMany();
-  await prisma.maximaAutoridad.deleteMany();
-  await prisma.manualGenerado.deleteMany();
-  await prisma.pliegoGenerado.deleteMany();
-  await prisma.documentoGenerado.deleteMany();
-  await prisma.usuario.deleteMany();
-  await prisma.supervisorAsignacion.deleteMany();
-  await prisma.enteSupervisor.deleteMany();
-  await prisma.supervisor.deleteMany();
-  await prisma.entePublico.deleteMany();
-  await prisma.universitas.deleteMany();
+  // 0. La limpieza de la base de datos ha sido desactivada por seguridad
+  console.log('⚠️ Limpieza de base de datos desactivada por seguridad.');
 
   // ============================================================================
   // 1. UNIVERSITAS (Super Admin)

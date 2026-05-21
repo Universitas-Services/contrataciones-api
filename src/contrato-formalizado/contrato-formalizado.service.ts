@@ -2,6 +2,18 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../database/prisma.service';
 import { SaveContratoDto } from './dto/save-contrato.dto';
 import { EstatusProceso } from '@prisma/client';
+import { NumerosALetras } from 'numero-a-letras';
+
+function toBolivares(monto: number | undefined | null): string | null {
+  if (monto === undefined || monto === null) return null;
+  const textoOriginal = NumerosALetras(monto);
+  return textoOriginal
+    .replace('Pesos', 'Bolívares')
+    .replace('Peso', 'Bolívar')
+    .replace('M.N.', '')
+    .trim()
+    .toUpperCase();
+}
 
 @Injectable()
 export class ContratoFormalizadoService {
@@ -41,6 +53,7 @@ export class ContratoFormalizadoService {
           fechaInicioVigencia: new Date(dto.fechaInicioVigencia),
           fechaFinVigencia: new Date(dto.fechaFinVigencia),
           montoContratoBs: dto.montoContratoBs,
+          montoContratoBsLetras: toBolivares(dto.montoContratoBs),
           valorUcauContrato,
           plazoEjecucionDias: dto.plazoEjecucionDias,
           plazoGarantiaCalidadFuncionamiento: dto.plazoGarantiaCalidadFuncionamiento,
@@ -52,12 +65,15 @@ export class ContratoFormalizadoService {
           plazoConsignacionFacturas: dto.plazoConsignacionFacturas,
 
           montoFielCumplimientoBs: dto.montoFielCumplimientoBs,
+          montoFielCumplimientoBsLetras: toBolivares(dto.montoFielCumplimientoBs),
           requiereGarantiaLaboral: dto.requiereGarantiaLaboral,
           porcentajeGarantiaLaboral: dto.porcentajeGarantiaLaboral,
           montoGarantiaLaboralBs: dto.montoGarantiaLaboralBs,
+          montoGarantiaLaboralBsLetras: toBolivares(dto.montoGarantiaLaboralBs),
           polizaResponsabilidadCivil: dto.polizaResponsabilidadCivil,
           porcentajeResponsabilidadCivil: dto.porcentajeResponsabilidadCivil,
           montoResponsabilidadCivilBs: dto.montoResponsabilidadCivilBs,
+          montoResponsabilidadCivilBsLetras: toBolivares(dto.montoResponsabilidadCivilBs),
           anticipoContrato: dto.anticipoContrato,
           porcentajeAnticipoOtorgado: dto.porcentajeAnticipoOtorgado,
           formaCumplimientoCrs: dto.formaCumplimientoCrs,
