@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateAdjudicacionDto } from './dto/create-adjudicacion.dto';
+import { UpdateAdjudicacionDto } from './dto/update-adjudicacion.dto';
 import { EstatusProceso } from '@prisma/client';
 
 @Injectable()
@@ -80,5 +81,36 @@ export class AdjudicacionService {
     }
 
     return adjudicacion;
+  }
+
+  async update(expedienteId: string, updateAdjudicacionDto: UpdateAdjudicacionDto, userId: string) {
+    const adjudicacion = await this.prisma.adjudicacion.findUnique({
+      where: { expedienteId },
+    });
+
+    if (!adjudicacion) {
+      throw new NotFoundException('No se ha registrado adjudicación para este expediente.');
+    }
+
+    const data: any = { updatedBy: userId };
+    if (updateAdjudicacionDto.montoAdjudicadoBs !== undefined) {
+      data.montoAdjudicadoBs = updateAdjudicacionDto.montoAdjudicadoBs;
+    }
+    if (updateAdjudicacionDto.partidaPresupuestariaGasto !== undefined) {
+      data.partidaPresupuestariaGasto = updateAdjudicacionDto.partidaPresupuestariaGasto;
+    }
+    if (updateAdjudicacionDto.montoCrsBs !== undefined) {
+      data.montoCrsBs = updateAdjudicacionDto.montoCrsBs;
+    }
+    if (updateAdjudicacionDto.referenciaRecomendacion !== undefined) {
+      data.referenciaRecomendacion = updateAdjudicacionDto.referenciaRecomendacion;
+    }
+
+    const updated = await this.prisma.adjudicacion.update({
+      where: { expedienteId },
+      data,
+    });
+
+    return updated;
   }
 }

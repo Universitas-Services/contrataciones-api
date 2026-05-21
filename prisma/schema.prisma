@@ -706,6 +706,7 @@ model ContratoFormalizado {
   fechaInicioVigencia                DateTime           @map("fec_inicio_vigencia_au_au")
   fechaFinVigencia                   DateTime           @map("fec_fin_vigencia_au_au")
   montoContratoBs                    Decimal            @map("monto_contrato_bs_au_au") @db.Decimal(15, 2)
+  montoContratoBsLetras              String?            @map("monto_contrato_bs_letras_au_au") @db.VarChar(255)
   valorUcauContrato                  Decimal            @map("valor_ucau_contrato_au_au") @db.Decimal(15, 2)
   plazoEjecucionDias                 Int                @map("plazo_ejecucion_dias_au_au")
   plazoGarantiaCalidadFuncionamiento String             @map("plazo_garantia_calidad_funcionamiento_au_au") @db.VarChar(255)
@@ -719,12 +720,15 @@ model ContratoFormalizado {
 
   // --- Sección C: Finanzas contractuales y compromiso social ---
   montoFielCumplimientoBs            Decimal            @map("monto_fiel_cumplimiento_bs_au_au") @db.Decimal(20, 2)
+  montoFielCumplimientoBsLetras      String?            @map("monto_fiel_cump_bs_letras_au_au") @db.VarChar(255)
   requiereGarantiaLaboral            Boolean            @map("requiere_garantia_laboral_au_au")
   porcentajeGarantiaLaboral          Decimal?           @map("porcentaje_garantia_laboral_au_au") @db.Decimal(5, 2)
   montoGarantiaLaboralBs             Decimal?           @map("monto_garantia_laboral_bs_au_au") @db.Decimal(15, 2)
+  montoGarantiaLaboralBsLetras       String?            @map("monto_garantia_lab_bs_letras_au_au") @db.VarChar(255)
   polizaResponsabilidadCivil         Boolean            @map("poliza_responsabilidad_civil_au_au")
   porcentajeResponsabilidadCivil     Decimal?           @map("porcentaje_responsabilidad_civil_au_au") @db.Decimal(5, 2)
   montoResponsabilidadCivilBs        Decimal?           @map("monto_responsabilidad_civil_bs_au_au") @db.Decimal(15, 2)
+  montoResponsabilidadCivilBsLetras  String?            @map("monto_resp_civil_bs_letras_au_au") @db.VarChar(255)
   anticipoContrato                   Boolean            @map("anticipo_contrato_au_au")
   formaCumplimientoCrs               String             @map("forma_cumplimiento_crs_au_au") @db.VarChar(255)
   unidadRespCumplimientoCrs          String             @map("unidad_resp_cumplimiento_crs_au_au") @db.VarChar(255)

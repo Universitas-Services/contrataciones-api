@@ -55,6 +55,7 @@
     "cloudinary": "^2.9.0",
     "docxtemplater": "^3.67.6",
     "docxtemplater-image-module-free": "^1.1.1",
+    "numero-a-letras": "^1.0.6",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "pizzip": "^3.1.7",

@@ -145,6 +145,12 @@ export class EvaluacionFase3Service {
       },
     });
 
+    // Actualizar estado del expediente a EN_EVALUACION
+    await this.prisma.expedienteContratacion.update({
+      where: { id: oferta.expedienteId },
+      data: { estatusProceso: 'EN_EVALUACION', updatedBy: userId },
+    });
+
     return evaluacion;
   }
 
@@ -344,6 +350,12 @@ export class EvaluacionFase3Service {
     // Marcar documentos como desactualizados
     await this.invalidarDocumentos(evaluacion.oferta.expedienteId);
 
+    // Actualizar estado del expediente a EN_EVALUACION
+    await this.prisma.expedienteContratacion.update({
+      where: { id: evaluacion.oferta.expedienteId },
+      data: { estatusProceso: 'EN_EVALUACION', updatedBy: userId },
+    });
+
     return sobre1;
   }
 
@@ -424,6 +436,12 @@ export class EvaluacionFase3Service {
 
     // Marcar documentos como desactualizados
     await this.invalidarDocumentos(evaluacion.oferta.expedienteId);
+
+    // Actualizar estado del expediente a EN_EVALUACION
+    await this.prisma.expedienteContratacion.update({
+      where: { id: evaluacion.oferta.expedienteId },
+      data: { estatusProceso: 'EN_EVALUACION', updatedBy: userId },
+    });
 
     // Retornar la evaluación actualizada completa
     return this.findOne(evaluacionId, enteId);

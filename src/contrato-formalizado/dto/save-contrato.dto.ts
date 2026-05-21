@@ -6,6 +6,7 @@ import {
   IsDateString,
   ValidateIf,
   IsNotEmpty,
+  IsOptional,
 } from 'class-validator';
 
 export class SaveContratoDto {
@@ -106,10 +107,9 @@ export class SaveContratoDto {
   @IsNotEmpty()
   anticipoContrato: boolean;
 
-  @ApiProperty()
-  @ValidateIf((o) => o.anticipoContrato === true)
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsNumber()
-  @IsNotEmpty()
   porcentajeAnticipoOtorgado?: number;
 
   @ApiProperty()
