@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ContratoFormalizadoService } from './contrato-formalizado.service';
 import { SaveContratoDto } from './dto/save-contrato.dto';
+import { UpdateContratoDto } from './dto/update-contrato.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -31,5 +32,16 @@ export class ContratoFormalizadoController {
   @ApiOperation({ summary: 'Obtener contrato formalizado del expediente' })
   findOne(@Param('expedienteId') expedienteId: string) {
     return this.contratoService.findByExpediente(expedienteId);
+  }
+
+  @Patch()
+  @Roles('ADMIN_ENTE', 'EJECUTOR')
+  @ApiOperation({ summary: 'Actualizar datos del contrato formalizado' })
+  update(
+    @Param('expedienteId') expedienteId: string,
+    @Body() dto: UpdateContratoDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.contratoService.update(expedienteId, dto, user.id);
   }
 }
