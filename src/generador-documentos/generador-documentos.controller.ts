@@ -351,6 +351,42 @@ export class GeneradorDocumentosController {
     return this.downloadDocumentoInternal(expedienteId, 'CONTRATO', res);
   }
 
+  @ApiOperation({ summary: 'Preview Notificación (Adjudicado o No Adjudicado)' })
+  @Get('preview/notificacion/evaluacion/:evaluacionId')
+  async previewNotificacion(@Param('evaluacionId') evaluacionId: string) {
+    // Determine the type based on whether it's the winner or not
+    const evaluacion = await this.generadorDocumentosService[
+      'prisma'
+    ].evaluacionResultados.findUnique({
+      where: { id: evaluacionId },
+    });
+    const tipo =
+      evaluacion?.posicionPrelacion === 'Primera Opción'
+        ? 'NOTIFICACION_ADJUDICADO'
+        : 'NOTIFICACION_NO_ADJUDICADO';
+    return this.generadorDocumentosService.getPreviewUrlByEvaluacion(evaluacionId, tipo);
+  }
+
+  @ApiOperation({ summary: 'Descargar Notificación (Adjudicado o No Adjudicado)' })
+  @Get('download/notificacion/evaluacion/:evaluacionId')
+  async downloadNotificacion(
+    @Param('evaluacionId') evaluacionId: string,
+    @Res({ passthrough: false }) res: any,
+  ) {
+    const evaluacion = await this.generadorDocumentosService[
+      'prisma'
+    ].evaluacionResultados.findUnique({
+      where: { id: evaluacionId },
+    });
+    const tipo =
+      evaluacion?.posicionPrelacion === 'Primera Opción'
+        ? 'NOTIFICACION_ADJUDICADO'
+        : 'NOTIFICACION_NO_ADJUDICADO';
+
+    const result = await this.generadorDocumentosService.downloadByEvaluacion(evaluacionId, tipo);
+    return this.proxyCloudinaryDownload(result, res);
+  }
+
   @ApiOperation({ summary: 'Obtener estado de notificaciones' })
   @Get('expedientes/:expedienteId/estado-notificaciones')
   async getEstadoNotificaciones(@Param('expedienteId') expedienteId: string) {

@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { SaveContratoDto } from './dto/save-contrato.dto';
+import { UpdateContratoDto } from './dto/update-contrato.dto';
 import { EstatusProceso } from '@prisma/client';
 import { NumerosALetras } from 'numero-a-letras';
 
@@ -125,5 +126,107 @@ export class ContratoFormalizadoService {
     }
 
     return contrato;
+  }
+
+  async update(expedienteId: string, dto: UpdateContratoDto, userId: string) {
+    const adjudicacion = await this.prisma.adjudicacion.findUnique({
+      where: { expedienteId },
+      include: {
+        expediente: {
+          include: { modalidad: true },
+        },
+      },
+    });
+
+    if (!adjudicacion) {
+      throw new NotFoundException('Expediente no tiene adjudicación asociada.');
+    }
+
+    const contratoActual = await this.prisma.contratoFormalizado.findUnique({
+      where: { adjudicacionId: adjudicacion.id },
+    });
+
+    if (!contratoActual) {
+      throw new NotFoundException('No se ha registrado contrato para este expediente.');
+    }
+
+    const data: any = { updatedBy: userId };
+
+    if (dto.fechaInicioVigencia !== undefined)
+      data.fechaInicioVigencia = new Date(dto.fechaInicioVigencia);
+    if (dto.fechaFinVigencia !== undefined) data.fechaFinVigencia = new Date(dto.fechaFinVigencia);
+
+    if (dto.montoContratoBs !== undefined) {
+      data.montoContratoBs = dto.montoContratoBs;
+      data.montoContratoBsLetras = toBolivares(dto.montoContratoBs);
+      const valorUcauBase = Number(adjudicacion.expediente.modalidad?.valorUcauBase) || 1;
+      data.valorUcauContrato = dto.montoContratoBs / valorUcauBase;
+    }
+
+    if (dto.plazoEjecucionDias !== undefined) data.plazoEjecucionDias = dto.plazoEjecucionDias;
+    if (dto.plazoGarantiaCalidadFuncionamiento !== undefined)
+      data.plazoGarantiaCalidadFuncionamiento = dto.plazoGarantiaCalidadFuncionamiento;
+    if (dto.nombreSupervisor !== undefined) data.nombreSupervisor = dto.nombreSupervisor;
+    if (dto.cedulaSupervisor !== undefined) data.cedulaSupervisor = dto.cedulaSupervisor;
+    if (dto.cargoSupervisor !== undefined) data.cargoSupervisor = dto.cargoSupervisor;
+    if (dto.criterioAceptacionContrato !== undefined)
+      data.criterioAceptacionContrato = dto.criterioAceptacionContrato;
+    if (dto.plazoConsignacionFacturas !== undefined)
+      data.plazoConsignacionFacturas = dto.plazoConsignacionFacturas;
+
+    if (dto.montoFielCumplimientoBs !== undefined) {
+      data.montoFielCumplimientoBs = dto.montoFielCumplimientoBs;
+      data.montoFielCumplimientoBsLetras = toBolivares(dto.montoFielCumplimientoBs);
+    }
+
+    if (dto.requiereGarantiaLaboral !== undefined)
+      data.requiereGarantiaLaboral = dto.requiereGarantiaLaboral;
+    if (dto.porcentajeGarantiaLaboral !== undefined)
+      data.porcentajeGarantiaLaboral = dto.porcentajeGarantiaLaboral;
+
+    if (dto.montoGarantiaLaboralBs !== undefined) {
+      data.montoGarantiaLaboralBs = dto.montoGarantiaLaboralBs;
+      data.montoGarantiaLaboralBsLetras = toBolivares(dto.montoGarantiaLaboralBs);
+    }
+
+    if (dto.polizaResponsabilidadCivil !== undefined)
+      data.polizaResponsabilidadCivil = dto.polizaResponsabilidadCivil;
+    if (dto.porcentajeResponsabilidadCivil !== undefined)
+      data.porcentajeResponsabilidadCivil = dto.porcentajeResponsabilidadCivil;
+
+    if (dto.montoResponsabilidadCivilBs !== undefined) {
+      data.montoResponsabilidadCivilBs = dto.montoResponsabilidadCivilBs;
+      data.montoResponsabilidadCivilBsLetras = toBolivares(dto.montoResponsabilidadCivilBs);
+    }
+
+    if (dto.anticipoContrato !== undefined) data.anticipoContrato = dto.anticipoContrato;
+    if (dto.porcentajeAnticipoOtorgado !== undefined)
+      data.porcentajeAnticipoOtorgado = dto.porcentajeAnticipoOtorgado;
+    if (dto.formaCumplimientoCrs !== undefined)
+      data.formaCumplimientoCrs = dto.formaCumplimientoCrs;
+    if (dto.unidadRespCumplimientoCrs !== undefined)
+      data.unidadRespCumplimientoCrs = dto.unidadRespCumplimientoCrs;
+
+    if (dto.porcentajeMultaDiaria !== undefined)
+      data.porcentajeMultaDiaria = dto.porcentajeMultaDiaria;
+    if (dto.baseCalculoMultaDiaria !== undefined)
+      data.baseCalculoMultaDiaria = dto.baseCalculoMultaDiaria;
+    if (dto.plazoRegularizarIncumplimiento !== undefined)
+      data.plazoRegularizarIncumplimiento = dto.plazoRegularizarIncumplimiento;
+    if (dto.porcentajeProcedimientoRescision !== undefined)
+      data.porcentajeProcedimientoRescision = dto.porcentajeProcedimientoRescision;
+    if (dto.formulaAjustePrecios !== undefined)
+      data.formulaAjustePrecios = dto.formulaAjustePrecios;
+    if (dto.evaluacionDesempeno !== undefined) data.evaluacionDesempeno = dto.evaluacionDesempeno;
+    if (dto.garantiaPostEjecucion !== undefined)
+      data.garantiaPostEjecucion = dto.garantiaPostEjecucion;
+    if (dto.lugarTribunal !== undefined) data.lugarTribunal = dto.lugarTribunal;
+
+    const updated = await this.prisma.contratoFormalizado.update({
+      where: { adjudicacionId: adjudicacion.id },
+      data,
+    });
+
+    return updated;
   }
 }
