@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Get, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Param, Get, UseGuards, Patch } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ContratoFormalizadoService } from './contrato-formalizado.service';
