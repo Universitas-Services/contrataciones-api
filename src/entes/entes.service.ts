@@ -71,7 +71,9 @@ export class EntesService {
       };
 
       // Agregar campos opcionales solo si están definidos
-      if (enteData.rif !== undefined) createData.rif = enteData.rif;
+      if (enteData.rif !== undefined && enteData.rif.trim() !== '') {
+        createData.rif = enteData.rif;
+      }
       if (enteData.siglas !== undefined) createData.siglas = enteData.siglas;
       if (enteData.logoUrl !== undefined) createData.logoUrl = enteData.logoUrl;
       if (enteData.direccionFiscal !== undefined)
@@ -485,13 +487,19 @@ export class EntesService {
       }
     }
 
+    const dataToUpdate: any = {
+      ...updateEnteDto,
+      datosConfirmados: true,
+      updatedBy: userId,
+    };
+
+    if (updateEnteDto.rif === '') {
+      dataToUpdate.rif = null;
+    }
+
     const actualizado = await this.prisma.entePublico.update({
       where: { id },
-      data: {
-        ...updateEnteDto,
-        datosConfirmados: true,
-        updatedBy: userId,
-      },
+      data: dataToUpdate,
     });
 
     if (requiereInvalidacion) {
