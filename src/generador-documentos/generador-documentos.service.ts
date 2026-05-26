@@ -248,7 +248,7 @@ export class GeneradorDocumentosService {
       })),
       sub_total: formatCurrencyVE(subtotalNum),
       iva_sub_total: formatCurrencyVE(ivaNum),
-      monto_total_renglon_au_au: formatCurrencyVE(Number(m.montoEstimadoBs)),
+      monto_total_renglon_au_au: formatCurrencyVE(subtotalNum + ivaNum),
     };
   }
 
