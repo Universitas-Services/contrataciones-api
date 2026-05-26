@@ -116,6 +116,8 @@ export class AuthController {
     @Body() changeUserPasswordDto: ChangeUserPasswordDto,
     @CurrentUser() user: any,
   ) {
+    console.log('DEBUG: Datos extraídos del JWT =>', user);
+    console.log('DEBUG: DTO recibido =>', changeUserPasswordDto);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.authService.changeUserPassword(user.id, user.rol, changeUserPasswordDto);
   }
