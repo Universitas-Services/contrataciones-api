@@ -180,6 +180,7 @@ export class GeneradorDocumentosService {
         modalidad: true,
         comision: true,
         autoridad: true,
+        presupuestoItems: true,
       },
     });
 
@@ -192,6 +193,10 @@ export class GeneradorDocumentosService {
     const f = expediente.fasePreparatoria;
     const c = expediente.cronograma;
     const m = expediente.modalidad;
+
+    const items = expediente.presupuestoItems || [];
+    const subtotalNum = items.reduce((acc, item) => acc + Number(item.totalItem), 0);
+    const ivaNum = subtotalNum * 0.16;
 
     return {
       desc_objeto_contratacion: e.descripcionObjeto || '___',
@@ -232,6 +237,18 @@ export class GeneradorDocumentosService {
       es_bienes: m.tipoContratacion === 'BIENES',
       es_servicios: m.tipoContratacion === 'SERVICIOS',
       es_obras: m.tipoContratacion === 'OBRAS',
+      items_presupuesto: items.map((item, index) => ({
+        numero: index + 1,
+        descripcion_item_au_au: item.descripcionItem,
+        codigo_partida_au_au: item.codigoPartida,
+        unidad_medida_au_au: item.unidadMedida,
+        cantidad_requerida_au_au: formatCurrencyVE(Number(item.cantidadRequerida)),
+        precio_unitario_estimado_au_au: formatCurrencyVE(Number(item.precioUnitarioEstimado)),
+        total_items_au_au: formatCurrencyVE(Number(item.totalItem)),
+      })),
+      sub_total: formatCurrencyVE(subtotalNum),
+      iva_sub_total: formatCurrencyVE(ivaNum),
+      monto_total_renglon_au_au: formatCurrencyVE(Number(m.montoEstimadoBs)),
     };
   }
 
