@@ -37,16 +37,24 @@ export class CreateProveedorDto {
 
   @ApiProperty({
     description: 'Tipo de persona',
-    enum: ['NATURAL', 'JURIDICA'],
+    enum: ['NATURAL', 'JURIDICA', 'ORGANO_ENTE_PUBLICO'],
     example: 'JURIDICA',
   })
-  @IsEnum(['NATURAL', 'JURIDICA'])
+  @IsEnum(['NATURAL', 'JURIDICA', 'ORGANO_ENTE_PUBLICO'])
   @IsNotEmpty()
   tipoPersona: string;
 
   @ApiPropertyOptional({
     description: 'Tipo de entidad jurídica',
-    enum: ['COMPANIA_ANONIMA', 'ASOCIACION_CIVIL', 'SRL', 'FUNDACION', 'COOPERATIVA', 'PYME'],
+    enum: [
+      'COMPANIA_ANONIMA',
+      'ASOCIACION_CIVIL',
+      'SRL',
+      'FUNDACION',
+      'COOPERATIVA',
+      'PYME',
+      'SOCIEDAD_CIVIL',
+    ],
     example: 'COMPANIA_ANONIMA',
   })
   @IsOptional()
@@ -58,10 +66,19 @@ export class CreateProveedorDto {
       Fundaciones: 'FUNDACION',
       Cooperativas: 'COOPERATIVA',
       Pymes: 'PYME',
+      'Sociedad Civil': 'SOCIEDAD_CIVIL',
     };
     return map[value] || value?.toUpperCase();
   })
-  @IsEnum(['COMPANIA_ANONIMA', 'ASOCIACION_CIVIL', 'SRL', 'FUNDACION', 'COOPERATIVA', 'PYME'])
+  @IsEnum([
+    'COMPANIA_ANONIMA',
+    'ASOCIACION_CIVIL',
+    'SRL',
+    'FUNDACION',
+    'COOPERATIVA',
+    'PYME',
+    'SOCIEDAD_CIVIL',
+  ])
   tipoEntidadJuridica?: string;
 
   @ApiPropertyOptional({ description: 'Estado', example: 'Miranda' })
@@ -219,4 +236,99 @@ export class CreateProveedorDto {
   @IsOptional()
   @IsString()
   obs_doc_registro_mercantil?: string;
+
+  @ApiPropertyOptional({
+    description: '¿Posee Declaración de ISLR del último ejercicio fiscal?',
+    example: true,
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  islrProveedor?: boolean;
+
+  @ApiPropertyOptional({ description: 'Cédula del Proveedor (Persona Natural)', example: 12345678 })
+  @IsOptional()
+  @Transform(({ value }) => (value ? parseInt(value, 10) : undefined))
+  @IsInt()
+  cedulaNaturalProveedor?: number;
+
+  @ApiPropertyOptional({
+    description: 'Nombre de la Máxima Autoridad del Órgano o Ente',
+    example: 'José Ramírez González Pérez',
+  })
+  @IsOptional()
+  @IsString()
+  nombreAutoridadProveedor?: string;
+
+  @ApiPropertyOptional({ description: 'Cédula de la Máxima Autoridad', example: 87654321 })
+  @IsOptional()
+  @Transform(({ value }) => (value ? parseInt(value, 10) : undefined))
+  @IsInt()
+  cedulaAutoridadProveedor?: number;
+
+  @ApiPropertyOptional({
+    description: 'Datos de la designación de la Máxima Autoridad',
+    example:
+      'Resolución N° 000/00 de fecha 00-00-0000 publicado en Gaceta N° 0000 de fecha 00-00-0000',
+  })
+  @IsOptional()
+  @IsString()
+  datosDesignacionAutoridadProveedor?: string;
+
+  // Nuevas observaciones de documentos
+  @ApiPropertyOptional({
+    description: 'Observaciones de la Cédula',
+    example: 'Cédula de identidad vigente del representante',
+  })
+  @IsOptional()
+  @IsString()
+  obs_doc_cedula?: string;
+
+  @ApiPropertyOptional({
+    description: 'Observaciones del ISLR',
+    example: 'Declaración del ejercicio fiscal 2025',
+  })
+  @IsOptional()
+  @IsString()
+  obs_doc_islr?: string;
+
+  @ApiPropertyOptional({
+    description: 'Observaciones del Currículum',
+    example: 'Currículum detallado con soportes',
+  })
+  @IsOptional()
+  @IsString()
+  obs_doc_curriculum?: string;
+
+  @ApiPropertyOptional({
+    description: 'Observaciones del Título Universitario',
+    example: 'Fondo negro certificado por rectorado',
+  })
+  @IsOptional()
+  @IsString()
+  obs_doc_titulo?: string;
+
+  @ApiPropertyOptional({
+    description: 'Observaciones de la Resolución',
+    example: 'Resolución Ministerial de fecha reciente',
+  })
+  @IsOptional()
+  @IsString()
+  obs_doc_resolucion?: string;
+
+  @ApiPropertyOptional({
+    description: 'Observaciones de la Gaceta',
+    example: 'Gaceta Oficial N° 42.000',
+  })
+  @IsOptional()
+  @IsString()
+  obs_doc_gaceta?: string;
+
+  @ApiPropertyOptional({
+    description: 'Comentario general u observaciones del proveedor',
+    example: 'Documentación adicional anexa al expediente',
+  })
+  @IsOptional()
+  @IsString()
+  observaciones_proveedor?: string;
 }
