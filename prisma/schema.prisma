@@ -282,6 +282,11 @@ model Proveedor {
   version                         Int                  @default(1)
   datosRegistroMercantil          String?
   fechaUltimaAprobacion           DateTime?
+  islrProveedor                   Boolean?             @default(false) @map("islr_proveedor")
+  cedulaNaturalProveedor          Int?                 @map("cedula_natural_proveedor")
+  nombreAutoridadProveedor        String?              @map("nombre_autoridad_proveedor")
+  cedulaAutoridadProveedor        Int?                 @map("cedula_autoridad_proveedor")
+  datosDesignacionAutoridadProveedor String?           @map("datos_designacion_autoridad_proveedor")
   documentos                      DocumentoProveedor[]
   ofertas                         OfertaPresentada[]
   ente                            EntePublico          @relation(fields: [enteId], references: [id])
@@ -882,6 +887,7 @@ enum RolUsuario {
 enum TipoPersona {
   NATURAL
   JURIDICA
+  ORGANO_ENTE_PUBLICO
 }
 
 enum TipoEntidadJuridica {
@@ -891,6 +897,7 @@ enum TipoEntidadJuridica {
   FUNDACION
   COOPERATIVA
   PYME
+  SOCIEDAD_CIVIL
 }
 
 enum AreaEspecialidad {
@@ -961,6 +968,12 @@ enum TipoDocumentoProveedor {
   CERTIFICADO_SOLVENCIA_LABORAL
   LICENCIA_MUNICIPAL
   RNC
+  CEDULA
+  ISLR
+  CURRICULUM
+  TITULO_UNIVERSITARIO
+  RESOLUCION_DESIGNACION
+  GACETA_CREACION
 }
 
 enum TipoMiembro {

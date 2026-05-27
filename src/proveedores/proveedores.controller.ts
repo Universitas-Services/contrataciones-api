@@ -57,6 +57,12 @@ export class ProveedoresController {
       { name: 'doc_solvencia_laboral', maxCount: 1 },
       { name: 'doc_licencia_municipal', maxCount: 1 },
       { name: 'doc_rnc', maxCount: 1 },
+      { name: 'doc_cedula', maxCount: 1 },
+      { name: 'doc_islr', maxCount: 1 },
+      { name: 'doc_curriculum', maxCount: 1 },
+      { name: 'doc_titulo', maxCount: 1 },
+      { name: 'doc_resolucion', maxCount: 1 },
+      { name: 'doc_gaceta', maxCount: 1 },
     ]),
   )
   @ApiConsumes('multipart/form-data')
@@ -74,10 +80,22 @@ export class ProveedoresController {
         correo: { type: 'string', example: 'proveedor@empresa.com' },
         nombre: { type: 'string', example: 'Constructora Los Andes C.A.' },
         rif: { type: 'string', example: 'J-12345678-9' },
-        tipoPersona: { type: 'string', enum: ['NATURAL', 'JURIDICA'], example: 'JURIDICA' },
+        tipoPersona: {
+          type: 'string',
+          enum: ['NATURAL', 'JURIDICA', 'ORGANO_ENTE_PUBLICO'],
+          example: 'JURIDICA',
+        },
         tipoEntidadJuridica: {
           type: 'string',
-          enum: ['COMPANIA_ANONIMA', 'ASOCIACION_CIVIL', 'SRL', 'FUNDACION', 'COOPERATIVA', 'PYME'],
+          enum: [
+            'COMPANIA_ANONIMA',
+            'ASOCIACION_CIVIL',
+            'SRL',
+            'FUNDACION',
+            'COOPERATIVA',
+            'PYME',
+            'SOCIEDAD_CIVIL',
+          ],
           example: 'COMPANIA_ANONIMA',
         },
         estado: { type: 'string', example: 'Miranda' },
@@ -109,6 +127,14 @@ export class ProveedoresController {
           enum: ['ALTA', 'MEDIA', 'BAJA'],
           example: 'MEDIA',
         },
+        islrProveedor: { type: 'boolean', example: true },
+        cedulaNaturalProveedor: { type: 'integer', example: 12345678 },
+        nombreAutoridadProveedor: { type: 'string', example: 'José Ramírez González Pérez' },
+        cedulaAutoridadProveedor: { type: 'integer', example: 87654321 },
+        datosDesignacionAutoridadProveedor: {
+          type: 'string',
+          example: 'Resolución N° 000/00 de fecha 00-00-0000',
+        },
         doc_rif: { type: 'string', format: 'binary', description: 'PDF del RIF (archivo)' },
         obs_doc_rif: {
           type: 'string',
@@ -118,7 +144,7 @@ export class ProveedoresController {
         doc_registro_mercantil: {
           type: 'string',
           format: 'binary',
-          description: 'PDF del Registro Mercantil (archivo)',
+          description: 'PDF del Registro Mercantil / Acta Constitutiva (archivo)',
         },
         obs_doc_registro_mercantil: {
           type: 'string',
@@ -170,6 +196,63 @@ export class ProveedoresController {
           type: 'string',
           description: 'Observaciones del RNC',
           example: 'Inscripción N° 2025-00456',
+        },
+        doc_cedula: { type: 'string', format: 'binary', description: 'PDF de la Cédula (archivo)' },
+        obs_doc_cedula: {
+          type: 'string',
+          description: 'Observaciones de la Cédula',
+          example: 'Cédula de identidad vigente',
+        },
+        doc_islr: {
+          type: 'string',
+          format: 'binary',
+          description: 'PDF de la declaración de ISLR (archivo)',
+        },
+        obs_doc_islr: {
+          type: 'string',
+          description: 'Observaciones del ISLR',
+          example: 'Declaración del último ejercicio fiscal',
+        },
+        doc_curriculum: {
+          type: 'string',
+          format: 'binary',
+          description: 'PDF del Curriculum (archivo)',
+        },
+        obs_doc_curriculum: {
+          type: 'string',
+          description: 'Observaciones del Curriculum',
+          example: 'Currículum Vitae actualizado',
+        },
+        doc_titulo: { type: 'string', format: 'binary', description: 'PDF del Título (archivo)' },
+        obs_doc_titulo: {
+          type: 'string',
+          description: 'Observaciones del Título',
+          example: 'Fondo negro del Título Universitario',
+        },
+        doc_resolucion: {
+          type: 'string',
+          format: 'binary',
+          description: 'PDF de la Resolución de Designación (archivo)',
+        },
+        obs_doc_resolucion: {
+          type: 'string',
+          description: 'Observaciones de la Resolución',
+          example: 'Gaceta Oficial N° 45.000',
+        },
+        doc_gaceta: {
+          type: 'string',
+          format: 'binary',
+          description: 'PDF de la Gaceta de Creación (archivo)',
+        },
+        obs_doc_gaceta: {
+          type: 'string',
+          description: 'Observaciones de la Gaceta',
+          example: 'Gaceta Oficial de creación del Ente',
+        },
+        observaciones_proveedor: {
+          type: 'string',
+          description: 'Comentario general del proveedor',
+          example: 'Documentación cargada para revisión',
         },
       },
     },
@@ -248,6 +331,12 @@ export class ProveedoresController {
       { name: 'doc_solvencia_laboral', maxCount: 1 },
       { name: 'doc_licencia_municipal', maxCount: 1 },
       { name: 'doc_rnc', maxCount: 1 },
+      { name: 'doc_cedula', maxCount: 1 },
+      { name: 'doc_islr', maxCount: 1 },
+      { name: 'doc_curriculum', maxCount: 1 },
+      { name: 'doc_titulo', maxCount: 1 },
+      { name: 'doc_resolucion', maxCount: 1 },
+      { name: 'doc_gaceta', maxCount: 1 },
     ]),
   )
   @ApiConsumes('multipart/form-data')

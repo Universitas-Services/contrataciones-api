@@ -23,6 +23,12 @@ const FILE_FIELD_TO_TIPO: Record<string, string> = {
   doc_solvencia_laboral: 'CERTIFICADO_SOLVENCIA_LABORAL',
   doc_licencia_municipal: 'LICENCIA_MUNICIPAL',
   doc_rnc: 'RNC',
+  doc_cedula: 'CEDULA',
+  doc_islr: 'ISLR',
+  doc_curriculum: 'CURRICULUM',
+  doc_titulo: 'TITULO_UNIVERSITARIO',
+  doc_resolucion: 'RESOLUCION_DESIGNACION',
+  doc_gaceta: 'GACETA_CREACION',
 };
 
 @Injectable()
@@ -80,7 +86,7 @@ export class ProveedoresService {
             correo: createDto.correo,
             nombre: createDto.nombre,
             rif: createDto.rif,
-            tipoPersona: createDto.tipoPersona as 'NATURAL' | 'JURIDICA',
+            tipoPersona: createDto.tipoPersona as any,
             tipoEntidadJuridica: createDto.tipoEntidadJuridica as any,
             estado: createDto.estado,
             municipio: createDto.municipio,
@@ -96,6 +102,11 @@ export class ProveedoresService {
             actividadComercial: createDto.actividadComercial,
             areaEspecialidad: createDto.areaEspecialidad as any,
             anosExperiencia: createDto.anosExperiencia,
+            islrProveedor: createDto.islrProveedor,
+            cedulaNaturalProveedor: createDto.cedulaNaturalProveedor,
+            nombreAutoridadProveedor: createDto.nombreAutoridadProveedor,
+            cedulaAutoridadProveedor: createDto.cedulaAutoridadProveedor,
+            datosDesignacionAutoridadProveedor: createDto.datosDesignacionAutoridadProveedor,
             fechaEstadoFinanciero: createDto.fechaEstadoFinanciero
               ? new Date(createDto.fechaEstadoFinanciero)
               : undefined,
