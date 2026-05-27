@@ -88,6 +88,7 @@ export class AuthService {
         email: user.email,
         rol: user.rol,
         cambioPasswordDefault: user.cambioPasswordDefault,
+        passwordPerdido: user.passwordPerdido,
         ente: user.ente,
       },
     };
