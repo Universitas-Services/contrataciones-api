@@ -56,6 +56,7 @@ model EntePublico {
   unidadesContratantes        UnidadContratante[]
   unidadesUsuarias            UnidadUsuaria[]
   ticketsSoporte              TicketSoporte[]
+  diasNoLaborables            DiaNoLaborableEnte[]
 
   @@index([universitasId])
   @@index([rif])
@@ -451,6 +452,8 @@ model CronogramaExpediente {
   updatedBy                        String?
   version                          Int                    @default(1)
   expediente                       ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  alertas                          AlertaCronograma[]
+  tieneConflictoFestivo            Boolean                @default(false) @map("ind_tiene_conflicto_festivo")
 
   @@index([expedienteId])
   @@map("tb_cronograma_expediente")
@@ -962,9 +965,7 @@ enum TipoDocumento {
 
 enum TipoDocumentoProveedor {
   RIF
-  REGISTRO_MERCANTIL
-  ESTADOS_FINANCIEROS
-  REFERENCIAS_BANCARIAS
+  ACTA_CONSTITUTIVA
   CERTIFICADO_SOLVENCIA_LABORAL
   LICENCIA_MUNICIPAL
   RNC
@@ -975,6 +976,7 @@ enum TipoDocumentoProveedor {
   RESOLUCION_DESIGNACION
   GACETA_CREACION
 }
+
 
 enum TipoMiembro {
   MIEMBRO_PRINCIPAL @map("Miembro principal")
@@ -1043,4 +1045,46 @@ model MensajeTicket {
   @@index([ticketId, createdAt])
   @@index([remitenteId])
   @@map("tb_mensaje_ticket")
+}
+
+model DiaNoLaborableEnte {
+  id              String      @id @default(uuid())
+  enteId          String      @map("id_ente")
+  fecha           DateTime?   @map("fec_dia_no_laborable")     // Fecha específica (2026-08-15)
+  fechaRecurrente String?     @map("fec_recurrente_mmdd")      // Formato "MM-DD" (recurrente anual)
+  esRecurrente    Boolean     @default(false) @map("ind_es_recurrente")
+  descripcion     String      @map("desc_dia_no_laborable") @db.VarChar(255)
+  activo          Boolean     @default(true) @map("ind_activo")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deletedAt       DateTime?
+  createdBy       String?
+  updatedBy       String?
+
+  ente            EntePublico @relation(fields: [enteId], references: [id])
+  alertas         AlertaCronograma[]
+
+  @@unique([enteId, fecha])
+  @@unique([enteId, fechaRecurrente])
+  @@index([enteId, activo])
+  @@map("tb_dia_no_laborable_ente")
+}
+
+model AlertaCronograma {
+  id                String                 @id @default(uuid())
+  cronogramaId      String                 @map("id_cronograma")
+  diaNoLaborableId  String                 @map("id_dia_no_laborable")
+  campoAfectado     String                 @map("campo_afectado") @db.VarChar(100)
+  fechaConflicto    DateTime               @map("fec_conflicto")
+  resuelta          Boolean                @default(false) @map("ind_resuelta")
+  resueltaPor       String?                @map("resuelta_por")
+  resueltaEn        DateTime?              @map("fec_resuelta")
+  createdAt         DateTime               @default(now())
+
+  cronograma        CronogramaExpediente   @relation(fields: [cronogramaId], references: [id], onDelete: Cascade)
+  diaNoLaborable    DiaNoLaborableEnte     @relation(fields: [diaNoLaborableId], references: [id])
+
+  @@index([cronogramaId, resuelta])
+  @@index([diaNoLaborableId])
+  @@map("tb_alerta_cronograma")
 }

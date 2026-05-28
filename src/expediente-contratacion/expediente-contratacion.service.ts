@@ -14,9 +14,14 @@ import { GenerarCronogramaDto } from './dto/generar-cronograma.dto';
 import { UpdateCronogramaExpedienteDto } from './dto/update-cronograma.dto';
 import { ModalidadSeleccion, RolUsuario, Prisma } from '@prisma/client';
 import { BusinessDaysUtil } from '../common/utils/business-days.util';
+import { CronogramaEnteService } from '../cronograma-ente/cronograma-ente.service';
+
 @Injectable()
 export class ExpedienteContratacionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cronogramaEnteService: CronogramaEnteService,
+  ) {}
 
   async createFullProcess(dto: CreateProcesoCompletoDto, userId: string, enteId: string) {
     if (!enteId) {
@@ -329,12 +334,16 @@ export class ExpedienteContratacionService {
               : null;
 
           if (baseDate) {
-            const calculo = this.generarCronogramaLegal({
-              tipoContratacion: modalidadInfo.tipoContratacion,
-              fechaLlamadoParticipar: baseDate,
-            });
+            const calculo = await this.generarCronogramaLegal(
+              {
+                tipoContratacion: modalidadInfo.tipoContratacion,
+                fechaLlamadoParticipar: baseDate,
+              },
+              enteId,
+            );
 
             const f = calculo.data;
+
             const cronogramaData = {
               fechaLlamadoParticipar: new Date(f.fechaLlamadoParticipar + 'T00:00:00Z'),
               fechaInicioDisponibilidadPliego: new Date(
@@ -514,7 +523,8 @@ export class ExpedienteContratacionService {
   }
 
   // --- GENERACIÓN DE CRONOGRAMA AUTOMÁTICO (PASO 4) ---
-  generarCronogramaLegal(dto: GenerarCronogramaDto) {
+  async generarCronogramaLegal(dto: GenerarCronogramaDto, enteId: string) {
+    const diasEnte = await this.cronogramaEnteService.getDiasNoLaborablesParaCalculo(enteId);
     const fechaLlamado = new Date(dto.fechaLlamadoParticipar + 'T00:00:00Z'); // Evitar timezone shifts
 
     let diasFinPliego = 0;
@@ -547,25 +557,46 @@ export class ExpedienteContratacionService {
 
     // Cálculos a partir de fechaLlamado
     const inicioDispPliego = fechaLlamado;
-    const finDispPliego = BusinessDaysUtil.addBusinessDays(fechaLlamado, diasFinPliego);
+    const finDispPliego = BusinessDaysUtil.addBusinessDays(fechaLlamado, diasFinPliego, diasEnte);
     const limiteSolicitudAclaratorias = BusinessDaysUtil.addBusinessDays(
       fechaLlamado,
       diasSolicitarAclaratoria,
+      diasEnte,
     );
-    const actoRecepcion = BusinessDaysUtil.addBusinessDays(fechaLlamado, diasActoRecepcion);
+    const actoRecepcion = BusinessDaysUtil.addBusinessDays(
+      fechaLlamado,
+      diasActoRecepcion,
+      diasEnte,
+    );
 
     // Cálculos regresivos desde el Acto de Recepción
-    const limiteRespuestaAclaratorias = BusinessDaysUtil.subtractBusinessDays(actoRecepcion, 1);
-    const limiteModificacionesPliego = BusinessDaysUtil.subtractBusinessDays(actoRecepcion, 2);
+    const limiteRespuestaAclaratorias = BusinessDaysUtil.subtractBusinessDays(
+      actoRecepcion,
+      1,
+      diasEnte,
+    );
+    const limiteModificacionesPliego = BusinessDaysUtil.subtractBusinessDays(
+      actoRecepcion,
+      2,
+      diasEnte,
+    );
 
     // Cálculos progresivos desde el Acto de Recepción
-    const limiteEvaluacion = BusinessDaysUtil.addBusinessDays(actoRecepcion, diasEvaluacion);
-    const limiteAdjudicacion = BusinessDaysUtil.addBusinessDays(actoRecepcion, diasAdjudicacion);
+    const limiteEvaluacion = BusinessDaysUtil.addBusinessDays(
+      actoRecepcion,
+      diasEvaluacion,
+      diasEnte,
+    );
+    const limiteAdjudicacion = BusinessDaysUtil.addBusinessDays(
+      actoRecepcion,
+      diasAdjudicacion,
+      diasEnte,
+    );
 
     // Cálculos finales (Notificación, Garantías, Firma)
-    const limiteNotificacion = BusinessDaysUtil.addBusinessDays(limiteAdjudicacion, 2);
-    const limiteGarantias = BusinessDaysUtil.addBusinessDays(limiteNotificacion, 5);
-    const limiteFirmaContrato = BusinessDaysUtil.addBusinessDays(limiteNotificacion, 8);
+    const limiteNotificacion = BusinessDaysUtil.addBusinessDays(limiteAdjudicacion, 2, diasEnte);
+    const limiteGarantias = BusinessDaysUtil.addBusinessDays(limiteNotificacion, 5, diasEnte);
+    const limiteFirmaContrato = BusinessDaysUtil.addBusinessDays(limiteNotificacion, 8, diasEnte);
 
     return {
       message: 'Cronograma calculado exitosamente basándose en la DLCP',
@@ -605,10 +636,13 @@ export class ExpedienteContratacionService {
     if (expediente.enteId !== enteId)
       throw new BadRequestException('No tiene permisos sobre este expediente');
 
+    // Obtener días no laborables dinámicos para este ente
+    const diasEnte = await this.cronogramaEnteService.getDiasNoLaborablesParaCalculo(enteId);
+
     // Validación cronológica básica (ej. Llamado <= Acto Recepción)
     const fechaLlamado = new Date(dto.fechaLlamadoParticipar);
     const fechaActo = new Date(dto.fechaActoRecepcionAperturaSobres);
-    const diffDias = BusinessDaysUtil.getBusinessDaysDifference(fechaLlamado, fechaActo);
+    const diffDias = BusinessDaysUtil.getBusinessDaysDifference(fechaLlamado, fechaActo, diasEnte);
 
     const tipo = expediente.modalidad?.tipoContratacion;
     if (tipo === 'BIENES' && diffDias < 7)
@@ -644,10 +678,21 @@ export class ExpedienteContratacionService {
           fechaLimiteNotificacion: new Date(dto.fechaLimiteNotificacion + 'T00:00:00Z'),
           fechaLimiteGarantias: new Date(dto.fechaLimiteGarantias + 'T00:00:00Z'),
           fechaLimiteFirmaContrato: new Date(dto.fechaLimiteFirmaContrato + 'T00:00:00Z'),
+          tieneConflictoFestivo: false,
           updatedBy: userId,
         };
 
         if (expediente.cronograma) {
+          // Limpiar flag y resolver alertas pendientes si el cronograma ya existía y es actualizado manualmente
+          await tx.alertaCronograma.updateMany({
+            where: { cronogramaId: expediente.cronograma.id, resuelta: false },
+            data: {
+              resuelta: true,
+              resueltaPor: userId,
+              resueltaEn: new Date(),
+            },
+          });
+
           cronogramaInfo = await tx.cronogramaExpediente.update({
             where: { id: expediente.cronograma.id },
             data: cronogramaData,
@@ -663,7 +708,6 @@ export class ExpedienteContratacionService {
         }
 
         // Ya que todos los pasos están listos, pasamos de BORRADOR a EN_PREPARACION
-        // (o estado equivalente en el workflow)
         const estatusActual = expediente.estatusProceso;
         let objUpdateExp = {};
         if (estatusActual === 'BORRADOR') {

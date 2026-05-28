@@ -27,6 +27,7 @@ import { EvaluacionFase3Module } from './evaluacion-fase3/evaluacion-fase3.modul
 import { SoporteModule } from './soporte/soporte.module';
 import { AdjudicacionModule } from './adjudicacion/adjudicacion.module';
 import { ContratoFormalizadoModule } from './contrato-formalizado/contrato-formalizado.module';
+import { CronogramaEnteModule } from './cronograma-ente/cronograma-ente.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { ContratoFormalizadoModule } from './contrato-formalizado/contrato-forma
     ModalidadContratacionModule,
     ExpedienteContratacionModule,
     CronogramaExpedienteModule,
+    CronogramaEnteModule,
     AdquirentePliegoModule,
     EmailModule,
     DirectorioActoresModule,
@@ -59,6 +61,7 @@ import { ContratoFormalizadoModule } from './contrato-formalizado/contrato-forma
     AdjudicacionModule,
     ContratoFormalizadoModule,
   ],
+
   providers: [
     {
       provide: APP_INTERCEPTOR,
