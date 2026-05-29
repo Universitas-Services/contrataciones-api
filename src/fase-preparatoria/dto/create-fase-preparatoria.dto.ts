@@ -189,18 +189,28 @@ export class CreateFasePreparatoriaDto {
 
   // --- Página 6: Observaciones Finales ---
   @ApiPropertyOptional({
-    example: 'Gasto contemplado para los ejercicios fiscales 2026-2027',
-    description: 'Condición plurianual si aplica',
+    example: true,
+    description: 'Indica si aplica condición plurianual',
   })
   @IsOptional()
-  @IsString({ message: 'La condición debe ser un texto' })
-  condicionPlurianual?: string;
+  @IsBoolean({ message: 'La condición plurianual debe ser un valor booleano' })
+  @Type(() => Boolean)
+  condicionPlurianual?: boolean;
 
   @ApiPropertyOptional({
-    example: 'Aplica a contrato marco regional corporativo',
-    description: 'Viabilidad contrato marco',
+    example: false,
+    description: 'Indica la viabilidad de contrato marco',
   })
   @IsOptional()
-  @IsString({ message: 'La viabilidad debe ser un texto' })
-  viabilidadContratoMarco?: string;
+  @IsBoolean({ message: 'La viabilidad de contrato marco debe ser un valor booleano' })
+  @Type(() => Boolean)
+  viabilidadContratoMarco?: boolean;
+
+  @ApiPropertyOptional({
+    example: 'Justificación del contrato marco regional corporativo',
+    description: 'Justificación opcional del contrato marco',
+  })
+  @IsOptional()
+  @IsString({ message: 'La justificación del contrato marco debe ser un texto' })
+  justificacion_contrato_marco_au_au?: string;
 }

@@ -17,8 +17,55 @@ const LOGO_NEUTRO =
 async function main() {
   console.log('🌱 Iniciando seeder (Limpieza Total)...\n');
 
-  // 0. La limpieza de la base de datos ha sido desactivada por seguridad
-  console.log('⚠️ Limpieza de base de datos desactivada por seguridad.');
+  console.log('🧹 Limpiando base de datos...');
+  await prisma.auditLog.deleteMany();
+  await prisma.sessionEdicion.deleteMany();
+  await prisma.garantiaContrato.deleteMany();
+  await prisma.contratoFormalizado.deleteMany();
+  await prisma.adjudicacion.deleteMany();
+  await prisma.evaluacionResultados.deleteMany();
+  await prisma.ofertaPresentada.deleteMany();
+  await prisma.adquirentePliego.deleteMany();
+  await prisma.partidaPresupuestaria.deleteMany();
+  await prisma.cronogramaExpediente.deleteMany();
+  await prisma.fasePreparatoria.deleteMany();
+  await prisma.documentoProveedor.deleteMany();
+  await prisma.proveedor.deleteMany();
+  await prisma.expedienteContratacion.deleteMany();
+  await prisma.unidadContratante.deleteMany();
+  await prisma.unidadUsuaria.deleteMany();
+  await prisma.miembroComision.deleteMany();
+  await prisma.comisionContrataciones.deleteMany();
+  await prisma.maximaAutoridad.deleteMany();
+  await prisma.pliegoGenerado.deleteMany();
+  await prisma.manualGenerado.deleteMany();
+  await prisma.documentoGenerado.deleteMany();
+  try {
+    await (prisma as any).mensajeTicket.deleteMany();
+  } catch {
+    /* ignore */
+  }
+  try {
+    await (prisma as any).ticketSoporte.deleteMany();
+  } catch {
+    /* ignore */
+  }
+  try {
+    await (prisma as any).diaNoLaborableEnte.deleteMany();
+  } catch {
+    /* ignore */
+  }
+  try {
+    await (prisma as any).alertaCronograma.deleteMany();
+  } catch {
+    /* ignore */
+  }
+  await prisma.usuario.deleteMany();
+  await prisma.enteSupervisor.deleteMany();
+  await prisma.supervisor.deleteMany();
+  await prisma.modalidadContratacion.deleteMany();
+  await prisma.entePublico.deleteMany();
+  await prisma.universitas.deleteMany();
 
   // ============================================================================
   // 1. UNIVERSITAS (Super Admin)
@@ -234,8 +281,8 @@ async function main() {
       // Nuevos campos para Generación de Documentos
       fechaActaInicio: new Date('2024-04-10'),
       datosActoAutorizacionInicio: 'Resolución N° 045-2024 de fecha 05-04-2024',
-      condicionPlurianual: 'No aplica',
-      viabilidadContratoMarco: 'No aplica',
+      condicionPlurianual: false,
+      viabilidadContratoMarco: false,
       createdBy: ejecutorMiranda.id,
     },
   });
@@ -289,6 +336,61 @@ async function main() {
         totalItem: 1300000.0,
       },
     ],
+  });
+
+  console.log('🏢 Creando Proveedores...');
+  await prisma.proveedor.create({
+    data: {
+      enteId: enteMiranda.id,
+      nombre: 'Construcciones Modernas C.A.',
+      rif: 'J-40001234-5',
+      correo: 'info@construccionesmodernas.com',
+      tipoPersona: 'JURIDICA',
+      tipoEntidadJuridica: 'COMPANIA_ANONIMA',
+      estado: 'Miranda',
+      municipio: 'Chacao',
+      direccionFiscal: 'Av. Francisco de Miranda, Torre Ejecutiva',
+      telefono: '+58 212-9876543',
+      nombreRepLegal: 'Arq. José Méndez',
+      cedulaRepLegal: 'V-9876543',
+      registroRnc: true,
+      solvenciaLaboral: true,
+      licenciaFuncionamientoMunicipal: true,
+      areaEspecialidad: 'OBRAS',
+      anosExperiencia: 15,
+      patrimonioReportado: 500000.0,
+      nivelContratacion: 'MEDIA',
+      estatusValidacion: 'APROBADO',
+      nombreAutoridadProveedor: 'Dr. Alejandro Moreno',
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  await prisma.proveedor.create({
+    data: {
+      enteId: enteMiranda.id,
+      nombre: 'Suministros Tecnológicos del Centro S.R.L.',
+      rif: 'J-30005678-9',
+      correo: 'ventas@sumintec.com',
+      tipoPersona: 'JURIDICA',
+      tipoEntidadJuridica: 'SRL',
+      estado: 'Distrito Capital',
+      municipio: 'Libertador',
+      direccionFiscal: 'Sabana Grande, C.C. Líder',
+      telefono: '+58 212-7654321',
+      nombreRepLegal: 'Lic. Sandra Vargas',
+      cedulaRepLegal: 'V-8765432',
+      registroRnc: true,
+      solvenciaLaboral: true,
+      licenciaFuncionamientoMunicipal: true,
+      areaEspecialidad: 'BIENES',
+      anosExperiencia: 8,
+      patrimonioReportado: 150000.0,
+      nivelContratacion: 'BAJA',
+      estatusValidacion: 'APROBADO',
+      nombreAutoridadProveedor: 'Dr. Alejandro Moreno',
+      createdBy: ejecutorMiranda.id,
+    },
   });
 
   console.log('\n✅ SEEDER REESTRUCTURADO Y COMPLETADO');
