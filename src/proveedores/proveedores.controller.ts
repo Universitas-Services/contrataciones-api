@@ -51,7 +51,7 @@ export class ProveedoresController {
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'doc_rif', maxCount: 1 },
-      { name: 'doc_registro_mercantil', maxCount: 1 },
+      { name: 'doc_acta_constitutiva', maxCount: 1 },
       { name: 'doc_solvencia_laboral', maxCount: 1 },
       { name: 'doc_licencia_municipal', maxCount: 1 },
       { name: 'doc_rnc', maxCount: 1 },
@@ -139,7 +139,7 @@ export class ProveedoresController {
           description: 'Observaciones del RIF',
           example: 'RIF vigente hasta 2027',
         },
-        doc_registro_mercantil: {
+        doc_acta_constitutiva: {
           type: 'string',
           format: 'binary',
           description: 'PDF del Acta Constitutiva (archivo)',
@@ -304,7 +304,7 @@ export class ProveedoresController {
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'doc_rif', maxCount: 1 },
-      { name: 'doc_registro_mercantil', maxCount: 1 },
+      { name: 'doc_acta_constitutiva', maxCount: 1 },
       { name: 'doc_solvencia_laboral', maxCount: 1 },
       { name: 'doc_licencia_municipal', maxCount: 1 },
       { name: 'doc_rnc', maxCount: 1 },
