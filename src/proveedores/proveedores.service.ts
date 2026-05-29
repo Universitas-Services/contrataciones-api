@@ -16,9 +16,9 @@ import { RegistroRapidoProveedorDto } from './dto/registro-rapido-proveedor.dto'
 import type { IStorageService } from '../common/interfaces/storage-service.interface';
 
 // Mapeo de nombres de campo de archivo al enum TipoDocumentoProveedor
-const FILE_FIELD_TO_TIPO: Record<string, string> = {
+const fileKeyToTipoDocumento: Record<string, TipoDocumentoProveedor> = {
   doc_rif: 'RIF',
-  doc_registro_mercantil: 'ACTA_CONSTITUTIVA',
+  doc_acta_constitutiva: 'ACTA_CONSTITUTIVA',
   doc_solvencia_laboral: 'CERTIFICADO_SOLVENCIA_LABORAL',
   doc_licencia_municipal: 'LICENCIA_MUNICIPAL',
   doc_rnc: 'RNC',
@@ -119,7 +119,7 @@ export class ProveedoresService {
         const documentosCreados: Awaited<ReturnType<typeof tx.documentoProveedor.create>>[] = [];
 
         for (const [fieldName, fileArray] of Object.entries(files)) {
-          const tipoDocumento = FILE_FIELD_TO_TIPO[fieldName];
+          const tipoDocumento = fileKeyToTipoDocumento[fieldName];
           if (!tipoDocumento || !fileArray || fileArray.length === 0) continue;
 
           const file = fileArray[0];
@@ -129,7 +129,7 @@ export class ProveedoresService {
           const filename = tipoDocumento;
           const secureUrl = await this.storageService.uploadFile(file.buffer, folder, filename);
 
-          // Leer observación correspondiente (obs_doc_rif, obs_doc_registro_mercantil, etc.)
+          // Leer observación correspondiente (obs_doc_rif, obs_doc_acta_constitutiva, etc.)
           const obsKey = `obs_${fieldName}`;
           const observacion = observaciones[obsKey] || null;
 
@@ -512,7 +512,7 @@ export class ProveedoresService {
 
     if (files && Object.keys(files).length > 0) {
       for (const [fieldName, fileArray] of Object.entries(files)) {
-        const tipoDocumento = FILE_FIELD_TO_TIPO[fieldName] as
+        const tipoDocumento = fileKeyToTipoDocumento[fieldName] as
           | 'RIF'
           | 'ACTA_CONSTITUTIVA'
           | 'CERTIFICADO_SOLVENCIA_LABORAL'
