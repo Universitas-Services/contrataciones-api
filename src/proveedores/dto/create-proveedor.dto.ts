@@ -222,20 +222,10 @@ export class CreateProveedorDto {
   @IsString()
   obs_doc_rif?: string;
 
-  @ApiPropertyOptional({ description: 'Observaciones de Referencias Bancarias' })
+  @ApiPropertyOptional({ description: 'Observaciones del Acta Constitutiva' })
   @IsOptional()
   @IsString()
-  obs_doc_referencias_bancarias?: string;
-
-  @ApiPropertyOptional({ description: 'Observaciones de Estados Financieros' })
-  @IsOptional()
-  @IsString()
-  obs_doc_estados_financieros?: string;
-
-  @ApiPropertyOptional({ description: 'Observaciones del Registro Mercantil' })
-  @IsOptional()
-  @IsString()
-  obs_doc_registro_mercantil?: string;
+  obs_doc_acta_constitutiva?: string;
 
   @ApiPropertyOptional({
     description: '¿Posee Declaración de ISLR del último ejercicio fiscal?',
@@ -248,7 +238,7 @@ export class CreateProveedorDto {
 
   @ApiPropertyOptional({ description: 'Cédula del Proveedor (Persona Natural)', example: 12345678 })
   @IsOptional()
-  @Transform(({ value }) => (value ? parseInt(value, 10) : undefined))
+  @Transform(({ value }: { value: string }) => (value ? parseInt(value, 10) : undefined))
   @IsInt()
   cedulaNaturalProveedor?: number;
 
@@ -262,7 +252,7 @@ export class CreateProveedorDto {
 
   @ApiPropertyOptional({ description: 'Cédula de la Máxima Autoridad', example: 87654321 })
   @IsOptional()
-  @Transform(({ value }) => (value ? parseInt(value, 10) : undefined))
+  @Transform(({ value }: { value: string }) => (value ? parseInt(value, 10) : undefined))
   @IsInt()
   cedulaAutoridadProveedor?: number;
 

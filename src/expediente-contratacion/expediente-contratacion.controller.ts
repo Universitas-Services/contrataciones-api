@@ -111,8 +111,11 @@ export class ExpedienteContratacionController {
   @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
   @ApiOperation({ summary: 'Calcular fechas sugeridas para el cronograma (No guarda en DB)' })
   @ApiResponse({ status: 200, description: 'Fechas generadas exitosamente' })
-  calcularCronograma(@Body() dto: GenerarCronogramaDto) {
-    return this.expedienteService.generarCronogramaLegal(dto);
+  calcularCronograma(
+    @Body() dto: GenerarCronogramaDto,
+    @CurrentUser() user: { id: string; enteId: string },
+  ) {
+    return this.expedienteService.generarCronogramaLegal(dto, user.enteId);
   }
 
   @Put(':id/cronograma')

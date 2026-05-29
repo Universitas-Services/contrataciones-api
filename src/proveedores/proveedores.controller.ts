@@ -52,8 +52,6 @@ export class ProveedoresController {
     FileFieldsInterceptor([
       { name: 'doc_rif', maxCount: 1 },
       { name: 'doc_registro_mercantil', maxCount: 1 },
-      { name: 'doc_estados_financieros', maxCount: 1 },
-      { name: 'doc_referencias_bancarias', maxCount: 1 },
       { name: 'doc_solvencia_laboral', maxCount: 1 },
       { name: 'doc_licencia_municipal', maxCount: 1 },
       { name: 'doc_rnc', maxCount: 1 },
@@ -144,33 +142,14 @@ export class ProveedoresController {
         doc_registro_mercantil: {
           type: 'string',
           format: 'binary',
-          description: 'PDF del Registro Mercantil / Acta Constitutiva (archivo)',
+          description: 'PDF del Acta Constitutiva (archivo)',
         },
-        obs_doc_registro_mercantil: {
+        obs_doc_acta_constitutiva: {
           type: 'string',
-          description: 'Observaciones del Registro Mercantil',
+          description: 'Observaciones del Acta Constitutiva',
           example: 'Tomo 45, Folio 12',
         },
-        doc_estados_financieros: {
-          type: 'string',
-          format: 'binary',
-          description: 'PDF de Estados Financieros (archivo)',
-        },
-        obs_doc_estados_financieros: {
-          type: 'string',
-          description: 'Observaciones de Estados Financieros',
-          example: 'Auditados por firma externa',
-        },
-        doc_referencias_bancarias: {
-          type: 'string',
-          format: 'binary',
-          description: 'PDF de Referencias Bancarias (archivo)',
-        },
-        obs_doc_referencias_bancarias: {
-          type: 'string',
-          description: 'Observaciones de Referencias Bancarias',
-          example: 'Banco Nacional, cuenta corriente',
-        },
+
         doc_solvencia_laboral: {
           type: 'string',
           format: 'binary',
@@ -326,8 +305,6 @@ export class ProveedoresController {
     FileFieldsInterceptor([
       { name: 'doc_rif', maxCount: 1 },
       { name: 'doc_registro_mercantil', maxCount: 1 },
-      { name: 'doc_estados_financieros', maxCount: 1 },
-      { name: 'doc_referencias_bancarias', maxCount: 1 },
       { name: 'doc_solvencia_laboral', maxCount: 1 },
       { name: 'doc_licencia_municipal', maxCount: 1 },
       { name: 'doc_rnc', maxCount: 1 },

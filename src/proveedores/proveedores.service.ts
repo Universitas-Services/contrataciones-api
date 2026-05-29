@@ -7,6 +7,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import axios from 'axios';
+import { TipoDocumentoProveedor } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { CreateProveedorDto } from './dto/create-proveedor.dto';
 import { UpdateProveedorDto } from './dto/update-proveedor.dto';
@@ -17,9 +18,7 @@ import type { IStorageService } from '../common/interfaces/storage-service.inter
 // Mapeo de nombres de campo de archivo al enum TipoDocumentoProveedor
 const FILE_FIELD_TO_TIPO: Record<string, string> = {
   doc_rif: 'RIF',
-  doc_registro_mercantil: 'REGISTRO_MERCANTIL',
-  doc_estados_financieros: 'ESTADOS_FINANCIEROS',
-  doc_referencias_bancarias: 'REFERENCIAS_BANCARIAS',
+  doc_registro_mercantil: 'ACTA_CONSTITUTIVA',
   doc_solvencia_laboral: 'CERTIFICADO_SOLVENCIA_LABORAL',
   doc_licencia_municipal: 'LICENCIA_MUNICIPAL',
   doc_rnc: 'RNC',
@@ -140,12 +139,11 @@ export class ProveedoresService {
               proveedorId: proveedor.id,
               tipoDocumento: tipoDocumento as
                 | 'RIF'
-                | 'REGISTRO_MERCANTIL'
-                | 'ESTADOS_FINANCIEROS'
-                | 'REFERENCIAS_BANCARIAS'
+                | 'ACTA_CONSTITUTIVA'
                 | 'CERTIFICADO_SOLVENCIA_LABORAL'
                 | 'LICENCIA_MUNICIPAL'
                 | 'RNC',
+
               urlArchivo: secureUrl,
               observaciones: observacion,
             },
@@ -516,9 +514,7 @@ export class ProveedoresService {
       for (const [fieldName, fileArray] of Object.entries(files)) {
         const tipoDocumento = FILE_FIELD_TO_TIPO[fieldName] as
           | 'RIF'
-          | 'REGISTRO_MERCANTIL'
-          | 'ESTADOS_FINANCIEROS'
-          | 'REFERENCIAS_BANCARIAS'
+          | 'ACTA_CONSTITUTIVA'
           | 'CERTIFICADO_SOLVENCIA_LABORAL'
           | 'LICENCIA_MUNICIPAL'
           | 'RNC'
@@ -644,9 +640,7 @@ export class ProveedoresService {
     if (estatusValidacion === 'APROBADO') {
       const documentosRequeridos = [
         'RIF',
-        'REGISTRO_MERCANTIL',
-        'ESTADOS_FINANCIEROS',
-        'REFERENCIAS_BANCARIAS',
+        'ACTA_CONSTITUTIVA',
         'CERTIFICADO_SOLVENCIA_LABORAL',
         'LICENCIA_MUNICIPAL',
         'RNC',
@@ -657,7 +651,7 @@ export class ProveedoresService {
         .map((doc) => doc.tipoDocumento);
 
       const documentosFaltantes = documentosRequeridos.filter(
-        (tipo) => !documentosExistentes.includes(tipo as any),
+        (tipo) => !documentosExistentes.includes(tipo as TipoDocumentoProveedor),
       );
 
       if (documentosFaltantes.length > 0) {

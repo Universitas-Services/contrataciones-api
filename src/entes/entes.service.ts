@@ -584,6 +584,7 @@ export class EntesService {
       usuariosTotal,
       usuariosEjecutores,
       usuariosVisualizadores,
+      usuariosAdministradores,
       proveedoresTotal,
       expedientesCompliance,
     ] = await Promise.all([
@@ -596,6 +597,9 @@ export class EntesService {
       }),
       this.prisma.usuario.count({
         where: { enteId, rol: 'VISUALIZADOR', deletedAt: null },
+      }),
+      this.prisma.usuario.count({
+        where: { enteId, rol: 'ADMIN_ENTE', deletedAt: null },
       }),
       // 2. Proveedores del Ente
       this.prisma.proveedor.count({
@@ -675,6 +679,7 @@ export class EntesService {
         total: usuariosTotal,
         ejecutores: usuariosEjecutores,
         visualizadores: usuariosVisualizadores,
+        administradores: usuariosAdministradores,
       },
       expedientesEnProceso: {
         total: procesoBienes + procesoObras + procesoServicios,
