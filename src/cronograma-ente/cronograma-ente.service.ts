@@ -362,6 +362,32 @@ export class CronogramaEnteService {
 
   // === Detección de Conflictos ===
 
+  async sumarDiasHabiles(fechaInicial: Date, dias: number, festivosEnte: string[]): Promise<Date> {
+    const fecha = new Date(fechaInicial);
+    let diasSumados = 0;
+
+    while (diasSumados < dias) {
+      fecha.setUTCDate(fecha.getUTCDate() + 1);
+
+      const day = fecha.getUTCDay();
+      // 0 = Domingo, 6 = Sábado
+      if (day === 0 || day === 6) continue;
+
+      const fechaStr = fecha.toISOString().split('T')[0];
+      const mm = String(fecha.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(fecha.getUTCDate()).padStart(2, '0');
+      const mmdd = `${mm}-${dd}`;
+
+      if (festivosEnte.includes(fechaStr) || festivosEnte.includes(mmdd)) {
+        continue;
+      }
+
+      diasSumados++;
+    }
+
+    return fecha;
+  }
+
   async detectarConflictos(enteId: string, diaNoLaborable: any) {
     // 1. Obtener todos los expedientes del ente en estados activos
     const expedientesActivos = await this.prisma.expedienteContratacion.findMany({
@@ -375,6 +401,7 @@ export class CronogramaEnteService {
       },
     });
 
+    const festivos = await this.getDiasNoLaborablesParaCalculo(enteId);
     const conflictosRealizados: any[] = [];
 
     for (const exp of expedientesActivos) {
@@ -382,36 +409,42 @@ export class CronogramaEnteService {
       if (!cronograma) continue;
 
       const camposAfectados: any[] = [];
+      const datosActualizar: any = {};
 
       for (const mapping of CAMPOS_CRONOGRAMA) {
         const fechaCampo = cronograma[mapping.campo] as Date;
         if (!fechaCampo) continue;
 
-        let hayConflicto = false;
+        let esAfectada = false;
         const fechaCampoStr = fechaCampo.toISOString().split('T')[0];
 
         if (diaNoLaborable.esRecurrente) {
-          const mm = String(fechaCampo.getUTCMonth() + 1).padStart(2, '0');
-          const dd = String(fechaCampo.getUTCDate()).padStart(2, '0');
-          const mmdd = `${mm}-${dd}`;
-          if (diaNoLaborable.fechaRecurrente === mmdd) {
-            hayConflicto = true;
+          const thisYear = fechaCampo.getUTCFullYear();
+          // Construimos la fecha recurrente de este año para comparar
+          const recurringDateThisYear = new Date(
+            `${thisYear}-${diaNoLaborable.fechaRecurrente}T00:00:00Z`,
+          );
+          if (fechaCampo.getTime() >= recurringDateThisYear.getTime()) {
+            esAfectada = true;
           }
         } else {
-          const fechaFestivoStr = diaNoLaborable.fecha.toISOString().split('T')[0];
-          if (fechaFestivoStr === fechaCampoStr) {
-            hayConflicto = true;
+          if (fechaCampo.getTime() >= diaNoLaborable.fecha.getTime()) {
+            esAfectada = true;
           }
         }
 
-        if (hayConflicto) {
+        if (esAfectada) {
           camposAfectados.push({
             campo: mapping.campo,
             etiqueta: mapping.etiqueta,
-            fechaActual: fechaCampoStr,
+            fechaAnterior: fechaCampoStr,
           });
 
-          // Crear AlertaCronograma en base de datos
+          // Desplazar 1 día hábil
+          const nuevaFecha = await this.sumarDiasHabiles(fechaCampo, 1, festivos);
+          datosActualizar[mapping.campo] = nuevaFecha;
+
+          // Crear AlertaCronograma como aviso para regenerar documentos
           await this.prisma.alertaCronograma.create({
             data: {
               cronogramaId: cronograma.id,
@@ -424,10 +457,12 @@ export class CronogramaEnteService {
       }
 
       if (camposAfectados.length > 0) {
-        // Marcar el cronograma con conflicto festivo activo
+        // Marcar el cronograma con conflicto festivo activo (aviso de regenerar documentos)
+        datosActualizar.tieneConflictoFestivo = true;
+
         await this.prisma.cronogramaExpediente.update({
           where: { id: cronograma.id },
-          data: { tieneConflictoFestivo: true },
+          data: datosActualizar,
         });
 
         conflictosRealizados.push({
