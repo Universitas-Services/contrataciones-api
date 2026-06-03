@@ -3,6 +3,8 @@ import { EntesService } from './entes.service';
 import { PrismaService } from '../database/prisma.service';
 import { NotFoundException } from '@nestjs/common';
 
+import { ManualesService } from '../manuales/manuales.service';
+
 describe('EntesService', () => {
   let service: EntesService;
 
@@ -23,9 +25,17 @@ describe('EntesService', () => {
     },
   };
 
+  const mockManualesService = {
+    marcarManualDesactualizado: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [EntesService, { provide: PrismaService, useValue: mockPrismaService }],
+      providers: [
+        EntesService,
+        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: ManualesService, useValue: mockManualesService },
+      ],
     }).compile();
 
     service = module.get<EntesService>(EntesService);

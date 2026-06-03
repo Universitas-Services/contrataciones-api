@@ -8,10 +8,14 @@ import { UpdateEnteDto } from './dto/update-ente.dto';
 import { CreateEnteUsuarioDto } from './dto/create-ente-usuario.dto';
 import { QueryEnteUsuariosDto } from './dto/query-ente-usuarios.dto';
 import { UpdateEnteUsuarioDto } from './dto/update-ente-usuario.dto';
+import { ManualesService } from '../manuales/manuales.service';
 
 @Injectable()
 export class EntesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private manualesService: ManualesService,
+  ) {}
 
   private async invalidarDocumentosExpedientes(enteId: string) {
     const expedientes = await this.prisma.expedienteContratacion.findMany({
@@ -504,6 +508,10 @@ export class EntesService {
 
     if (requiereInvalidacion) {
       await this.invalidarDocumentosExpedientes(id);
+      await this.manualesService.marcarManualDesactualizado(
+        id,
+        'Se actualizaron datos del Ente que afectan el manual',
+      );
     }
 
     return actualizado;
@@ -513,13 +521,17 @@ export class EntesService {
     // Verificar que el Ente existe
     await this.findOne(id);
 
-    return this.prisma.entePublico.update({
+    const result = await this.prisma.entePublico.update({
       where: { id },
       data: {
         logoUrl,
         updatedBy: userId,
       },
     });
+
+    await this.manualesService.marcarManualDesactualizado(id, 'Se actualizó el logo del Ente');
+
+    return result;
   }
 
   async remove(id: string, userId: string) {

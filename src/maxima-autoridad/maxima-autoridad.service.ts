@@ -2,10 +2,14 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../database/prisma.service';
 import { CreateMaximaAutoridadDto } from './dto/create-maxima-autoridad.dto';
 import { UpdateMaximaAutoridadDto } from './dto/update-maxima-autoridad.dto';
+import { ManualesService } from '../manuales/manuales.service';
 
 @Injectable()
 export class MaximaAutoridadService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly manualesService: ManualesService,
+  ) {}
 
   private async invalidarDocumentosExpedientes(autoridadId: string) {
     const expedientes = await this.prisma.expedienteContratacion.findMany({
@@ -93,6 +97,10 @@ export class MaximaAutoridadService {
 
     if (requiereInvalidacion) {
       await this.invalidarDocumentosExpedientes(id);
+      await this.manualesService.marcarManualDesactualizado(
+        autoridad.enteId,
+        'Se actualizó la Máxima Autoridad del Ente',
+      );
     }
 
     return actualizada;
@@ -127,13 +135,20 @@ export class MaximaAutoridadService {
       );
     }
 
-    return this.prisma.maximaAutoridad.update({
+    const result = await this.prisma.maximaAutoridad.update({
       where: { id },
       data: {
         vigente: true,
         updatedBy: userId,
       },
     });
+
+    await this.manualesService.marcarManualDesactualizado(
+      enteId,
+      'Se activó una nueva Máxima Autoridad del Ente',
+    );
+
+    return result;
   }
 
   async desactivar(id: string, enteId: string, userId: string) {
