@@ -4,10 +4,14 @@ import { CreateComisionContratacionesDto } from './dto/create-comision-contratac
 import { UpdateComisionContratacionesDto } from './dto/update-comision-contrataciones.dto';
 import { TipoMiembro, AreaRepresentacion } from '@prisma/client';
 import { CreateMiembroComisionDto } from './dto/create-miembro-comision.dto';
+import { ManualesService } from '../manuales/manuales.service';
 
 @Injectable()
 export class ComisionContratacionesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly manualesService: ManualesService,
+  ) {}
 
   private async invalidarDocumentosExpedientes(comisionId: string) {
     const expedientes = await this.prisma.expedienteContratacion.findMany({
@@ -171,6 +175,10 @@ export class ComisionContratacionesService {
 
     if (requiereInvalidacion) {
       await this.invalidarDocumentosExpedientes(id);
+      await this.manualesService.marcarManualDesactualizado(
+        comision.enteId,
+        'Se actualizó la Comisión de Contrataciones',
+      );
     }
 
     return actualizada;

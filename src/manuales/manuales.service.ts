@@ -12,6 +12,8 @@ import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class ManualesService {
+  private readonly MAX_MANUALES_POR_ENTE = 10;
+
   constructor(
     private prisma: PrismaService,
     private emailService: EmailService,
@@ -39,31 +41,30 @@ export class ManualesService {
       throw new NotFoundException('Ente no encontrado');
     }
 
-    // 2. Eliminar manual anterior si existe (un ente solo tiene UN manual)
+    // 2. Marcar manual anterior como histórico (NO eliminar)
     const manualAnterior = await this.prisma.manualGenerado.findFirst({
-      where: { enteId, deletedAt: null },
+      where: { enteId, esVersionVigente: true, deletedAt: null },
     });
 
-    if (manualAnterior) {
-      // Eliminar archivo de Cloudinary
-      try {
-        const publicId = this.extractCloudinaryPublicId(manualAnterior.urlArchivo);
-        if (publicId) {
-          await this.storage.deleteFile(publicId);
-          console.log('🗑️ Manual anterior eliminado de Cloudinary:', publicId);
-        }
-      } catch (deleteError: any) {
-        console.warn(
-          '⚠️ No se pudo eliminar el manual anterior de Cloudinary:',
-          deleteError.message,
-        );
-      }
+    let nuevaVersion = 1;
 
-      // Eliminar registro de BD
-      await this.prisma.manualGenerado.delete({
+    if (manualAnterior) {
+      // Marcar como NO vigente (pasa a histórico)
+      await this.prisma.manualGenerado.update({
         where: { id: manualAnterior.id },
+        data: {
+          esVersionVigente: false,
+          estaDesactualizado: true,
+          motivoDesactualizacion: 'Se generó una nueva versión del manual',
+          updatedBy: userId,
+        },
       });
-      console.log('🗑️ Registro anterior eliminado de BD:', manualAnterior.id);
+      nuevaVersion = manualAnterior.versionDocumento + 1;
+      console.log(
+        '📋 Manual anterior movido a historial:',
+        manualAnterior.id,
+        'v' + manualAnterior.versionDocumento,
+      );
     }
 
     // 3. Validar que el Ente tenga todos los campos requeridos
@@ -252,7 +253,7 @@ export class ManualesService {
       throw new BadRequestException(`Error al subir archivo: ${uploadError.message}`);
     }
 
-    // 11. Registrar en BD
+    // 11. Registrar en BD con snapshot de datos
     console.log('💾 About to save to database...');
     let manual: any;
     try {
@@ -264,8 +265,21 @@ export class ManualesService {
           tituloManual: `Manual ${tipoManual} - ${ente.siglas || ente.nombre}`,
           descripcion:
             descripcion || `Manual ${tipoManual} generado automáticamente para ${ente.nombre}`,
-          versionDocumento: 1,
+          versionDocumento: nuevaVersion,
+          esVersionVigente: true,
+          estaDesactualizado: false,
           createdBy: userId,
+          snapshotDatos: {
+            nombre: ente.nombre,
+            siglas: ente.siglas,
+            logoUrl: ente.logoUrl,
+            nombreUnidadAdminFinanciera: ente.nombreUnidadAdminFinanciera,
+            nombreUnidadContratante: nom_unidad_contratante,
+            nombreUnidadTecnologia: ente.nombreUnidadTecnologia,
+            denominacionComision: denominacion_comision,
+            cargoOficialAutoridad: cargo_oficial_autoridad,
+            fechaGeneracion: data.fecha_generacion,
+          },
         },
       });
       console.log('✅ Manual saved to database successfully!');
@@ -279,6 +293,9 @@ export class ManualesService {
       throw new BadRequestException(`Error al guardar en base de datos: ${dbError.message}`);
     }
 
+    // 12. Purgar manuales históricos si exceden el límite
+    await this.purgarHistorialExcedente(enteId);
+
     return {
       id: manual.id,
       url: fileUrl,
@@ -286,6 +303,7 @@ export class ManualesService {
       generatedAt: manual.createdAt,
       tipoManual: manual.tipoManual,
       titulo: manual.tituloManual,
+      versionDocumento: manual.versionDocumento,
     };
   }
 
@@ -375,20 +393,22 @@ export class ManualesService {
       previewUrl,
       tituloManual: manual.tituloManual,
       urlArchivo: manual.urlArchivo,
+      estaDesactualizado: manual.estaDesactualizado,
+      motivoDesactualizacion: manual.motivoDesactualizacion,
     };
   }
 
   /**
-   * Busca el único manual de un ente.
+   * Busca el manual vigente de un ente.
    */
   async findByEnte(enteId: string) {
     const manual = await this.prisma.manualGenerado.findFirst({
-      where: { enteId, deletedAt: null },
+      where: { enteId, esVersionVigente: true, deletedAt: null },
       orderBy: { createdAt: 'desc' },
     });
 
     if (!manual) {
-      throw new NotFoundException('Este ente no tiene un manual generado');
+      throw new NotFoundException('Este ente no tiene un manual vigente');
     }
 
     return manual;
@@ -407,8 +427,50 @@ export class ManualesService {
         urlArchivo: true,
         createdAt: true,
         createdBy: true,
+        esVersionVigente: true,
+        estaDesactualizado: true,
+        motivoDesactualizacion: true,
       },
     });
+  }
+
+  /**
+   * Lista todo el historial de manuales de un ente (vigente + históricos).
+   * Paginado y ordenado por versión descendente.
+   */
+  async findHistorial(enteId: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+
+    const [total, data] = await Promise.all([
+      this.prisma.manualGenerado.count({
+        where: { enteId, deletedAt: null },
+      }),
+      this.prisma.manualGenerado.findMany({
+        where: { enteId, deletedAt: null },
+        orderBy: { versionDocumento: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          tipoManual: true,
+          tituloManual: true,
+          descripcion: true,
+          versionDocumento: true,
+          urlArchivo: true,
+          createdAt: true,
+          createdBy: true,
+          esVersionVigente: true,
+          estaDesactualizado: true,
+          motivoDesactualizacion: true,
+          snapshotDatos: true,
+        },
+      }),
+    ]);
+
+    return {
+      metadata: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      data,
+    };
   }
 
   async findOne(id: string, enteId: string) {
@@ -424,6 +486,23 @@ export class ManualesService {
   }
 
   /**
+   * Obtiene la URL de previsualización de un manual específico del historial.
+   */
+  async getPreviewUrlById(manualId: string, enteId: string) {
+    const manual = await this.findOne(manualId, enteId);
+    const previewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(manual.urlArchivo)}&embedded=true`;
+    return {
+      previewUrl,
+      tituloManual: manual.tituloManual,
+      urlArchivo: manual.urlArchivo,
+      versionDocumento: manual.versionDocumento,
+      esVersionVigente: manual.esVersionVigente,
+      estaDesactualizado: manual.estaDesactualizado,
+      motivoDesactualizacion: manual.motivoDesactualizacion,
+    };
+  }
+
+  /**
    * Descarga el manual de un ente por su enteId (sin necesitar ID del manual).
    */
   async downloadByEnte(enteId: string) {
@@ -435,6 +514,17 @@ export class ManualesService {
     };
   }
 
+  /**
+   * Descarga un manual específico del historial por su ID.
+   */
+  async downloadById(manualId: string, enteId: string) {
+    const manual = await this.findOne(manualId, enteId);
+    return {
+      url: manual.urlArchivo,
+      fileName: `${manual.tituloManual.replace(/\s+/g, '-')}-v${manual.versionDocumento}.docx`,
+    };
+  }
+
   async download(id: string, enteId: string) {
     const manual = await this.findOne(id, enteId);
 
@@ -442,6 +532,61 @@ export class ManualesService {
       url: manual.urlArchivo,
       fileName: `${manual.tituloManual.replace(/\s+/g, '-')}.docx`,
     };
+  }
+
+  /**
+   * Marca todos los manuales vigentes de un ente como desactualizados.
+   * Se invoca desde otros módulos cuando cambian datos relevantes del ente.
+   */
+  async marcarManualDesactualizado(enteId: string, motivo: string) {
+    await this.prisma.manualGenerado.updateMany({
+      where: { enteId, esVersionVigente: true, deletedAt: null },
+      data: {
+        estaDesactualizado: true,
+        motivoDesactualizacion: motivo,
+      },
+    });
+  }
+
+  /**
+   * Elimina los manuales históricos más antiguos cuando se supera el límite por ente.
+   * Conserva siempre los más recientes (incluyendo el vigente).
+   * Los archivos de Cloudinary de los manuales eliminados también se borran.
+   */
+  private async purgarHistorialExcedente(enteId: string) {
+    const totalManuales = await this.prisma.manualGenerado.count({
+      where: { enteId, deletedAt: null },
+    });
+
+    if (totalManuales <= this.MAX_MANUALES_POR_ENTE) return;
+
+    // Obtener los manuales que exceden el límite (los más antiguos)
+    const manualesAEliminar = await this.prisma.manualGenerado.findMany({
+      where: { enteId, deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+      skip: this.MAX_MANUALES_POR_ENTE,
+      select: { id: true, urlArchivo: true },
+    });
+
+    for (const manual of manualesAEliminar) {
+      // Eliminar archivo de Cloudinary
+      try {
+        const publicId = this.extractCloudinaryPublicId(manual.urlArchivo);
+        if (publicId) {
+          await this.storage.deleteFile(publicId);
+        }
+      } catch (error: any) {
+        console.warn('⚠️ No se pudo eliminar manual antiguo de Cloudinary:', error.message);
+      }
+
+      // Soft delete del registro en BD
+      await this.prisma.manualGenerado.update({
+        where: { id: manual.id },
+        data: { deletedAt: new Date() },
+      });
+    }
+
+    console.log(`🗑️ Purgados ${manualesAEliminar.length} manuales antiguos del ente ${enteId}`);
   }
 
   /**

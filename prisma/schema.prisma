@@ -808,22 +808,27 @@ model DocumentoGenerado {
 }
 
 model ManualGenerado {
-  id               String      @id @default(uuid())
-  enteId           String
-  urlArchivo       String
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-  deletedAt        DateTime?
-  createdBy        String?
-  descripcion      String?
-  tipoManual       String
-  tituloManual     String
-  updatedBy        String?
-  versionDocumento Int         @default(1)
-  ente             EntePublico @relation(fields: [enteId], references: [id])
+  id                     String      @id @default(uuid())
+  enteId                 String
+  urlArchivo             String
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+  deletedAt              DateTime?
+  createdBy              String?
+  descripcion            String?
+  tipoManual             String
+  tituloManual           String
+  updatedBy              String?
+  versionDocumento       Int         @default(1)
+  estaDesactualizado     Boolean     @default(false)
+  esVersionVigente       Boolean     @default(true)
+  motivoDesactualizacion String?
+  snapshotDatos          Json?
+  ente                   EntePublico @relation(fields: [enteId], references: [id])
 
   @@index([enteId, tipoManual])
   @@index([createdAt])
+  @@index([enteId, esVersionVigente])
 }
 
 model PliegoGenerado {
