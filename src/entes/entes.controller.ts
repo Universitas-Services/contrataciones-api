@@ -288,7 +288,7 @@ export class EntesController {
   }
 
   @Get('dashboard/operativo')
-  @Roles('ADMIN_ENTE', 'EJECUTOR', 'VISUALIZADOR', 'UNIVERSITAS')
+  @Roles('ADMIN_ENTE', 'UNIVERSITAS')
   @ApiOperation({
     summary: 'Obtener resumen operativo del ente logueado',
     description:
@@ -306,6 +306,22 @@ export class EntesController {
       throw new ForbiddenException('El usuario no tiene un ente asociado.');
     }
     return this.entesService.getEnteOperationalMetrics(user.enteId);
+  }
+
+  @Get('dashboard/employed')
+  @Roles('EJECUTOR', 'VISUALIZADOR')
+  @ApiOperation({
+    summary: 'Obtener resumen operativo del ente logueado (Empleados)',
+    description:
+      'Retorna estadísticas detalladas de expedientes y proveedores del ente actual, sin información de usuarios.',
+  })
+  @ApiResponse({ status: 200, description: 'Métricas obtenidas correctamente' })
+  @ApiResponse({ status: 403, description: 'No autorizado o el usuario no tiene un ente asociado' })
+  getEmployedMetrics(@CurrentUser() user: { rol: string; enteId?: string }) {
+    if (!user.enteId) {
+      throw new ForbiddenException('El usuario no tiene un ente asociado.');
+    }
+    return this.entesService.getEnteEmployedMetrics(user.enteId);
   }
 
   @Get(':id')

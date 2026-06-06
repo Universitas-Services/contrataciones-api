@@ -713,4 +713,101 @@ export class EntesService {
       },
     };
   }
+
+  async getEnteEmployedMetrics(enteId: string) {
+    const [proveedoresTotal, expedientesCompliance] = await Promise.all([
+      // Proveedores del Ente
+      this.prisma.proveedor.count({
+        where: { enteId, deletedAt: null },
+      }),
+      // Expedientes Compliance (con LISTA_COTEJO)
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          documentosGenerados: {
+            some: { tipoDocumento: 'LISTA_COTEJO', deletedAt: null },
+          },
+        },
+      }),
+    ]);
+
+    // Expedientes en Proceso (Desglose por tipo)
+    const statusEnProceso = { notIn: ['CONTRATADO', 'ANULADO'] } as any;
+    const [procesoBienes, procesoObras, procesoServicios] = await Promise.all([
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          estatusProceso: statusEnProceso,
+          modalidad: { tipoContratacion: 'BIENES' },
+        },
+      }),
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          estatusProceso: statusEnProceso,
+          modalidad: { tipoContratacion: 'OBRAS' },
+        },
+      }),
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          estatusProceso: statusEnProceso,
+          modalidad: { tipoContratacion: 'SERVICIOS' },
+        },
+      }),
+    ]);
+
+    // Expedientes Terminados (Desglose por tipo)
+    const [terminadoBienes, terminadoObras, terminadoServicios] = await Promise.all([
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          estatusProceso: 'CONTRATADO',
+          modalidad: { tipoContratacion: 'BIENES' },
+        },
+      }),
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          estatusProceso: 'CONTRATADO',
+          modalidad: { tipoContratacion: 'OBRAS' },
+        },
+      }),
+      this.prisma.expedienteContratacion.count({
+        where: {
+          enteId,
+          deletedAt: null,
+          estatusProceso: 'CONTRATADO',
+          modalidad: { tipoContratacion: 'SERVICIOS' },
+        },
+      }),
+    ]);
+
+    return {
+      expedientesEnProceso: {
+        total: procesoBienes + procesoObras + procesoServicios,
+        bienes: procesoBienes,
+        obras: procesoObras,
+        servicios: procesoServicios,
+      },
+      expedientesTerminados: {
+        total: terminadoBienes + terminadoObras + terminadoServicios,
+        bienes: terminadoBienes,
+        obras: terminadoObras,
+        servicios: terminadoServicios,
+      },
+      proveedores: {
+        total: proveedoresTotal,
+      },
+      compliance: {
+        total: expedientesCompliance,
+      },
+    };
+  }
 }
