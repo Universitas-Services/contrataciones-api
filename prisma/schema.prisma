@@ -243,7 +243,8 @@ model UnidadContratante {
   deletedAt               DateTime?
   createdBy               String?
   updatedBy               String?
-  ente                    EntePublico @relation(fields: [enteId], references: [id])
+  ente                    EntePublico              @relation(fields: [enteId], references: [id])
+  expedientes             ExpedienteContratacion[]
 
   @@index([enteId, activa])
   @@map("tb_unidad_contratante")
@@ -351,6 +352,10 @@ model ExpedienteContratacion {
   updatedBy                  String?
   version                    Int                     @default(1)
   autoridadFirmaComoDelegado Boolean                 @default(false) @map("ind_firma_delegado_au_au")
+  modalidadConcursoAbierto   String?                 @map("modalidad_concurso_abierto") @db.VarChar(100)
+  numeralCausalProcedenciaCd String?                 @map("numeral_causal_procedencia_cd") @db.VarChar(10)
+  causalProcedenciaCd        String?                 @map("causal_procedencia_cd")
+  unidadContratanteId        String?                 @map("id_unidad_contratante")
   adjudicacion               Adjudicacion?
   documentosGenerados        DocumentoGenerado[]
   ofertas                    OfertaPresentada[]
@@ -362,6 +367,7 @@ model ExpedienteContratacion {
   ente                       EntePublico             @relation(fields: [enteId], references: [id])
   modalidad                  ModalidadContratacion   @relation(fields: [modalidadId], references: [id])
   unidadUsuaria              UnidadUsuaria?          @relation(fields: [unidadUsuariaId], references: [id])
+  unidadContratante          UnidadContratante?      @relation(fields: [unidadContratanteId], references: [id])
   fasePreparatoria           FasePreparatoria?
   pliegosGenerados           PliegoGenerado[]
   presupuestoItems           PresupuestoItem[]
@@ -455,6 +461,7 @@ model CronogramaExpediente {
   expediente                       ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
   alertas                          AlertaCronograma[]
   tieneConflictoFestivo            Boolean                @default(false) @map("ind_tiene_conflicto_festivo")
+  fechaVerificacionRecaudos        DateTime?              @map("fec_verificacion_recaudos")
 
   @@index([expedienteId])
   @@map("tb_cronograma_expediente")
@@ -940,6 +947,7 @@ enum ModalidadSeleccion {
   CONCURSO_CERRADO
   CONSULTA_PRECIOS
   ADJUDICACION_DIRECTA
+  MODALIDADES_EXCLUIDAS
 }
 
 enum EstatusProceso {

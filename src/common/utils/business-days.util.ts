@@ -4,8 +4,8 @@ export class BusinessDaysUtil {
    * ÚNICO dato fijo en el código.
    */
   static isWeekend(date: Date): boolean {
-    const day = date.getDay();
-    return day === 0 || day === 6; // 0 = Domingo, 6 = Sábado
+    const day = date.getUTCDay();
+    return day === 0 || day === 6;
   }
 
   /**
@@ -34,7 +34,7 @@ export class BusinessDaysUtil {
     const result = new Date(startDate);
     let added = 0;
     while (added < days) {
-      result.setDate(result.getDate() + 1);
+      result.setUTCDate(result.getUTCDate() + 1);
       if (this.isBusinessDay(result, diasEnte)) {
         added++;
       }
@@ -46,7 +46,7 @@ export class BusinessDaysUtil {
     const result = new Date(startDate);
     let subtracted = 0;
     while (subtracted < days) {
-      result.setDate(result.getDate() - 1);
+      result.setUTCDate(result.getUTCDate() - 1);
       if (this.isBusinessDay(result, diasEnte)) {
         subtracted++;
       }
@@ -62,8 +62,8 @@ export class BusinessDaysUtil {
     const end = new Date(endDate);
 
     // Normalizar horas
-    current.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
+    current.setUTCHours(0, 0, 0, 0);
+    end.setUTCHours(0, 0, 0, 0);
 
     let days = 0;
     while (current < end) {

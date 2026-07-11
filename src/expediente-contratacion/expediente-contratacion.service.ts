@@ -8,9 +8,17 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateProcesoCompletoDto } from './dto/create-proceso-completo.dto';
 import { CalcularModalidadDto } from './dto/calcular-modalidad.dto';
 import { CreateExpedienteDraftDto } from './dto/create-expediente-draft.dto';
+import { CreateExpedienteConcursoCerradoDto } from './dto/create-expediente-concurso-cerrado.dto';
+import { CreateExpedienteConsultaPreciosDto } from './dto/create-expediente-consulta-precios.dto';
+import { CreateExpedienteContratacionDirectaDto } from './dto/create-expediente-contratacion-directa.dto';
+import { CreateExpedienteModalidadExcluidaDto } from './dto/create-expediente-modalidad-excluida.dto';
 import { UpdateExpedienteGeneralDto } from './dto/update-expediente-general.dto';
 import { QueryExpedienteDto } from './dto/query-expedientes.dto';
 import { GenerarCronogramaDto } from './dto/generar-cronograma.dto';
+import { GenerarCronogramaCCDto } from './dto/generar-cronograma-cc.dto';
+import { GenerarCronogramaCPDto } from './dto/generar-cronograma-cp.dto';
+import { GenerarCronogramaCDDto } from './dto/generar-cronograma-cd.dto';
+import { GenerarCronogramaMEDto } from './dto/generar-cronograma-me.dto';
 import { UpdateCronogramaExpedienteDto } from './dto/update-cronograma.dto';
 import { ModalidadSeleccion, RolUsuario, Prisma } from '@prisma/client';
 import { BusinessDaysUtil } from '../common/utils/business-days.util';
@@ -138,17 +146,17 @@ export class ExpedienteContratacionService {
     switch (dto.tipoContratacion) {
       case 'BIENES':
         if (montoUcau > 20000) {
-          modalidadSugerida = 'LICITACION_PUBLICA'; // Equivalente en el Enum a Concurso Abierto
+          modalidadSugerida = 'LICITACION_PUBLICA';
           nombreModalidad = 'Concurso Abierto, acto único, apertura única';
-          baseLegal = 'Artículo 78, Numeral 1, DLCP';
+          baseLegal = 'Artículos 55 y 78, DLCP';
         } else if (montoUcau > 5000) {
           modalidadSugerida = 'CONCURSO_CERRADO';
           nombreModalidad = 'Concurso Cerrado';
-          baseLegal = 'Artículo 85, Numeral 1, DLCP';
+          baseLegal = 'Artículo 85, DLCP';
         } else {
           modalidadSugerida = 'CONSULTA_PRECIOS';
           nombreModalidad = 'Consulta de Precios';
-          baseLegal = 'Artículo 95, Numeral 1, DLCP';
+          baseLegal = 'Artículo 96, DLCP';
         }
         break;
 
@@ -156,15 +164,15 @@ export class ExpedienteContratacionService {
         if (montoUcau > 30000) {
           modalidadSugerida = 'LICITACION_PUBLICA';
           nombreModalidad = 'Concurso Abierto, acto único, apertura única';
-          baseLegal = 'Artículo 78, Numeral 2, DLCP';
+          baseLegal = 'Artículos 55 y 78, DLCP';
         } else if (montoUcau > 10000) {
           modalidadSugerida = 'CONCURSO_CERRADO';
           nombreModalidad = 'Concurso Cerrado';
-          baseLegal = 'Artículo 85, Numeral 2, DLCP';
+          baseLegal = 'Artículo 85, DLCP';
         } else {
           modalidadSugerida = 'CONSULTA_PRECIOS';
           nombreModalidad = 'Consulta de Precios';
-          baseLegal = 'Artículo 95, Numeral 2, DLCP';
+          baseLegal = 'Artículo 96, DLCP';
         }
         break;
 
@@ -172,15 +180,15 @@ export class ExpedienteContratacionService {
         if (montoUcau > 50000) {
           modalidadSugerida = 'LICITACION_PUBLICA';
           nombreModalidad = 'Concurso Abierto, acto único, apertura única';
-          baseLegal = 'Artículo 78, Numeral 3, DLCP';
+          baseLegal = 'Artículos 55 y 78, DLCP';
         } else if (montoUcau > 20000) {
           modalidadSugerida = 'CONCURSO_CERRADO';
           nombreModalidad = 'Concurso Cerrado';
-          baseLegal = 'Artículo 85, Numeral 3, DLCP';
+          baseLegal = 'Artículo 85, DLCP';
         } else {
           modalidadSugerida = 'CONSULTA_PRECIOS';
           nombreModalidad = 'Consulta de Precios';
-          baseLegal = 'Artículo 95, Numeral 3, DLCP';
+          baseLegal = 'Artículo 96, DLCP';
         }
         break;
 
@@ -742,5 +750,426 @@ export class ExpedienteContratacionService {
         'Error al guardar el cronograma: ' + (e instanceof Error ? e.message : String(e)),
       );
     }
+  }
+
+  // =====================================================================
+  // CREAR BORRADOR — CONCURSO CERRADO
+  // =====================================================================
+  async createBorradorCC(dto: CreateExpedienteConcursoCerradoDto, userId: string, enteId: string) {
+    if (!enteId) {
+      throw new BadRequestException(
+        'El usuario no tiene un Ente asignado para realizar esta acción.',
+      );
+    }
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const modalidad = await tx.modalidadContratacion.create({
+          data: {
+            tipoContratacion: dto.tipoContratacion,
+            montoEstimadoBs: dto.montoEstimadoBs,
+            montoEstimadoDolar: dto.montoEstimadoDolar,
+            valorUcauBase: dto.valorUcauBase,
+            modalidadSeleccion: 'CONCURSO_CERRADO',
+            enteId,
+            createdBy: userId,
+            updatedBy: userId,
+          },
+        });
+
+        const expediente = await tx.expedienteContratacion.create({
+          data: {
+            descripcionObjeto: dto.descripcionObjeto,
+            codigoNomenclatura: dto.codigoNomenclatura,
+            enteId,
+            modalidadId: modalidad.id,
+            estatusProceso: 'BORRADOR',
+            createdBy: userId,
+            updatedBy: userId,
+          },
+        });
+
+        return {
+          message: 'Expediente Concurso Cerrado creado en borrador exitosamente',
+          data: { modalidad, expediente },
+        };
+      });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException('Error al crear el borrador CC: ' + msg);
+    }
+  }
+
+  // =====================================================================
+  // CREAR BORRADOR — CONSULTA DE PRECIOS
+  // =====================================================================
+  async createBorradorCP(dto: CreateExpedienteConsultaPreciosDto, userId: string, enteId: string) {
+    if (!enteId) {
+      throw new BadRequestException(
+        'El usuario no tiene un Ente asignado para realizar esta acción.',
+      );
+    }
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const modalidad = await tx.modalidadContratacion.create({
+          data: {
+            tipoContratacion: dto.tipoContratacion,
+            montoEstimadoBs: dto.montoEstimadoBs,
+            montoEstimadoDolar: dto.montoEstimadoDolar,
+            valorUcauBase: dto.valorUcauBase,
+            modalidadSeleccion: 'CONSULTA_PRECIOS',
+            enteId,
+            createdBy: userId,
+            updatedBy: userId,
+          },
+        });
+
+        const expediente = await tx.expedienteContratacion.create({
+          data: {
+            descripcionObjeto: dto.descripcionObjeto,
+            codigoNomenclatura: dto.codigoNomenclatura,
+            enteId,
+            modalidadId: modalidad.id,
+            unidadContratanteId: dto.unidadContratanteId,
+            estatusProceso: 'BORRADOR',
+            createdBy: userId,
+            updatedBy: userId,
+          },
+        });
+
+        return {
+          message: 'Expediente Consulta de Precios creado en borrador exitosamente',
+          data: { modalidad, expediente },
+        };
+      });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException('Error al crear el borrador CP: ' + msg);
+    }
+  }
+
+  // =====================================================================
+  // CREAR BORRADOR — CONTRATACIÓN DIRECTA
+  // =====================================================================
+  async createBorradorCD(
+    dto: CreateExpedienteContratacionDirectaDto,
+    userId: string,
+    enteId: string,
+  ) {
+    if (!enteId) {
+      throw new BadRequestException(
+        'El usuario no tiene un Ente asignado para realizar esta acción.',
+      );
+    }
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const modalidad = await tx.modalidadContratacion.create({
+          data: {
+            tipoContratacion: dto.tipoContratacion,
+            montoEstimadoBs: dto.montoEstimadoBs,
+            montoEstimadoDolar: dto.montoEstimadoDolar,
+            valorUcauBase: dto.valorUcauBase,
+            modalidadSeleccion: 'ADJUDICACION_DIRECTA',
+            enteId,
+            createdBy: userId,
+            updatedBy: userId,
+          },
+        });
+
+        const expediente = await tx.expedienteContratacion.create({
+          data: {
+            descripcionObjeto: dto.descripcionObjeto,
+            codigoNomenclatura: dto.codigoNomenclatura,
+            enteId,
+            modalidadId: modalidad.id,
+            unidadContratanteId: dto.unidadContratanteId,
+            numeralCausalProcedenciaCd: dto.numeralCausalProcedenciaCd,
+            causalProcedenciaCd: dto.causalProcedenciaCd,
+            estatusProceso: 'BORRADOR',
+            createdBy: userId,
+            updatedBy: userId,
+          },
+        });
+
+        return {
+          message: 'Expediente Contratación Directa creado en borrador exitosamente',
+          data: { modalidad, expediente },
+        };
+      });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException('Error al crear el borrador CD: ' + msg);
+    }
+  }
+
+  // =====================================================================
+  // CREAR BORRADOR — MODALIDADES EXCLUIDAS
+  // =====================================================================
+  async createBorradorME(
+    dto: CreateExpedienteModalidadExcluidaDto,
+    userId: string,
+    enteId: string,
+  ) {
+    if (!enteId) {
+      throw new BadRequestException(
+        'El usuario no tiene un Ente asignado para realizar esta acción.',
+      );
+    }
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const modalidad = await tx.modalidadContratacion.create({
+          data: {
+            tipoContratacion: dto.tipoContratacion,
+            montoEstimadoBs: dto.montoEstimadoBs,
+            montoEstimadoDolar: dto.montoEstimadoDolar,
+            valorUcauBase: dto.valorUcauBase,
+            modalidadSeleccion: 'MODALIDADES_EXCLUIDAS',
+            enteId,
+            createdBy: userId,
+            updatedBy: userId,
+          },
+        });
+
+        const expediente = await tx.expedienteContratacion.create({
+          data: {
+            descripcionObjeto: dto.descripcionObjeto,
+            codigoNomenclatura: dto.codigoNomenclatura,
+            enteId,
+            modalidadId: modalidad.id,
+            estatusProceso: 'BORRADOR',
+            createdBy: userId,
+            updatedBy: userId,
+          },
+        });
+
+        return {
+          message: 'Expediente Modalidad Excluida creado en borrador exitosamente',
+          data: { modalidad, expediente },
+        };
+      });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      throw new InternalServerErrorException('Error al crear el borrador ME: ' + msg);
+    }
+  }
+
+  // =====================================================================
+  // MOTOR DE CRONOGRAMA — CONCURSO CERRADO (Art. 85 y 87 LCP)
+  // =====================================================================
+  async generarCronogramaConcursoCerrado(dto: GenerarCronogramaCCDto, enteId: string) {
+    const diasEnte = await this.cronogramaEnteService.getDiasNoLaborablesParaCalculo(enteId);
+    const fechaInvitacion = new Date(dto.fechaEnvioInvitacion + 'T00:00:00Z');
+
+    let diasFinPliego = 0;
+    let diasSolicitudAclaratorias = 0;
+    let diasActoRecepcion = 0;
+    let diasEvaluacion = 0;
+    let diasAdjudicacion = 0;
+    let diasNotificacion = 0;
+
+    switch (dto.tipoContratacion) {
+      case 'BIENES':
+        diasFinPliego = 4;
+        diasSolicitudAclaratorias = 2;
+        diasActoRecepcion = 5;
+        diasEvaluacion = 4;
+        diasAdjudicacion = 6;
+        diasNotificacion = 8;
+        break;
+      case 'SERVICIOS':
+        diasFinPliego = 5;
+        diasSolicitudAclaratorias = 3;
+        diasActoRecepcion = 6;
+        diasEvaluacion = 5;
+        diasAdjudicacion = 8;
+        diasNotificacion = 10;
+        break;
+      case 'OBRAS':
+      case 'MIXTO':
+        diasFinPliego = 6;
+        diasSolicitudAclaratorias = 3;
+        diasActoRecepcion = 7;
+        diasEvaluacion = 5;
+        diasAdjudicacion = 9;
+        diasNotificacion = 11;
+        break;
+    }
+
+    const inicioDispPliego = fechaInvitacion;
+    const finDispPliego = BusinessDaysUtil.addBusinessDays(
+      fechaInvitacion,
+      diasFinPliego,
+      diasEnte,
+    );
+    const solicitudAclaratorias = BusinessDaysUtil.addBusinessDays(
+      fechaInvitacion,
+      diasSolicitudAclaratorias,
+      diasEnte,
+    );
+    const actoRecepcion = BusinessDaysUtil.addBusinessDays(
+      fechaInvitacion,
+      diasActoRecepcion,
+      diasEnte,
+    );
+
+    const respuestaAclaratorias = BusinessDaysUtil.subtractBusinessDays(actoRecepcion, 1, diasEnte);
+    const modificacionPliego = BusinessDaysUtil.subtractBusinessDays(actoRecepcion, 2, diasEnte);
+
+    const limiteEvaluacion = BusinessDaysUtil.addBusinessDays(
+      actoRecepcion,
+      diasEvaluacion,
+      diasEnte,
+    );
+    const limiteAdjudicacion = BusinessDaysUtil.addBusinessDays(
+      actoRecepcion,
+      diasAdjudicacion,
+      diasEnte,
+    );
+    const limiteNotificacion = BusinessDaysUtil.addBusinessDays(
+      actoRecepcion,
+      diasNotificacion,
+      diasEnte,
+    );
+
+    const limiteGarantias = BusinessDaysUtil.addBusinessDays(limiteNotificacion, 5, diasEnte);
+    const limiteFirmaContrato = BusinessDaysUtil.addBusinessDays(limiteNotificacion, 8, diasEnte);
+
+    const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+    return {
+      message: 'Cronograma Concurso Cerrado calculado exitosamente (Art. 85 y 87 LCP)',
+      data: {
+        fechaEnvioInvitacion: fmt(fechaInvitacion),
+        fechaInicioDisponibilidadPliego: fmt(inicioDispPliego),
+        fechaFinDisponibilidadPliego: fmt(finDispPliego),
+        fechaSolicitudAclaratorias: fmt(solicitudAclaratorias),
+        fechaRespuestaAclaratorias: fmt(respuestaAclaratorias),
+        fechaModificacionPliego: fmt(modificacionPliego),
+        fechaActoRecepcionAperturaSobres: fmt(actoRecepcion),
+        fechaLimiteEvaluacion: fmt(limiteEvaluacion),
+        fechaLimiteAdjudicacion: fmt(limiteAdjudicacion),
+        fechaLimiteNotificacion: fmt(limiteNotificacion),
+        fechaLimiteGarantias: fmt(limiteGarantias),
+        fechaLimiteFirmaContrato: fmt(limiteFirmaContrato),
+      },
+    };
+  }
+
+  // =====================================================================
+  // MOTOR DE CRONOGRAMA — CONSULTA DE PRECIOS (Art. 96 LCP)
+  // =====================================================================
+  async generarCronogramaConsultaPrecios(dto: GenerarCronogramaCPDto, enteId: string) {
+    const diasEnte = await this.cronogramaEnteService.getDiasNoLaborablesParaCalculo(enteId);
+    const fechaInvitacion = new Date(dto.fechaEnvioInvitacion + 'T00:00:00Z');
+
+    let diasRecepcionOfertas = 0;
+    let diasEvalAdjNotif = 0;
+
+    switch (dto.tipoContratacion) {
+      case 'BIENES':
+        diasRecepcionOfertas = 4;
+        diasEvalAdjNotif = 8;
+        break;
+      case 'SERVICIOS':
+        diasRecepcionOfertas = 5;
+        diasEvalAdjNotif = 9;
+        break;
+      case 'OBRAS':
+      case 'MIXTO':
+        diasRecepcionOfertas = 6;
+        diasEvalAdjNotif = 10;
+        break;
+    }
+
+    const solicitudAclaratorias = BusinessDaysUtil.addBusinessDays(fechaInvitacion, 1, diasEnte);
+    const recepcionOfertas = BusinessDaysUtil.addBusinessDays(
+      fechaInvitacion,
+      diasRecepcionOfertas,
+      diasEnte,
+    );
+    const respuestaAclaratorias = BusinessDaysUtil.subtractBusinessDays(
+      recepcionOfertas,
+      1,
+      diasEnte,
+    );
+    const limiteNotificacion = BusinessDaysUtil.addBusinessDays(
+      recepcionOfertas,
+      diasEvalAdjNotif,
+      diasEnte,
+    );
+    const limiteGarantias = BusinessDaysUtil.addBusinessDays(limiteNotificacion, 5, diasEnte);
+    const limiteFirmaContrato = BusinessDaysUtil.addBusinessDays(limiteNotificacion, 8, diasEnte);
+
+    const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+    return {
+      message: 'Cronograma Consulta de Precios calculado exitosamente (Art. 96 LCP)',
+      data: {
+        fechaEnvioInvitacion: fmt(fechaInvitacion),
+        fechaSolicitudAclaratorias: fmt(solicitudAclaratorias),
+        fechaRespuestaAclaratorias: fmt(respuestaAclaratorias),
+        fechaRecepcionOfertas: fmt(recepcionOfertas),
+        fechaLimiteNotificacion: fmt(limiteNotificacion),
+        fechaLimiteGarantias: fmt(limiteGarantias),
+        fechaLimiteFirmaContrato: fmt(limiteFirmaContrato),
+      },
+    };
+  }
+
+  // =====================================================================
+  // MOTOR DE CRONOGRAMA — CONTRATACIÓN DIRECTA (Art. 101 LCP)
+  // =====================================================================
+  async generarCronogramaContratacionDirecta(dto: GenerarCronogramaCDDto, enteId: string) {
+    const diasEnte = await this.cronogramaEnteService.getDiasNoLaborablesParaCalculo(enteId);
+    const fechaInvitacion = new Date(dto.fechaEnvioInvitacion + 'T00:00:00Z');
+
+    const recepcionOferta = BusinessDaysUtil.addBusinessDays(fechaInvitacion, 3, diasEnte);
+    const limiteAdjudicacion = BusinessDaysUtil.addBusinessDays(recepcionOferta, 2, diasEnte);
+    const limiteNotificacion = BusinessDaysUtil.addBusinessDays(limiteAdjudicacion, 1, diasEnte);
+    const limiteGarantias = BusinessDaysUtil.addBusinessDays(limiteNotificacion, 5, diasEnte);
+    const limiteFirmaContrato = BusinessDaysUtil.addBusinessDays(limiteNotificacion, 8, diasEnte);
+
+    const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+    return {
+      message: 'Cronograma Contratación Directa calculado exitosamente (Art. 101 LCP)',
+      data: {
+        fechaEnvioInvitacion: fmt(fechaInvitacion),
+        fechaRecepcionOferta: fmt(recepcionOferta),
+        fechaLimiteAdjudicacion: fmt(limiteAdjudicacion),
+        fechaLimiteNotificacion: fmt(limiteNotificacion),
+        fechaLimiteGarantias: fmt(limiteGarantias),
+        fechaLimiteFirmaContrato: fmt(limiteFirmaContrato),
+      },
+    };
+  }
+
+  // =====================================================================
+  // MOTOR DE CRONOGRAMA — MODALIDADES EXCLUIDAS
+  // =====================================================================
+  async generarCronogramaModalidadExcluida(dto: GenerarCronogramaMEDto, enteId: string) {
+    const diasEnte = await this.cronogramaEnteService.getDiasNoLaborablesParaCalculo(enteId);
+    const fechaInicio = new Date(dto.fechaInicioProcedimiento + 'T00:00:00Z');
+
+    const verificacionRecaudos = BusinessDaysUtil.addBusinessDays(fechaInicio, 2, diasEnte);
+    const limiteAdjudicacion = BusinessDaysUtil.addBusinessDays(verificacionRecaudos, 1, diasEnte);
+    const limiteGarantias = BusinessDaysUtil.addBusinessDays(limiteAdjudicacion, 5, diasEnte);
+    const limiteFirmaContrato = BusinessDaysUtil.addBusinessDays(limiteAdjudicacion, 8, diasEnte);
+
+    const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+    return {
+      message: 'Cronograma Modalidad Excluida calculado exitosamente',
+      data: {
+        fechaInicioProcedimiento: fmt(fechaInicio),
+        fechaVerificacionRecaudos: fmt(verificacionRecaudos),
+        fechaLimiteAdjudicacion: fmt(limiteAdjudicacion),
+        fechaLimiteGarantias: fmt(limiteGarantias),
+        fechaLimiteFirmaContrato: fmt(limiteFirmaContrato),
+      },
+    };
   }
 }

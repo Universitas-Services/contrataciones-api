@@ -14,9 +14,17 @@ import { ExpedienteContratacionService } from './expediente-contratacion.service
 import { CreateProcesoCompletoDto } from './dto/create-proceso-completo.dto';
 import { CalcularModalidadDto } from './dto/calcular-modalidad.dto';
 import { CreateExpedienteDraftDto } from './dto/create-expediente-draft.dto';
+import { CreateExpedienteConcursoCerradoDto } from './dto/create-expediente-concurso-cerrado.dto';
+import { CreateExpedienteConsultaPreciosDto } from './dto/create-expediente-consulta-precios.dto';
+import { CreateExpedienteContratacionDirectaDto } from './dto/create-expediente-contratacion-directa.dto';
+import { CreateExpedienteModalidadExcluidaDto } from './dto/create-expediente-modalidad-excluida.dto';
 import { UpdateExpedienteGeneralDto } from './dto/update-expediente-general.dto';
 import { QueryExpedienteDto } from './dto/query-expedientes.dto';
 import { GenerarCronogramaDto } from './dto/generar-cronograma.dto';
+import { GenerarCronogramaCCDto } from './dto/generar-cronograma-cc.dto';
+import { GenerarCronogramaCPDto } from './dto/generar-cronograma-cp.dto';
+import { GenerarCronogramaCDDto } from './dto/generar-cronograma-cd.dto';
+import { GenerarCronogramaMEDto } from './dto/generar-cronograma-me.dto';
 import { UpdateCronogramaExpedienteDto } from './dto/update-cronograma.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -128,5 +136,101 @@ export class ExpedienteContratacionController {
     @CurrentUser() user: { id: string; enteId: string },
   ) {
     return this.expedienteService.updateCronograma(id, dto, user.id, user.enteId);
+  }
+
+  // =====================================================================
+  // BORRADORES POR MODALIDAD
+  // =====================================================================
+
+  @Post('borrador/concurso-cerrado')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
+  @ApiOperation({ summary: 'Crear Borrador — Concurso Cerrado' })
+  @ApiResponse({ status: 201, description: 'Borrador CC creado exitosamente' })
+  createBorradorCC(
+    @Body() dto: CreateExpedienteConcursoCerradoDto,
+    @CurrentUser() user: { id: string; enteId: string },
+  ) {
+    return this.expedienteService.createBorradorCC(dto, user.id, user.enteId);
+  }
+
+  @Post('borrador/consulta-precios')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
+  @ApiOperation({ summary: 'Crear Borrador — Consulta de Precios' })
+  @ApiResponse({ status: 201, description: 'Borrador CP creado exitosamente' })
+  createBorradorCP(
+    @Body() dto: CreateExpedienteConsultaPreciosDto,
+    @CurrentUser() user: { id: string; enteId: string },
+  ) {
+    return this.expedienteService.createBorradorCP(dto, user.id, user.enteId);
+  }
+
+  @Post('borrador/contratacion-directa')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
+  @ApiOperation({ summary: 'Crear Borrador — Contratación Directa (Art. 101 LCP)' })
+  @ApiResponse({ status: 201, description: 'Borrador CD creado exitosamente' })
+  createBorradorCD(
+    @Body() dto: CreateExpedienteContratacionDirectaDto,
+    @CurrentUser() user: { id: string; enteId: string },
+  ) {
+    return this.expedienteService.createBorradorCD(dto, user.id, user.enteId);
+  }
+
+  @Post('borrador/modalidad-excluida')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
+  @ApiOperation({ summary: 'Crear Borrador — Modalidades Excluidas' })
+  @ApiResponse({ status: 201, description: 'Borrador ME creado exitosamente' })
+  createBorradorME(
+    @Body() dto: CreateExpedienteModalidadExcluidaDto,
+    @CurrentUser() user: { id: string; enteId: string },
+  ) {
+    return this.expedienteService.createBorradorME(dto, user.id, user.enteId);
+  }
+
+  // =====================================================================
+  // CRONOGRAMAS POR MODALIDAD
+  // =====================================================================
+
+  @Post('generar-cronograma/concurso-cerrado')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
+  @ApiOperation({ summary: 'Calcular cronograma — Concurso Cerrado (Art. 85 y 87 LCP)' })
+  @ApiResponse({ status: 200, description: 'Cronograma CC calculado exitosamente' })
+  calcularCronogramaCC(
+    @Body() dto: GenerarCronogramaCCDto,
+    @CurrentUser() user: { id: string; enteId: string },
+  ) {
+    return this.expedienteService.generarCronogramaConcursoCerrado(dto, user.enteId);
+  }
+
+  @Post('generar-cronograma/consulta-precios')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
+  @ApiOperation({ summary: 'Calcular cronograma — Consulta de Precios (Art. 96 LCP)' })
+  @ApiResponse({ status: 200, description: 'Cronograma CP calculado exitosamente' })
+  calcularCronogramaCP(
+    @Body() dto: GenerarCronogramaCPDto,
+    @CurrentUser() user: { id: string; enteId: string },
+  ) {
+    return this.expedienteService.generarCronogramaConsultaPrecios(dto, user.enteId);
+  }
+
+  @Post('generar-cronograma/contratacion-directa')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
+  @ApiOperation({ summary: 'Calcular cronograma — Contratación Directa (Art. 101 LCP)' })
+  @ApiResponse({ status: 200, description: 'Cronograma CD calculado exitosamente' })
+  calcularCronogramaCD(
+    @Body() dto: GenerarCronogramaCDDto,
+    @CurrentUser() user: { id: string; enteId: string },
+  ) {
+    return this.expedienteService.generarCronogramaContratacionDirecta(dto, user.enteId);
+  }
+
+  @Post('generar-cronograma/modalidad-excluida')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
+  @ApiOperation({ summary: 'Calcular cronograma — Modalidades Excluidas' })
+  @ApiResponse({ status: 200, description: 'Cronograma ME calculado exitosamente' })
+  calcularCronogramaME(
+    @Body() dto: GenerarCronogramaMEDto,
+    @CurrentUser() user: { id: string; enteId: string },
+  ) {
+    return this.expedienteService.generarCronogramaModalidadExcluida(dto, user.enteId);
   }
 }
