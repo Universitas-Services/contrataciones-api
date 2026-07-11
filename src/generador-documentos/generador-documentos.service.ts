@@ -198,22 +198,85 @@ export class GeneradorDocumentosService {
     const subtotalNum = items.reduce((acc, item) => acc + Number(item.totalItem), 0);
     const ivaNum = subtotalNum * 0.16;
 
+    const tipo = m.tipoContratacion;
+    const esServicios = tipo === 'SERVICIOS';
+    const esObras = tipo === 'OBRAS';
+    const esBienes = tipo === 'BIENES';
+    const esServiciosOObras = esServicios || esObras;
+
+    const nomEnte = e.ente?.nombre || '___';
+    const descObjeto = e.descripcionObjeto || '___';
+    const codNomenclatura = e.codigoNomenclatura || '___';
+    const ciudadEnte = e.ente?.ciudad || '___';
+    const estadoEnte = e.ente?.estado || '___';
+    const fechaActoRecep = c.fechaActoRecepcionAperturaSobres
+      ? formatDateToSpanishLong(c.fechaActoRecepcionAperturaSobres)
+      : '___';
+
+    // Texto pliego gratuito / con costo
+    let textoPliegoGratuito = 'Costo del Pliego: Sin costo.';
+    if (!f.pliegoGratuito) {
+      const costoBs = f.costoPliegoBs ? formatCurrencyVE(Number(f.costoPliegoBs)) : '0,00';
+      textoPliegoGratuito = `El costo del pliego es de Bs. ${costoBs}. El pago deberá realizarse en la cuenta ${f.cuentaPagoPliego || 'N/A'} del banco ${f.bancoPagoPliego || 'N/A'} a nombre de ${f.titularPagoPliego || 'N/A'}.`;
+    }
+
+    // Modelo 16 — texto completo según tipo
+    const textoModelo16 = (() => {
+      const encabezado = `MODELO N° 16\nCARTA DE COMPROMISO DE TIEMPO DE EJECUCIÓN, DISPONIBILIDAD y GARANTÍA TÉCNICA/ TIEMPO DE RESPUESTA\n\n${ciudadEnte}, ${fechaActoRecep}.\n\nSeñores:\nCOMISIÓN DE CONTRATACIONES PÚBLICAS\nPresente.-\n\nYo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, de Estado Civil ___________, de profesión (Ocupación; si está inscrito en algún colegio colocar datos o número de Colegiatura) actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, a los fines de dar cumplimiento a lo establecido en el numeral 18 del artículo 66 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas, DECLARO BAJO FE DE JURAMENTO:`;
+      const cierre = `Todo ello para asegurar la eficiencia en la ejecución de la contratación ${descObjeto}, correspondiente al Concurso Abierto N° ${codNomenclatura}\n\nAtentamente,\nRepresentante Legal de la Empresa\nFirma y sello`;
+
+      switch (tipo) {
+        case 'BIENES':
+          return `${encabezado}\nQue mi representada se compromete formalmente a ejecutar la entrega de los bienes o insumos, objeto del proceso, en un lapso de: __________ días hábiles, dicho lapso se contará a partir de la recepción efectiva de la Orden de Compra.\nQue mi representada certifica lo siguiente: Contamos con un Inventario Físico (Stock) de entrega inmediata del ______% de los ítems solicitados.\nQue presentamos garantía, canje o sustitución de los bienes o insumos ofertados por una lapso de: _______ meses contra defectos de fábrica, empaques dañados o vencimiento prematuro.\n${cierre}`;
+        case 'SERVICIOS':
+          return `${encabezado}\nQue mi representada se compromete formalmente a iniciar la ejecución de la prestación de los servicios objeto del proceso, en un lapso de: _________ días hábiles contados a partir de la suscripción del contrato u orden de servicio.\nQue mi representada certifica lo siguiente: Contamos con la Disponibilidad Inmediata y Operatividad del ______% de la maquinaria, equipos o herramientas exigidos en el Pliego de Condiciones.\nQue garantizamos la idoneidad de la prestación del servicio mediante un Tiempo de Respuesta (atención in situ) ante fallas o emergencias de: _______ horas.\n${cierre}`;
+        case 'OBRAS':
+          return `${encabezado}\nQue mi representada se compromete formalmente a iniciar la ejecución de la obra objeto del proceso, en un lapso de: ________ días hábiles contados a partir de la suscripción del contrato.\nQue mi representada certifica lo siguiente: Contamos con la Disponibilidad Inmediata y Operatividad del ______% de la maquinaria, equipos o herramientas exigidos en el Pliego de Condiciones.\n${cierre}`;
+        default:
+          return '';
+      }
+    })();
+
+    // Modelo 17 — Fianza Laboral (solo SERVICIOS y OBRAS)
+    const textoModelo17 = esServiciosOObras
+      ? `MODELO N° 17\nFIANZA LABORAL\nAFIANZADO: ______________________________\nACREEDOR: "LA CONTRATANTE"\nSUMA AFIANZADA: Bs. ________________\nVIGENCIA: Según texto.-\n\nFIANZA LABORAL Nº: ________\n\nYo, (Nombre del representante del Garante), mayor de edad, domiciliado en la ciudad de ____________________, titular de la cédula de identidad N°. __________________, procediendo en este acto en mi carácter de ___(Carácter del representante del Garante)____________________ de __(Nombre del Garante)___________________ sociedad mercantil constituida y domiciliada en ______________________, inscrita en ____________________, bajo el N°________, tomo ________________, el ________________, en el ___________________, por medio del presente contrato declaro: Constituyo a mi representada en fiadora solidaria y principal pagadora de _____________(Nombre del Contratista)_____________ inscrita en ___________(Datos del Registro Mercantil del Participante)_____________ en lo adelante denominada "EL AFIANZADO", hasta por la suma de _________________________________________ (Bs. __________), de conformidad con el Artículo 124 del Decreto Ley de Contrataciones Públicas, y en el marco del sistema de gestión de riesgos y de las Actividades de Control (Artículo 4 de las Normas de Control Interno SUNAI) establecidas por "LA CONTRATANTE" para proteger el interés público y la seriedad de los procesos de contratación, para garantizar ante "LA CONTRATANTE", el fiel, cabal y oportuno cumplimiento por parte de "LA CONTRATISTA", de todas y cada una de las obligaciones que resulten a su cargo y a favor de "LA CONTRATANTE" según el contrato celebrado entre ambos para ${descObjeto}\n\nLa presente fianza empezará a regir a partir del otorgamiento del referido contrato y permanecerá en vigencia hasta que se dé total cumplimiento a las obligaciones que le corresponden a "LA CONTRATISTA" de acuerdo con el mencionado contrato.\n\nMi representada pagará al Ente Contratante hasta el monto total indicado contra recibo de su primer requerimiento por escrito en que conste que "LA CONTRATISTA" no ha cumplido el Contrato, con indicación expresa de la obligación contractual incumplida, sin que "LA CONTRATANTE" tenga que probar o demostrar las causas o razones del requerimiento o la suma especificada en él.\n\nAsimismo, declaro que la responsabilidad de mi representada ante ustedes y el pago del monto de la garantía no serán descargados en el caso de las modificaciones o enmiendas ulteriores en las disposiciones del contrato, acordadas entre "LA CONTRATANTE" y el Proveedor en relación con las condiciones de implementación del mismo.\n\nMi representada renuncia expresamente a los beneficios acordados por los artículos 1833, 1834 y 1836 del Código Civil de la República Bolivariana de Venezuela.\n\nSe fija como domicilio especial para todos los efectos de esta fianza ciudad ${ciudadEnte}, Estado ${estadoEnte}.\n\nEn ciudad, a los 00 días del mes de _________ del 202_.\n\nEL FIADOR\n(Nota: La Garantía debe ser autenticada ante Notaría Pública y la Afianzadora debe estar inscrita ante la Superintendencia de Seguros).`
+      : '';
+
+    // Modelo 18 — Experiencia del Personal Técnico Clave (SERVICIOS y OBRAS)
+    const textoModelo18 = esServiciosOObras
+      ? `MODELO N° 18\nEXPERIENCIA DEL PERSONAL TÉCNICO CLAVE\nINGENIERO RESIDENTE\n\n${ciudadEnte}, ${fechaActoRecep}.\n\nSeñores:\nCOMISIÓN DE CONTRATACIONES PÚBLICAS\nPresente.-\n\nYo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, de Estado Civil ___________, de profesión (Ocupación; si está inscrito en algún colegio colocar datos o número de Colegiatura) actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, a los fines de asegurar la idoneidad y calidad del objeto de la contratación conforme al numeral 19 del artículo 66 de la Ley de Contrataciones Públicas, DECLARO BAJO FE DE JURAMENTO, que la información presentada en este formulario es veraz y cumple con lo exigido en el pliego de condiciones del proceso N° ${codNomenclatura}, objeto: ${descObjeto}.\n\nNOMBRE COMPLETO | C.I. Nº | PROFESIÓN U OFICIO / GRADO ACADÉMICO | FECHA DE GRADUACIÓN | EXPERIENCIA ESPECÍFICA (AÑOS)\n\nAtentamente,\nRepresentante Legal de la Empresa\nFirma y sello\n\n"Nota: El oferente deberá anexar obligatoriamente a este formato el Currículum Vitae (CV) actualizado, copia del Título Universitario y constancia de inscripción/solvencia en el Colegio de Ingenieros de Venezuela (CIV) del profesional propuesto."`
+      : '';
+
     return {
-      desc_objeto_contratacion: e.descripcionObjeto || '___',
-      cod_nomenclatura_proceso: e.codigoNomenclatura || '___',
-      nom_ente_contratante: e.ente?.nombre || '___',
-      normativa_legal: f.normativaLegal || 'Decreto de Ley de Contrataciones vigente',
+      // --- Datos generales ---
+      desc_objeto_contratacion: descObjeto,
+      cod_nomenclatura_proceso: codNomenclatura,
+      nom_ente_contratante: nomEnte,
+      normativa_legal_au_au: f.normativaLegal || 'Decreto de Ley de Contrataciones vigente',
       valor_ucau_base: formatCurrencyVE(Number(m.valorUcauBase)),
       denominacion_comision:
         e.comision?.denominacionComision || 'Comisión de Contrataciones Públicas',
       dir_fiscal_ente: e.ente?.direccionFiscal || '___',
-      loc_estado_ente: e.ente?.estado || '___',
+      loc_estado_ente: estadoEnte,
       correo_comision: e.comision?.correoElectronico || '___',
       telefono_comision: e.comision?.telefono || '___',
       pag_web_ente: 'www.snd.gob.ve',
-      fec_acto_recep_aper_sobres_au_au: c.fechaActoRecepcionAperturaSobres
-        ? formatDateToSpanishLong(c.fechaActoRecepcionAperturaSobres)
-        : '___',
+      loc_municipio_ente: e.ente?.municipio || '___',
+      loc_ciudad_ente: ciudadEnte,
+      monto_estimado_bs: formatCurrencyVE(Number(m.montoEstimadoBs)),
+
+      // --- Autoridad máxima ---
+      nom_completo_autoridad: e.autoridad?.nombreCompletoAutoridad || '___',
+      cedula_autoridad: e.autoridad?.cedulaAutoridad || '___',
+      cargo_oficial_autoridad: e.autoridad?.cargoOficialAutoridad || '___',
+      datos_designacion_autoridad: e.autoridad?.datosDesignacionAutoridad || '___',
+
+      // --- Variables nuevas desde FasePreparatoria ---
+      autoridad_aclaratorias_au_au: f.autoridadAclaratorias || '___',
+      dias_vigencia_garantia_ext_au_au: f.diasVigenciaGarantiaExtension?.toString() || '___',
+
+      // --- Fechas del cronograma ---
+      fec_acto_recep_aper_sobres_au_au: fechaActoRecep,
       hora_acto_recep_aper_au_au: f.horaActoRecepAper || '___',
       fec_solicitud_aclaratorias_au_au: c.fechaSolicitudAclaratorias
         ? formatDateToSpanishLong(c.fechaSolicitudAclaratorias)
@@ -221,22 +284,109 @@ export class GeneradorDocumentosService {
       fec_respuesta_aclaratorias_au_au: c.fechaRespuestaAclaratorias
         ? formatDateToSpanishLong(c.fechaRespuestaAclaratorias)
         : '___',
-      horario_retiro_pliego: f.horarioRetiroPliego || '___',
-      direccion_retiro_pliego: f.direccionRetiroPliego || '___',
       fec_modific_pliego_au_au: c.fechaModificacionPliego
         ? formatDateToSpanishLong(c.fechaModificacionPliego)
         : '___',
-      dias_validez_oferta: f.diasValidezOferta?.toString() || '30',
-      loc_municipio_ente: e.ente?.municipio || '___',
-      monto_estimado_bs: formatCurrencyVE(Number(m.montoEstimadoBs)),
-      nom_completo_autoridad: e.autoridad?.nombreCompletoAutoridad || '___',
-      cedula_autoridad: e.autoridad?.cedulaAutoridad || '___',
-      cargo_oficial_autoridad: e.autoridad?.cargoOficialAutoridad || '___',
-      datos_designacion_autoridad: e.autoridad?.datosDesignacionAutoridad || '___',
-      loc_ciudad_ente: e.ente?.ciudad || '___',
-      es_bienes: m.tipoContratacion === 'BIENES',
-      es_servicios: m.tipoContratacion === 'SERVICIOS',
-      es_obras: m.tipoContratacion === 'OBRAS',
+      fec_inicio_disponibilidad_pliego_au_au: c.fechaInicioDisponibilidadPliego
+        ? formatDateToSpanishLong(c.fechaInicioDisponibilidadPliego)
+        : '___',
+      fec_fin_disponibilidad_pliego_au_au: c.fechaFinDisponibilidadPliego
+        ? formatDateToSpanishLong(c.fechaFinDisponibilidadPliego)
+        : '___',
+      fec_limite_evaluacion_au_au: c.fechaLimiteEvaluacion
+        ? formatDateToSpanishLong(c.fechaLimiteEvaluacion)
+        : '___',
+      fec_limite_adjudicacion_au_au: c.fechaLimiteAdjudicacion
+        ? formatDateToSpanishLong(c.fechaLimiteAdjudicacion)
+        : '___',
+      fec_limite_notificacion_au_au: c.fechaLimiteNotificacion
+        ? formatDateToSpanishLong(c.fechaLimiteNotificacion)
+        : '___',
+
+      // --- Pliego: disponibilidad y costo ---
+      horario_retiro_pliego: f.horarioRetiroPliego || '___',
+      direccion_retiro_pliego: f.direccionRetiroPliego || '___',
+      dias_validez_oferta_au_au: f.diasValidezOferta?.toString() || '30',
+      pliego_gratuito_au_au: textoPliegoGratuito,
+
+      // --- Booleanos condicionales por tipo ---
+      es_bienes: esBienes,
+      es_servicios: esServicios,
+      es_obras: esObras,
+      tipo_objeto_contratacion: esBienes ? 'Bienes' : esServicios ? 'Servicios' : 'Obras',
+
+      // --- Forma de presentación (texto dinámico por tipo) ---
+      forma_presentacion_au_au: (() => {
+        switch (tipo) {
+          case 'BIENES':
+            return [
+              'La oferta deberá incluir una descripción exhaustiva y detallada de las características de los Bienes / insumos ofertados.',
+              'Adicionalmente, los participantes deberán acompañar y consignar con la oferta los siguientes documentos:',
+              'Catálogos, Folletos y/o Fichas Técnicas descriptivas de cada ítem.',
+              'Consignar según Modelo N°17 los siguientes compromisos y certificaciones técnicas:',
+              'Compromiso de Tiempo de Entrega.',
+              'Certificación de Disponibilidad de Inventario (Stock).',
+              'Garantía de los Bienes o Insumos.',
+            ].join('\n');
+          case 'SERVICIOS':
+            return [
+              'La oferta deberá incluir una descripción exhaustiva y detallada de las características técnicas del servicio ofertado.',
+              'Consignar según Modelo N°17 los siguientes compromisos y certificaciones técnicas:',
+              'Compromiso de Tiempo de Ejecución.',
+              'Declaración de Disponibilidad de Maquinaria/Equipos.',
+              'Tiempo de Respuesta (SLA) ante fallas o emergencias.',
+            ].join('\n');
+          case 'OBRAS':
+            return [
+              'La oferta deberá incluir una descripción exhaustiva y detallada de las características técnicas del objeto ofertado.',
+              'Adicionalmente, los participantes deberán acompañar y consignar con la oferta los siguientes documentos:',
+              'Cronograma de Ejecución (Gantt).',
+              'Plan de Trabajo.',
+              'Consignar según Modelo N°17 los siguientes compromisos y certificaciones técnicas:',
+              'Compromiso de Tiempo de Ejecución (ajustado al Cronograma).',
+              'Declaración de Disponibilidad de Maquinaria/Equipos.',
+              'Consignar según Modelo N°18 el siguiente compromiso y certificación técnica:',
+              'Experiencia del personal técnico clave.',
+            ].join('\n');
+          default:
+            return '';
+        }
+      })(),
+
+      // --- Criterios de evaluación (booleanos para secciones condicionales en template) ---
+      es_bienes_criterio_evaluacion_au_au: esBienes,
+      es_servicios_criterio_evaluacion_au_au: esServicios,
+      es_obras_criterio_evaluacion_au_au: esObras,
+
+      // --- Garantías sección XVIII (booleanos para secciones condicionales en template) ---
+      requiere_garantia_laboral_au_au: esServiciosOObras,
+      requiere_responsabilidad_civil_au_au: esServiciosOObras,
+
+      // --- Referencias a modelos en sección X.B (texto o vacío si BIENES) ---
+      ver_modelo_17_au_au: esServiciosOObras ? '9. Fianza Laboral. (Ver Modelo N° 17)' : '',
+      ver_modelo_18_au_au: esServiciosOObras
+        ? '10. Experiencia del personal técnico clave. (Ver Modelo N° 18)'
+        : '',
+
+      // --- Enumeración ANEXO III ---
+      modelo_17_enum_au_au: esServiciosOObras ? 'MODELO N° 17: Fianza Laboral.' : '',
+      modelo_18_enum_au_au: esServiciosOObras
+        ? 'MODELO N° 18: Experiencia del Personal Técnico Clave.'
+        : '',
+
+      // --- Modelos completos (texto legal generado por tipo) ---
+      modelo_16_au_au: textoModelo16,
+      modelo_17_au_au: textoModelo17,
+      modelo_18_au_au: textoModelo18,
+
+      // --- Booleanos legacy (se mantienen para compatibilidad con template condicional) ---
+      es_bienes_modelo_16_au_au: esBienes,
+      es_servicios_modelo_16_au_au: esServicios,
+      es_obras_modelo_16_au_au: esObras,
+      es_servicios_modelo_17_au_au: esServicios,
+      es_obras_modelo_17_au_au: esObras,
+
+      // --- Presupuesto ---
       items_presupuesto: items.map((item, index) => ({
         numero: index + 1,
         descripcion_item_au_au: item.descripcionItem,
@@ -299,6 +449,17 @@ export class GeneradorDocumentosService {
       zip = new PizZip(content);
     } catch (e: any) {
       throw new BadRequestException(`Error cargando PizZip: ${e.message}`);
+    }
+
+    // Parchear loops anónimos {#}...{/} → {#items_presupuesto}...{/items_presupuesto}
+    if (jsonData.items_presupuesto) {
+      const docXml = zip.file('word/document.xml');
+      if (docXml) {
+        let xmlContent = docXml.asText();
+        xmlContent = xmlContent.replace(/\{#\}/g, '{#items_presupuesto}');
+        xmlContent = xmlContent.replace(/\{\/\}/g, '{/items_presupuesto}');
+        zip.file('word/document.xml', xmlContent);
+      }
     }
 
     let doc: Docxtemplater;
