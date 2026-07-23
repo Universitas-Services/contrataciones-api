@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateUnidadUsuariaDto {
   @ApiProperty({
@@ -25,4 +25,20 @@ export class CreateUnidadUsuariaDto {
   @IsString()
   @IsNotEmpty()
   cargoResponsableUnidadUsuaria: string;
+
+  @ApiPropertyOptional({
+    description: 'Cédula del responsable de la unidad usuaria',
+    example: 'V-12345678',
+  })
+  @IsString()
+  @IsOptional()
+  cedulaResponsableUnidadUsuaria?: string;
+
+  @ApiPropertyOptional({
+    description: 'Datos de designación del responsable de la unidad usuaria',
+    example: 'Resolución N° 45-2025',
+  })
+  @IsString()
+  @IsOptional()
+  datosDesignacionUnidadUsuaria?: string;
 }

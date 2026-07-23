@@ -6,8 +6,9 @@ import {
   IsDateString,
   ValidateIf,
   IsNotEmpty,
+  IsArray,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateFasePreparatoriaDto {
@@ -80,12 +81,40 @@ export class CreateFasePreparatoriaDto {
   autoridadAclaratorias?: string;
 
   @ApiPropertyOptional({
-    example: 'Ley de Contrataciones Públicas Art. 123',
-    description: 'Base legal vinculada al pliego',
+    example: ['Ley de Contrataciones Públicas Art. 123'],
+    description: 'Base legal vinculada al pliego (arreglo de strings o string legacy)',
+    type: [String],
   })
   @IsOptional()
-  @IsString({ message: 'La normativa legal debe ser texto' })
-  normativaLegal?: string;
+  @Transform(({ value }) => {
+    if (value === null || value === undefined || value === '') return null;
+    if (Array.isArray(value)) {
+      const filtered = value.map((item) => String(item).trim()).filter((item) => item.length > 0);
+      return filtered.length > 0 ? filtered : null;
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+      if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            const filtered = parsed
+              .map((item) => String(item).trim())
+              .filter((item) => item.length > 0);
+            return filtered.length > 0 ? filtered : null;
+          }
+        } catch {
+          // ignore parsing error and treat as plain string
+        }
+      }
+      return [trimmed];
+    }
+    return value;
+  })
+  @IsArray({ message: 'La normativa legal debe enviarse como un arreglo de textos' })
+  @IsString({ each: true, message: 'Cada elemento de la normativa legal debe ser texto' })
+  normativaLegal?: string[] | null;
 
   @ApiPropertyOptional({ example: 90, description: 'Días de vigencia sugeridos para garantías' })
   @IsOptional()

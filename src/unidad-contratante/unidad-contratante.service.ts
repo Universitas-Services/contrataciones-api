@@ -8,9 +8,14 @@ export class UnidadContratanteService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createDto: CreateUnidadContratanteDto, enteId: string, userId: string) {
+    const nombreResponsable =
+      createDto.nombreResponsableUnidadContratante || createDto.nombreResponsableUnidad;
+
     return this.prisma.unidadContratante.create({
       data: {
         ...createDto,
+        nombreResponsableUnidad: nombreResponsable,
+        nombreResponsableUnidadContratante: nombreResponsable,
         enteId,
         createdBy: userId,
       },
@@ -48,12 +53,20 @@ export class UnidadContratanteService {
   async update(id: string, updateDto: UpdateUnidadContratanteDto, enteId: string, userId: string) {
     await this.findOne(id, enteId);
 
+    const dataToUpdate: any = {
+      ...updateDto,
+      updatedBy: userId,
+    };
+
+    if (updateDto.nombreResponsableUnidadContratante && !updateDto.nombreResponsableUnidad) {
+      dataToUpdate.nombreResponsableUnidad = updateDto.nombreResponsableUnidadContratante;
+    } else if (updateDto.nombreResponsableUnidad && !updateDto.nombreResponsableUnidadContratante) {
+      dataToUpdate.nombreResponsableUnidadContratante = updateDto.nombreResponsableUnidad;
+    }
+
     return this.prisma.unidadContratante.update({
       where: { id },
-      data: {
-        ...updateDto,
-        updatedBy: userId,
-      },
+      data: dataToUpdate,
     });
   }
 

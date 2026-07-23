@@ -218,6 +218,8 @@ model UnidadUsuaria {
   nombreUnidadUsuaria            String                   @map("nom_unidad_usuaria")
   nombreResponsableUnidadUsuaria String                   @map("nom_responsable_unidad_usuaria")
   cargoResponsableUnidadUsuaria  String                   @map("cargo_responsable_unidad_usuaria")
+  cedulaResponsableUnidadUsuaria String?                  @map("cedula_respo_unidad_usuaria")
+  datosDesignacionUnidadUsuaria  String?                  @map("datos_designacion_unidad_usuaria")
   createdAt                      DateTime                 @default(now())
   updatedAt                      DateTime                 @updatedAt
   deletedAt                      DateTime?
@@ -232,19 +234,22 @@ model UnidadUsuaria {
 }
 
 model UnidadContratante {
-  id                      String      @id @default(uuid()) @map("id_unidad_contratante")
-  enteId                  String      @map("id_ente")
-  nombreUnidadContratante String      @map("nom_unidad_contratante")
-  nombreResponsableUnidad String      @map("nom_responsable_unidad")
-  cargoResponsable        String      @map("cargo_responsable")
-  activa                  Boolean     @default(true) @map("ind_activa")
-  createdAt               DateTime    @default(now())
-  updatedAt               DateTime    @updatedAt
-  deletedAt               DateTime?
-  createdBy               String?
-  updatedBy               String?
-  ente                    EntePublico              @relation(fields: [enteId], references: [id])
-  expedientes             ExpedienteContratacion[]
+  id                                 String      @id @default(uuid()) @map("id_unidad_contratante")
+  enteId                             String      @map("id_ente")
+  nombreUnidadContratante            String      @map("nom_unidad_contratante")
+  nombreResponsableUnidad            String      @map("nom_responsable_unidad")
+  nombreResponsableUnidadContratante String?     @map("nom_responsable_unidad_contratante")
+  cargoResponsable                   String      @map("cargo_responsable")
+  cedulaResponsableUnidadContratante String?     @map("cedula_respo_unidad_contratante")
+  datosDesignacionUnidadContratante  String?     @map("datos_designacion_unidad_contratante")
+  activa                             Boolean     @default(true) @map("ind_activa")
+  createdAt                          DateTime    @default(now())
+  updatedAt                          DateTime    @updatedAt
+  deletedAt                          DateTime?
+  createdBy                          String?
+  updatedBy                          String?
+  ente                               EntePublico              @relation(fields: [enteId], references: [id])
+  expedientes                        ExpedienteContratacion[]
 
   @@index([enteId, activa])
   @@map("tb_unidad_contratante")

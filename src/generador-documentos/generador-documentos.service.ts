@@ -13,6 +13,22 @@ import {
 } from '../common/utils/date-formatter.util';
 import { TipoDocumento } from '@prisma/client';
 
+function formatNormativaLegalForDoc(raw: string | null | undefined): string {
+  if (!raw || !raw.trim()) return 'Decreto de Ley de Contrataciones vigente';
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.join(', ');
+      }
+    } catch {
+      // Ignore JSON parse error and fallback to raw trimmed string
+    }
+  }
+  return trimmed;
+}
+
 @Injectable()
 export class GeneradorDocumentosService {
   constructor(
@@ -252,7 +268,7 @@ export class GeneradorDocumentosService {
       desc_objeto_contratacion: descObjeto,
       cod_nomenclatura_proceso: codNomenclatura,
       nom_ente_contratante: nomEnte,
-      normativa_legal_au_au: f.normativaLegal || 'Decreto de Ley de Contrataciones vigente',
+      normativa_legal_au_au: formatNormativaLegalForDoc(f.normativaLegal),
       valor_ucau_base: formatCurrencyVE(Number(m.valorUcauBase)),
       denominacion_comision:
         e.comision?.denominacionComision || 'Comisión de Contrataciones Públicas',
@@ -1534,7 +1550,7 @@ export class GeneradorDocumentosService {
       cod_nomenclatura_proceso_au_au: exp.codigoNomenclatura || '___',
       desc_objeto_contratacion: exp.descripcionObjeto || '___',
       desc_objeto_contratacion_au_au: exp.descripcionObjeto || '___',
-      normativa_legal: fasePrep?.normativaLegal || 'Decreto de Ley de Contrataciones vigente',
+      normativa_legal: formatNormativaLegalForDoc(fasePrep?.normativaLegal),
 
       fec_llamado_participar_au_au: crono?.fechaLlamadoParticipar
         ? formatDateToSpanishLong(crono.fechaLlamadoParticipar)
