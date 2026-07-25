@@ -391,7 +391,7 @@ model FasePreparatoria {
   detallesTecnicosCalidad       String?                @map("detalles_tecnicos_calidad")
   alcanceCantidadesObra         String?                @map("alcance_cantidades_obra")
   justificacionVentajas         String?                @map("justificacion_ventajas")
-  origenCrsRegistro             Boolean                @default(false) @map("ind_origen_crs_registro")
+  origenCrsRegistro             Boolean?               @default(false) @map("ind_origen_crs_registro")
   diasValidezOferta             Int?                   @map("dias_validez_oferta")
   autoridadAclaratorias         String?                @map("autoridad_aclaratorias") @db.VarChar(255)
   normativaLegal                String?                @map("normativa_legal")
@@ -531,6 +531,7 @@ model OfertaPresentada {
   nombreRepLegalOferente                  String                 @map("nombre_rep_legal_oferente_au_au") @db.VarChar(255)
   numeroSobresEntregados                  Int                    @map("num_sobres_entregados_au_au")
   rifProveedorOferente                    String                 @map("rif_proveedor_oferente_au_au") @db.VarChar(20)
+  correoProveedorOferente                 String?                @map("correo_proveedor_oferente_au_au") @db.VarChar(150)
   adjudicacion                            Adjudicacion?
   evaluacion                              EvaluacionResultados?
   expediente                              ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
@@ -552,14 +553,37 @@ model EvaluacionResultados {
   nombreRepLegalEvaluado  String @map("nombre_rep_legal_evaluado_au_au") @db.VarChar(255)
   cedulaRepLegalEvaluado  String @map("cedula_rep_legal_evaluado_au_au") @db.VarChar(20)
 
-  // Calificación del oferente
-  oferenteCalificado    Boolean? @map("oferente_calificado_au_au")
-  motivoDescalificacion String?  @map("motivo_descalificacion_oferente_au_au")
+  // ── Calificación LEGAL ──────────────────────────────────────────────
+  oferenteCalificadoLegal       Boolean? @map("oferente_calificado_legal_au_au")
+  justificacionCalificadoLegal  String?  @map("justificacion_calificado_legal_au_au")
 
-  // Posición de prelación (texto: "Primera Opción", etc.)
+  // ── Calificación FINANCIERA ─────────────────────────────────────────
+  indiceLiquidez                  Decimal? @map("indice_liquidez_au_au") @db.Decimal(10, 4)
+  indiceSolvencia                 Decimal? @map("indice_solvencia_au_au") @db.Decimal(10, 4)
+  oferenteCalificadoFinanciera    Boolean? @map("oferente_calificado_financiera_au_au")
+  justificacionCalificadaFinanciera String? @map("justificacion_calificado_financiera_au_au")
+
+  // ── Calificación TÉCNICA (Sobre 1 — sección resumen) ───────────────
+  actividadComercial              Decimal? @map("actividad_comercial_au_au") @db.Decimal(5, 2)
+  relacionSuministros             Decimal? @map("relacion_suministros_au_au") @db.Decimal(5, 2)
+  referenciasComercialesPuntaje   Decimal? @map("referencias_comerciales_puntaje_au_au") @db.Decimal(5, 2)
+  totalCalifTecnica               Decimal? @map("total_calif_tecnica_au_au") @db.Decimal(6, 2)
+  oferenteCalificadoTecnica       Boolean? @map("oferente_calificado_tecnica_au_au")
+  justificacionCalificadoTecnica  String?  @map("justificacion_calificado_tecnica_au_au")
+
+  // ── Calificación GLOBAL del oferente ───────────────────────────────
+  oferenteCalificado      Boolean? @map("oferente_calificado_au_au")
+  motivoDescalificacion   String?  @map("motivo_descalificacion_oferente_au_au")
+  itemsDescalificacion    String?  @map("items_descalificacion_oferente_au_au")
+
+  // ── Evaluación TÉCNICA (Matriz — Sobre 2) ──────────────────────────
+  oferenteEvaluadoTecnico         Boolean? @map("oferente_evaluado_tecnico_au_au")
+  justificacionEvaluadoTecnico    String?  @map("justificacion_evaluado_tecnico_au_au")
+
+  // ── Posición de prelación ──────────────────────────────────────────
   posicionPrelacion String? @map("posicion_prelacion_au_au") @db.VarChar(50)
 
-  // Totales calculados
+  // ── Totales calculados ─────────────────────────────────────────────
   totalTecnica    Decimal? @map("total_tecnica_au_au") @db.Decimal(5, 2)
   totalEconomica  Decimal? @map("total_economica_au_au") @db.Decimal(5, 2)
   totalVan        Decimal? @map("total_van_au_au") @db.Decimal(5, 2)
@@ -585,11 +609,13 @@ model Sobre1 {
   id           String @id @default(uuid())
   evaluacionId String @unique
 
-  // 11 ítems booleanos + observación opcional
+  // 13 ítems booleanos + observación opcional
   cartaManifestacionVoluntad          Boolean? @map("carta_manifestacion_voluntad_au_au")
   obsCartaManifestacionVoluntad       String?  @map("obs_carta_manifestacion_voluntad_au_au")
   cartaAutorizacion                   Boolean? @map("carta_autorizacion_au_au")
   obsCartaAutorizacion                String?  @map("obs_carta_autorizacion_au_au")
+  docConstitutivo                     Boolean? @map("doc_constitutivo_au_au")
+  obsDocConstitutivo                  String?  @map("obs_doc_constitutivo_au_au")
   copiaRifVigente                     Boolean? @map("copia_rif_vigente_au_au")
   obsCopiaRifVigente                  String?  @map("obs_copia_rif_vigente_au_au")
   certificadoRnc                      Boolean? @map("certificado_rnc_au_au")
@@ -606,6 +632,8 @@ model Sobre1 {
   obsDeclaracionInfoFinanciera        String?  @map("obs_declaracion_info_financiera_au_au")
   relacionServiciosPrestados          Boolean? @map("relacion_servicios_prestados_au_au")
   obsRelacionServiciosPrestados       String?  @map("obs_relacion_servicios_prestados_au_au")
+  evaluacionDesempenio                Boolean? @map("evaluacion_desempenio_au_au")
+  obsEvaluacionDesempenio             String?  @map("obs_evaluacion_desempenio_au_au")
   referenciasComerciales              Boolean? @map("referencias_comerciales_au_au")
   obsReferenciasComerciales           String?  @map("obs_referencias_comerciales_au_au")
 
@@ -625,7 +653,7 @@ model Sobre2 {
   id           String @id @default(uuid())
   evaluacionId String @unique
 
-  // 6 ítems booleanos + observación opcional
+  // 11 ítems booleanos + observación opcional
   ofertaTecnicoEconomica             Boolean? @map("oferta_tecnico_economica_au_au")
   obsOfertaTecnicoEconomica          String?  @map("obs_oferta_tecnico_economica_au_au")
   cartaOferta                        Boolean? @map("carta_oferta_au_au")
@@ -638,6 +666,16 @@ model Sobre2 {
   obsGarantiaMantenimientoOferta     String?  @map("obs_garantia_mantenimiento_oferta_au_au")
   declaracionAutocalculoVan          Boolean? @map("declaracion_autocalculo_van_au_au")
   obsDeclaracionAutocalculoVan       String?  @map("obs_declaracion_autocalculo_van_au_au")
+  cartaNotificaciones                Boolean? @map("carta_notificaciones_au_au")
+  obsCartaNotificaciones             String?  @map("obs_carta_notificaciones_au_au")
+  garantiaFielCumpl                  Boolean? @map("garantia_fiel_cumpl_au_au")
+  obsGarantiaFielCumpl               String?  @map("obs_garantia_fiel_cumpl_au_au")
+  cartaCompromiso                    Boolean? @map("carta_compromiso_au_au")
+  obsCartaCompromiso                 String?  @map("obs_carta_compromiso_au_au")
+  fianzaLaboral                      Boolean? @map("fianza_laboral_au_au")
+  obsFianzaLaboral                   String?  @map("obs_fianza_laboral_au_au")
+  experienciaPersonalTecnico         Boolean? @map("experiencia_personal_tecnico_au_au")
+  obsExperienciaPersonalTecnico      String?  @map("obs_experiencia_personal_tecnico_au_au")
 
   // Evaluación técnica — 4 criterios dinámicos según tipo_objeto_contratacion (VarChar)
   criterio1Evaluacion String?  @map("criterio_1_evaluacion_au_au") @db.VarChar(255)

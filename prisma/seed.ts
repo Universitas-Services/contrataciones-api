@@ -17,12 +17,14 @@ const LOGO_NEUTRO =
 async function main() {
   console.log('🌱 Iniciando seeder (Limpieza Total)...\n');
 
+  // ─── LIMPIEZA EN CASCADA ─────────────────────────────────────────────────
   console.log('🧹 Limpiando base de datos...');
   await prisma.auditLog.deleteMany();
   await prisma.sessionEdicion.deleteMany();
   await prisma.garantiaContrato.deleteMany();
   await prisma.contratoFormalizado.deleteMany();
   await prisma.adjudicacion.deleteMany();
+  // Sobre2 y Sobre1 se eliminan en cascada con EvaluacionResultados
   await prisma.evaluacionResultados.deleteMany();
   await prisma.ofertaPresentada.deleteMany();
   await prisma.adquirentePliego.deleteMany();
@@ -40,26 +42,10 @@ async function main() {
   await prisma.pliegoGenerado.deleteMany();
   await prisma.manualGenerado.deleteMany();
   await prisma.documentoGenerado.deleteMany();
-  try {
-    await (prisma as any).mensajeTicket.deleteMany();
-  } catch {
-    /* ignore */
-  }
-  try {
-    await (prisma as any).ticketSoporte.deleteMany();
-  } catch {
-    /* ignore */
-  }
-  try {
-    await (prisma as any).diaNoLaborableEnte.deleteMany();
-  } catch {
-    /* ignore */
-  }
-  try {
-    await (prisma as any).alertaCronograma.deleteMany();
-  } catch {
-    /* ignore */
-  }
+  try { await (prisma as any).mensajeTicket.deleteMany(); } catch { /* ignore */ }
+  try { await (prisma as any).ticketSoporte.deleteMany(); } catch { /* ignore */ }
+  try { await (prisma as any).diaNoLaborableEnte.deleteMany(); } catch { /* ignore */ }
+  try { await (prisma as any).alertaCronograma.deleteMany(); } catch { /* ignore */ }
   await prisma.usuario.deleteMany();
   await prisma.enteSupervisor.deleteMany();
   await prisma.supervisor.deleteMany();
@@ -235,7 +221,7 @@ async function main() {
   });
 
   // ============================================================================
-  // 5. EXPEDIENTE COMPLETO (MIRANDA)
+  // 5. EXPEDIENTE COMPLETO (MIRANDA) — EN_EVALUACION
   // ============================================================================
   console.log('📂 Creando Expediente Maestro...');
 
@@ -260,7 +246,7 @@ async function main() {
       modalidadId: modalidadMiranda.id,
       descripcionObjeto: 'Adquisición de Insumos Médicos y Quirúrgicos para la Red Hospitalaria',
       codigoNomenclatura: 'LP-GEM-SALUD-002-2024',
-      estatusProceso: EstatusProceso.EN_PREPARACION,
+      estatusProceso: EstatusProceso.EN_EVALUACION,
       createdBy: ejecutorMiranda.id,
     },
   });
@@ -334,78 +320,412 @@ async function main() {
         precioUnitarioEstimado: 1200.0,
         totalItem: 1200000.0,
       },
-      {
-        expedienteId: expedienteM.id,
-        descripcionItem: 'Guantes de Nitrilo (Talla M)',
-        codigoPartida: '401-01-010',
-        unidadMedida: 'Par',
-        cantidadRequerida: 10000,
-        precioUnitarioEstimado: 130.0,
-        totalItem: 1300000.0,
-      },
     ],
   });
 
+  // ============================================================================
+  // 6. PROVEEDORES
+  // ============================================================================
   console.log('🏢 Creando Proveedores...');
-  await prisma.proveedor.create({
+
+  const proveedorAlpha = await prisma.proveedor.create({
     data: {
       enteId: enteMiranda.id,
-      nombre: 'Construcciones Modernas C.A.',
+      nombre: 'Alpha Medical Supplies C.A.',
       rif: 'J-40001234-5',
-      correo: 'info@construccionesmodernas.com',
+      correo: 'ofertas@alphamedical.com',
       tipoPersona: 'JURIDICA',
       tipoEntidadJuridica: 'COMPANIA_ANONIMA',
       estado: 'Miranda',
       municipio: 'Chacao',
-      direccionFiscal: 'Av. Francisco de Miranda, Torre Ejecutiva',
+      direccionFiscal: 'Av. Francisco de Miranda, Torre Ejecutiva, Piso 3',
       telefono: '+58 212-9876543',
-      nombreRepLegal: 'Arq. José Méndez',
-      cedulaRepLegal: 'V-9876543',
-      registroRnc: true,
-      solvenciaLaboral: true,
-      licenciaFuncionamientoMunicipal: true,
-      areaEspecialidad: 'OBRAS',
-      anosExperiencia: 15,
-      patrimonioReportado: 500000.0,
-      nivelContratacion: 'MEDIA',
-      estatusValidacion: 'APROBADO',
-      nombreAutoridadProveedor: 'Dr. Alejandro Moreno',
-      createdBy: ejecutorMiranda.id,
-    },
-  });
-
-  await prisma.proveedor.create({
-    data: {
-      enteId: enteMiranda.id,
-      nombre: 'Suministros Tecnológicos del Centro S.R.L.',
-      rif: 'J-30005678-9',
-      correo: 'ventas@sumintec.com',
-      tipoPersona: 'JURIDICA',
-      tipoEntidadJuridica: 'SRL',
-      estado: 'Distrito Capital',
-      municipio: 'Libertador',
-      direccionFiscal: 'Sabana Grande, C.C. Líder',
-      telefono: '+58 212-7654321',
-      nombreRepLegal: 'Lic. Sandra Vargas',
-      cedulaRepLegal: 'V-8765432',
+      nombreRepLegal: 'Lic. Carmen Rodríguez',
+      cedulaRepLegal: 'V-12.345.678',
       registroRnc: true,
       solvenciaLaboral: true,
       licenciaFuncionamientoMunicipal: true,
       areaEspecialidad: 'BIENES',
-      anosExperiencia: 8,
-      patrimonioReportado: 150000.0,
-      nivelContratacion: 'BAJA',
+      anosExperiencia: 12,
+      patrimonioReportado: 850000.0,
+      nivelContratacion: 'ALTA',
       estatusValidacion: 'APROBADO',
-      nombreAutoridadProveedor: 'Dr. Alejandro Moreno',
+      datosRegistroMercantil:
+        'Registro Mercantil Primero de la Circunscripción Judicial del Estado Miranda, bajo el N° 45, Tomo 18-A del Año 2010',
       createdBy: ejecutorMiranda.id,
     },
   });
 
-  console.log('\n✅ SEEDER REESTRUCTURADO Y COMPLETADO');
+  const proveedorBeta = await prisma.proveedor.create({
+    data: {
+      enteId: enteMiranda.id,
+      nombre: 'Beta Distribuciones Médicas S.R.L.',
+      rif: 'J-30005678-9',
+      correo: 'ventas@betadistrib.com',
+      tipoPersona: 'JURIDICA',
+      tipoEntidadJuridica: 'SRL',
+      estado: 'Distrito Capital',
+      municipio: 'Libertador',
+      direccionFiscal: 'Sabana Grande, C.C. Líder, Local 12',
+      telefono: '+58 212-7654321',
+      nombreRepLegal: 'Ing. Marco Villanueva',
+      cedulaRepLegal: 'V-8.765.432',
+      registroRnc: true,
+      solvenciaLaboral: true,
+      licenciaFuncionamientoMunicipal: true,
+      areaEspecialidad: 'BIENES',
+      anosExperiencia: 7,
+      patrimonioReportado: 320000.0,
+      nivelContratacion: 'MEDIA',
+      estatusValidacion: 'APROBADO',
+      datosRegistroMercantil:
+        'Registro Mercantil Segundo del Distrito Capital, bajo el N° 12, Tomo 05-B del Año 2016',
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  const proveedorGamma = await prisma.proveedor.create({
+    data: {
+      enteId: enteMiranda.id,
+      nombre: 'Gamma Insumos Hospitalarios C.A.',
+      rif: 'J-20011111-3',
+      correo: 'contacto@gammainsumos.com',
+      tipoPersona: 'JURIDICA',
+      tipoEntidadJuridica: 'COMPANIA_ANONIMA',
+      estado: 'Carabobo',
+      municipio: 'Valencia',
+      direccionFiscal: 'Zona Industrial Norte, Galpón 7, Valencia',
+      telefono: '+58 241-8901234',
+      nombreRepLegal: 'Dr. Luis Fernández',
+      cedulaRepLegal: 'V-15.987.654',
+      registroRnc: true,
+      solvenciaLaboral: true,
+      licenciaFuncionamientoMunicipal: true,
+      areaEspecialidad: 'BIENES',
+      anosExperiencia: 20,
+      patrimonioReportado: 1500000.0,
+      nivelContratacion: 'ALTA',
+      estatusValidacion: 'APROBADO',
+      datosRegistroMercantil:
+        'Registro Mercantil Primero de la Circunscripción Judicial del Estado Carabobo, bajo el N° 8, Tomo 22-A del Año 2003',
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  // ============================================================================
+  // 7. OFERTAS PRESENTADAS (Fase 2 — tb_oferta_presentada)
+  // ============================================================================
+  console.log('📑 Registrando Ofertas Presentadas...');
+
+  const ofertaAlpha = await prisma.ofertaPresentada.create({
+    data: {
+      expedienteId: expedienteM.id,
+      proveedorId: proveedorAlpha.id,
+      rifProveedorOferente: 'J-40001234-5',
+      nombreProveedorOferente: 'Alpha Medical Supplies C.A.',
+      nombreRepLegalOferente: 'Lic. Carmen Rodríguez',
+      cedulaRepLegalOferente: 'V-12.345.678',
+      correoProveedorOferente: 'ofertas@alphamedical.com',
+      datosRegistroMercantilProveedorOferente:
+        'Registro Mercantil Primero de la Circunscripción Judicial del Estado Miranda, bajo el N° 45, Tomo 18-A del Año 2010',
+      numeroSobresEntregados: 2,
+      montoOfertaBs: 13200000.0,
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  const ofertaBeta = await prisma.ofertaPresentada.create({
+    data: {
+      expedienteId: expedienteM.id,
+      proveedorId: proveedorBeta.id,
+      rifProveedorOferente: 'J-30005678-9',
+      nombreProveedorOferente: 'Beta Distribuciones Médicas S.R.L.',
+      nombreRepLegalOferente: 'Ing. Marco Villanueva',
+      cedulaRepLegalOferente: 'V-8.765.432',
+      correoProveedorOferente: 'ventas@betadistrib.com',
+      datosRegistroMercantilProveedorOferente:
+        'Registro Mercantil Segundo del Distrito Capital, bajo el N° 12, Tomo 05-B del Año 2016',
+      numeroSobresEntregados: 2,
+      montoOfertaBs: 14750000.0,
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  const ofertaGamma = await prisma.ofertaPresentada.create({
+    data: {
+      expedienteId: expedienteM.id,
+      proveedorId: proveedorGamma.id,
+      rifProveedorOferente: 'J-20011111-3',
+      nombreProveedorOferente: 'Gamma Insumos Hospitalarios C.A.',
+      nombreRepLegalOferente: 'Dr. Luis Fernández',
+      cedulaRepLegalOferente: 'V-15.987.654',
+      correoProveedorOferente: 'contacto@gammainsumos.com',
+      datosRegistroMercantilProveedorOferente:
+        'Registro Mercantil Primero de la Circunscripción Judicial del Estado Carabobo, bajo el N° 8, Tomo 22-A del Año 2003',
+      numeroSobresEntregados: 2,
+      montoOfertaBs: 12800000.0,
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  // ============================================================================
+  // 8. EVALUACIONES FASE 3 (tb_evaluacion_resultados + tb_sobre_1 + tb_sobre_2)
+  // ============================================================================
+  console.log('📊 Creando Evaluaciones Fase 3...');
+
+  // ─── EVALUACIÓN ALPHA (Calificada — Primera Opción) ──────────────────────
+  const evalAlpha = await prisma.evaluacionResultados.create({
+    data: {
+      ofertaId: ofertaAlpha.id,
+      nombreProveedorEvaluado: 'Alpha Medical Supplies C.A.',
+      rifProveedorEvaluado: 'J-40001234-5',
+      nombreRepLegalEvaluado: 'Lic. Carmen Rodríguez',
+      cedulaRepLegalEvaluado: 'V-12.345.678',
+      // Calificación legal
+      oferenteCalificadoLegal: true,
+      justificacionCalificadoLegal: 'Cumplió con todos los recaudos legales exigidos en el Pliego de Condiciones.',
+      // Calificación financiera
+      indiceLiquidez: 2.35,
+      indiceSolvencia: 0.42,
+      oferenteCalificadoFinanciera: true,
+      justificacionCalificadaFinanciera: 'Índice de liquidez superior a 1 e índice de solvencia por debajo de 0.5, dentro de los parámetros exigidos.',
+      // Calificación técnica
+      actividadComercial: 15,
+      relacionSuministros: 14,
+      referenciasComercialesPuntaje: 10,
+      totalCalifTecnica: 39,
+      oferenteCalificadoTecnica: true,
+      justificacionCalificadoTecnica: 'Empresa con amplia trayectoria en el suministro de insumos médicos a entes públicos.',
+      // Calificación global
+      oferenteCalificado: true,
+      // Evaluación técnica (Matriz)
+      oferenteEvaluadoTecnico: true,
+      justificacionEvaluadoTecnico: 'Cumplió con todos los criterios de evaluación técnica del Pliego.',
+      // Totales
+      totalTecnica: 39,
+      totalEconomica: 50,
+      totalVan: 10,
+      totalEvaluacion: 99,
+      posicionPrelacion: 'Primera Opción',
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  await prisma.sobre1.create({
+    data: {
+      evaluacionId: evalAlpha.id,
+      cartaManifestacionVoluntad: true,
+      cartaAutorizacion: true,
+      docConstitutivo: true,
+      copiaRifVigente: true,
+      certificadoRnc: true,
+      solvenciaLaboral: true,
+      declaracionSociosNoInhabilitados: true,
+      declaracionNoDeudas: true,
+      declaracionNoImpedimentosLcp: true,
+      declaracionInfoFinanciera: true,
+      relacionServiciosPrestados: true,
+      evaluacionDesempenio: true,
+      referenciasComerciales: true,
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  await prisma.sobre2.create({
+    data: {
+      evaluacionId: evalAlpha.id,
+      ofertaTecnicoEconomica: true,
+      cartaOferta: true,
+      declaracionCapacidadFinanciera: true,
+      declaracionCompromisoRespSocial: true,
+      garantiaMantenimientoOferta: true,
+      declaracionAutocalculoVan: true,
+      cartaNotificaciones: true,
+      garantiaFielCumpl: true,
+      cartaCompromiso: true,
+      fianzaLaboral: false,
+      obsFianzaLaboral: 'No aplica para esta contratación.',
+      experienciaPersonalTecnico: false,
+      obsExperienciaPersonalTecnico: 'No aplica para bienes.',
+      criterio1Evaluacion: 'Tiempo de entrega a partir de la recepción de la Orden de compra',
+      puntuacionCriterio1: 14,
+      criterio2Evaluacion: 'Garantía, Canje o Sustitución de los Bienes / insumos',
+      puntuacionCriterio2: 14,
+      criterio3Evaluacion: 'Especificaciones Técnicas de los Bienes / insumos',
+      puntuacionCriterio3: 8,
+      criterio4Evaluacion: 'Disponibilidad de los Bienes / insumos requeridos',
+      puntuacionCriterio4: 14,
+      montoOfertaBs: 13200000.0,
+      porcentajeVan: 75,
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  // ─── EVALUACIÓN GAMMA (Calificada — Segunda Opción) ──────────────────────
+  const evalGamma = await prisma.evaluacionResultados.create({
+    data: {
+      ofertaId: ofertaGamma.id,
+      nombreProveedorEvaluado: 'Gamma Insumos Hospitalarios C.A.',
+      rifProveedorEvaluado: 'J-20011111-3',
+      nombreRepLegalEvaluado: 'Dr. Luis Fernández',
+      cedulaRepLegalEvaluado: 'V-15.987.654',
+      oferenteCalificadoLegal: true,
+      justificacionCalificadoLegal: 'Presentó todos los recaudos legales completos y vigentes.',
+      indiceLiquidez: 3.10,
+      indiceSolvencia: 0.32,
+      oferenteCalificadoFinanciera: true,
+      justificacionCalificadaFinanciera: 'Sólida posición financiera con índices dentro de parámetros.',
+      actividadComercial: 15,
+      relacionSuministros: 15,
+      referenciasComercialesPuntaje: 10,
+      totalCalifTecnica: 40,
+      oferenteCalificadoTecnica: true,
+      justificacionCalificadoTecnica: 'Vasta experiencia en el rubro con más de 20 años en el mercado.',
+      oferenteCalificado: true,
+      oferenteEvaluadoTecnico: true,
+      justificacionEvaluadoTecnico: 'Supera los criterios mínimos de evaluación técnica.',
+      totalTecnica: 40,
+      totalEconomica: 40,
+      totalVan: 10,
+      totalEvaluacion: 90,
+      posicionPrelacion: 'Segunda Opción',
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  await prisma.sobre1.create({
+    data: {
+      evaluacionId: evalGamma.id,
+      cartaManifestacionVoluntad: true,
+      cartaAutorizacion: true,
+      docConstitutivo: true,
+      copiaRifVigente: true,
+      certificadoRnc: true,
+      solvenciaLaboral: true,
+      declaracionSociosNoInhabilitados: true,
+      declaracionNoDeudas: true,
+      declaracionNoImpedimentosLcp: true,
+      declaracionInfoFinanciera: true,
+      relacionServiciosPrestados: true,
+      evaluacionDesempenio: true,
+      referenciasComerciales: true,
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  await prisma.sobre2.create({
+    data: {
+      evaluacionId: evalGamma.id,
+      ofertaTecnicoEconomica: true,
+      cartaOferta: true,
+      declaracionCapacidadFinanciera: true,
+      declaracionCompromisoRespSocial: true,
+      garantiaMantenimientoOferta: true,
+      declaracionAutocalculoVan: true,
+      cartaNotificaciones: true,
+      garantiaFielCumpl: true,
+      cartaCompromiso: true,
+      fianzaLaboral: false,
+      obsFianzaLaboral: 'No aplica.',
+      experienciaPersonalTecnico: false,
+      criterio1Evaluacion: 'Tiempo de entrega a partir de la recepción de la Orden de compra',
+      puntuacionCriterio1: 15,
+      criterio2Evaluacion: 'Garantía, Canje o Sustitución de los Bienes / insumos',
+      puntuacionCriterio2: 13,
+      criterio3Evaluacion: 'Especificaciones Técnicas de los Bienes / insumos',
+      puntuacionCriterio3: 8,
+      criterio4Evaluacion: 'Disponibilidad de los Bienes / insumos requeridos',
+      puntuacionCriterio4: 14,
+      montoOfertaBs: 12800000.0,
+      porcentajeVan: 68,
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  // ─── EVALUACIÓN BETA (Descalificada) ─────────────────────────────────────
+  const evalBeta = await prisma.evaluacionResultados.create({
+    data: {
+      ofertaId: ofertaBeta.id,
+      nombreProveedorEvaluado: 'Beta Distribuciones Médicas S.R.L.',
+      rifProveedorEvaluado: 'J-30005678-9',
+      nombreRepLegalEvaluado: 'Ing. Marco Villanueva',
+      cedulaRepLegalEvaluado: 'V-8.765.432',
+      oferenteCalificadoLegal: false,
+      justificacionCalificadoLegal: 'No consignó el Certificado de Inscripción en el RNC vigente ni la Solvencia Laboral.',
+      indiceLiquidez: 0.85,
+      indiceSolvencia: 0.72,
+      oferenteCalificadoFinanciera: false,
+      justificacionCalificadaFinanciera: 'Índice de liquidez inferior a 1, no cumple el requisito mínimo financiero.',
+      actividadComercial: 8,
+      relacionSuministros: 6,
+      referenciasComercialesPuntaje: 5,
+      totalCalifTecnica: 19,
+      oferenteCalificadoTecnica: false,
+      justificacionCalificadoTecnica: 'Puntaje técnico insuficiente: 19 puntos sobre el mínimo requerido de 25.',
+      oferenteCalificado: false,
+      motivoDescalificacion: 'Incumplimiento de recaudos legales obligatorios (RNC y Solvencia Laboral) e índice de liquidez deficitario.',
+      itemsDescalificacion: 'Ítem 5 del Pliego de Condiciones (Certificado RNC); Art. 95 LCP; Modelo N° 3 (Solvencia Laboral).',
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  await prisma.sobre1.create({
+    data: {
+      evaluacionId: evalBeta.id,
+      cartaManifestacionVoluntad: true,
+      cartaAutorizacion: true,
+      docConstitutivo: true,
+      copiaRifVigente: true,
+      certificadoRnc: false,
+      obsCertificadoRnc: 'No consignó el certificado RNC. Documento ausente del sobre.',
+      solvenciaLaboral: false,
+      obsSolvenciaLaboral: 'No presentó certificado ni declaración jurada de solvencia laboral.',
+      declaracionSociosNoInhabilitados: true,
+      declaracionNoDeudas: true,
+      declaracionNoImpedimentosLcp: true,
+      declaracionInfoFinanciera: true,
+      relacionServiciosPrestados: false,
+      obsRelacionServiciosPrestados: 'Relación de servicios incompleta, sin soporte documental.',
+      evaluacionDesempenio: false,
+      obsEvaluacionDesempenio: 'No presentó informe de evaluación de desempeño.',
+      referenciasComerciales: true,
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  await prisma.sobre2.create({
+    data: {
+      evaluacionId: evalBeta.id,
+      ofertaTecnicoEconomica: true,
+      cartaOferta: true,
+      declaracionCapacidadFinanciera: false,
+      obsDeclaracionCapacidadFinanciera: 'No consignó declaración jurada de capacidad financiera (Modelo N° 10).',
+      declaracionCompromisoRespSocial: true,
+      garantiaMantenimientoOferta: false,
+      obsGarantiaMantenimientoOferta: 'Garantía de mantenimiento de oferta no consignada.',
+      declaracionAutocalculoVan: false,
+      cartaNotificaciones: true,
+      garantiaFielCumpl: false,
+      cartaCompromiso: false,
+      fianzaLaboral: false,
+      experienciaPersonalTecnico: false,
+      montoOfertaBs: 14750000.0,
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  console.log('\n✅ SEEDER COMPLETADO EXITOSAMENTE');
   console.log('--------------------------------------------------');
   console.log('🔑 CREDENCIALES:');
-  console.log('MIRANDA ADMIN: admin@miranda.gob.ve / miranda123');
+  console.log('UNIVERSITAS:   admin@universitas.gob.ve / universitas123');
+  console.log('MIRANDA ADMIN: admin@miranda.gob.ve    / miranda123');
   console.log('MIRANDA EJEC:  ejecutor@miranda.gob.ve / miranda123');
+  console.log('--------------------------------------------------');
+  console.log('📦 DATOS CREADOS:');
+  console.log(`  Expediente: LP-GEM-SALUD-002-2024 (EN_EVALUACION)`);
+  console.log(`  Oferta Alpha (ID: ${ofertaAlpha.id}) → Eval: ${evalAlpha.id} ✅ 1ra Opción`);
+  console.log(`  Oferta Gamma (ID: ${ofertaGamma.id}) → Eval: ${evalGamma.id} ✅ 2da Opción`);
+  console.log(`  Oferta Beta  (ID: ${ofertaBeta.id})  → Eval: ${evalBeta.id}  ❌ Descalificada`);
   console.log('--------------------------------------------------');
 }
 

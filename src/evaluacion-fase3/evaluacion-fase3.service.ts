@@ -3,6 +3,7 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateEvaluacionDto } from './dto/create-evaluacion.dto';
 import { UpdateSobre1Dto } from './dto/update-sobre1.dto';
 import { UpdateSobre2Dto } from './dto/update-sobre2.dto';
+import { UpdateCalificacionDto } from './dto/update-calificacion.dto';
 import { CreateInformeDto } from './dto/create-informe.dto';
 import { ListarEvaluacionesQueryDto, EstatusEvaluacion } from './dto/listar-evaluaciones-query.dto';
 
@@ -309,6 +310,8 @@ export class EvaluacionFase3Service {
       'obsCartaManifestacionVoluntad',
       'cartaAutorizacion',
       'obsCartaAutorizacion',
+      'docConstitutivo',
+      'obsDocConstitutivo',
       'copiaRifVigente',
       'obsCopiaRifVigente',
       'certificadoRnc',
@@ -325,6 +328,8 @@ export class EvaluacionFase3Service {
       'obsDeclaracionInfoFinanciera',
       'relacionServiciosPrestados',
       'obsRelacionServiciosPrestados',
+      'evaluacionDesempenio',
+      'obsEvaluacionDesempenio',
       'referenciasComerciales',
       'obsReferenciasComerciales',
     ] as const;
@@ -382,6 +387,16 @@ export class EvaluacionFase3Service {
       'obsGarantiaMantenimientoOferta',
       'declaracionAutocalculoVan',
       'obsDeclaracionAutocalculoVan',
+      'cartaNotificaciones',
+      'obsCartaNotificaciones',
+      'garantiaFielCumpl',
+      'obsGarantiaFielCumpl',
+      'cartaCompromiso',
+      'obsCartaCompromiso',
+      'fianzaLaboral',
+      'obsFianzaLaboral',
+      'experienciaPersonalTecnico',
+      'obsExperienciaPersonalTecnico',
       'criterio1Evaluacion',
       'puntuacionCriterio1',
       'criterio2Evaluacion',
@@ -400,7 +415,9 @@ export class EvaluacionFase3Service {
       }
     }
 
-    // Campos que van a EvaluacionResultados
+    // Campos que van a EvaluacionResultados (SOLO criterios económicos — calificación va en /calificacion)
+    // Nota: oferenteCalificado, motivoDescalificacion, posicionPrelacion se mueven a updateCalificacion
+    // pero se mantienen aquí por retrocompatibilidad temporal si vienen en el body
     if (dto.oferenteCalificado !== undefined)
       updateDataEval.oferenteCalificado = dto.oferenteCalificado;
     if (dto.motivoDescalificacion !== undefined)
@@ -455,6 +472,79 @@ export class EvaluacionFase3Service {
 
     await this.calcularEconomicaPorExpediente(evaluacion.oferta.expedienteId);
     await this.recalcularTotalesEvaluacion(evaluacionId);
+
+    return this.findOne(evaluacionId, enteId);
+  }
+
+  // ============================================================
+  // 6.1. ACTUALIZAR CALIFICACIÓN DEL OFERENTE
+  // Cubre: calificación legal, financiera, técnica (Sobre 1 resumen),
+  // descalificación global, evaluación técnica (Matriz) y prelación.
+  // ============================================================
+  async updateCalificacion(
+    evaluacionId: string,
+    dto: UpdateCalificacionDto,
+    userId: string,
+    enteId: string,
+  ) {
+    const evaluacion = await this.findOne(evaluacionId, enteId);
+
+    const updateData: Record<string, any> = { updatedBy: userId };
+
+    // Calificación legal
+    if (dto.oferenteCalificadoLegal !== undefined)
+      updateData.oferenteCalificadoLegal = dto.oferenteCalificadoLegal;
+    if (dto.justificacionCalificadoLegal !== undefined)
+      updateData.justificacionCalificadoLegal = dto.justificacionCalificadoLegal;
+
+    // Calificación financiera
+    if (dto.indiceLiquidez !== undefined) updateData.indiceLiquidez = dto.indiceLiquidez;
+    if (dto.indiceSolvencia !== undefined) updateData.indiceSolvencia = dto.indiceSolvencia;
+    if (dto.oferenteCalificadoFinanciera !== undefined)
+      updateData.oferenteCalificadoFinanciera = dto.oferenteCalificadoFinanciera;
+    if (dto.justificacionCalificadaFinanciera !== undefined)
+      updateData.justificacionCalificadaFinanciera = dto.justificacionCalificadaFinanciera;
+
+    // Calificación técnica (Sobre 1 resumen)
+    if (dto.actividadComercial !== undefined) updateData.actividadComercial = dto.actividadComercial;
+    if (dto.relacionSuministros !== undefined) updateData.relacionSuministros = dto.relacionSuministros;
+    if (dto.referenciasComercialesPuntaje !== undefined)
+      updateData.referenciasComercialesPuntaje = dto.referenciasComercialesPuntaje;
+
+    // Cálculo automático de total_calif_tecnica
+    const actividad = dto.actividadComercial ?? Number(evaluacion.actividadComercial ?? 0);
+    const relacion = dto.relacionSuministros ?? Number(evaluacion.relacionSuministros ?? 0);
+    const referencias =
+      dto.referenciasComercialesPuntaje ?? Number(evaluacion.referenciasComercialesPuntaje ?? 0);
+    updateData.totalCalifTecnica = actividad + relacion + referencias;
+
+    if (dto.oferenteCalificadoTecnica !== undefined)
+      updateData.oferenteCalificadoTecnica = dto.oferenteCalificadoTecnica;
+    if (dto.justificacionCalificadoTecnica !== undefined)
+      updateData.justificacionCalificadoTecnica = dto.justificacionCalificadoTecnica;
+
+    // Descalificación global
+    if (dto.oferenteCalificado !== undefined) updateData.oferenteCalificado = dto.oferenteCalificado;
+    if (dto.motivoDescalificacion !== undefined)
+      updateData.motivoDescalificacion = dto.motivoDescalificacion;
+    if (dto.itemsDescalificacion !== undefined)
+      updateData.itemsDescalificacion = dto.itemsDescalificacion;
+
+    // Evaluación técnica (Matriz)
+    if (dto.oferenteEvaluadoTecnico !== undefined)
+      updateData.oferenteEvaluadoTecnico = dto.oferenteEvaluadoTecnico;
+    if (dto.justificacionEvaluadoTecnico !== undefined)
+      updateData.justificacionEvaluadoTecnico = dto.justificacionEvaluadoTecnico;
+
+    // Prelación
+    if (dto.posicionPrelacion !== undefined) updateData.posicionPrelacion = dto.posicionPrelacion;
+
+    await this.prisma.evaluacionResultados.update({
+      where: { id: evaluacionId },
+      data: updateData,
+    });
+
+    await this.invalidarDocumentos(evaluacion.oferta.expedienteId);
 
     return this.findOne(evaluacionId, enteId);
   }

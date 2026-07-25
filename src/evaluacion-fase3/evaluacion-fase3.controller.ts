@@ -17,6 +17,7 @@ import { EvaluacionFase3Service } from './evaluacion-fase3.service';
 import { CreateEvaluacionDto } from './dto/create-evaluacion.dto';
 import { UpdateSobre1Dto } from './dto/update-sobre1.dto';
 import { UpdateSobre2Dto } from './dto/update-sobre2.dto';
+import { UpdateCalificacionDto } from './dto/update-calificacion.dto';
 import { CreateInformeDto } from './dto/create-informe.dto';
 import { ListarEvaluacionesQueryDto } from './dto/listar-evaluaciones-query.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -125,7 +126,7 @@ export class EvaluacionFase3Controller {
   @ApiOperation({
     summary: 'Guardar/actualizar Sección B + Matriz de Evaluación (Sobre Nº2)',
     description:
-      'Guarda los 6 ítems del Sobre Nº2, los 4 criterios técnicos con sus puntajes, la evaluación económica (monto y VAN), la calificación del oferente y su posición de prelación. Recalcula automáticamente los totales y el ranking económico del expediente.',
+      'Guarda los 11 ítems del Sobre Nº2 (incluyendo cartaNotificaciones, garantiaFielCumpl, cartaCompromiso, fianzaLaboral, experienciaPersonalTecnico), los 4 criterios técnicos con sus puntajes, la evaluación económica (monto y VAN). Recalcula automáticamente los totales y el ranking económico del expediente.',
   })
   @ApiParam({ name: 'evaluacionId', description: 'ID de la evaluación' })
   async updateSobre2(
@@ -134,6 +135,27 @@ export class EvaluacionFase3Controller {
     @CurrentUser() user: { id: string; enteId: string },
   ) {
     return this.evaluacionFase3Service.updateSobre2(evaluacionId, dto, user.id, user.enteId);
+  }
+
+  // =====================================================================
+  // CALIFICACIÓN DEL OFERENTE (legal, financiera, técnica + global)
+  // =====================================================================
+
+  @Patch(':evaluacionId/calificacion')
+  @Roles('ADMIN_ENTE', 'EJECUTOR')
+  @ApiOperation({
+    summary: 'Guardar calificación del oferente',
+    description:
+      'Guarda la calificación legal, financiera (con índices de liquidez y solvencia) y técnica (actividad comercial, relación de suministros, referencias). Calcula automáticamente el total_calif_tecnica. Registra la descalificación global (si aplica), la evaluación técnica de la Matriz y la posición de prelación del oferente.',
+  })
+  @ApiParam({ name: 'evaluacionId', description: 'ID de la evaluación' })
+  @ApiResponse({ status: 200, description: 'Calificación guardada exitosamente' })
+  async updateCalificacion(
+    @Param('evaluacionId') evaluacionId: string,
+    @Body() dto: UpdateCalificacionDto,
+    @CurrentUser() user: { id: string; enteId: string },
+  ) {
+    return this.evaluacionFase3Service.updateCalificacion(evaluacionId, dto, user.id, user.enteId);
   }
 
   // =====================================================================

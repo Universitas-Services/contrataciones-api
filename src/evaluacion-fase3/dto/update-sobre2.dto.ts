@@ -81,6 +81,66 @@ export class UpdateSobre2Dto {
   @IsOptional()
   obsDeclaracionAutocalculoVan?: string;
 
+  @ApiPropertyOptional({
+    description: '¿Consignó carta de datos para notificaciones? (carta_notificaciones_au_au)',
+  })
+  @IsBoolean()
+  @IsOptional()
+  cartaNotificaciones?: boolean;
+
+  @ApiPropertyOptional({ description: 'Observación (obs_carta_notificaciones_au_au)' })
+  @IsString()
+  @IsOptional()
+  obsCartaNotificaciones?: string;
+
+  @ApiPropertyOptional({
+    description: '¿Consignó garantía de fiel cumplimiento del contrato? (garantia_fiel_cumpl_au_au)',
+  })
+  @IsBoolean()
+  @IsOptional()
+  garantiaFielCumpl?: boolean;
+
+  @ApiPropertyOptional({ description: 'Observación (obs_garantia_fiel_cumpl_au_au)' })
+  @IsString()
+  @IsOptional()
+  obsGarantiaFielCumpl?: string;
+
+  @ApiPropertyOptional({
+    description: '¿Consignó carta de compromiso de tiempo de ejecución? (carta_compromiso_au_au)',
+  })
+  @IsBoolean()
+  @IsOptional()
+  cartaCompromiso?: boolean;
+
+  @ApiPropertyOptional({ description: 'Observación (obs_carta_compromiso_au_au)' })
+  @IsString()
+  @IsOptional()
+  obsCartaCompromiso?: string;
+
+  @ApiPropertyOptional({
+    description: '¿Consignó Fianza Laboral? (fianza_laboral_au_au)',
+  })
+  @IsBoolean()
+  @IsOptional()
+  fianzaLaboral?: boolean;
+
+  @ApiPropertyOptional({ description: 'Observación (obs_fianza_laboral_au_au)' })
+  @IsString()
+  @IsOptional()
+  obsFianzaLaboral?: string;
+
+  @ApiPropertyOptional({
+    description: '¿Consignó experiencia del personal técnico clave? (experiencia_personal_tecnico_au_au)',
+  })
+  @IsBoolean()
+  @IsOptional()
+  experienciaPersonalTecnico?: boolean;
+
+  @ApiPropertyOptional({ description: 'Observación (obs_experiencia_personal_tecnico_au_au)' })
+  @IsString()
+  @IsOptional()
+  obsExperienciaPersonalTecnico?: string;
+
   // --- Evaluación técnica: 4 criterios dinámicos (VarChar según tipo_objeto) ---
 
   @ApiPropertyOptional({
