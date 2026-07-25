@@ -8,9 +8,9 @@ RUN apk add --no-cache python3 make g++ openssl
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and schema for client generation
 COPY package*.json ./
-COPY prisma ./prisma/
+COPY prisma/schema.prisma ./prisma/
 
 # Install ALL dependencies (including dev) for build stage
 # Use --ignore-scripts to skip husky install
@@ -28,9 +28,8 @@ WORKDIR /app
 
 # Copy dependencies from previous stage
 COPY --from=dependencies /app/node_modules ./node_modules
-COPY --from=dependencies /app/prisma ./prisma
 
-# Copy source code
+# Copy source code and fresh prisma folder
 COPY . .
 
 # Build application
