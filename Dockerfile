@@ -1,7 +1,7 @@
 # ============================================================================
 # STAGE 1: Dependencies
 # ============================================================================
-FROM node:18-alpine AS dependencies
+FROM node:20-alpine AS dependencies
 
 # Install build dependencies for native modules
 RUN apk add --no-cache python3 make g++ openssl
@@ -22,7 +22,7 @@ RUN npx prisma generate
 # ============================================================================
 # STAGE 2: Build
 # ============================================================================
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
@@ -45,7 +45,7 @@ RUN apk add --no-cache python3 make g++ && \
 # ============================================================================
 # STAGE 3: Production
 # ============================================================================
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 # Install dumb-init and openssl for proper signal handling and Prisma
 RUN apk add --no-cache dumb-init openssl
