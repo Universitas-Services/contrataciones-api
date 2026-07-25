@@ -52,6 +52,14 @@ export class CreateOfertaPresentadaDto {
   @IsOptional()
   datosRegistroMercantilProveedorOferente?: string;
 
+  @ApiPropertyOptional({
+    description: 'Correo electrónico del proveedor oferente (correo_proveedor_oferente_au_au)',
+    example: 'contacto@empresa.com',
+  })
+  @IsString()
+  @IsOptional()
+  correoProveedorOferente?: string;
+
   @ApiProperty({
     description: 'Cantidad de sobres entregados por la empresa (num_sobres_entregados_au_au)',
     example: 2,

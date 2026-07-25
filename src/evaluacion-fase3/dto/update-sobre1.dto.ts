@@ -33,6 +33,18 @@ export class UpdateSobre1Dto {
   obsCartaAutorizacion?: string;
 
   @ApiPropertyOptional({
+    description: '¿Consignó documento Constitutivo y Estatutario? (doc_constitutivo_au_au)',
+  })
+  @IsBoolean()
+  @IsOptional()
+  docConstitutivo?: boolean;
+
+  @ApiPropertyOptional({ description: 'Observación sobre documento constitutivo (obs_doc_constitutivo_au_au)' })
+  @IsString()
+  @IsOptional()
+  obsDocConstitutivo?: string;
+
+  @ApiPropertyOptional({
     description: '¿Consignó copia del RIF vigente? (copia_rif_vigente_au_au)',
   })
   @IsBoolean()
@@ -137,6 +149,18 @@ export class UpdateSobre1Dto {
   @IsString()
   @IsOptional()
   obsRelacionServiciosPrestados?: string;
+
+  @ApiPropertyOptional({
+    description: '¿Consignó Informe de Evaluación de desempeño? (evaluacion_desempenio_au_au)',
+  })
+  @IsBoolean()
+  @IsOptional()
+  evaluacionDesempenio?: boolean;
+
+  @ApiPropertyOptional({ description: 'Observación (obs_evaluacion_desempenio_au_au)' })
+  @IsString()
+  @IsOptional()
+  obsEvaluacionDesempenio?: string;
 
   @ApiPropertyOptional({
     description: '¿Consignó referencias comerciales? (referencias_comerciales_au_au)',

@@ -87,6 +87,7 @@ export class OfertaPresentadaService {
         nombreRepLegalOferente: dto.nombreRepLegalOferente,
         cedulaRepLegalOferente: dto.cedulaRepLegalOferente,
         datosRegistroMercantilProveedorOferente: dto.datosRegistroMercantilProveedorOferente,
+        correoProveedorOferente: dto.correoProveedorOferente,
         numeroSobresEntregados: dto.numeroSobresEntregados,
         montoOfertaBs: dto.montoOfertaBs,
         createdBy: userId,
@@ -166,6 +167,8 @@ export class OfertaPresentadaService {
     if (dto.datosRegistroMercantilProveedorOferente !== undefined)
       updateData.datosRegistroMercantilProveedorOferente =
         dto.datosRegistroMercantilProveedorOferente;
+    if (dto.correoProveedorOferente !== undefined)
+      updateData.correoProveedorOferente = dto.correoProveedorOferente;
     if (dto.numeroSobresEntregados !== undefined)
       updateData.numeroSobresEntregados = dto.numeroSobresEntregados;
     if (dto.montoOfertaBs !== undefined) updateData.montoOfertaBs = dto.montoOfertaBs;
