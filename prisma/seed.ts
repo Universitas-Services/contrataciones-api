@@ -255,9 +255,9 @@ async function main() {
     data: {
       expedienteId: expedienteM.id,
       detallesTecnicosCalidad:
-        'Suministros médicos estériles de alta calidad, certificados por SENIAT y MPPS.',
-      alcanceCantidadesObra: 'Lote de 50,000 unidades divididas en 10 rubros críticos.',
-      justificacionVentajas: 'Garantizar el inventario para el primer semestre de 2024.',
+        'Equipos de computación de alto rendimiento según normas ISO',
+      alcanceCantidadesObra: 'Adquisición e instalación de 15 computadoras',
+      justificacionVentajas: 'Renovación tecnológica necesaria para operaciones ininterrumpidas',
       origenCrsRegistro: true,
       diasValidezOferta: 90,
       diasVigenciaGarantiaExtension: 60,
