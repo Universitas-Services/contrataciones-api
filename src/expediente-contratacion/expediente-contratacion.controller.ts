@@ -12,8 +12,8 @@ import {
 } from '@nestjs/common';
 import { ExpedienteContratacionService } from './expediente-contratacion.service';
 import { CreateProcesoCompletoDto } from './dto/create-proceso-completo.dto';
-import { CalcularModalidadDto } from './dto/calcular-modalidad.dto';
 import { CreateExpedienteDraftDto } from './dto/create-expediente-draft.dto';
+import { DeclaracionDesiertoDto } from './dto/declarar-desierto.dto';
 import { CreateExpedienteConcursoCerradoDto } from './dto/create-expediente-concurso-cerrado.dto';
 import { CreateExpedienteConsultaPreciosDto } from './dto/create-expediente-consulta-precios.dto';
 import { CreateExpedienteContratacionDirectaDto } from './dto/create-expediente-contratacion-directa.dto';
@@ -50,14 +50,6 @@ export class ExpedienteContratacionController {
     @CurrentUser() user: { id: string; enteId: string },
   ) {
     return this.expedienteService.createFullProcess(dto, user.id, user.enteId);
-  }
-
-  @Post('calcular-modalidad')
-  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
-  @ApiOperation({ summary: 'Paso 2: Calcular modalidad sugerida según UCAU' })
-  @ApiResponse({ status: 200, description: 'Cálculo exitoso con modalidad sugerida' })
-  calcularModalidad(@Body() dto: CalcularModalidadDto) {
-    return this.expedienteService.calcularModalidadSugerida(dto);
   }
 
   @Post('borrador')
@@ -113,6 +105,18 @@ export class ExpedienteContratacionController {
   @ApiResponse({ status: 200, description: 'Expediente anulado exitosamente' })
   remove(@Param('id') id: string, @CurrentUser() user: { id: string; enteId: string }) {
     return this.expedienteService.remove(id, user.id, user.enteId);
+  }
+
+  @Patch(':id/declarar-desierto')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
+  @ApiOperation({ summary: 'Declarar desierto un expediente (Art. 113 LCP)' })
+  @ApiResponse({ status: 200, description: 'Expediente declarado desierto exitosamente' })
+  declararDesierto(
+    @Param('id') id: string,
+    @Body() dto: DeclaracionDesiertoDto,
+    @CurrentUser() user: { id: string; enteId: string },
+  ) {
+    return this.expedienteService.declararDesierto(id, dto, user.id, user.enteId);
   }
 
   @Post('generar-cronograma')

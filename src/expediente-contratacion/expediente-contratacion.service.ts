@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateProcesoCompletoDto } from './dto/create-proceso-completo.dto';
-import { CalcularModalidadDto } from './dto/calcular-modalidad.dto';
 import { CreateExpedienteDraftDto } from './dto/create-expediente-draft.dto';
+import { DeclaracionDesiertoDto } from './dto/declarar-desierto.dto';
 import { CreateExpedienteConcursoCerradoDto } from './dto/create-expediente-concurso-cerrado.dto';
 import { CreateExpedienteConsultaPreciosDto } from './dto/create-expediente-consulta-precios.dto';
 import { CreateExpedienteContratacionDirectaDto } from './dto/create-expediente-contratacion-directa.dto';
@@ -20,7 +20,7 @@ import { GenerarCronogramaCPDto } from './dto/generar-cronograma-cp.dto';
 import { GenerarCronogramaCDDto } from './dto/generar-cronograma-cd.dto';
 import { GenerarCronogramaMEDto } from './dto/generar-cronograma-me.dto';
 import { UpdateCronogramaExpedienteDto } from './dto/update-cronograma.dto';
-import { ModalidadSeleccion, RolUsuario, Prisma } from '@prisma/client';
+import { RolUsuario, Prisma } from '@prisma/client';
 import { BusinessDaysUtil } from '../common/utils/business-days.util';
 import { CronogramaEnteService } from '../cronograma-ente/cronograma-ente.service';
 
@@ -129,96 +129,7 @@ export class ExpedienteContratacionService {
     }
   }
 
-  // --- NUEVA LÓGICA DE CÁLCULO DE MODALIDAD (PASO 2) ---
-
-  calcularModalidadSugerida(dto: CalcularModalidadDto) {
-    // Si el cliente provee el valor UCA (lo trae de otro endpoint), lo usamos.
-    // De lo contrario, usamos el valor fallback de 35.0 Bs.
-    const VALOR_UCAU_ACTUAL = dto.valorUcauBase ?? 35.0;
-
-    const montoUcau = Number(dto.montoEstimadoBs) / VALOR_UCAU_ACTUAL;
-
-    let modalidadSugerida: ModalidadSeleccion;
-    let baseLegal = '';
-    let nombreModalidad = '';
-
-    // Lógica basada en rangos legales de la Ley de Contrataciones Públicas (DLCP)
-    switch (dto.tipoContratacion) {
-      case 'BIENES':
-        if (montoUcau > 20000) {
-          modalidadSugerida = 'LICITACION_PUBLICA';
-          nombreModalidad = 'Concurso Abierto, acto único, apertura única';
-          baseLegal = 'Artículos 55 y 78, DLCP';
-        } else if (montoUcau > 5000) {
-          modalidadSugerida = 'CONCURSO_CERRADO';
-          nombreModalidad = 'Concurso Cerrado';
-          baseLegal = 'Artículo 85, DLCP';
-        } else {
-          modalidadSugerida = 'CONSULTA_PRECIOS';
-          nombreModalidad = 'Consulta de Precios';
-          baseLegal = 'Artículo 96, DLCP';
-        }
-        break;
-
-      case 'SERVICIOS':
-        if (montoUcau > 30000) {
-          modalidadSugerida = 'LICITACION_PUBLICA';
-          nombreModalidad = 'Concurso Abierto, acto único, apertura única';
-          baseLegal = 'Artículos 55 y 78, DLCP';
-        } else if (montoUcau > 10000) {
-          modalidadSugerida = 'CONCURSO_CERRADO';
-          nombreModalidad = 'Concurso Cerrado';
-          baseLegal = 'Artículo 85, DLCP';
-        } else {
-          modalidadSugerida = 'CONSULTA_PRECIOS';
-          nombreModalidad = 'Consulta de Precios';
-          baseLegal = 'Artículo 96, DLCP';
-        }
-        break;
-
-      case 'OBRAS':
-        if (montoUcau > 50000) {
-          modalidadSugerida = 'LICITACION_PUBLICA';
-          nombreModalidad = 'Concurso Abierto, acto único, apertura única';
-          baseLegal = 'Artículos 55 y 78, DLCP';
-        } else if (montoUcau > 20000) {
-          modalidadSugerida = 'CONCURSO_CERRADO';
-          nombreModalidad = 'Concurso Cerrado';
-          baseLegal = 'Artículo 85, DLCP';
-        } else {
-          modalidadSugerida = 'CONSULTA_PRECIOS';
-          nombreModalidad = 'Consulta de Precios';
-          baseLegal = 'Artículo 96, DLCP';
-        }
-        break;
-
-      case 'MIXTO':
-        // Generalizando para mixto basado en obras como peor escenario o bienes
-        modalidadSugerida = montoUcau > 50000 ? 'LICITACION_PUBLICA' : 'CONSULTA_PRECIOS';
-        nombreModalidad =
-          modalidadSugerida === 'LICITACION_PUBLICA' ? 'Concurso Abierto' : 'Consulta de Precios';
-        baseLegal = 'Artículo 78, Numeral 4, DLCP (Referencial Mixto)';
-        break;
-
-      default:
-        modalidadSugerida = 'ADJUDICACION_DIRECTA';
-        nombreModalidad = 'Adjudicación Directa';
-        baseLegal = 'Artículo 101, DLCP';
-        break;
-    }
-
-    return {
-      tipoContratacion: dto.tipoContratacion,
-      valorUcauBase: VALOR_UCAU_ACTUAL,
-      montoEstimadoBs: Number(dto.montoEstimadoBs),
-      montoUcauCalculado: Number(montoUcau.toFixed(2)),
-      modalidadSeleccion: modalidadSugerida,
-      nombreModalidadSugerida: nombreModalidad,
-      baseLegal: baseLegal,
-    };
-  }
-
-  // --- CREAR BORRADOR (PASO 2 COMPLETADO) ---
+  // --- CREAR BORRADOR ---
   async createBorrador(dto: CreateExpedienteDraftDto, userId: string, enteId: string) {
     if (!enteId) {
       throw new BadRequestException(
@@ -526,6 +437,43 @@ export class ExpedienteContratacionService {
     } catch (e: unknown) {
       throw new InternalServerErrorException(
         'Error al anular expediente: ' + (e instanceof Error ? e.message : String(e)),
+      );
+    }
+  }
+
+  // --- DECLARATORIA DE DESIERTO (Art. 113 LCP) ---
+  async declararDesierto(id: string, dto: DeclaracionDesiertoDto, userId: string, enteId: string) {
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id },
+    });
+
+    if (!expediente) throw new NotFoundException('Expediente no encontrado');
+    if (expediente.enteId !== enteId)
+      throw new BadRequestException('No tiene permisos para modificar este expediente');
+    if (expediente.estatusProceso === 'ANULADO')
+      throw new BadRequestException('No se puede declarar desierto un expediente anulado');
+    if (expediente.declaratoriaDesierto)
+      throw new BadRequestException('El expediente ya fue declarado desierto');
+
+    try {
+      const result = await this.prisma.expedienteContratacion.update({
+        where: { id },
+        data: {
+          declaratoriaDesierto: true,
+          causalDeclaratoriaDesierto: dto.causalDeclaratoriaDesierto,
+          justificacionDeclaratoriaDesierto: dto.justificacionDeclaratoriaDesierto,
+          estatusProceso: 'DESIERTO',
+          updatedBy: userId,
+        },
+      });
+
+      return {
+        message: 'Expediente declarado desierto exitosamente',
+        data: result,
+      };
+    } catch (e: unknown) {
+      throw new InternalServerErrorException(
+        'Error al declarar desierto: ' + (e instanceof Error ? e.message : String(e)),
       );
     }
   }

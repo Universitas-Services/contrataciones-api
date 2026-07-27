@@ -322,9 +322,9 @@ model ModalidadContratacion {
   id                 String                   @id @default(uuid()) @map("id_modalidad")
   enteId             String                   @map("id_ente")
   tipoContratacion   TipoContratacion         @map("tipo_contratacion")
-  montoEstimadoBs    Decimal                  @map("monto_estimado_bs") @db.Decimal(15, 2)
-  montoEstimadoDolar Decimal                  @map("monto_estimado_dolar") @db.Decimal(15, 2)
-  valorUcauBase      Decimal                  @map("valor_ucau_base") @db.Decimal(10, 4)
+  montoEstimadoBs    Decimal                  @map("monto_estimado_bs") @db.Decimal(18, 4)
+  montoEstimadoDolar Decimal                  @map("monto_estimado_dolar") @db.Decimal(18, 4)
+  valorUcauBase      Decimal                  @map("valor_ucau_base") @db.Decimal(18, 4)
   modalidadSeleccion ModalidadSeleccion       @map("modalidad_seleccion")
   createdAt          DateTime                 @default(now())
   updatedAt          DateTime                 @updatedAt
@@ -360,7 +360,10 @@ model ExpedienteContratacion {
   modalidadConcursoAbierto   String?                 @map("modalidad_concurso_abierto") @db.VarChar(100)
   numeralCausalProcedenciaCd String?                 @map("numeral_causal_procedencia_cd") @db.VarChar(10)
   causalProcedenciaCd        String?                 @map("causal_procedencia_cd")
-  unidadContratanteId        String?                 @map("id_unidad_contratante")
+  unidadContratanteId                String?                 @map("id_unidad_contratante")
+  declaratoriaDesierto               Boolean                 @default(false) @map("declaratoria_desierto_au_au")
+  causalDeclaratoriaDesierto         String?                 @map("causal_declaratoria_desierto_au_au") @db.VarChar(255)
+  justificacionDeclaratoriaDesierto  String?                 @map("justificacion_declaratoria_desierto_au_au")
   adjudicacion               Adjudicacion?
   documentosGenerados        DocumentoGenerado[]
   ofertas                    OfertaPresentada[]
@@ -1001,6 +1004,7 @@ enum EstatusProceso {
   ADJUDICADO
   CONTRATADO
   ANULADO
+  DESIERTO
 }
 
 enum TipoDocumento {

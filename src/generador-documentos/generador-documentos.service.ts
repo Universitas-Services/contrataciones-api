@@ -1030,8 +1030,8 @@ export class GeneradorDocumentosService {
     });
     if (!evaluacion) throw new NotFoundException(`Evaluación ${evaluacionId} no encontrada`);
 
-    const boolToSiNo = (val: boolean | null | undefined) =>
-      val === true ? 'SI' : val === false ? 'NO' : '___';
+    const boolSi = (val: boolean | null | undefined) => (val === true ? 'SI' : '');
+    const boolNo = (val: boolean | null | undefined) => (val === false ? 'NO' : '');
 
     const s1 = evaluacion.sobre1;
     const s2 = evaluacion.sobre2;
@@ -1061,45 +1061,63 @@ export class GeneradorDocumentosService {
       cedula_rep_legal_evaluado_au_au: evaluacion.cedulaRepLegalEvaluado || '___',
 
       // Sección A — Sobre N°1
-      carta_manifestacion_voluntad_au_au: boolToSiNo(s1?.cartaManifestacionVoluntad),
+      carta_manifestacion_voluntad_au_au_si: boolSi(s1?.cartaManifestacionVoluntad),
+      carta_manifestacion_voluntad_au_au_no: boolNo(s1?.cartaManifestacionVoluntad),
       obs_carta_manifestacion_voluntad_au_au: s1?.obsCartaManifestacionVoluntad || '',
-      carta_autorizacion_au_au: boolToSiNo(s1?.cartaAutorizacion),
+      carta_autorizacion_au_au_si: boolSi(s1?.cartaAutorizacion),
+      carta_autorizacion_au_au_no: boolNo(s1?.cartaAutorizacion),
       obs_carta_autorizacion_au_au: s1?.obsCartaAutorizacion || '',
-      copia_rif_vigente_au_au: boolToSiNo(s1?.copiaRifVigente),
+      copia_rif_vigente_au_au_si: boolSi(s1?.copiaRifVigente),
+      copia_rif_vigente_au_au_no: boolNo(s1?.copiaRifVigente),
       obs_copia_rif_vigente_au_au: s1?.obsCopiaRifVigente || '',
-      certificado_rnc_au_au: boolToSiNo(s1?.certificadoRnc),
+      certificado_rnc_au_au_si: boolSi(s1?.certificadoRnc),
+      certificado_rnc_au_au_no: boolNo(s1?.certificadoRnc),
       obs_certificado_rnc_au_au: s1?.obsCertificadoRnc || '',
-      solvencia_laboral_au_au: boolToSiNo(s1?.solvenciaLaboral),
+      solvencia_laboral_au_au_si: boolSi(s1?.solvenciaLaboral),
+      solvencia_laboral_au_au_no: boolNo(s1?.solvenciaLaboral),
       obs_solvencia_laboral_au_au: s1?.obsSolvenciaLaboral || '',
-      declaracion_socios_no_inhabilitados_au_au: boolToSiNo(s1?.declaracionSociosNoInhabilitados),
+      declaracion_socios_no_inhabilitados_au_au_si: boolSi(s1?.declaracionSociosNoInhabilitados),
+      declaracion_socios_no_inhabilitados_au_au_no: boolNo(s1?.declaracionSociosNoInhabilitados),
       obs_declaracion_socios_no_inhabilitados_au_au: s1?.obsDeclaracionSociosNoInhabilitados || '',
-      declaracion_no_deudas_ente_au_au: boolToSiNo(s1?.declaracionNoDeudas),
+      declaracion_no_deudas_ente_au_au_si: boolSi(s1?.declaracionNoDeudas),
+      declaracion_no_deudas_ente_au_au_no: boolNo(s1?.declaracionNoDeudas),
       obs_declaracion_no_deudas_ente_au_au: s1?.obsDeclaracionNoDeudas || '',
-      declaracion_no_impedimentos_lcp_au_au: boolToSiNo(s1?.declaracionNoImpedimentosLcp),
+      declaracion_no_impedimentos_lcp_au_au_si: boolSi(s1?.declaracionNoImpedimentosLcp),
+      declaracion_no_impedimentos_lcp_au_au_no: boolNo(s1?.declaracionNoImpedimentosLcp),
       obs_declaracion_no_impedimentos_lcp_au_au: s1?.obsDeclaracionNoImpedimentosLcp || '',
-      declaracion_info_financiera_au_au: boolToSiNo(s1?.declaracionInfoFinanciera),
+      declaracion_info_financiera_au_au_si: boolSi(s1?.declaracionInfoFinanciera),
+      declaracion_info_financiera_au_au_no: boolNo(s1?.declaracionInfoFinanciera),
       obs_declaracion_info_financiera_au_au: s1?.obsDeclaracionInfoFinanciera || '',
-      relacion_servicios_prestados_au_au: boolToSiNo(s1?.relacionServiciosPrestados),
+      relacion_servicios_prestados_au_au_si: boolSi(s1?.relacionServiciosPrestados),
+      relacion_servicios_prestados_au_au_no: boolNo(s1?.relacionServiciosPrestados),
       obs_relacion_servicios_prestados_au_au: s1?.obsRelacionServiciosPrestados || '',
-      referencias_comerciales_au_au: boolToSiNo(s1?.referenciasComerciales),
+      referencias_comerciales_au_au_si: boolSi(s1?.referenciasComerciales),
+      referencias_comerciales_au_au_no: boolNo(s1?.referenciasComerciales),
       obs_referencias_comerciales_au_au: s1?.obsReferenciasComerciales || '',
 
       // Sección B — Sobre N°2
-      oferta_tecnico_economica_au_au: boolToSiNo(s2?.ofertaTecnicoEconomica),
+      oferta_tecnico_economica_au_au_si: boolSi(s2?.ofertaTecnicoEconomica),
+      oferta_tecnico_economica_au_au_no: boolNo(s2?.ofertaTecnicoEconomica),
       obs_oferta_tecnico_economica_au_au: s2?.obsOfertaTecnicoEconomica || '',
-      carta_oferta_au_au: boolToSiNo(s2?.cartaOferta),
+      carta_oferta_au_au_si: boolSi(s2?.cartaOferta),
+      carta_oferta_au_au_no: boolNo(s2?.cartaOferta),
       obs_carta_oferta_au_au: s2?.obsCartaOferta || '',
-      declaracion_capacidad_financiera_au_au: boolToSiNo(s2?.declaracionCapacidadFinanciera),
+      declaracion_capacidad_financiera_au_au_si: boolSi(s2?.declaracionCapacidadFinanciera),
+      declaracion_capacidad_financiera_au_au_no: boolNo(s2?.declaracionCapacidadFinanciera),
       obs_declaracion_capacidad_financiera_au_au: s2?.obsDeclaracionCapacidadFinanciera || '',
-      declaracion_compromiso_resp_social_au_au: boolToSiNo(s2?.declaracionCompromisoRespSocial),
+      declaracion_compromiso_resp_social_au_au_si: boolSi(s2?.declaracionCompromisoRespSocial),
+      declaracion_compromiso_resp_social_au_au_no: boolNo(s2?.declaracionCompromisoRespSocial),
       obs_declaracion_compromiso_resp_social_au_au: s2?.obsDeclaracionCompromisoRespSocial || '',
-      garantia_mantenimiento_oferta_au_au: boolToSiNo(s2?.garantiaMantenimientoOferta),
+      garantia_mantenimiento_oferta_au_au_si: boolSi(s2?.garantiaMantenimientoOferta),
+      garantia_mantenimiento_oferta_au_au_no: boolNo(s2?.garantiaMantenimientoOferta),
       obs_garantia_mantenimiento_oferta_au_au: s2?.obsGarantiaMantenimientoOferta || '',
-      declaracion_autocalculo_van_au_au: boolToSiNo(s2?.declaracionAutocalculoVan),
+      declaracion_autocalculo_van_au_au_si: boolSi(s2?.declaracionAutocalculoVan),
+      declaracion_autocalculo_van_au_au_no: boolNo(s2?.declaracionAutocalculoVan),
       obs_declaracion_autocalculo_van_au_au: s2?.obsDeclaracionAutocalculoVan || '',
 
       // Calificación
-      oferente_calificado_au_au: boolToSiNo(evaluacion.oferenteCalificado),
+      oferente_calificado_au_au:
+        boolSi(evaluacion.oferenteCalificado) || boolNo(evaluacion.oferenteCalificado) || '___',
       motivo_descalificacion_oferente_au_au: evaluacion.motivoDescalificacion || '',
 
       // Miembros de la Comisión
