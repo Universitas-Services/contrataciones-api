@@ -161,6 +161,8 @@ export class ExpedienteContratacionService {
             enteId: enteId,
             modalidadId: modalidad.id,
             estatusProceso: 'BORRADOR',
+            tasaReferencialBcv: dto.tasaReferencialBcv,
+            fechaActaInicio: dto.fechaActaInicio ? new Date(dto.fechaActaInicio) : undefined,
             createdBy: userId,
             updatedBy: userId,
           },
@@ -230,6 +232,10 @@ export class ExpedienteContratacionService {
         if (dto.unidadUsuariaId !== undefined) dataExpediente.unidadUsuariaId = dto.unidadUsuariaId;
         if (dto.autoridadFirmaComoDelegado !== undefined)
           dataExpediente.autoridadFirmaComoDelegado = dto.autoridadFirmaComoDelegado;
+        if (dto.tasaReferencialBcv !== undefined)
+          dataExpediente.tasaReferencialBcv = dto.tasaReferencialBcv;
+        if (dto.fechaActaInicio !== undefined)
+          dataExpediente.fechaActaInicio = new Date(dto.fechaActaInicio);
 
         let resultExpediente: any = expediente;
         if (Object.keys(dataExpediente).length > 0) {
@@ -732,6 +738,8 @@ export class ExpedienteContratacionService {
             enteId,
             modalidadId: modalidad.id,
             estatusProceso: 'BORRADOR',
+            tasaReferencialBcv: dto.tasaReferencialBcv,
+            fechaActaInicio: dto.fechaActaInicio ? new Date(dto.fechaActaInicio) : undefined,
             createdBy: userId,
             updatedBy: userId,
           },
@@ -781,6 +789,8 @@ export class ExpedienteContratacionService {
             modalidadId: modalidad.id,
             unidadContratanteId: dto.unidadContratanteId,
             estatusProceso: 'BORRADOR',
+            tasaReferencialBcv: dto.tasaReferencialBcv,
+            fechaActaInicio: dto.fechaActaInicio ? new Date(dto.fechaActaInicio) : undefined,
             createdBy: userId,
             updatedBy: userId,
           },
@@ -836,6 +846,8 @@ export class ExpedienteContratacionService {
             numeralCausalProcedenciaCd: dto.numeralCausalProcedenciaCd,
             causalProcedenciaCd: dto.causalProcedenciaCd,
             estatusProceso: 'BORRADOR',
+            tasaReferencialBcv: dto.tasaReferencialBcv,
+            fechaActaInicio: dto.fechaActaInicio ? new Date(dto.fechaActaInicio) : undefined,
             createdBy: userId,
             updatedBy: userId,
           },
@@ -888,6 +900,8 @@ export class ExpedienteContratacionService {
             enteId,
             modalidadId: modalidad.id,
             estatusProceso: 'BORRADOR',
+            tasaReferencialBcv: dto.tasaReferencialBcv,
+            fechaActaInicio: dto.fechaActaInicio ? new Date(dto.fechaActaInicio) : undefined,
             createdBy: userId,
             updatedBy: userId,
           },

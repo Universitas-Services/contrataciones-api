@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsPositive, IsString } from 'class-validator';
+import { IsEnum, IsNumber, IsPositive, IsString, IsOptional, IsDateString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { TipoContratacion } from '@prisma/client';
 
@@ -33,4 +33,15 @@ export class CreateExpedienteConsultaPreciosDto {
   @ApiProperty({ description: 'ID de la Unidad Contratante responsable' })
   @IsString()
   unidadContratanteId: string;
+
+  @ApiProperty({ description: 'Tasa referencial del BCV', required: false })
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  tasaReferencialBcv?: number;
+
+  @ApiProperty({ description: 'Fecha del acta de inicio', example: '2026-03-31', required: false })
+  @IsOptional()
+  @IsDateString()
+  fechaActaInicio?: string;
 }

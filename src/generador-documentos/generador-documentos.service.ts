@@ -72,7 +72,7 @@ export class GeneradorDocumentosService {
       nom_ente_contratante: ente?.nombre || '___',
       cod_nomenclatura_proceso_au_au: expediente.codigoNomenclatura || '___',
       loc_ciudad_ente: ente?.ciudad || '___',
-      fec_acta_inicio_au_au: formatDateToSpanishLong(fasePreparatoria.fechaActaInicio),
+      fec_acta_inicio_au_au: formatDateToSpanishLong(expediente.fechaActaInicio ?? fasePreparatoria.fechaActaInicio),
       datos_acto_autorizacion_inicio_au_au: fasePreparatoria.datosActoAutorizacionInicio || '___',
       datos_designacion_comision: comision?.datosDesignacionComision || '___',
 
@@ -119,6 +119,7 @@ export class GeneradorDocumentosService {
 
       viabilidad_contrato_marco: fasePreparatoria.viabilidadContratoMarco || '___',
       tipo_objeto_contratacion: modalidad?.tipoContratacion || '___',
+      tasa_referencial_bcv: expediente.tasaReferencialBcv ? Number(expediente.tasaReferencialBcv).toFixed(4) : '___',
     };
   }
 
@@ -415,6 +416,7 @@ export class GeneradorDocumentosService {
       sub_total: formatCurrencyVE(subtotalNum),
       iva_sub_total: formatCurrencyVE(ivaNum),
       monto_total_renglon_au_au: formatCurrencyVE(subtotalNum + ivaNum),
+      tasa_referencial_bcv: e.tasaReferencialBcv ? Number(e.tasaReferencialBcv).toFixed(4) : '___',
     };
   }
 
@@ -1363,10 +1365,11 @@ export class GeneradorDocumentosService {
       // Montos del presupuesto
       monto_estimado_bs: formatBs(Number(expediente.modalidad?.montoEstimadoBs ?? 0)),
       valor_ucau_base: formatBs(Number(expediente.modalidad?.valorUcauBase ?? 0)),
+      tasa_referencial_bcv: expediente.tasaReferencialBcv ? Number(expediente.tasaReferencialBcv).toFixed(4) : '___',
 
       // Cronograma y Fase Preparatoria
       fec_limite_evaluacion_au_au: formatearFecha(cronograma?.fechaLimiteEvaluacion),
-      fec_acta_inicio_au_au: formatearFecha(fasePrep?.fechaActaInicio),
+      fec_acta_inicio_au_au: formatearFecha(expediente.fechaActaInicio ?? fasePrep?.fechaActaInicio),
       pag_web_ente: '___', // Placeholder para web
       fec_llamado_participar_au_au: formatearFecha(cronograma?.fechaLlamadoParticipar),
       fec_inicio_disponibilidad_pliego_au_au: formatearFecha(

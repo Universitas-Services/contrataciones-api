@@ -361,6 +361,8 @@ model ExpedienteContratacion {
   numeralCausalProcedenciaCd String?                 @map("numeral_causal_procedencia_cd") @db.VarChar(10)
   causalProcedenciaCd        String?                 @map("causal_procedencia_cd")
   unidadContratanteId                String?                 @map("id_unidad_contratante")
+  tasaReferencialBcv                 Decimal?                @map("tasa_referencial_bcv") @db.Decimal(18, 4)
+  fechaActaInicio                    DateTime?               @map("fec_acta_inicio_au_au")
   declaratoriaDesierto               Boolean                 @default(false) @map("declaratoria_desierto_au_au")
   causalDeclaratoriaDesierto         String?                 @map("causal_declaratoria_desierto_au_au") @db.VarChar(255)
   justificacionDeclaratoriaDesierto  String?                 @map("justificacion_declaratoria_desierto_au_au")

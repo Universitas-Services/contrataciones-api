@@ -87,4 +87,17 @@ export class UpdateExpedienteGeneralDto {
   @IsDateString()
   @IsOptional()
   fechaLlamadoParticipar?: string;
+
+  // --- TASA REFERENCIAL BCV ---
+  @ApiPropertyOptional({ description: 'Tasa referencial del BCV' })
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  tasaReferencialBcv?: number;
+
+  // --- FECHA ACTA INICIO ---
+  @ApiPropertyOptional({ description: 'Fecha del acta de inicio', example: '2026-03-31' })
+  @IsDateString()
+  @IsOptional()
+  fechaActaInicio?: string;
 }

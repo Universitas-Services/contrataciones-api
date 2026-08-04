@@ -210,6 +210,20 @@ async function main() {
     ],
   });
 
+  const unidadContratanteMiranda = await prisma.unidadContratante.create({
+    data: {
+      enteId: enteMiranda.id,
+      nombreUnidadContratante: 'Oficina Central de Compras y Contrataciones',
+      nombreResponsableUnidad: 'Lic. María Delgado',
+      nombreResponsableUnidadContratante: 'Lic. María Delgado',
+      cargoResponsable: 'Directora de Compras',
+      cedulaResponsableUnidadContratante: 'V-13.456.789',
+      datosDesignacionUnidadContratante: 'Resolución N° 012-2022',
+      activa: true,
+      createdBy: adminMiranda.id,
+    },
+  });
+
   const unidadMiranda = await prisma.unidadUsuaria.create({
     data: {
       enteId: enteMiranda.id,
@@ -242,6 +256,7 @@ async function main() {
       enteId: enteMiranda.id,
       comisionId: comisionMiranda.id,
       unidadUsuariaId: unidadMiranda.id,
+      unidadContratanteId: unidadContratanteMiranda.id,
       autoridadId: autoridadMiranda.id,
       modalidadId: modalidadMiranda.id,
       descripcionObjeto: 'Adquisición de Insumos Médicos y Quirúrgicos para la Red Hospitalaria',
