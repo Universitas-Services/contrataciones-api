@@ -1,15 +1,20 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
+import { ExpedienteAccessService } from '../common/services/expediente-access.service';
 import { CreatePresupuestoItemDto } from './dto/create-presupuesto-item.dto';
 import { UpdatePresupuestoItemDto } from './dto/update-presupuesto-item.dto';
 import { QueryPresupuestoItemDto } from './dto/query-presupuesto-item.dto';
+import type { UsuarioActual } from '../common/types/usuario-actual.type';
 
 @Injectable()
 export class PresupuestoItemService {
   private readonly IVA_RATE = 0.16; // 16%
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly acceso: ExpedienteAccessService,
+  ) {}
 
   private async invalidarDocumentos(expedienteId: string) {
     await this.prisma.documentoGenerado.updateMany({
@@ -22,7 +27,30 @@ export class PresupuestoItemService {
     });
   }
 
-  async create(expedienteId: string, dto: CreatePresupuestoItemDto) {
+  /**
+   * Recalcula el total del presupuesto del expediente a partir de sus ítems
+   * vigentes y lo persiste en el expediente.
+   */
+  private async sincronizarTotalPresupuesto(expedienteId: string) {
+    const aggregate = await this.prisma.presupuestoItem.aggregate({
+      where: { expedienteId, deletedAt: null },
+      _sum: { totalItem: true },
+    });
+
+    await this.prisma.expedienteContratacion.update({
+      where: { id: expedienteId },
+      data: { totalPresupuesto: aggregate._sum.totalItem ?? 0 },
+    });
+  }
+
+  private async despuesDeMutar(expedienteId: string) {
+    await this.sincronizarTotalPresupuesto(expedienteId);
+    await this.invalidarDocumentos(expedienteId);
+  }
+
+  async create(expedienteId: string, dto: CreatePresupuestoItemDto, user: UsuarioActual) {
+    await this.acceso.assertAcceso(expedienteId, user.enteId, user.rol);
+
     // Calculo automático del total del item
     const totalItem = dto.cantidadRequerida * dto.precioUnitarioEstimado;
 
@@ -38,11 +66,17 @@ export class PresupuestoItemService {
       },
     });
 
-    await this.invalidarDocumentos(expedienteId);
+    await this.despuesDeMutar(expedienteId);
     return result;
   }
 
-  async findAllByExpedienteId(expedienteId: string, query: QueryPresupuestoItemDto) {
+  async findAllByExpedienteId(
+    expedienteId: string,
+    query: QueryPresupuestoItemDto,
+    user: UsuarioActual,
+  ) {
+    await this.acceso.assertAcceso(expedienteId, user.enteId, user.rol);
+
     const { page = 1, limit = 10, search } = query;
     const skip = (page - 1) * limit;
 
@@ -89,6 +123,9 @@ export class PresupuestoItemService {
       },
       totales: {
         subtotal,
+        porcentajeIvaAplicado: this.IVA_RATE * 100,
+        // Alias con el nombre mal escrito que consume el front actual. Retirar
+        // cuando el front migre a porcentajeIvaAplicado.
         porcentajeIvaApicado: this.IVA_RATE * 100,
         montoIva: impuestoMonto,
         montoTotal,
@@ -130,9 +167,13 @@ export class PresupuestoItemService {
     };
   }
 
-  async update(id: string, dto: UpdatePresupuestoItemDto) {
-    const existing = await this.prisma.presupuestoItem.findUnique({ where: { id } });
+  async update(id: string, dto: UpdatePresupuestoItemDto, user: UsuarioActual) {
+    const existing = await this.prisma.presupuestoItem.findFirst({
+      where: { id, deletedAt: null },
+    });
     if (!existing) throw new NotFoundException('Item de presupuesto no encontrado');
+
+    await this.acceso.assertAcceso(existing.expedienteId, user.enteId, user.rol);
 
     const newCantidad = dto.cantidadRequerida ?? Number(existing.cantidadRequerida);
     const newPrecio = dto.precioUnitarioEstimado ?? Number(existing.precioUnitarioEstimado);
@@ -146,19 +187,24 @@ export class PresupuestoItemService {
       },
     });
 
-    await this.invalidarDocumentos(existing.expedienteId);
+    await this.despuesDeMutar(existing.expedienteId);
     return result;
   }
 
-  async remove(id: string) {
-    const existing = await this.prisma.presupuestoItem.findUnique({ where: { id } });
+  async remove(id: string, user: UsuarioActual) {
+    const existing = await this.prisma.presupuestoItem.findFirst({
+      where: { id, deletedAt: null },
+    });
     if (!existing) throw new NotFoundException('Item de presupuesto no encontrado');
 
-    const result = await this.prisma.presupuestoItem.delete({
+    await this.acceso.assertAcceso(existing.expedienteId, user.enteId, user.rol);
+
+    const result = await this.prisma.presupuestoItem.update({
       where: { id },
+      data: { deletedAt: new Date() },
     });
 
-    await this.invalidarDocumentos(existing.expedienteId);
+    await this.despuesDeMutar(existing.expedienteId);
     return result;
   }
 }

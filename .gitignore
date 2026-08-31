@@ -16,6 +16,7 @@ dist/
 build/
 *.js.map
 *.d.ts.map
+*.tsbuildinfo
 
 # ============================================================================
 # ENVIRONMENT VARIABLES
@@ -197,3 +198,4 @@ tmp/
 .local/
 local.json
 config.local.js
+.env.render.bak

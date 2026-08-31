@@ -6,6 +6,7 @@ import {
   TipoContratacion,
   ModalidadSeleccion,
   EstatusProceso,
+  EstadoMicromodulo,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
@@ -14,7 +15,33 @@ const prisma = new PrismaClient();
 const LOGO_NEUTRO =
   'https://res.cloudinary.com/da86ka5ip/image/upload/v1743519586/universitas/placeholder_logo.png';
 
+/**
+ * Este seeder BORRA TODA la base antes de poblarla. Para que no pueda
+ * ejecutarse por accidente contra un entorno remoto (Render, staging), sólo
+ * corre si la conexión apunta a un host local. Para forzarlo en otro entorno
+ * hay que pasar SEED_FORCE=1 de forma explícita.
+ */
+function assertBaseSegura() {
+  const url = process.env.DATABASE_URL ?? '';
+
+  if (process.env.SEED_FORCE === '1') {
+    console.warn('⚠️  SEED_FORCE=1: se omite la protección de entorno.\n');
+    return;
+  }
+
+  const esLocal = /@(localhost|127\.0\.0\.1|host\.docker\.internal|postgres|db)[:/]/.test(url);
+  if (!esLocal) {
+    const destino = url.replace(/:\/\/([^:]+):[^@]+@/, '://$1:****@') || '(DATABASE_URL vacío)';
+    console.error('\n🛑 SEEDER ABORTADO — la base no parece local.');
+    console.error(`   Destino: ${destino}`);
+    console.error('   Este seeder borra TODOS los datos. Si de verdad quieres');
+    console.error('   ejecutarlo aquí, vuelve a correrlo con SEED_FORCE=1.\n');
+    process.exit(1);
+  }
+}
+
 async function main() {
+  assertBaseSegura();
   console.log('🌱 Iniciando seeder (Limpieza Total)...\n');
 
   // ─── LIMPIEZA EN CASCADA ─────────────────────────────────────────────────
@@ -29,8 +56,12 @@ async function main() {
   await prisma.ofertaPresentada.deleteMany();
   await prisma.adquirentePliego.deleteMany();
   await prisma.partidaPresupuestaria.deleteMany();
+  await prisma.presupuestoItem.deleteMany();
   await prisma.cronogramaExpediente.deleteMany();
+  await prisma.informeRecomendacion.deleteMany();
+  // Fase1Especificacion se elimina en cascada con FasePreparatoria
   await prisma.fasePreparatoria.deleteMany();
+  await prisma.cuentaBancariaEnte.deleteMany();
   await prisma.documentoProveedor.deleteMany();
   await prisma.proveedor.deleteMany();
   await prisma.expedienteContratacion.deleteMany();
@@ -42,10 +73,26 @@ async function main() {
   await prisma.pliegoGenerado.deleteMany();
   await prisma.manualGenerado.deleteMany();
   await prisma.documentoGenerado.deleteMany();
-  try { await (prisma as any).mensajeTicket.deleteMany(); } catch { /* ignore */ }
-  try { await (prisma as any).ticketSoporte.deleteMany(); } catch { /* ignore */ }
-  try { await (prisma as any).diaNoLaborableEnte.deleteMany(); } catch { /* ignore */ }
-  try { await (prisma as any).alertaCronograma.deleteMany(); } catch { /* ignore */ }
+  try {
+    await (prisma as any).mensajeTicket.deleteMany();
+  } catch {
+    /* ignore */
+  }
+  try {
+    await (prisma as any).ticketSoporte.deleteMany();
+  } catch {
+    /* ignore */
+  }
+  try {
+    await (prisma as any).diaNoLaborableEnte.deleteMany();
+  } catch {
+    /* ignore */
+  }
+  try {
+    await (prisma as any).alertaCronograma.deleteMany();
+  } catch {
+    /* ignore */
+  }
   await prisma.usuario.deleteMany();
   await prisma.enteSupervisor.deleteMany();
   await prisma.supervisor.deleteMany();
@@ -266,33 +313,280 @@ async function main() {
     },
   });
 
-  await prisma.fasePreparatoria.create({
+  const faseM = await prisma.fasePreparatoria.create({
     data: {
       expedienteId: expedienteM.id,
-      detallesTecnicosCalidad:
-        'Equipos de computación de alto rendimiento según normas ISO',
+      detallesTecnicosCalidad: 'Equipos de computación de alto rendimiento según normas ISO',
       alcanceCantidadesObra: 'Adquisición e instalación de 15 computadoras',
-      justificacionVentajas: 'Renovación tecnológica necesaria para operaciones ininterrumpidas',
       origenCrsRegistro: true,
-      diasValidezOferta: 90,
-      diasVigenciaGarantiaExtension: 60,
-      normativaLegal: 'Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas (Gaceta Oficial N° 6.154), Reglamento de la Ley de Contrataciones Públicas, Normas de Control Interno SUNAI',
-      autoridadAclaratorias: 'Comisión Principal de Contrataciones GEM',
-      direccionRetiroPliego: 'Av. Francisco de Miranda, Edif. Gubernamental, Piso 3, Oficina de Contrataciones, Los Teques, Estado Miranda',
+      correoComision: 'comision.contratacion@miranda.gob.ve',
+      telefonoComision: '0212-3214567',
+      fechaActaInicio: new Date('2024-04-10'),
+
+      // ─── Micromódulo: Actividades Previas ────────────────────────────────
+      estadoActividadesPrevias: EstadoMicromodulo.COMPLETADO,
+      numReferenciaSnc: 'SNC-2024-004521',
+      modifRequerimientoSnc: false,
+      justificacionNecesidadContratacion:
+        'Desabastecimiento crítico de insumos médicos en la red hospitalaria del estado.',
+      justificacionVentajas: 'Renovación tecnológica necesaria para operaciones ininterrumpidas',
+      condicionPlurianual: false,
+      permitePymesCooperativas: true,
+      viabilidadContratoMarco: false,
+      fecEstudioMercado: new Date('2024-03-20'),
+      numCertificacionPresupuestaria: 'CDP-2024-00871',
+      plazoEjecucionProcedimiento: 90,
+      lugarLogisticaEjecucion:
+        'Almacén central de la Secretaría de Salud, Los Teques, Estado Miranda.',
+      requiereEspecializado: false,
+      requiereMuestras: true,
+      detalleProcedimientoMuestras:
+        'El oferente debe consignar una muestra por cada renglón junto con el Sobre N°2.',
+      activaPromocionEconomica: true,
+      requiereVan: true,
+      puntajeVan: 5,
+      indPrefLocal: true,
+      puntuacionBonoLocal: 3.0,
+      indBonoSujeto: false,
+
+      // ─── Micromódulo: Llamado ────────────────────────────────────────────
+      estadoLlamado: EstadoMicromodulo.COMPLETADO,
+      objetivosEspecificos1: 'Garantizar el abastecimiento continuo de insumos médicos.',
+      objetivosEspecificos2: 'Obtener las condiciones económicas más ventajosas para el Ente.',
+      objetivosEspecificos3: 'Asegurar la calidad certificada de los insumos adquiridos.',
+      direccionRetiroPliego:
+        'Av. Francisco de Miranda, Edif. Gubernamental, Piso 3, Oficina de Contrataciones, Los Teques, Estado Miranda',
       horarioRetiroPliego: '08:00am a 12:00m y 01:00pm a 04:00pm',
-      pliegoGratuito: false,
+      pliegoGratuito: false, // equivale a pliegoCosto = true
       costoPliegoBs: 25000.0,
       bancoPagoPliego: 'Banco de Venezuela',
       cuentaPagoPliego: '0102-0000-00-0000000000',
       titularPagoPliego: 'Gobernación del Estado Miranda',
+      rifPagoPliego: 'G-20000123-4',
       horaActoRecepAper: '10:00 AM',
-      correoComision: 'comision.contratacion@miranda.gob.ve',
-      telefonoComision: '0212-3214567',
-      fechaActaInicio: new Date('2024-04-10'),
+
+      // ─── Micromódulo: Aspectos Generales del Pliego ──────────────────────
+      estadoAspectosGenerales: EstadoMicromodulo.COMPLETADO,
       datosActoAutorizacionInicio: 'Resolución N° 045-2024 de fecha 05-04-2024',
-      condicionPlurianual: false,
-      viabilidadContratoMarco: false,
+      autoridadAclaratorias: 'Comisión Principal de Contrataciones GEM',
+      normativaLegal: JSON.stringify([
+        'Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas (Gaceta Oficial N° 6.154)',
+        'Reglamento de la Ley de Contrataciones Públicas',
+        'Normas de Control Interno SUNAI 2025',
+      ]),
+      diasValidezOferta: 90,
+      diasVigenciaGarantiaExtension: 60,
+      monedaDiferente: false,
+      idiomaDiferente: false,
+      porcentajeResponsabilidadSocial: 3.0,
+      unidadRespCumplimientoCrs: 'Secretaría de Desarrollo Social del Estado Miranda',
+      modalidadCrs: 'Ejecución de proyectos de desarrollo socio comunitario',
+      formaCumplimientoCrs:
+        'Dotación de insumos médicos a ambulatorios de comunidades priorizadas por el Ente.',
+      porcentajeMantenimientoOferta: 5.0,
+      porcentajeFielCumplimiento: 15.0,
+      retencionFielCumplimiento: true,
+      requiereGarantiaLaboral: false,
+      polizaResponsabilidadCivil: true,
+      porcentajeResponsabilidadCivil: 20.0,
+      montoResponsabilidadCivilBs: 3000000.0,
+      anticipoContrato: true,
+      porcentajeAnticipo: 30.0,
+      anticipoEspecial: false,
+
+      // ─── Micromódulo: Modelo de Contrato ─────────────────────────────────
+      estadoModeloContrato: EstadoMicromodulo.COMPLETADO,
+      modeloContratoData: {
+        clauses: [
+          {
+            instanceId: 'c1',
+            order: 1,
+            titulo: 'Objeto del contrato',
+            cuerpoHtml:
+              '<p>El presente contrato tiene por objeto {desc_objeto_contratacion_au_au}.</p>',
+            kind: 'preceptiva',
+            origen: 'generica',
+            basamentoLegal: 'Art. 120 LCP',
+          },
+          {
+            instanceId: 'c2',
+            order: 2,
+            titulo: 'Plazo de ejecución',
+            cuerpoHtml: '<p>El plazo de ejecución será de 90 días continuos.</p>',
+            kind: 'preceptiva',
+            origen: 'generica',
+          },
+          {
+            instanceId: 'c3',
+            order: 3,
+            titulo: 'Anticipo',
+            cuerpoHtml: '<p>El Ente otorgará un anticipo del 30% del monto del contrato.</p>',
+            kind: 'facultativa',
+            origen: 'custom',
+          },
+        ],
+      },
+
+      // ─── Micromódulo: Calificación Legal ─────────────────────────────────
+      estadoCalificacionLegal: EstadoMicromodulo.COMPLETADO,
+      calificacionLegalData: {
+        exigidos: {
+          modCartaManifestacionVoluntadAuAu: true,
+          modCartaAutorizacionAuAu: true,
+          modDocConstitutivoAuAu: true,
+          modCopiaRifVigenteAuAu: true,
+          modCertificadoRncAuAu: true,
+          modSolvenciaLaboralAuAu: true,
+          modDeclaracionSociosNoInhabilitadosAuAu: true,
+          modDeclaracionNoDeudasEnteAuAu: true,
+          modDeclaracionNoImpedimentosLcpAuAu: true,
+          modDeclaracionConocimientoLugarAuAu: false,
+          modDeclaracionInfoFinancieraAuAu: true,
+          modEvaluacionDesempenoAuAu: false,
+          modCartaOfertaAuAu: true,
+          modDeclaracionCapacidadFinancieraAuAu: true,
+          modDeclaracionCompromisoRespSocialAuAu: true,
+          modGarantiaMantenimientoOfertaAuAu: true,
+          modDeclaracionAutocalculoVanAuAu: true,
+          modCartaNotificacionesAuAu: true,
+          modGarantiaFielCumplAuAu: true,
+          modFianzaLaboralAuAu: false,
+        },
+        sustitutos: {
+          sustitutoDjRifVigenteAuAu: true,
+          sustitutoDjCertificadoRncAuAu: false,
+        },
+        personalizados: [
+          {
+            id: 'p1',
+            sobre: 1,
+            descripcion: 'Certificado de inscripción en el registro estadal de proveedores',
+            exigido: true,
+            tieneModelo: false,
+          },
+        ],
+      },
+
+      // ─── Micromódulo: Calificación Financiera ────────────────────────────
+      estadoCalificacionFinanciera: EstadoMicromodulo.COMPLETADO,
+      calificacionFinancieraData: {
+        criterioCalifFinanDescapital: true,
+        puntajeMaximoDescapital: 20,
+        criterioCalifFinanSolvencia: true,
+        rangosSolvencia: {
+          rangoMaximo: 2.0,
+          puntajeMaximo: 20,
+          rangoMedioDesde: 1.2,
+          rangoMedioHasta: 1.9,
+          puntajeMedio: 12,
+          rangoMinimo: 1.0,
+          puntajeMinimo: 5,
+        },
+        criterioCalifFinanRotacion: false,
+        criterioCalifFinanRendimiento: false,
+        criterioCalifFinanRentabilidad: false,
+        criterioCalifFinanEndeudamiento: true,
+        rangosEndeudamiento: {
+          rangoMaximo: 0.3,
+          puntajeMaximo: 20,
+          rangoMedioDesde: 0.4,
+          rangoMedioHasta: 0.6,
+          puntajeMedio: 12,
+          rangoMinimo: 0.8,
+          puntajeMinimo: 5,
+        },
+        puntuacionMinimaCalifFinanciera: 60,
+      },
+
+      // ─── Micromódulo: Calificación Técnica (suma exacta = 100) ───────────
+      estadoCalificacionTecnica: EstadoMicromodulo.COMPLETADO,
+      calificacionTecnicaData: {
+        criterios: [
+          {
+            id: 'ct1',
+            nombre: 'Experiencia en suministro de insumos médicos',
+            puntuacion: 60,
+            descripcion: 'Años de experiencia comprobable en contratos de naturaleza equivalente.',
+            rangos: [
+              { descripcion: 'Igual o mayor a 10 años', puntaje: 60 },
+              { descripcion: 'Entre 5 y 9 años', puntaje: 35 },
+              { descripcion: 'Menos de 5 años', puntaje: 10 },
+            ],
+          },
+          {
+            id: 'ct2',
+            nombre: 'Capacidad de almacenamiento y cadena de frío',
+            puntuacion: 40,
+            descripcion: 'Infraestructura propia certificada para resguardo de insumos.',
+            rangos: [
+              { descripcion: 'Almacén propio certificado', puntaje: 40 },
+              { descripcion: 'Almacén arrendado certificado', puntaje: 20 },
+            ],
+          },
+        ],
+        puntuacionMinimaCalifTecnica: 70,
+      },
+
+      // ─── Micromódulo: Evaluación T/E (bolsa compartida = 100) ────────────
+      estadoEvaluacionTecnicaEconomica: EstadoMicromodulo.COMPLETADO,
+      evaluacionTecnicaEconomicaData: {
+        tecnica: {
+          criterios: [
+            {
+              id: 'et1',
+              nombre: 'Tiempo de entrega',
+              puntuacion: 30,
+              descripcion: 'Menor plazo ofertado respecto al plazo referencial.',
+              rangos: [
+                { descripcion: 'Hasta 30 días', puntaje: 30 },
+                { descripcion: 'Entre 31 y 60 días', puntaje: 15 },
+              ],
+            },
+            {
+              id: 'et2',
+              nombre: 'Garantía técnica extendida',
+              puntuacion: 10,
+              descripcion: 'Meses de garantía por encima del mínimo exigido.',
+              rangos: [
+                { descripcion: '24 meses o más', puntaje: 10 },
+                { descripcion: 'Entre 12 y 23 meses', puntaje: 5 },
+              ],
+            },
+          ],
+          puntuacionMinima: 25,
+        },
+        economica: {
+          criterios: [
+            {
+              id: 'ee1',
+              nombre: 'Precio ofertado',
+              puntuacion: 60,
+              descripcion: 'Menor precio respecto al presupuesto base.',
+              rangos: [
+                { descripcion: 'Menor o igual al 90% del presupuesto base', puntaje: 60 },
+                { descripcion: 'Entre 91% y 100% del presupuesto base', puntaje: 30 },
+              ],
+            },
+          ],
+          puntuacionMinima: 30,
+        },
+      },
+
       createdBy: ejecutorMiranda.id,
+      updatedBy: ejecutorMiranda.id,
+    },
+  });
+
+  // Archivo de especificaciones técnicas (micromódulo especial de la Fase 1)
+  await prisma.fase1Especificacion.create({
+    data: {
+      fasePreparatoriaId: faseM.id,
+      fileName: 'especificaciones-tecnicas-insumos-medicos.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 348_512,
+      storageKey: `expedientes/${expedienteM.id}/especificaciones/especificaciones-tecnicas`,
+      url: 'https://res.cloudinary.com/da86ka5ip/raw/upload/v1743519586/universitas/especificaciones-demo.pdf',
+      uploadedBy: ejecutorMiranda.id,
     },
   });
 
@@ -336,6 +630,83 @@ async function main() {
         totalItem: 1200000.0,
       },
     ],
+  });
+
+  // El total del presupuesto se mantiene sincronizado con la suma de los ítems.
+  await prisma.expedienteContratacion.update({
+    where: { id: expedienteM.id },
+    data: { totalPresupuesto: 13700000.0 },
+  });
+
+  // ============================================================================
+  // 5b. CUENTAS BANCARIAS DEL ENTE
+  //     Alimentan la selección de cuenta de pago del pliego en el Llamado.
+  // ============================================================================
+  console.log('🏦 Creando Cuentas Bancarias del Ente...');
+
+  await prisma.cuentaBancariaEnte.createMany({
+    data: [
+      {
+        enteId: enteMiranda.id,
+        bancoPago: 'Banco de Venezuela',
+        numeroCuenta: '01020000000000000000',
+        tipoCuenta: 'Corriente',
+        titularPago: 'Gobernación del Estado Miranda',
+        rifPago: 'G-20000123-4',
+        createdBy: adminMiranda.id,
+      },
+      {
+        enteId: enteMiranda.id,
+        bancoPago: 'Banco del Tesoro',
+        numeroCuenta: '01630000000000000000',
+        tipoCuenta: 'Corriente',
+        titularPago: 'Gobernación del Estado Miranda',
+        rifPago: 'G-20000123-4',
+        createdBy: adminMiranda.id,
+      },
+    ],
+  });
+
+  // ============================================================================
+  // 5c. EXPEDIENTE EN FASE 1 RECIÉN INICIADA
+  //     Sirve para probar el flujo completo del panel de micromódulos: al abrirlo
+  //     sólo Actividades Previas está disponible y el resto queda bloqueado.
+  // ============================================================================
+  console.log('📂 Creando Expediente en Fase 1 (arranque limpio)...');
+
+  const modalidadFase1 = await prisma.modalidadContratacion.create({
+    data: {
+      enteId: enteMiranda.id,
+      tipoContratacion: TipoContratacion.OBRAS,
+      montoEstimadoBs: 48000000.0,
+      montoEstimadoDolar: 1333333.33,
+      valorUcauBase: 36.0,
+      modalidadSeleccion: ModalidadSeleccion.LICITACION_PUBLICA,
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  const expedienteFase1 = await prisma.expedienteContratacion.create({
+    data: {
+      enteId: enteMiranda.id,
+      modalidadId: modalidadFase1.id,
+      descripcionObjeto:
+        'Rehabilitación de la vialidad agrícola del Municipio Acevedo, Estado Miranda',
+      codigoNomenclatura: 'LP-GEM-OBRAS-007-2024',
+      estatusProceso: EstatusProceso.EN_PREPARACION,
+      modalidadConcursoAbierto: 'Acto Único Apertura Única',
+      createdBy: ejecutorMiranda.id,
+    },
+  });
+
+  // Fase creada pero sin datos: todos los micromódulos quedan en PENDIENTE por
+  // defecto, que es justo el estado de entrada del panel.
+  await prisma.fasePreparatoria.create({
+    data: {
+      expedienteId: expedienteFase1.id,
+      createdBy: ejecutorMiranda.id,
+      updatedBy: ejecutorMiranda.id,
+    },
   });
 
   // ============================================================================
@@ -498,24 +869,28 @@ async function main() {
       cedulaRepLegalEvaluado: 'V-12.345.678',
       // Calificación legal
       oferenteCalificadoLegal: true,
-      justificacionCalificadoLegal: 'Cumplió con todos los recaudos legales exigidos en el Pliego de Condiciones.',
+      justificacionCalificadoLegal:
+        'Cumplió con todos los recaudos legales exigidos en el Pliego de Condiciones.',
       // Calificación financiera
       indiceLiquidez: 2.35,
       indiceSolvencia: 0.42,
       oferenteCalificadoFinanciera: true,
-      justificacionCalificadaFinanciera: 'Índice de liquidez superior a 1 e índice de solvencia por debajo de 0.5, dentro de los parámetros exigidos.',
+      justificacionCalificadaFinanciera:
+        'Índice de liquidez superior a 1 e índice de solvencia por debajo de 0.5, dentro de los parámetros exigidos.',
       // Calificación técnica
       actividadComercial: 15,
       relacionSuministros: 14,
       referenciasComercialesPuntaje: 10,
       totalCalifTecnica: 39,
       oferenteCalificadoTecnica: true,
-      justificacionCalificadoTecnica: 'Empresa con amplia trayectoria en el suministro de insumos médicos a entes públicos.',
+      justificacionCalificadoTecnica:
+        'Empresa con amplia trayectoria en el suministro de insumos médicos a entes públicos.',
       // Calificación global
       oferenteCalificado: true,
       // Evaluación técnica (Matriz)
       oferenteEvaluadoTecnico: true,
-      justificacionEvaluadoTecnico: 'Cumplió con todos los criterios de evaluación técnica del Pliego.',
+      justificacionEvaluadoTecnico:
+        'Cumplió con todos los criterios de evaluación técnica del Pliego.',
       // Totales
       totalTecnica: 39,
       totalEconomica: 50,
@@ -586,16 +961,18 @@ async function main() {
       cedulaRepLegalEvaluado: 'V-15.987.654',
       oferenteCalificadoLegal: true,
       justificacionCalificadoLegal: 'Presentó todos los recaudos legales completos y vigentes.',
-      indiceLiquidez: 3.10,
+      indiceLiquidez: 3.1,
       indiceSolvencia: 0.32,
       oferenteCalificadoFinanciera: true,
-      justificacionCalificadaFinanciera: 'Sólida posición financiera con índices dentro de parámetros.',
+      justificacionCalificadaFinanciera:
+        'Sólida posición financiera con índices dentro de parámetros.',
       actividadComercial: 15,
       relacionSuministros: 15,
       referenciasComercialesPuntaje: 10,
       totalCalifTecnica: 40,
       oferenteCalificadoTecnica: true,
-      justificacionCalificadoTecnica: 'Vasta experiencia en el rubro con más de 20 años en el mercado.',
+      justificacionCalificadoTecnica:
+        'Vasta experiencia en el rubro con más de 20 años en el mercado.',
       oferenteCalificado: true,
       oferenteEvaluadoTecnico: true,
       justificacionEvaluadoTecnico: 'Supera los criterios mínimos de evaluación técnica.',
@@ -666,20 +1043,25 @@ async function main() {
       nombreRepLegalEvaluado: 'Ing. Marco Villanueva',
       cedulaRepLegalEvaluado: 'V-8.765.432',
       oferenteCalificadoLegal: false,
-      justificacionCalificadoLegal: 'No consignó el Certificado de Inscripción en el RNC vigente ni la Solvencia Laboral.',
+      justificacionCalificadoLegal:
+        'No consignó el Certificado de Inscripción en el RNC vigente ni la Solvencia Laboral.',
       indiceLiquidez: 0.85,
       indiceSolvencia: 0.72,
       oferenteCalificadoFinanciera: false,
-      justificacionCalificadaFinanciera: 'Índice de liquidez inferior a 1, no cumple el requisito mínimo financiero.',
+      justificacionCalificadaFinanciera:
+        'Índice de liquidez inferior a 1, no cumple el requisito mínimo financiero.',
       actividadComercial: 8,
       relacionSuministros: 6,
       referenciasComercialesPuntaje: 5,
       totalCalifTecnica: 19,
       oferenteCalificadoTecnica: false,
-      justificacionCalificadoTecnica: 'Puntaje técnico insuficiente: 19 puntos sobre el mínimo requerido de 25.',
+      justificacionCalificadoTecnica:
+        'Puntaje técnico insuficiente: 19 puntos sobre el mínimo requerido de 25.',
       oferenteCalificado: false,
-      motivoDescalificacion: 'Incumplimiento de recaudos legales obligatorios (RNC y Solvencia Laboral) e índice de liquidez deficitario.',
-      itemsDescalificacion: 'Ítem 5 del Pliego de Condiciones (Certificado RNC); Art. 95 LCP; Modelo N° 3 (Solvencia Laboral).',
+      motivoDescalificacion:
+        'Incumplimiento de recaudos legales obligatorios (RNC y Solvencia Laboral) e índice de liquidez deficitario.',
+      itemsDescalificacion:
+        'Ítem 5 del Pliego de Condiciones (Certificado RNC); Art. 95 LCP; Modelo N° 3 (Solvencia Laboral).',
       createdBy: ejecutorMiranda.id,
     },
   });
@@ -714,7 +1096,8 @@ async function main() {
       ofertaTecnicoEconomica: true,
       cartaOferta: true,
       declaracionCapacidadFinanciera: false,
-      obsDeclaracionCapacidadFinanciera: 'No consignó declaración jurada de capacidad financiera (Modelo N° 10).',
+      obsDeclaracionCapacidadFinanciera:
+        'No consignó declaración jurada de capacidad financiera (Modelo N° 10).',
       declaracionCompromisoRespSocial: true,
       garantiaMantenimientoOferta: false,
       obsGarantiaMantenimientoOferta: 'Garantía de mantenimiento de oferta no consignada.',
@@ -738,9 +1121,20 @@ async function main() {
   console.log('--------------------------------------------------');
   console.log('📦 DATOS CREADOS:');
   console.log(`  Expediente: LP-GEM-SALUD-002-2024 (EN_EVALUACION)`);
+  console.log(`    id: ${expedienteM.id}`);
+  console.log(`    Fase 1: los 8 micromódulos en COMPLETADO + especificaciones + 2 ítems`);
   console.log(`  Oferta Alpha (ID: ${ofertaAlpha.id}) → Eval: ${evalAlpha.id} ✅ 1ra Opción`);
   console.log(`  Oferta Gamma (ID: ${ofertaGamma.id}) → Eval: ${evalGamma.id} ✅ 2da Opción`);
   console.log(`  Oferta Beta  (ID: ${ofertaBeta.id})  → Eval: ${evalBeta.id}  ❌ Descalificada`);
+  console.log('--------------------------------------------------');
+  console.log(`  Expediente: LP-GEM-OBRAS-007-2024 (EN_PREPARACION, tipo OBRAS)`);
+  console.log(`    id: ${expedienteFase1.id}`);
+  console.log(`    Fase 1: todo PENDIENTE — sirve para probar el flujo desde cero`);
+  console.log(`  Cuentas bancarias del Ente Miranda: 2`);
+  console.log('--------------------------------------------------');
+  console.log('🔎 PARA PROBAR FASE 1:');
+  console.log(`  GET /expedientes/${expedienteM.id}/fase-preparatoria/progreso`);
+  console.log(`  GET /expedientes/${expedienteFase1.id}/fase-preparatoria/progreso`);
   console.log('--------------------------------------------------');
 }
 

@@ -28,6 +28,9 @@ import { SoporteModule } from './soporte/soporte.module';
 import { AdjudicacionModule } from './adjudicacion/adjudicacion.module';
 import { ContratoFormalizadoModule } from './contrato-formalizado/contrato-formalizado.module';
 import { CronogramaEnteModule } from './cronograma-ente/cronograma-ente.module';
+import { CommonModule } from './common/common.module';
+import { Fase1Module } from './fase1/fase1.module';
+import { CuentasBancariasModule } from './cuentas-bancarias/cuentas-bancarias.module';
 
 @Module({
   imports: [
@@ -35,6 +38,7 @@ import { CronogramaEnteModule } from './cronograma-ente/cronograma-ente.module';
       isGlobal: true,
     }),
     PrismaModule,
+    CommonModule,
     StorageModule,
     AuthModule,
     EntesModule,
@@ -53,6 +57,8 @@ import { CronogramaEnteModule } from './cronograma-ente/cronograma-ente.module';
     EmailModule,
     DirectorioActoresModule,
     FasePreparatoriaModule,
+    Fase1Module,
+    CuentasBancariasModule,
     PresupuestoItemModule,
     GeneradorDocumentosModule,
     OfertaPresentadaModule,

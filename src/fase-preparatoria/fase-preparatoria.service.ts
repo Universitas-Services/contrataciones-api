@@ -1,10 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateFasePreparatoriaDto } from './dto/create-fase-preparatoria.dto';
 import { PrismaService } from '../database/prisma.service';
+import { ExpedienteAccessService } from '../common/services/expediente-access.service';
+import { RolUsuario } from '@prisma/client';
 
 @Injectable()
 export class FasePreparatoriaService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly acceso: ExpedienteAccessService,
+  ) {}
 
   private formatFasePreparatoriaResponse(fase: any) {
     if (!fase) return fase;
@@ -33,7 +38,9 @@ export class FasePreparatoriaService {
     };
   }
 
-  async findByExpedienteId(expedienteId: string) {
+  async findByExpedienteId(expedienteId: string, enteId: string, rol: RolUsuario) {
+    await this.acceso.assertAcceso(expedienteId, enteId, rol);
+
     const fase = await this.prisma.fasePreparatoria.findUnique({
       where: { expedienteId },
     });
@@ -47,7 +54,15 @@ export class FasePreparatoriaService {
     return this.formatFasePreparatoriaResponse(fase);
   }
 
-  async upsertByExpedienteId(expedienteId: string, dto: CreateFasePreparatoriaDto) {
+  async upsertByExpedienteId(
+    expedienteId: string,
+    dto: CreateFasePreparatoriaDto,
+    userId: string,
+    enteId: string,
+    rol: RolUsuario,
+  ) {
+    await this.acceso.assertAcceso(expedienteId, enteId, rol);
+
     // Validaciones de negocio: Si pliego no es gratuito, deben venir banco, cuenta, titular
     if (dto.pliegoGratuito === false) {
       if (!dto.bancoPagoPliego || !dto.cuentaPagoPliego || !dto.titularPagoPliego) {
@@ -79,10 +94,13 @@ export class FasePreparatoriaService {
       where: { expedienteId },
       create: {
         ...data,
+        createdBy: userId,
+        updatedBy: userId,
         expediente: { connect: { id: expedienteId } },
       },
       update: {
         ...data,
+        updatedBy: userId,
       },
     });
 

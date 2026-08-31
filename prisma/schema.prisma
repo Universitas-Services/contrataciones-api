@@ -57,6 +57,7 @@ model EntePublico {
   unidadesUsuarias            UnidadUsuaria[]
   ticketsSoporte              TicketSoporte[]
   diasNoLaborables            DiaNoLaborableEnte[]
+  cuentasBancarias            CuentaBancariaEnte[]
 
   @@index([universitasId])
   @@index([rif])
@@ -234,17 +235,17 @@ model UnidadUsuaria {
 }
 
 model UnidadContratante {
-  id                                 String      @id @default(uuid()) @map("id_unidad_contratante")
-  enteId                             String      @map("id_ente")
-  nombreUnidadContratante            String      @map("nom_unidad_contratante")
-  nombreResponsableUnidad            String      @map("nom_responsable_unidad")
-  nombreResponsableUnidadContratante String?     @map("nom_responsable_unidad_contratante")
-  cargoResponsable                   String      @map("cargo_responsable")
-  cedulaResponsableUnidadContratante String?     @map("cedula_respo_unidad_contratante")
-  datosDesignacionUnidadContratante  String?     @map("datos_designacion_unidad_contratante")
-  activa                             Boolean     @default(true) @map("ind_activa")
-  createdAt                          DateTime    @default(now())
-  updatedAt                          DateTime    @updatedAt
+  id                                 String                   @id @default(uuid()) @map("id_unidad_contratante")
+  enteId                             String                   @map("id_ente")
+  nombreUnidadContratante            String                   @map("nom_unidad_contratante")
+  nombreResponsableUnidad            String                   @map("nom_responsable_unidad")
+  nombreResponsableUnidadContratante String?                  @map("nom_responsable_unidad_contratante")
+  cargoResponsable                   String                   @map("cargo_responsable")
+  cedulaResponsableUnidadContratante String?                  @map("cedula_respo_unidad_contratante")
+  datosDesignacionUnidadContratante  String?                  @map("datos_designacion_unidad_contratante")
+  activa                             Boolean                  @default(true) @map("ind_activa")
+  createdAt                          DateTime                 @default(now())
+  updatedAt                          DateTime                 @updatedAt
   deletedAt                          DateTime?
   createdBy                          String?
   updatedBy                          String?
@@ -256,48 +257,48 @@ model UnidadContratante {
 }
 
 model Proveedor {
-  id                              String               @id @default(uuid())
-  enteId                          String
-  correo                          String
-  nombre                          String
-  rif                             String
-  tipoPersona                     TipoPersona
-  tipoEntidadJuridica             TipoEntidadJuridica?
-  estado                          String?
-  municipio                       String?
-  parroquia                       String?
-  direccionFiscal                 String?
-  telefono                        String?
-  nombreRepLegal                  String?
-  cedulaRepLegal                  String?
-  registroRnc                     Boolean              @default(false)
-  solvenciaLaboral                Boolean              @default(false)
-  licenciaFuncionamientoMunicipal Boolean              @default(false)
-  actividadComercial              String?
-  areaEspecialidad                AreaEspecialidad?
-  anosExperiencia                 Int?
-  fechaEstadoFinanciero           DateTime?
-  patrimonioReportado             Decimal?             @db.Decimal(15, 2)
-  nivelContratacion               NivelContratacion?
-  estatusValidacion               EstatusValidacion    @default(PENDIENTE)
-  fechaRegistro                   DateTime             @default(now())
-  createdAt                       DateTime             @default(now())
-  updatedAt                       DateTime             @updatedAt
-  deletedAt                       DateTime?
-  createdBy                       String?
-  updatedBy                       String?
-  version                         Int                  @default(1)
-  datosRegistroMercantil          String?
-  fechaUltimaAprobacion           DateTime?
-  islrProveedor                   Boolean?             @default(false) @map("islr_proveedor")
-  cedulaNaturalProveedor          Int?                 @map("cedula_natural_proveedor")
-  nombreAutoridadProveedor        String?              @map("nombre_autoridad_proveedor")
-  cedulaAutoridadProveedor        Int?                 @map("cedula_autoridad_proveedor")
-  datosDesignacionAutoridadProveedor String?           @map("datos_designacion_autoridad_proveedor")
-  documentos                      DocumentoProveedor[]
-  ofertas                         OfertaPresentada[]
-  ente                            EntePublico          @relation(fields: [enteId], references: [id])
-  adquisicionesPliego             AdquirentePliego[]
+  id                                 String               @id @default(uuid())
+  enteId                             String
+  correo                             String
+  nombre                             String
+  rif                                String
+  tipoPersona                        TipoPersona
+  tipoEntidadJuridica                TipoEntidadJuridica?
+  estado                             String?
+  municipio                          String?
+  parroquia                          String?
+  direccionFiscal                    String?
+  telefono                           String?
+  nombreRepLegal                     String?
+  cedulaRepLegal                     String?
+  registroRnc                        Boolean              @default(false)
+  solvenciaLaboral                   Boolean              @default(false)
+  licenciaFuncionamientoMunicipal    Boolean              @default(false)
+  actividadComercial                 String?
+  areaEspecialidad                   AreaEspecialidad?
+  anosExperiencia                    Int?
+  fechaEstadoFinanciero              DateTime?
+  patrimonioReportado                Decimal?             @db.Decimal(15, 2)
+  nivelContratacion                  NivelContratacion?
+  estatusValidacion                  EstatusValidacion    @default(PENDIENTE)
+  fechaRegistro                      DateTime             @default(now())
+  createdAt                          DateTime             @default(now())
+  updatedAt                          DateTime             @updatedAt
+  deletedAt                          DateTime?
+  createdBy                          String?
+  updatedBy                          String?
+  version                            Int                  @default(1)
+  datosRegistroMercantil             String?
+  fechaUltimaAprobacion              DateTime?
+  islrProveedor                      Boolean?             @default(false) @map("islr_proveedor")
+  cedulaNaturalProveedor             Int?                 @map("cedula_natural_proveedor")
+  nombreAutoridadProveedor           String?              @map("nombre_autoridad_proveedor")
+  cedulaAutoridadProveedor           Int?                 @map("cedula_autoridad_proveedor")
+  datosDesignacionAutoridadProveedor String?              @map("datos_designacion_autoridad_proveedor")
+  documentos                         DocumentoProveedor[]
+  ofertas                            OfertaPresentada[]
+  ente                               EntePublico          @relation(fields: [enteId], references: [id])
+  adquisicionesPliego                AdquirentePliego[]
 
   @@index([enteId, estatusValidacion])
   @@index([rif])
@@ -340,48 +341,48 @@ model ModalidadContratacion {
 }
 
 model ExpedienteContratacion {
-  id                         String                  @id @default(uuid()) @map("id_expediente_au_au")
-  enteId                     String                  @map("id_ente")
-  modalidadId                String                  @map("id_modalidad")
-  comisionId                 String?                 @map("id_comision")
-  unidadUsuariaId            String?                 @map("id_unidad_usuaria")
-  autoridadId                String?                 @map("id_autoridad")
-  descripcionObjeto          String                  @map("desc_objeto_contratacion_au_au")
-  codigoNomenclatura         String                  @map("cod_nomenclatura_proceso_au_au")
-  estatusProceso             EstatusProceso          @default(BORRADOR) @map("estatus_proceso_au_au")
-  totalPresupuesto           Decimal?                @map("total_presupuesto_au_au") @db.Decimal(15, 2)
-  createdAt                  DateTime                @default(now())
-  updatedAt                  DateTime                @updatedAt
-  deletedAt                  DateTime?
-  createdBy                  String?
-  updatedBy                  String?
-  version                    Int                     @default(1)
-  autoridadFirmaComoDelegado Boolean                 @default(false) @map("ind_firma_delegado_au_au")
-  modalidadConcursoAbierto   String?                 @map("modalidad_concurso_abierto") @db.VarChar(100)
-  numeralCausalProcedenciaCd String?                 @map("numeral_causal_procedencia_cd") @db.VarChar(10)
-  causalProcedenciaCd        String?                 @map("causal_procedencia_cd")
-  unidadContratanteId                String?                 @map("id_unidad_contratante")
-  tasaReferencialBcv                 Decimal?                @map("tasa_referencial_bcv") @db.Decimal(18, 4)
-  fechaActaInicio                    DateTime?               @map("fec_acta_inicio_au_au")
-  declaratoriaDesierto               Boolean                 @default(false) @map("declaratoria_desierto_au_au")
-  causalDeclaratoriaDesierto         String?                 @map("causal_declaratoria_desierto_au_au") @db.VarChar(255)
-  justificacionDeclaratoriaDesierto  String?                 @map("justificacion_declaratoria_desierto_au_au")
-  adjudicacion               Adjudicacion?
-  documentosGenerados        DocumentoGenerado[]
-  ofertas                    OfertaPresentada[]
-  partidasPresupuestarias    PartidaPresupuestaria[]
-  adquirientesPliego         AdquirentePliego[]
-  cronograma                 CronogramaExpediente?
-  autoridad                  MaximaAutoridad?        @relation(fields: [autoridadId], references: [id])
-  comision                   ComisionContrataciones? @relation(fields: [comisionId], references: [id])
-  ente                       EntePublico             @relation(fields: [enteId], references: [id])
-  modalidad                  ModalidadContratacion   @relation(fields: [modalidadId], references: [id])
-  unidadUsuaria              UnidadUsuaria?          @relation(fields: [unidadUsuariaId], references: [id])
-  unidadContratante          UnidadContratante?      @relation(fields: [unidadContratanteId], references: [id])
-  fasePreparatoria           FasePreparatoria?
-  pliegosGenerados           PliegoGenerado[]
-  presupuestoItems           PresupuestoItem[]
-  informeRecomendacion       InformeRecomendacion?
+  id                                String                  @id @default(uuid()) @map("id_expediente_au_au")
+  enteId                            String                  @map("id_ente")
+  modalidadId                       String                  @map("id_modalidad")
+  comisionId                        String?                 @map("id_comision")
+  unidadUsuariaId                   String?                 @map("id_unidad_usuaria")
+  autoridadId                       String?                 @map("id_autoridad")
+  descripcionObjeto                 String                  @map("desc_objeto_contratacion_au_au")
+  codigoNomenclatura                String                  @map("cod_nomenclatura_proceso_au_au")
+  estatusProceso                    EstatusProceso          @default(BORRADOR) @map("estatus_proceso_au_au")
+  totalPresupuesto                  Decimal?                @map("total_presupuesto_au_au") @db.Decimal(15, 2)
+  createdAt                         DateTime                @default(now())
+  updatedAt                         DateTime                @updatedAt
+  deletedAt                         DateTime?
+  createdBy                         String?
+  updatedBy                         String?
+  version                           Int                     @default(1)
+  autoridadFirmaComoDelegado        Boolean                 @default(false) @map("ind_firma_delegado_au_au")
+  modalidadConcursoAbierto          String?                 @map("modalidad_concurso_abierto") @db.VarChar(100)
+  numeralCausalProcedenciaCd        String?                 @map("numeral_causal_procedencia_cd") @db.VarChar(10)
+  causalProcedenciaCd               String?                 @map("causal_procedencia_cd")
+  unidadContratanteId               String?                 @map("id_unidad_contratante")
+  tasaReferencialBcv                Decimal?                @map("tasa_referencial_bcv") @db.Decimal(18, 4)
+  fechaActaInicio                   DateTime?               @map("fec_acta_inicio_au_au")
+  declaratoriaDesierto              Boolean                 @default(false) @map("declaratoria_desierto_au_au")
+  causalDeclaratoriaDesierto        String?                 @map("causal_declaratoria_desierto_au_au") @db.VarChar(255)
+  justificacionDeclaratoriaDesierto String?                 @map("justificacion_declaratoria_desierto_au_au")
+  adjudicacion                      Adjudicacion?
+  documentosGenerados               DocumentoGenerado[]
+  ofertas                           OfertaPresentada[]
+  partidasPresupuestarias           PartidaPresupuestaria[]
+  adquirientesPliego                AdquirentePliego[]
+  cronograma                        CronogramaExpediente?
+  autoridad                         MaximaAutoridad?        @relation(fields: [autoridadId], references: [id])
+  comision                          ComisionContrataciones? @relation(fields: [comisionId], references: [id])
+  ente                              EntePublico             @relation(fields: [enteId], references: [id])
+  modalidad                         ModalidadContratacion   @relation(fields: [modalidadId], references: [id])
+  unidadUsuaria                     UnidadUsuaria?          @relation(fields: [unidadUsuariaId], references: [id])
+  unidadContratante                 UnidadContratante?      @relation(fields: [unidadContratanteId], references: [id])
+  fasePreparatoria                  FasePreparatoria?
+  pliegosGenerados                  PliegoGenerado[]
+  presupuestoItems                  PresupuestoItem[]
+  informeRecomendacion              InformeRecomendacion?
 
   @@index([enteId, estatusProceso])
   @@index([codigoNomenclatura])
@@ -389,44 +390,152 @@ model ExpedienteContratacion {
 }
 
 model FasePreparatoria {
-  id                            String                 @id @default(uuid()) @map("id_fase_preparatoria")
-  expedienteId                  String                 @unique @map("id_expediente")
-  datosActoAutorizacionInicio   String?                @map("datos_acto_autorizacion_inicio") @db.VarChar(255)
-  fechaActaInicio               DateTime?              @map("fec_acta_inicio")
-  detallesTecnicosCalidad       String?                @map("detalles_tecnicos_calidad")
-  alcanceCantidadesObra         String?                @map("alcance_cantidades_obra")
-  justificacionVentajas         String?                @map("justificacion_ventajas")
-  origenCrsRegistro             Boolean?               @default(false) @map("ind_origen_crs_registro")
-  diasValidezOferta             Int?                   @map("dias_validez_oferta")
-  autoridadAclaratorias         String?                @map("autoridad_aclaratorias") @db.VarChar(255)
-  normativaLegal                String?                @map("normativa_legal")
-  diasVigenciaGarantiaExtension Int?                   @map("dias_vigencia_garantia_ext")
-  objetivosEspecificos1         String?                @map("objetivos_especificos_1") @db.VarChar(255)
-  objetivosEspecificos2         String?                @map("objetivos_especificos_2") @db.VarChar(255)
-  objetivosEspecificos3         String?                @map("objetivos_especificos_3") @db.VarChar(255)
-  direccionRetiroPliego         String?                @map("direccion_retiro_pliego") @db.VarChar(255)
-  horarioRetiroPliego           String?                @map("horario_retiro_pliego") @db.VarChar(255)
-  pliegoGratuito                Boolean                @default(true) @map("pliego_gratuito")
-  costoPliegoBs                 Decimal?               @map("costo_pliego_bs") @db.Decimal(10, 2)
-  bancoPagoPliego               String?                @map("banco_pago_pliego") @db.VarChar(100)
-  cuentaPagoPliego              String?                @map("cuenta_pago_pliego") @db.VarChar(50)
-  titularPagoPliego             String?                @map("titular_pago_pliego") @db.VarChar(100)
-  horaActoRecepAper             String?                @map("hora_acto_recep_aper") @db.VarChar(50)
-  correoComision                String?                @map("correo_comision") @db.VarChar(100)
-  telefonoComision              String?                @map("telefono_comision") @db.VarChar(50)
-  condicionPlurianual           Boolean?               @map("condicion_plurianual")
-  viabilidadContratoMarco       Boolean?               @map("viabilidad_contrato_marco")
-  justificacion_contrato_marco_au_au String?          @map("justificacion_contrato_marco_au_au") @db.VarChar(100)
-  createdAt                     DateTime               @default(now()) @map("created_at")
-  updatedAt                     DateTime               @updatedAt @map("updated_at")
-  deletedAt                     DateTime?              @map("deleted_at")
-  createdBy                     String?                @map("created_by")
-  updatedBy                     String?                @map("updated_by")
-  version                       Int                    @default(1) @map("version")
-  expediente                    ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  id                                 String    @id @default(uuid()) @map("id_fase_preparatoria")
+  expedienteId                       String    @unique @map("id_expediente")
+  datosActoAutorizacionInicio        String?   @map("datos_acto_autorizacion_inicio") @db.VarChar(255)
+  fechaActaInicio                    DateTime? @map("fec_acta_inicio")
+  detallesTecnicosCalidad            String?   @map("detalles_tecnicos_calidad")
+  alcanceCantidadesObra              String?   @map("alcance_cantidades_obra")
+  justificacionVentajas              String?   @map("justificacion_ventajas")
+  origenCrsRegistro                  Boolean?  @default(false) @map("ind_origen_crs_registro")
+  diasValidezOferta                  Int?      @map("dias_validez_oferta")
+  autoridadAclaratorias              String?   @map("autoridad_aclaratorias") @db.VarChar(255)
+  normativaLegal                     String?   @map("normativa_legal")
+  diasVigenciaGarantiaExtension      Int?      @map("dias_vigencia_garantia_ext")
+  objetivosEspecificos1              String?   @map("objetivos_especificos_1") @db.VarChar(255)
+  objetivosEspecificos2              String?   @map("objetivos_especificos_2") @db.VarChar(255)
+  objetivosEspecificos3              String?   @map("objetivos_especificos_3") @db.VarChar(255)
+  direccionRetiroPliego              String?   @map("direccion_retiro_pliego") @db.VarChar(255)
+  horarioRetiroPliego                String?   @map("horario_retiro_pliego") @db.VarChar(255)
+  pliegoGratuito                     Boolean   @default(true) @map("pliego_gratuito")
+  costoPliegoBs                      Decimal?  @map("costo_pliego_bs") @db.Decimal(10, 2)
+  bancoPagoPliego                    String?   @map("banco_pago_pliego") @db.VarChar(100)
+  cuentaPagoPliego                   String?   @map("cuenta_pago_pliego") @db.VarChar(50)
+  titularPagoPliego                  String?   @map("titular_pago_pliego") @db.VarChar(100)
+  horaActoRecepAper                  String?   @map("hora_acto_recep_aper") @db.VarChar(50)
+  correoComision                     String?   @map("correo_comision") @db.VarChar(100)
+  telefonoComision                   String?   @map("telefono_comision") @db.VarChar(50)
+  condicionPlurianual                Boolean?  @map("condicion_plurianual")
+  viabilidadContratoMarco            Boolean?  @map("viabilidad_contrato_marco")
+  justificacion_contrato_marco_au_au String?   @map("justificacion_contrato_marco_au_au") @db.VarChar(100)
+
+  // --- Estados por micromódulo (Fase 1) ---
+  estadoActividadesPrevias         EstadoMicromodulo @default(PENDIENTE) @map("estado_actividades_previas_au_au")
+  estadoLlamado                    EstadoMicromodulo @default(PENDIENTE) @map("estado_llamado_au_au")
+  estadoAspectosGenerales          EstadoMicromodulo @default(PENDIENTE) @map("estado_aspectos_generales_au_au")
+  estadoModeloContrato             EstadoMicromodulo @default(PENDIENTE) @map("estado_modelo_contrato_au_au")
+  estadoCalificacionLegal          EstadoMicromodulo @default(PENDIENTE) @map("estado_calificacion_legal_au_au")
+  estadoCalificacionFinanciera     EstadoMicromodulo @default(PENDIENTE) @map("estado_calificacion_financiera_au_au")
+  estadoCalificacionTecnica        EstadoMicromodulo @default(PENDIENTE) @map("estado_calificacion_tecnica_au_au")
+  estadoEvaluacionTecnicaEconomica EstadoMicromodulo @default(PENDIENTE) @map("estado_evaluacion_tecnica_economica_au_au")
+  phaseComplete                    Boolean           @default(false) @map("phase_complete_au_au")
+
+  // --- Actividades Previas ---
+  numReferenciaSnc                      String?   @map("num_referencia_snc_au_au") @db.VarChar(100)
+  modifRequerimientoSnc                 Boolean?  @map("modif_requerimiento_snc_au_au")
+  numeroModifRequerimientoSnc           String?   @map("numero_modif_requerimiento_snc_au_au") @db.VarChar(100)
+  justificacionNecesidadContratacion    String?   @map("justificacion_necesidad_contratacion_au_au") @db.VarChar(255)
+  proyectoAprobado                      Boolean?  @map("proyecto_aprobado_au_au")
+  permitePymesCooperativas              Boolean?  @map("permite_pymes_cooperativas_au_au")
+  justificacionPermitePymesCooperativas String?   @map("justificacion_permite_pymes_cooperativas_au_au") @db.VarChar(255)
+  fecEstudioMercado                     DateTime? @map("fec_estudio_mercado_au_au")
+  numCertificacionPresupuestaria        String?   @map("num_certificacion_presupuestaria_au_au") @db.VarChar(100)
+  plazoEjecucionProcedimiento           Int?      @map("plazo_ejecucion_procedimiento_au_au")
+  lugarLogisticaEjecucion               String?   @map("lugar_logistica_ejecucion_au_au") @db.VarChar(500)
+  requiereEspecializado                 Boolean?  @map("requiere_especializado_au_au")
+  detalleEspecializado                  String?   @map("detalle_especializado_au_au") @db.VarChar(500)
+  requiereMuestras                      Boolean?  @map("requiere_muestras_au_au")
+  detalleProcedimientoMuestras          String?   @map("detalle_procedimiento_muestras_au_au") @db.VarChar(500)
+  activaPromocionEconomica              Boolean?  @map("activa_promocion_economica_au_au")
+  requiereVan                           Boolean?  @map("requiere_van_au_au")
+  puntajeVan                            Int?      @map("puntaje_van_au_au")
+  indPrefLocal                          Boolean?  @map("ind_pref_local_au_au")
+  puntuacionBonoLocal                   Decimal?  @map("puntuacion_bono_local_au_au") @db.Decimal(5, 2)
+  indBonoSujeto                         Boolean?  @map("ind_bono_sujeto_au_au")
+  puntuacionBonoSujeto                  Decimal?  @map("puntuacion_bono_sujeto_au_au") @db.Decimal(5, 2)
+
+  // --- Llamado (complemento) ---
+  rifPagoPliego String? @map("rif_pago_pliego_au_au") @db.VarChar(100)
+
+  // --- Aspectos Generales del Pliego ---
+  monedaDiferente                 Boolean? @map("moneda_diferente_au_au")
+  nomMonedaExtranjera             String?  @map("nom_moneda_extranjera_au_au") @db.VarChar(100)
+  idiomaDiferente                 Boolean? @map("idioma_diferente_au_au")
+  nomIdiomaDiferente              String?  @map("nom_idioma_diferente_au_au") @db.VarChar(100)
+  porcentajeResponsabilidadSocial Decimal? @map("porcentaje_responsabilidad_social_au_au") @db.Decimal(5, 2)
+  unidadRespCumplimientoCrs       String?  @map("unidad_resp_cumplimiento_crs_au_au") @db.VarChar(255)
+  modalidadCrs                    String?  @map("modalidad_crs_au_au") @db.VarChar(255)
+  formaCumplimientoCrs            String?  @map("forma_cumplimiento_crs_au_au") @db.VarChar(500)
+  porcentajeMantenimientoOferta   Decimal? @map("porcentaje_mantenimiento_oferta_au_au") @db.Decimal(5, 2)
+  porcentajeFielCumplimiento      Decimal? @map("porcentaje_fiel_cumplimiento_au_au") @db.Decimal(5, 2)
+  retencionFielCumplimiento       Boolean? @map("retencion_fiel_cumplimiento_au_au")
+  requiereGarantiaLaboral         Boolean? @map("requiere_garantia_laboral_au_au")
+  porcentajeGarantiaLaboral       Decimal? @map("porcentaje_garantia_laboral_au_au") @db.Decimal(5, 2)
+  retencionFianzaLaboral          Boolean? @map("retencion_fianza_laboral_au_au")
+  polizaResponsabilidadCivil      Boolean? @map("poliza_responsabilidad_civil_au_au")
+  porcentajeResponsabilidadCivil  Decimal? @map("porcentaje_responsabilidad_civil_au_au") @db.Decimal(5, 2)
+  montoResponsabilidadCivilBs     Decimal? @map("monto_responsabilidad_civil_bs_au_au") @db.Decimal(18, 4)
+  anticipoContrato                Boolean? @map("anticipo_contrato_au_au")
+  porcentajeAnticipo              Decimal? @map("porcentaje_anticipo_au_au") @db.Decimal(5, 2)
+  anticipoEspecial                Boolean? @map("anticipo_especial_au_au")
+  porcentajeAnticipoEspecial      Decimal? @map("porcentaje_anticipo_especial_au_au") @db.Decimal(5, 2)
+
+  // --- Micromódulos complejos (JSONB) ---
+  modeloContratoData             Json? @map("modelo_contrato_data_au_au")
+  calificacionLegalData          Json? @map("calificacion_legal_data_au_au")
+  calificacionFinancieraData     Json? @map("calificacion_financiera_data_au_au")
+  calificacionTecnicaData        Json? @map("calificacion_tecnica_data_au_au")
+  evaluacionTecnicaEconomicaData Json? @map("evaluacion_tecnica_economica_data_au_au")
+
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+  deletedAt        DateTime?              @map("deleted_at")
+  createdBy        String?                @map("created_by")
+  updatedBy        String?                @map("updated_by")
+  version          Int                    @default(1) @map("version")
+  expediente       ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  especificaciones Fase1Especificacion?
 
   @@index([expedienteId])
   @@map("tb_fase_preparatoria")
+}
+
+model Fase1Especificacion {
+  id                 String           @id @default(uuid()) @map("id_fase1_especificacion_au_au")
+  fasePreparatoriaId String           @unique @map("id_fase_preparatoria")
+  fileName           String           @map("file_name_au_au") @db.VarChar(255)
+  mimeType           String           @map("mime_type_au_au") @db.VarChar(100)
+  sizeBytes          Int              @map("size_bytes_au_au")
+  storageKey         String?          @map("storage_key_au_au") @db.VarChar(500)
+  url                String           @map("url_au_au")
+  uploadedAt         DateTime         @default(now()) @map("uploaded_at_au_au")
+  uploadedBy         String?          @map("uploaded_by_au_au")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  deletedAt          DateTime?        @map("deleted_at")
+  fasePreparatoria   FasePreparatoria @relation(fields: [fasePreparatoriaId], references: [id], onDelete: Cascade)
+
+  @@index([fasePreparatoriaId])
+  @@map("tb_fase1_especificaciones")
+}
+
+model CuentaBancariaEnte {
+  id           String      @id @default(uuid()) @map("id_cuenta_bancaria_au_au")
+  enteId       String      @map("id_ente")
+  bancoPago    String      @map("banco_pago_pliego_au_au") @db.VarChar(100)
+  numeroCuenta String      @map("cuenta_pago_pliego_au_au") @db.VarChar(20)
+  tipoCuenta   String?     @map("tipo_cuenta_au_au") @db.VarChar(50)
+  titularPago  String      @map("titular_pago_pliego_au_au") @db.VarChar(100)
+  rifPago      String      @map("rif_pago_pliego_au_au") @db.VarChar(100)
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  deletedAt    DateTime?   @map("deleted_at")
+  createdBy    String?     @map("created_by")
+  updatedBy    String?     @map("updated_by")
+  ente         EntePublico @relation(fields: [enteId], references: [id], onDelete: Cascade)
+
+  @@index([enteId])
+  @@map("tb_cuentas_bancarias_ente")
 }
 
 model PresupuestoItem {
@@ -559,31 +668,31 @@ model EvaluacionResultados {
   cedulaRepLegalEvaluado  String @map("cedula_rep_legal_evaluado_au_au") @db.VarChar(20)
 
   // ── Calificación LEGAL ──────────────────────────────────────────────
-  oferenteCalificadoLegal       Boolean? @map("oferente_calificado_legal_au_au")
-  justificacionCalificadoLegal  String?  @map("justificacion_calificado_legal_au_au")
+  oferenteCalificadoLegal      Boolean? @map("oferente_calificado_legal_au_au")
+  justificacionCalificadoLegal String?  @map("justificacion_calificado_legal_au_au")
 
   // ── Calificación FINANCIERA ─────────────────────────────────────────
-  indiceLiquidez                  Decimal? @map("indice_liquidez_au_au") @db.Decimal(10, 4)
-  indiceSolvencia                 Decimal? @map("indice_solvencia_au_au") @db.Decimal(10, 4)
-  oferenteCalificadoFinanciera    Boolean? @map("oferente_calificado_financiera_au_au")
-  justificacionCalificadaFinanciera String? @map("justificacion_calificado_financiera_au_au")
+  indiceLiquidez                    Decimal? @map("indice_liquidez_au_au") @db.Decimal(10, 4)
+  indiceSolvencia                   Decimal? @map("indice_solvencia_au_au") @db.Decimal(10, 4)
+  oferenteCalificadoFinanciera      Boolean? @map("oferente_calificado_financiera_au_au")
+  justificacionCalificadaFinanciera String?  @map("justificacion_calificado_financiera_au_au")
 
   // ── Calificación TÉCNICA (Sobre 1 — sección resumen) ───────────────
-  actividadComercial              Decimal? @map("actividad_comercial_au_au") @db.Decimal(5, 2)
-  relacionSuministros             Decimal? @map("relacion_suministros_au_au") @db.Decimal(5, 2)
-  referenciasComercialesPuntaje   Decimal? @map("referencias_comerciales_puntaje_au_au") @db.Decimal(5, 2)
-  totalCalifTecnica               Decimal? @map("total_calif_tecnica_au_au") @db.Decimal(6, 2)
-  oferenteCalificadoTecnica       Boolean? @map("oferente_calificado_tecnica_au_au")
-  justificacionCalificadoTecnica  String?  @map("justificacion_calificado_tecnica_au_au")
+  actividadComercial             Decimal? @map("actividad_comercial_au_au") @db.Decimal(5, 2)
+  relacionSuministros            Decimal? @map("relacion_suministros_au_au") @db.Decimal(5, 2)
+  referenciasComercialesPuntaje  Decimal? @map("referencias_comerciales_puntaje_au_au") @db.Decimal(5, 2)
+  totalCalifTecnica              Decimal? @map("total_calif_tecnica_au_au") @db.Decimal(6, 2)
+  oferenteCalificadoTecnica      Boolean? @map("oferente_calificado_tecnica_au_au")
+  justificacionCalificadoTecnica String?  @map("justificacion_calificado_tecnica_au_au")
 
   // ── Calificación GLOBAL del oferente ───────────────────────────────
-  oferenteCalificado      Boolean? @map("oferente_calificado_au_au")
-  motivoDescalificacion   String?  @map("motivo_descalificacion_oferente_au_au")
-  itemsDescalificacion    String?  @map("items_descalificacion_oferente_au_au")
+  oferenteCalificado    Boolean? @map("oferente_calificado_au_au")
+  motivoDescalificacion String?  @map("motivo_descalificacion_oferente_au_au")
+  itemsDescalificacion  String?  @map("items_descalificacion_oferente_au_au")
 
   // ── Evaluación TÉCNICA (Matriz — Sobre 2) ──────────────────────────
-  oferenteEvaluadoTecnico         Boolean? @map("oferente_evaluado_tecnico_au_au")
-  justificacionEvaluadoTecnico    String?  @map("justificacion_evaluado_tecnico_au_au")
+  oferenteEvaluadoTecnico      Boolean? @map("oferente_evaluado_tecnico_au_au")
+  justificacionEvaluadoTecnico String?  @map("justificacion_evaluado_tecnico_au_au")
 
   // ── Posición de prelación ──────────────────────────────────────────
   posicionPrelacion String? @map("posicion_prelacion_au_au") @db.VarChar(50)
@@ -761,62 +870,62 @@ model Adjudicacion {
 }
 
 model ContratoFormalizado {
-  id                                 String             @id @default(uuid())
-  adjudicacionId                     String             @unique
-  supervisorId                       String?
-  numeroContratoFisico               String
-  fechaFirmaContrato                 DateTime
+  id                   String   @id @default(uuid())
+  adjudicacionId       String   @unique
+  supervisorId         String?
+  numeroContratoFisico String
+  fechaFirmaContrato   DateTime
 
   // --- Sección A: Tiempos de ejecución y montos ---
-  fechaInicioVigencia                DateTime           @map("fec_inicio_vigencia_au_au")
-  fechaFinVigencia                   DateTime           @map("fec_fin_vigencia_au_au")
-  montoContratoBs                    Decimal            @map("monto_contrato_bs_au_au") @db.Decimal(15, 2)
-  montoContratoBsLetras              String?            @map("monto_contrato_bs_letras_au_au") @db.VarChar(255)
-  valorUcauContrato                  Decimal            @map("valor_ucau_contrato_au_au") @db.Decimal(15, 2)
-  plazoEjecucionDias                 Int                @map("plazo_ejecucion_dias_au_au")
-  plazoGarantiaCalidadFuncionamiento String             @map("plazo_garantia_calidad_funcionamiento_au_au") @db.VarChar(255)
+  fechaInicioVigencia                DateTime @map("fec_inicio_vigencia_au_au")
+  fechaFinVigencia                   DateTime @map("fec_fin_vigencia_au_au")
+  montoContratoBs                    Decimal  @map("monto_contrato_bs_au_au") @db.Decimal(15, 2)
+  montoContratoBsLetras              String?  @map("monto_contrato_bs_letras_au_au") @db.VarChar(255)
+  valorUcauContrato                  Decimal  @map("valor_ucau_contrato_au_au") @db.Decimal(15, 2)
+  plazoEjecucionDias                 Int      @map("plazo_ejecucion_dias_au_au")
+  plazoGarantiaCalidadFuncionamiento String   @map("plazo_garantia_calidad_funcionamiento_au_au") @db.VarChar(255)
 
   // --- Sección B: Supervisión, aceptación y pago ---
-  nombreSupervisor                   String             @map("nombre_supervisor_au_au") @db.VarChar(500)
-  cedulaSupervisor                   String             @map("cedula_supervisor_au_au") @db.VarChar(50)
-  cargoSupervisor                    String             @map("cargo_supervisor_au_au") @db.VarChar(255)
-  criterioAceptacionContrato         String             @map("criterio_aceptacion_contrato_au_au") @db.VarChar(500)
-  plazoConsignacionFacturas          Int                @map("plazo_consignacion_facturas_au_au")
+  nombreSupervisor           String @map("nombre_supervisor_au_au") @db.VarChar(500)
+  cedulaSupervisor           String @map("cedula_supervisor_au_au") @db.VarChar(50)
+  cargoSupervisor            String @map("cargo_supervisor_au_au") @db.VarChar(255)
+  criterioAceptacionContrato String @map("criterio_aceptacion_contrato_au_au") @db.VarChar(500)
+  plazoConsignacionFacturas  Int    @map("plazo_consignacion_facturas_au_au")
 
   // --- Sección C: Finanzas contractuales y compromiso social ---
-  montoFielCumplimientoBs            Decimal            @map("monto_fiel_cumplimiento_bs_au_au") @db.Decimal(20, 2)
-  montoFielCumplimientoBsLetras      String?            @map("monto_fiel_cump_bs_letras_au_au") @db.VarChar(255)
-  requiereGarantiaLaboral            Boolean            @map("requiere_garantia_laboral_au_au")
-  porcentajeGarantiaLaboral          Decimal?           @map("porcentaje_garantia_laboral_au_au") @db.Decimal(5, 2)
-  montoGarantiaLaboralBs             Decimal?           @map("monto_garantia_laboral_bs_au_au") @db.Decimal(15, 2)
-  montoGarantiaLaboralBsLetras       String?            @map("monto_garantia_lab_bs_letras_au_au") @db.VarChar(255)
-  polizaResponsabilidadCivil         Boolean            @map("poliza_responsabilidad_civil_au_au")
-  porcentajeResponsabilidadCivil     Decimal?           @map("porcentaje_responsabilidad_civil_au_au") @db.Decimal(5, 2)
-  montoResponsabilidadCivilBs        Decimal?           @map("monto_responsabilidad_civil_bs_au_au") @db.Decimal(15, 2)
-  montoResponsabilidadCivilBsLetras  String?            @map("monto_resp_civil_bs_letras_au_au") @db.VarChar(255)
-  anticipoContrato                   Boolean            @map("anticipo_contrato_au_au")
-  formaCumplimientoCrs               String             @map("forma_cumplimiento_crs_au_au") @db.VarChar(255)
-  unidadRespCumplimientoCrs          String             @map("unidad_resp_cumplimiento_crs_au_au") @db.VarChar(255)
-  porcentajeAnticipoOtorgado         Decimal?           @db.Decimal(5, 2)
+  montoFielCumplimientoBs           Decimal  @map("monto_fiel_cumplimiento_bs_au_au") @db.Decimal(20, 2)
+  montoFielCumplimientoBsLetras     String?  @map("monto_fiel_cump_bs_letras_au_au") @db.VarChar(255)
+  requiereGarantiaLaboral           Boolean  @map("requiere_garantia_laboral_au_au")
+  porcentajeGarantiaLaboral         Decimal? @map("porcentaje_garantia_laboral_au_au") @db.Decimal(5, 2)
+  montoGarantiaLaboralBs            Decimal? @map("monto_garantia_laboral_bs_au_au") @db.Decimal(15, 2)
+  montoGarantiaLaboralBsLetras      String?  @map("monto_garantia_lab_bs_letras_au_au") @db.VarChar(255)
+  polizaResponsabilidadCivil        Boolean  @map("poliza_responsabilidad_civil_au_au")
+  porcentajeResponsabilidadCivil    Decimal? @map("porcentaje_responsabilidad_civil_au_au") @db.Decimal(5, 2)
+  montoResponsabilidadCivilBs       Decimal? @map("monto_responsabilidad_civil_bs_au_au") @db.Decimal(15, 2)
+  montoResponsabilidadCivilBsLetras String?  @map("monto_resp_civil_bs_letras_au_au") @db.VarChar(255)
+  anticipoContrato                  Boolean  @map("anticipo_contrato_au_au")
+  formaCumplimientoCrs              String   @map("forma_cumplimiento_crs_au_au") @db.VarChar(255)
+  unidadRespCumplimientoCrs         String   @map("unidad_resp_cumplimiento_crs_au_au") @db.VarChar(255)
+  porcentajeAnticipoOtorgado        Decimal? @db.Decimal(5, 2)
 
   // --- Sección D: Penalidades, ajustes y cierre legal ---
-  porcentajeMultaDiaria              Decimal            @map("porcentaje_multa_diaria_au_au") @db.Decimal(5, 2)
-  baseCalculoMultaDiaria             Decimal            @map("base_calculo_multa_diaria_au_au") @db.Decimal(15, 2)
-  plazoRegularizarIncumplimiento     String             @map("plazo_regularizar_incumplimiento_au_au") @db.VarChar(50)
-  porcentajeProcedimientoRescision   Decimal            @map("porcentaje_procedimiento_rescision_au_au") @db.Decimal(5, 2)
-  formulaAjustePrecios               String             @map("formula_ajuste_precios_au_au") @db.VarChar(255)
-  evaluacionDesempeno                String             @map("evaluacion_desempeño_au_au") @db.VarChar(255)
-  garantiaPostEjecucion              String             @map("garantia_post_ejecucion_au_au") @db.VarChar(255)
-  lugarTribunal                      String             @map("lugar_tribunal_au_au") @db.VarChar(255)
+  porcentajeMultaDiaria            Decimal @map("porcentaje_multa_diaria_au_au") @db.Decimal(5, 2)
+  baseCalculoMultaDiaria           Decimal @map("base_calculo_multa_diaria_au_au") @db.Decimal(15, 2)
+  plazoRegularizarIncumplimiento   String  @map("plazo_regularizar_incumplimiento_au_au") @db.VarChar(50)
+  porcentajeProcedimientoRescision Decimal @map("porcentaje_procedimiento_rescision_au_au") @db.Decimal(5, 2)
+  formulaAjustePrecios             String  @map("formula_ajuste_precios_au_au") @db.VarChar(255)
+  evaluacionDesempeno              String  @map("evaluacion_desempeño_au_au") @db.VarChar(255)
+  garantiaPostEjecucion            String  @map("garantia_post_ejecucion_au_au") @db.VarChar(255)
+  lugarTribunal                    String  @map("lugar_tribunal_au_au") @db.VarChar(255)
 
-  createdAt                          DateTime           @default(now())
-  updatedAt                          DateTime           @updatedAt
-  deletedAt                          DateTime?
-  createdBy                          String?
-  updatedBy                          String?
-  version                            Int                @default(1)
-  adjudicacion                       Adjudicacion       @relation(fields: [adjudicacionId], references: [id], onDelete: Cascade)
-  garantias                          GarantiaContrato[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?
+  updatedBy    String?
+  version      Int                @default(1)
+  adjudicacion Adjudicacion       @relation(fields: [adjudicacionId], references: [id], onDelete: Cascade)
+  garantias    GarantiaContrato[]
 
   @@index([adjudicacionId])
   @@index([numeroContratoFisico])
@@ -1009,6 +1118,12 @@ enum EstatusProceso {
   DESIERTO
 }
 
+enum EstadoMicromodulo {
+  PENDIENTE
+  BORRADOR
+  COMPLETADO
+}
+
 enum TipoDocumento {
   PLIEGO_CONDICIONES
   ACTA_APERTURA
@@ -1024,6 +1139,7 @@ enum TipoDocumento {
   INFORME_RECOMENDACION
   NOTIFICACION_ADJUDICADO
   NOTIFICACION_NO_ADJUDICADO
+  ACTIVIDADES_PREVIAS
 }
 
 enum TipoDocumentoProveedor {
@@ -1039,7 +1155,6 @@ enum TipoDocumentoProveedor {
   RESOLUCION_DESIGNACION
   GACETA_CREACION
 }
-
 
 enum TipoMiembro {
   MIEMBRO_PRINCIPAL @map("Miembro principal")
@@ -1111,21 +1226,21 @@ model MensajeTicket {
 }
 
 model DiaNoLaborableEnte {
-  id              String      @id @default(uuid())
-  enteId          String      @map("id_ente")
-  fecha           DateTime?   @map("fec_dia_no_laborable")     // Fecha específica (2026-08-15)
-  fechaRecurrente String?     @map("fec_recurrente_mmdd")      // Formato "MM-DD" (recurrente anual)
-  esRecurrente    Boolean     @default(false) @map("ind_es_recurrente")
-  descripcion     String      @map("desc_dia_no_laborable") @db.VarChar(255)
-  activo          Boolean     @default(true) @map("ind_activo")
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id              String    @id @default(uuid())
+  enteId          String    @map("id_ente")
+  fecha           DateTime? @map("fec_dia_no_laborable") // Fecha específica (2026-08-15)
+  fechaRecurrente String?   @map("fec_recurrente_mmdd") // Formato "MM-DD" (recurrente anual)
+  esRecurrente    Boolean   @default(false) @map("ind_es_recurrente")
+  descripcion     String    @map("desc_dia_no_laborable") @db.VarChar(255)
+  activo          Boolean   @default(true) @map("ind_activo")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
   createdBy       String?
   updatedBy       String?
 
-  ente            EntePublico @relation(fields: [enteId], references: [id])
-  alertas         AlertaCronograma[]
+  ente    EntePublico        @relation(fields: [enteId], references: [id])
+  alertas AlertaCronograma[]
 
   @@unique([enteId, fecha])
   @@unique([enteId, fechaRecurrente])
@@ -1134,18 +1249,18 @@ model DiaNoLaborableEnte {
 }
 
 model AlertaCronograma {
-  id                String                 @id @default(uuid())
-  cronogramaId      String                 @map("id_cronograma")
-  diaNoLaborableId  String                 @map("id_dia_no_laborable")
-  campoAfectado     String                 @map("campo_afectado") @db.VarChar(100)
-  fechaConflicto    DateTime               @map("fec_conflicto")
-  resuelta          Boolean                @default(false) @map("ind_resuelta")
-  resueltaPor       String?                @map("resuelta_por")
-  resueltaEn        DateTime?              @map("fec_resuelta")
-  createdAt         DateTime               @default(now())
+  id               String    @id @default(uuid())
+  cronogramaId     String    @map("id_cronograma")
+  diaNoLaborableId String    @map("id_dia_no_laborable")
+  campoAfectado    String    @map("campo_afectado") @db.VarChar(100)
+  fechaConflicto   DateTime  @map("fec_conflicto")
+  resuelta         Boolean   @default(false) @map("ind_resuelta")
+  resueltaPor      String?   @map("resuelta_por")
+  resueltaEn       DateTime? @map("fec_resuelta")
+  createdAt        DateTime  @default(now())
 
-  cronograma        CronogramaExpediente   @relation(fields: [cronogramaId], references: [id], onDelete: Cascade)
-  diaNoLaborable    DiaNoLaborableEnte     @relation(fields: [diaNoLaborableId], references: [id])
+  cronograma     CronogramaExpediente @relation(fields: [cronogramaId], references: [id], onDelete: Cascade)
+  diaNoLaborable DiaNoLaborableEnte   @relation(fields: [diaNoLaborableId], references: [id])
 
   @@index([cronogramaId, resuelta])
   @@index([diaNoLaborableId])
