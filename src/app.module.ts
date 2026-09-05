@@ -31,6 +31,8 @@ import { CronogramaEnteModule } from './cronograma-ente/cronograma-ente.module';
 import { CommonModule } from './common/common.module';
 import { Fase1Module } from './fase1/fase1.module';
 import { CuentasBancariasModule } from './cuentas-bancarias/cuentas-bancarias.module';
+import { BibliotecaModule } from './biblioteca/biblioteca.module';
+import { DocumentosEjemploModule } from './documentos-ejemplo/documentos-ejemplo.module';
 
 @Module({
   imports: [
@@ -59,6 +61,8 @@ import { CuentasBancariasModule } from './cuentas-bancarias/cuentas-bancarias.mo
     FasePreparatoriaModule,
     Fase1Module,
     CuentasBancariasModule,
+    BibliotecaModule,
+    DocumentosEjemploModule,
     PresupuestoItemModule,
     GeneradorDocumentosModule,
     OfertaPresentadaModule,

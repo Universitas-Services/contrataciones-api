@@ -8,14 +8,16 @@ datasource db {
 }
 
 model Universitas {
-  id           String        @id @default(uuid())
-  nombre       String
-  email        String        @unique
-  passwordHash String
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  deletedAt    DateTime?
-  entes        EntePublico[]
+  id                 String             @id @default(uuid())
+  nombre             String
+  email              String             @unique
+  passwordHash       String
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  deletedAt          DateTime?
+  entes              EntePublico[]
+  normativasGlobales NormativaGlobal[]
+  clausulasGenericas ClausulaGenerica[]
 
   @@index([email])
 }
@@ -58,6 +60,8 @@ model EntePublico {
   ticketsSoporte              TicketSoporte[]
   diasNoLaborables            DiaNoLaborableEnte[]
   cuentasBancarias            CuentaBancariaEnte[]
+  normativasEnte              NormativaEnte[]
+  clausulasBiblioteca         ClausulaBibliotecaEnte[]
 
   @@index([universitasId])
   @@index([rif])
@@ -517,6 +521,99 @@ model Fase1Especificacion {
 
   @@index([fasePreparatoriaId])
   @@map("tb_fase1_especificaciones")
+}
+
+/// Catálogo de documentos de ejemplo (imágenes) que administra UNIVERSITAS y
+/// los entes consultan como guía visual al llenar los formularios.
+///
+/// `codigo` es un identificador legible (documento-01, documento-02) para que
+/// el frontend pueda pedir cada imagen sin conocer el UUID.
+model DocumentoEjemplo {
+  id          String    @id @default(uuid()) @map("id_documento_ejemplo_au_au")
+  codigo      String    @unique @map("cod_documento_ejemplo_au_au") @db.VarChar(50)
+  nombre      String    @map("nombre_documento_ejemplo_au_au") @db.VarChar(255)
+  descripcion String?   @map("desc_documento_ejemplo_au_au")
+  fileName    String    @map("file_name_au_au") @db.VarChar(255)
+  mimeType    String    @map("mime_type_au_au") @db.VarChar(100)
+  sizeBytes   Int       @map("size_bytes_au_au")
+  storageKey  String?   @map("storage_key_au_au") @db.VarChar(500)
+  url         String    @map("url_au_au")
+  orden       Int?      @map("orden_au_au")
+  activo      Boolean   @default(true) @map("activo_au_au")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  createdBy   String?   @map("created_by")
+  updatedBy   String?   @map("updated_by")
+
+  @@index([codigo])
+  @@map("tb_documentos_ejemplo")
+}
+
+/// tb_normativa_global — normativa que administra UNIVERSITAS y ven todos los entes.
+model NormativaGlobal {
+  id                     String      @id @default(uuid()) @map("id_normativa_global")
+  adminUniversitasId     String      @map("id_admin_universitas")
+  textoNormativaCompleto String      @map("texto_normativa_completo")
+  indActivo              Boolean     @default(true) @map("ind_activo")
+  fecCreacion            DateTime    @default(now()) @map("fec_creacion")
+  updatedAt              DateTime    @updatedAt @map("updated_at")
+  deletedAt              DateTime?   @map("deleted_at")
+  updatedBy              String?     @map("updated_by")
+  adminUniversitas       Universitas @relation(fields: [adminUniversitasId], references: [id], onDelete: Cascade)
+
+  @@index([adminUniversitasId])
+  @@map("tb_normativa_global")
+}
+
+/// tb_normativa_ente — normativa propia de cada ente.
+model NormativaEnte {
+  id                     String      @id @default(uuid()) @map("id_normativa_ente")
+  enteId                 String      @map("id_ente")
+  textoNormativaCompleto String      @map("texto_normativa_completo")
+  fecCreacion            DateTime    @default(now()) @map("fec_creacion")
+  updatedAt              DateTime    @updatedAt @map("updated_at")
+  deletedAt              DateTime?   @map("deleted_at")
+  createdBy              String?     @map("created_by")
+  updatedBy              String?     @map("updated_by")
+  ente                   EntePublico @relation(fields: [enteId], references: [id], onDelete: Cascade)
+
+  @@index([enteId])
+  @@map("tb_normativa_ente")
+}
+
+/// tb_clausulas_genericas_ente — cláusulas modelo que administra UNIVERSITAS y
+/// quedan disponibles para todos los entes.
+model ClausulaGenerica {
+  id                     String      @id @default(uuid()) @map("id_clausulas_genericas_ente")
+  adminUniversitasId     String      @map("id_admin_universitas")
+  tituloClausulaGenerica String      @map("titulo_clausula_generica") @db.VarChar(255)
+  cuerpoClausulaGenerica String      @map("cuerpo_clausula_generica")
+  createdAt              DateTime    @default(now()) @map("created_at")
+  updatedAt              DateTime    @updatedAt @map("updated_at")
+  deletedAt              DateTime?   @map("deleted_at")
+  updatedBy              String?     @map("updated_by")
+  adminUniversitas       Universitas @relation(fields: [adminUniversitasId], references: [id], onDelete: Cascade)
+
+  @@index([adminUniversitasId])
+  @@map("tb_clausulas_genericas_ente")
+}
+
+/// tb_biblioteca_clausulas_ente — cláusulas que cada ente guarda en su biblioteca.
+model ClausulaBibliotecaEnte {
+  id                       String      @id @default(uuid()) @map("id_clausula_bib")
+  enteId                   String      @map("id_ente")
+  tituloClausulaBib        String      @map("titulo_clausula_bib") @db.VarChar(255)
+  cuerpoClausulaBib        String      @map("cuerpo_clausula_bib")
+  fechaGuardadoClausulaBib DateTime    @default(now()) @map("fecha_guardado_clausula_bib")
+  updatedAt                DateTime    @updatedAt @map("updated_at")
+  deletedAt                DateTime?   @map("deleted_at")
+  createdBy                String?     @map("created_by")
+  updatedBy                String?     @map("updated_by")
+  ente                     EntePublico @relation(fields: [enteId], references: [id], onDelete: Cascade)
+
+  @@index([enteId])
+  @@map("tb_biblioteca_clausulas_ente")
 }
 
 model CuentaBancariaEnte {

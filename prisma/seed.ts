@@ -62,6 +62,11 @@ async function main() {
   // Fase1Especificacion se elimina en cascada con FasePreparatoria
   await prisma.fasePreparatoria.deleteMany();
   await prisma.cuentaBancariaEnte.deleteMany();
+  await prisma.documentoEjemplo.deleteMany();
+  await prisma.normativaGlobal.deleteMany();
+  await prisma.normativaEnte.deleteMany();
+  await prisma.clausulaGenerica.deleteMany();
+  await prisma.clausulaBibliotecaEnte.deleteMany();
   await prisma.documentoProveedor.deleteMany();
   await prisma.proveedor.deleteMany();
   await prisma.expedienteContratacion.deleteMany();
@@ -710,6 +715,178 @@ async function main() {
   });
 
   // ============================================================================
+  // 5d. BIBLIOTECA — NORMATIVA (global de UNIVERSITAS + propia del ente)
+  // ============================================================================
+  console.log('📚 Creando Biblioteca de Normativa...');
+
+  await prisma.normativaGlobal.createMany({
+    data: [
+      {
+        adminUniversitasId: universitas.id,
+        textoNormativaCompleto:
+          'Artículo 55. Podrá procederse por Concurso Abierto cuando el contrato a ser otorgado sea por un monto estimado superior a veinte mil unidades de cuenta dinámica para el cálculo aritmético del umbral máximo y mínimo (20.000 U.C.A.U.).',
+        indActivo: true,
+      },
+      {
+        adminUniversitasId: universitas.id,
+        textoNormativaCompleto:
+          'Artículo 101. Se podrá proceder excepcionalmente por Contratación Directa, con independencia del monto de la contratación, en los supuestos taxativamente enumerados en el presente artículo, previo acto motivado de la máxima autoridad del órgano o ente contratante.',
+        indActivo: true,
+      },
+      {
+        adminUniversitasId: universitas.id,
+        textoNormativaCompleto:
+          'Artículo 113. El órgano o ente contratante declarará desierto el procedimiento de selección de contratistas cuando no se presenten ofertas, cuando ninguna de las ofertas presentadas resulte calificada, o cuando las ofertas presentadas no cumplan con las condiciones establecidas en el pliego de condiciones.',
+        indActivo: true,
+      },
+      {
+        adminUniversitasId: universitas.id,
+        textoNormativaCompleto:
+          'Artículo 68 del Reglamento. Los criterios de calificación técnica y la puntuación mínima aprobatoria deberán establecerse en el pliego de condiciones, garantizando su objetividad y su relación directa con el objeto de la contratación.',
+        indActivo: true,
+      },
+      {
+        adminUniversitasId: universitas.id,
+        textoNormativaCompleto:
+          'Norma 24, literal b, de las Normas de Control Interno SUNAI 2025. En las especificaciones técnicas deberán incorporarse las condiciones de soporte y garantías de idoneidad necesarias para proteger el patrimonio del Ente.',
+        indActivo: true,
+      },
+    ],
+  });
+
+  await prisma.normativaEnte.createMany({
+    data: [
+      {
+        enteId: enteMiranda.id,
+        textoNormativaCompleto:
+          'Resolución N° 012-2024 de la Gobernación del Estado Miranda. Establece los lineamientos internos aplicables a los procedimientos de contratación adelantados por las dependencias del ejecutivo estadal.',
+        createdBy: adminMiranda.id,
+      },
+      {
+        enteId: enteMiranda.id,
+        textoNormativaCompleto:
+          'Instructivo interno GEM-CI-2024. Define el circuito de aprobación presupuestaria previo a la emisión de la certificación de disponibilidad para procedimientos de contratación.',
+        createdBy: adminMiranda.id,
+      },
+    ],
+  });
+
+  // ============================================================================
+  // 5e. BIBLIOTECA — CLÁUSULAS (genéricas de UNIVERSITAS + propias del ente)
+  // ============================================================================
+  console.log('📜 Creando Biblioteca de Cláusulas...');
+
+  await prisma.clausulaGenerica.createMany({
+    data: [
+      {
+        adminUniversitasId: universitas.id,
+        tituloClausulaGenerica: 'Objeto del contrato',
+        cuerpoClausulaGenerica:
+          '<p>El presente contrato tiene por objeto {desc_objeto_contratacion_au_au}, conforme al pliego de condiciones del procedimiento {cod_nomenclatura_proceso_au_au}.</p>',
+      },
+      {
+        adminUniversitasId: universitas.id,
+        tituloClausulaGenerica: 'Monto del contrato',
+        cuerpoClausulaGenerica:
+          '<p>El monto total del contrato asciende a {monto_contrato_bs} bolívares, sujeto a las condiciones de pago establecidas en el pliego de condiciones.</p>',
+      },
+      {
+        adminUniversitasId: universitas.id,
+        tituloClausulaGenerica: 'Plazo de ejecución',
+        cuerpoClausulaGenerica:
+          '<p>El plazo de ejecución será de {plazo_ejecucion_procedimiento_au_au} días continuos, contados a partir de la fecha del acta de inicio.</p>',
+      },
+      {
+        adminUniversitasId: universitas.id,
+        tituloClausulaGenerica: 'Garantía de fiel cumplimiento',
+        cuerpoClausulaGenerica:
+          '<p>El contratista constituirá una garantía de fiel cumplimiento equivalente al {porcentaje_fiel_cumplimiento_au_au}% del monto del contrato, vigente hasta la recepción definitiva.</p>',
+      },
+      {
+        adminUniversitasId: universitas.id,
+        tituloClausulaGenerica: 'Anticipo',
+        cuerpoClausulaGenerica:
+          '<p>El Ente otorgará un anticipo equivalente al {porcentaje_anticipo_au_au}% del monto del contrato, previa constitución de la garantía correspondiente.</p>',
+      },
+      {
+        adminUniversitasId: universitas.id,
+        tituloClausulaGenerica: 'Compromiso de Responsabilidad Social',
+        cuerpoClausulaGenerica:
+          '<p>El contratista se obliga a cumplir el Compromiso de Responsabilidad Social equivalente al {porcentaje_responsabilidad_social_au_au}% del monto del contrato, bajo la modalidad {modalidad_crs_au_au}.</p>',
+      },
+      {
+        adminUniversitasId: universitas.id,
+        tituloClausulaGenerica: 'Resolución de controversias',
+        cuerpoClausulaGenerica:
+          '<p>Las controversias derivadas del presente contrato se resolverán por la vía administrativa; agotada esta, serán competentes los tribunales de la República Bolivariana de Venezuela.</p>',
+      },
+    ],
+  });
+
+  await prisma.clausulaBibliotecaEnte.createMany({
+    data: [
+      {
+        enteId: enteMiranda.id,
+        tituloClausulaBib: 'Cadena de frío para insumos médicos',
+        cuerpoClausulaBib:
+          '<p>El contratista garantizará la cadena de frío durante todo el traslado y almacenamiento de los insumos, y consignará el registro de temperatura en cada entrega.</p>',
+        createdBy: adminMiranda.id,
+      },
+      {
+        enteId: enteMiranda.id,
+        tituloClausulaBib: 'Penalidades por retraso',
+        cuerpoClausulaBib:
+          '<p>Se aplicará una multa diaria equivalente al cero coma cinco por ciento (0,5%) del monto del contrato por cada día de retraso imputable al contratista.</p>',
+        createdBy: adminMiranda.id,
+      },
+    ],
+  });
+
+  // ============================================================================
+  // 5f. DOCUMENTOS DE EJEMPLO
+  //     Guías visuales que carga UNIVERSITAS; los entes las consultan por código.
+  // ============================================================================
+  console.log('🖼️  Creando Documentos de Ejemplo...');
+
+  await prisma.documentoEjemplo.createMany({
+    data: [
+      {
+        codigo: 'documento-01',
+        nombre: 'Modelo de acta de inicio',
+        descripcion: 'Así debe verse el acta de inicio una vez firmada por la comisión.',
+        fileName: 'acta-inicio-ejemplo.png',
+        mimeType: 'image/png',
+        sizeBytes: 184_320,
+        storageKey: 'universitas/documentos-ejemplo/documento-01',
+        url: `${LOGO_NEUTRO}`,
+        orden: 1,
+      },
+      {
+        codigo: 'documento-02',
+        nombre: 'Modelo de pliego de condiciones',
+        descripcion: 'Estructura esperada del pliego, con sus secciones numeradas.',
+        fileName: 'pliego-ejemplo.png',
+        mimeType: 'image/png',
+        sizeBytes: 221_184,
+        storageKey: 'universitas/documentos-ejemplo/documento-02',
+        url: `${LOGO_NEUTRO}`,
+        orden: 2,
+      },
+      {
+        codigo: 'documento-03',
+        nombre: 'Modelo de llamado a participar',
+        descripcion: 'Ejemplo del llamado publicado, con los datos de retiro del pliego.',
+        fileName: 'llamado-ejemplo.png',
+        mimeType: 'image/png',
+        sizeBytes: 156_672,
+        storageKey: 'universitas/documentos-ejemplo/documento-03',
+        url: `${LOGO_NEUTRO}`,
+        orden: 3,
+      },
+    ],
+  });
+
+  // ============================================================================
   // 6. PROVEEDORES
   // ============================================================================
   console.log('🏢 Creando Proveedores...');
@@ -1131,6 +1308,9 @@ async function main() {
   console.log(`    id: ${expedienteFase1.id}`);
   console.log(`    Fase 1: todo PENDIENTE — sirve para probar el flujo desde cero`);
   console.log(`  Cuentas bancarias del Ente Miranda: 2`);
+  console.log(`  Normativa:  5 globales + 2 del ente`);
+  console.log(`  Cláusulas:  7 genéricas + 2 del ente`);
+  console.log(`  Documentos de ejemplo: 3 (documento-01 a documento-03)`);
   console.log('--------------------------------------------------');
   console.log('🔎 PARA PROBAR FASE 1:');
   console.log(`  GET /expedientes/${expedienteM.id}/fase-preparatoria/progreso`);
