@@ -17,7 +17,7 @@ import {
 
 /**
  * Catálogo de documentos de ejemplo. Los carga UNIVERSITAS y los entes los
- * consultan como guía visual mientras llenan los formularios.
+ * consultan como guía (imagen, PDF o DOCX) mientras llenan los formularios.
  */
 @Injectable()
 export class DocumentosEjemploService {
@@ -100,13 +100,13 @@ export class DocumentosEjemploService {
   }
 
   async create(dto: CreateDocumentoEjemploDto, file: Express.Multer.File, user: UsuarioActual) {
-    if (!file) throw new BadRequestException('Debe adjuntar la imagen del documento');
+    if (!file) throw new BadRequestException('Debe adjuntar el archivo del documento');
 
     const codigo = dto.codigo ?? (await this.siguienteCodigo());
     await this.assertCodigoLibre(codigo);
 
     const carpeta = 'universitas/documentos-ejemplo';
-    const nombreArchivo = `${codigo}-${Date.now()}`;
+    const nombreArchivo = `${codigo}-${Date.now()}-${file.originalname}`;
     const url = await this.storage.uploadFile(file.buffer, carpeta, nombreArchivo);
 
     return this.prisma.documentoEjemplo.create({
@@ -139,14 +139,14 @@ export class DocumentosEjemploService {
     });
   }
 
-  /** Reemplaza la imagen conservando el código y el resto de los datos. */
+  /** Reemplaza el archivo conservando el código y el resto de los datos. */
   async reemplazarImagen(id: string, file: Express.Multer.File, user: UsuarioActual) {
-    if (!file) throw new BadRequestException('Debe adjuntar la nueva imagen');
+    if (!file) throw new BadRequestException('Debe adjuntar el nuevo archivo');
 
     const documento = await this.findOne(id);
 
     const carpeta = 'universitas/documentos-ejemplo';
-    const nombreArchivo = `${documento.codigo}-${Date.now()}`;
+    const nombreArchivo = `${documento.codigo}-${Date.now()}-${file.originalname}`;
     const url = await this.storage.uploadFile(file.buffer, carpeta, nombreArchivo);
 
     return this.prisma.documentoEjemplo.update({
