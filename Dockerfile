@@ -36,8 +36,10 @@ COPY . .
 RUN npm run build
 
 # Install only production dependencies (and rebuild bcrypt)
+# ts-node/typescript se mantienen para poder sembrar en boot con RUN_SEED_ON_BOOT=1
 RUN apk add --no-cache python3 make g++ && \
     npm install --only=production --ignore-scripts && \
+    npm install ts-node typescript --no-save --ignore-scripts && \
     npm rebuild bcrypt --build-from-source && \
     npm cache clean --force
 
@@ -81,4 +83,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start application
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+# Si RUN_SEED_ON_BOOT=1 (solo al recrear la DB Free), siembra datos demo + normativas/clausulas.
+# Luego quita o pon RUN_SEED_ON_BOOT=0 para que los deploys normales no borren datos.
+CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$RUN_SEED_ON_BOOT\" = \"1\" ]; then echo 'RUN_SEED_ON_BOOT=1 — ejecutando seed...'; SEED_FORCE=1 npx ts-node --transpile-only prisma/seed.ts; fi && node dist/main"]
