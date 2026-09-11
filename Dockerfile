@@ -85,4 +85,5 @@ ENTRYPOINT ["dumb-init", "--"]
 # Start application
 # Si RUN_SEED_ON_BOOT=1 (solo al recrear la DB Free), siembra datos demo + normativas/clausulas.
 # Luego quita o pon RUN_SEED_ON_BOOT=0 para que los deploys normales no borren datos.
-CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$RUN_SEED_ON_BOOT\" = \"1\" ]; then echo 'RUN_SEED_ON_BOOT=1 — ejecutando seed...'; SEED_FORCE=1 npx ts-node --transpile-only prisma/seed.ts; fi && node dist/main"]
+# compiler-options evita TS5109 (module NodeNext vs moduleResolution) al correr prisma/seed.ts
+CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$RUN_SEED_ON_BOOT\" = \"1\" ]; then echo 'RUN_SEED_ON_BOOT=1 — ejecutando seed...'; SEED_FORCE=1 npx ts-node --transpile-only --compiler-options '{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' prisma/seed.ts; fi && node dist/main"]
