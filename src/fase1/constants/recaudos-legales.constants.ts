@@ -8,6 +8,10 @@
 export interface RecaudoCatalogo {
   id: string;
   sobre: 1 | 2;
+  /** Nombre corto del recaudo, para listados y chips. */
+  etiquetaCorta: string;
+  /** Pregunta que se le muestra al evaluador en el cotejo de la Fase 2. */
+  pregunta: string;
   /** Id del recaudo sustituto (declaración jurada) cuando el recaudo es exigido. */
   sustitutoId?: string;
   /**
@@ -18,29 +22,134 @@ export interface RecaudoCatalogo {
 }
 
 export const RECAUDOS_SOBRE_1: RecaudoCatalogo[] = [
-  { id: 'modCartaManifestacionVoluntadAuAu', sobre: 1 },
-  { id: 'modCartaAutorizacionAuAu', sobre: 1 },
-  { id: 'modDocConstitutivoAuAu', sobre: 1 },
-  { id: 'modCopiaRifVigenteAuAu', sobre: 1, sustitutoId: 'sustitutoDjRifVigenteAuAu' },
-  { id: 'modCertificadoRncAuAu', sobre: 1, sustitutoId: 'sustitutoDjCertificadoRncAuAu' },
-  { id: 'modSolvenciaLaboralAuAu', sobre: 1 },
-  { id: 'modDeclaracionSociosNoInhabilitadosAuAu', sobre: 1 },
-  { id: 'modDeclaracionNoDeudasEnteAuAu', sobre: 1 },
-  { id: 'modDeclaracionNoImpedimentosLcpAuAu', sobre: 1 },
-  { id: 'modDeclaracionConocimientoLugarAuAu', sobre: 1 },
-  { id: 'modDeclaracionInfoFinancieraAuAu', sobre: 1 },
-  { id: 'modEvaluacionDesempenoAuAu', sobre: 1, sustitutoId: 'sustitutoDjEvalDesempenoAuAu' },
+  {
+    id: 'modCartaManifestacionVoluntadAuAu',
+    sobre: 1,
+    etiquetaCorta: 'Carta de manifestación de voluntad',
+    pregunta: '¿Consignó carta de manifestación de voluntad de participar?',
+  },
+  {
+    id: 'modCartaAutorizacionAuAu',
+    sobre: 1,
+    etiquetaCorta: 'Carta de autorización',
+    pregunta: '¿Consignó carta de autorización del representante legal?',
+  },
+  {
+    id: 'modDocConstitutivoAuAu',
+    sobre: 1,
+    etiquetaCorta: 'Documento constitutivo',
+    pregunta: '¿Consignó el documento constitutivo estatutario vigente?',
+  },
+  {
+    id: 'modCopiaRifVigenteAuAu',
+    sobre: 1,
+    etiquetaCorta: 'Copia del RIF vigente',
+    pregunta: '¿Consignó copia del RIF vigente?',
+    sustitutoId: 'sustitutoDjRifVigenteAuAu',
+  },
+  {
+    id: 'modCertificadoRncAuAu',
+    sobre: 1,
+    etiquetaCorta: 'Certificado RNC',
+    pregunta: '¿Consignó el certificado del Registro Nacional de Contratistas?',
+    sustitutoId: 'sustitutoDjCertificadoRncAuAu',
+  },
+  {
+    id: 'modSolvenciaLaboralAuAu',
+    sobre: 1,
+    etiquetaCorta: 'Solvencia laboral',
+    pregunta: '¿Consignó la solvencia laboral vigente?',
+  },
+  {
+    id: 'modDeclaracionSociosNoInhabilitadosAuAu',
+    sobre: 1,
+    etiquetaCorta: 'Declaración de socios no inhabilitados',
+    pregunta: '¿Consignó la declaración jurada de socios no inhabilitados?',
+  },
+  {
+    id: 'modDeclaracionNoDeudasEnteAuAu',
+    sobre: 1,
+    etiquetaCorta: 'Declaración de no deudas con el Ente',
+    pregunta: '¿Consignó la declaración jurada de no mantener deudas con el Ente?',
+  },
+  {
+    id: 'modDeclaracionNoImpedimentosLcpAuAu',
+    sobre: 1,
+    etiquetaCorta: 'Declaración de no impedimentos LCP',
+    pregunta: '¿Consignó la declaración jurada de no estar incurso en los impedimentos de la LCP?',
+  },
+  {
+    id: 'modDeclaracionConocimientoLugarAuAu',
+    sobre: 1,
+    etiquetaCorta: 'Declaración de conocimiento del lugar',
+    pregunta: '¿Consignó la declaración de conocimiento del lugar de ejecución?',
+  },
+  {
+    id: 'modDeclaracionInfoFinancieraAuAu',
+    sobre: 1,
+    etiquetaCorta: 'Declaración de información financiera',
+    pregunta: '¿Consignó la declaración jurada de información financiera?',
+  },
+  {
+    id: 'modEvaluacionDesempenoAuAu',
+    sobre: 1,
+    etiquetaCorta: 'Evaluación de desempeño',
+    pregunta: '¿Consignó la evaluación de desempeño de contrataciones anteriores?',
+    sustitutoId: 'sustitutoDjEvalDesempenoAuAu',
+  },
 ];
 
 export const RECAUDOS_SOBRE_2: RecaudoCatalogo[] = [
-  { id: 'modCartaOfertaAuAu', sobre: 2 },
-  { id: 'modDeclaracionCapacidadFinancieraAuAu', sobre: 2 },
-  { id: 'modDeclaracionCompromisoRespSocialAuAu', sobre: 2 },
-  { id: 'modGarantiaMantenimientoOfertaAuAu', sobre: 2 },
-  { id: 'modDeclaracionAutocalculoVanAuAu', sobre: 2, autoFrom: 'requiereVan' },
-  { id: 'modCartaNotificacionesAuAu', sobre: 2 },
-  { id: 'modGarantiaFielCumplAuAu', sobre: 2 },
-  { id: 'modFianzaLaboralAuAu', sobre: 2, autoFrom: 'requiereGarantiaLaboral' },
+  {
+    id: 'modCartaOfertaAuAu',
+    sobre: 2,
+    etiquetaCorta: 'Carta de oferta',
+    pregunta: '¿Consignó la carta de oferta debidamente firmada?',
+  },
+  {
+    id: 'modDeclaracionCapacidadFinancieraAuAu',
+    sobre: 2,
+    etiquetaCorta: 'Declaración de capacidad financiera',
+    pregunta: '¿Consignó la declaración jurada de capacidad financiera?',
+  },
+  {
+    id: 'modDeclaracionCompromisoRespSocialAuAu',
+    sobre: 2,
+    etiquetaCorta: 'Compromiso de responsabilidad social',
+    pregunta: '¿Consignó el compromiso de responsabilidad social?',
+  },
+  {
+    id: 'modGarantiaMantenimientoOfertaAuAu',
+    sobre: 2,
+    etiquetaCorta: 'Garantía de mantenimiento de oferta',
+    pregunta: '¿Consignó la garantía de mantenimiento de la oferta?',
+  },
+  {
+    id: 'modDeclaracionAutocalculoVanAuAu',
+    sobre: 2,
+    etiquetaCorta: 'Declaración de autocálculo del VAN',
+    pregunta: '¿Consignó la declaración de autocálculo del Valor Agregado Nacional?',
+    autoFrom: 'requiereVan',
+  },
+  {
+    id: 'modCartaNotificacionesAuAu',
+    sobre: 2,
+    etiquetaCorta: 'Carta de notificaciones',
+    pregunta: '¿Consignó la carta de domicilio para notificaciones?',
+  },
+  {
+    id: 'modGarantiaFielCumplAuAu',
+    sobre: 2,
+    etiquetaCorta: 'Garantía de fiel cumplimiento',
+    pregunta: '¿Consignó la garantía de fiel cumplimiento?',
+  },
+  {
+    id: 'modFianzaLaboralAuAu',
+    sobre: 2,
+    etiquetaCorta: 'Fianza laboral',
+    pregunta: '¿Consignó la fianza laboral?',
+    autoFrom: 'requiereGarantiaLaboral',
+  },
 ];
 
 export const RECAUDOS_CATALOGO: RecaudoCatalogo[] = [...RECAUDOS_SOBRE_1, ...RECAUDOS_SOBRE_2];

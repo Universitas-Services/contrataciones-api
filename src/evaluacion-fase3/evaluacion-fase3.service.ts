@@ -506,8 +506,10 @@ export class EvaluacionFase3Service {
       updateData.justificacionCalificadaFinanciera = dto.justificacionCalificadaFinanciera;
 
     // Calificación técnica (Sobre 1 resumen)
-    if (dto.actividadComercial !== undefined) updateData.actividadComercial = dto.actividadComercial;
-    if (dto.relacionSuministros !== undefined) updateData.relacionSuministros = dto.relacionSuministros;
+    if (dto.actividadComercial !== undefined)
+      updateData.actividadComercial = dto.actividadComercial;
+    if (dto.relacionSuministros !== undefined)
+      updateData.relacionSuministros = dto.relacionSuministros;
     if (dto.referenciasComercialesPuntaje !== undefined)
       updateData.referenciasComercialesPuntaje = dto.referenciasComercialesPuntaje;
 
@@ -524,7 +526,8 @@ export class EvaluacionFase3Service {
       updateData.justificacionCalificadoTecnica = dto.justificacionCalificadoTecnica;
 
     // Descalificación global
-    if (dto.oferenteCalificado !== undefined) updateData.oferenteCalificado = dto.oferenteCalificado;
+    if (dto.oferenteCalificado !== undefined)
+      updateData.oferenteCalificado = dto.oferenteCalificado;
     if (dto.motivoDescalificacion !== undefined)
       updateData.motivoDescalificacion = dto.motivoDescalificacion;
     if (dto.itemsDescalificacion !== undefined)

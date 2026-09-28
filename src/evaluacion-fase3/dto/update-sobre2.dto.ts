@@ -94,7 +94,8 @@ export class UpdateSobre2Dto {
   obsCartaNotificaciones?: string;
 
   @ApiPropertyOptional({
-    description: '¿Consignó garantía de fiel cumplimiento del contrato? (garantia_fiel_cumpl_au_au)',
+    description:
+      '¿Consignó garantía de fiel cumplimiento del contrato? (garantia_fiel_cumpl_au_au)',
   })
   @IsBoolean()
   @IsOptional()
@@ -130,7 +131,8 @@ export class UpdateSobre2Dto {
   obsFianzaLaboral?: string;
 
   @ApiPropertyOptional({
-    description: '¿Consignó experiencia del personal técnico clave? (experiencia_personal_tecnico_au_au)',
+    description:
+      '¿Consignó experiencia del personal técnico clave? (experiencia_personal_tecnico_au_au)',
   })
   @IsBoolean()
   @IsOptional()

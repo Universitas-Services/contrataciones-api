@@ -19,8 +19,7 @@ export class UpdateCalificacionDto {
   oferenteCalificadoLegal?: boolean;
 
   @ApiPropertyOptional({
-    description:
-      'Justificación de la calificación legal (justificacion_calificado_legal_au_au)',
+    description: 'Justificación de la calificación legal (justificacion_calificado_legal_au_au)',
   })
   @IsString()
   @IsOptional()
@@ -29,8 +28,7 @@ export class UpdateCalificacionDto {
   // ─── Calificación FINANCIERA ──────────────────────────────────────────────
 
   @ApiPropertyOptional({
-    description:
-      'Índice de Liquidez (Activo Corriente / Pasivo Corriente) (indice_liquidez_au_au)',
+    description: 'Índice de Liquidez (Activo Corriente / Pasivo Corriente) (indice_liquidez_au_au)',
     example: 1.5,
   })
   @IsNumber()
@@ -40,8 +38,7 @@ export class UpdateCalificacionDto {
   indiceLiquidez?: number;
 
   @ApiPropertyOptional({
-    description:
-      'Índice de Solvencia (Pasivo Total / Activo Total) (indice_solvencia_au_au)',
+    description: 'Índice de Solvencia (Pasivo Total / Activo Total) (indice_solvencia_au_au)',
     example: 0.6,
   })
   @IsNumber()
@@ -69,8 +66,7 @@ export class UpdateCalificacionDto {
   // ─── Calificación TÉCNICA (Sobre 1 — resumen de puntajes) ────────────────
 
   @ApiPropertyOptional({
-    description:
-      'Puntaje asignado en el criterio Actividad Comercial (actividad_comercial_au_au)',
+    description: 'Puntaje asignado en el criterio Actividad Comercial (actividad_comercial_au_au)',
     example: 15,
   })
   @IsNumber()
@@ -131,8 +127,7 @@ export class UpdateCalificacionDto {
   oferenteCalificado?: boolean;
 
   @ApiPropertyOptional({
-    description:
-      'Motivo de descalificación del oferente (motivo_descalificacion_oferente_au_au)',
+    description: 'Motivo de descalificación del oferente (motivo_descalificacion_oferente_au_au)',
   })
   @IsString()
   @IsOptional()
@@ -157,8 +152,7 @@ export class UpdateCalificacionDto {
   oferenteEvaluadoTecnico?: boolean;
 
   @ApiPropertyOptional({
-    description:
-      'Justificación de la evaluación técnica (justificacion_evaluado_tecnico_au_au)',
+    description: 'Justificación de la evaluación técnica (justificacion_evaluado_tecnico_au_au)',
   })
   @IsString()
   @IsOptional()

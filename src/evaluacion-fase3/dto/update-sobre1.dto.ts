@@ -39,7 +39,9 @@ export class UpdateSobre1Dto {
   @IsOptional()
   docConstitutivo?: boolean;
 
-  @ApiPropertyOptional({ description: 'Observación sobre documento constitutivo (obs_doc_constitutivo_au_au)' })
+  @ApiPropertyOptional({
+    description: 'Observación sobre documento constitutivo (obs_doc_constitutivo_au_au)',
+  })
   @IsString()
   @IsOptional()
   obsDocConstitutivo?: string;

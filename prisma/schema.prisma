@@ -800,6 +800,19 @@ model EvaluacionResultados {
   totalVan        Decimal? @map("total_van_au_au") @db.Decimal(5, 2)
   totalEvaluacion Decimal? @map("total_evaluacion_oferente_au_au") @db.Decimal(6, 2)
 
+  // ── Hub de evaluación (Fase 2 — CA / Acto Único) ───────────────────
+  /// Copia inmutable de lo exigido en Fase 1 al abrir la evaluación. Si la
+  /// Fase 1 se edita después, la evaluación en curso NO cambia de plantilla.
+  plantillasSnapshot Json?   @map("plantillas_snapshot_au_au")
+  hubLegal           Json?   @map("hub_legal_au_au")
+  hubFinanciera      Json?   @map("hub_financiera_au_au")
+  hubTecnica         Json?   @map("hub_tecnica_au_au")
+  hubEvaluacion      Json?   @map("hub_evaluacion_au_au")
+  hubPromocion       Json?   @map("hub_promocion_au_au")
+  hubUnlocked        Json?   @map("hub_unlocked_au_au")
+  hubActiveModulo    String? @map("hub_active_modulo_au_au") @db.VarChar(30)
+  hubResultadoFinal  String? @map("hub_resultado_final_au_au") @db.VarChar(20)
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
