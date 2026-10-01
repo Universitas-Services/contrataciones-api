@@ -1,0 +1,295 @@
+Título
+Configuración de aspectos generales del pliego
+Defina el marco normativo, plazos, condiciones de responsabilidad social y régimen de garantías que regirán las reglas del procedimiento.
+📍 Paso 1: Régimen legal
+Autorizaciones y régimen legal
+Registre el acto administrativo de inicio, la autoridad competente y las normativas legales complementarias.
+Indique los datos del acto administrativo de autorización de inicio emitido por la Máxima Autoridad (Número y fecha punto de cuenta)
+Artículos 18.3 LOPA; 23 NORMAS DE CONTROL INTERNO SUNAI.
+Ejemplo: 0002-2026 de fecha 02-03-2026
+Tipo de Campo: Área de Texto.
+Variable: datos_acto_autorizacion_inicio_au_au
+Tipo de dato: Varchar (255)
+MARCADOR EN AUTOMATIZACIÓN: {datos_acto_autorizacion_inicio_au_au}
+Marcador en los siguientes documentos:
+Acta de inicio
+Indique el plazo mínimo de validez que deben mantener las manifestaciones de voluntad y ofertas. -
+Artículos 66.5, 71 LCP; 18 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de campo: input numérico
+Variable: dias_validez_oferta_au_au
+Tipo de dato: Integer
+MARCADOR EN AUTOMATIZACIÓN: {dias_validez_oferta_au_au}Marcador en los siguientes documentos:
+Pliego de condiciones
+Indique la autoridad competente encargada de responder aclaratorias, modificar el documento y notificar las decisiones durante el procedimiento de contratación.
+Artículos 66.8 LCP; 5 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de campo: Input text.
+Variable: autoridad_aclaratorias_au_au
+Tipo de dato: Varchar (255)
+MARCADOR EN AUTOMATIZACIÓN: {autoridad_aclaratorias_au_au}Marcador en los siguientes documentos:
+Agrega en el Régimen Jurídico aplicable al procedimiento de contratación, cualquier otra normativa nacional y sectorial que considere pertinente.
+Artículos 6.17 LCP; 6 NORMAS DE CONTROL INTERNO SUNAI.
+Verifica las normativas aplicables al procedimiento ya agregadas aquí
+Hipervincula a un modal que mostrará el siguiente contenido:
+_________________________________________________________________________
+Constitución de la República Bolivariana de Venezuela (1999).
+Ley Constitucional Contra La Guerra Económica Para La Racionalidad Y Uniformidad En La Adquisición De Bienes, Servicios Y Obras Públicas, publicado en Gaceta Oficial N° 41.318 de fecha 11 de enero de 2018.
+Decreto Nº 1399 con Rango, Valor y Fuerza de Ley de Contrataciones Públicas. Gaceta Oficial Extraordinaria N° 6.154 de fecha 19 de noviembre de 2014.
+Ley Orgánica de la Contraloría General de la República y del Sistema Nacional de Control Fiscal. Gaceta Oficial Extraordinaria N° 6.013 del 23 de diciembre de 2010.
+Ley Orgánica de Procedimientos Administrativos, publicada en Gaceta Oficial N° 2.818 del 1° de julio de 1981.
+Decreto N° 1.424 con Rango, Valor y Fuerza de Ley de Reforma de Ley Orgánica de la Administración Pública. Gaceta Oficial Extraordinaria N° 6.147 del 17 de noviembre de 2014.
+Decreto con Rango, Valor y Fuerza de Ley contra la Corrupción. Gaceta Oficial Extraordinaria N° 6.699 del 02 de mayo de 2022.
+Decreto N° 1423 con Rango, Valor y Fuerza de Ley de Simplificación de Trámites Administrativos. Gaceta Oficial N° 40.549 del 26 de noviembre de 2014.
+Decreto con Rango, Valor y Fuerza de Ley Orgánica de Planificación Pública y Popular (G.O. N°. Ext. 6.148 del 18/11/2014).
+Decreto N° 2174 con Rango, Valor y Fuerza de Ley Orgánica de la Administración Financiera del Sector Público (LOAFSP). Gaceta Oficial Extraordinaria N° 6.210 extraordinaria del 30 de diciembre de 2015 y sus reglamentos.
+Reglamento de la Ley de Contrataciones Públicas, Decreto N° 6.708 de fecha 19 de mayo de 2009 publicada en Gaceta Oficial N° 39.181 del 19 de mayo de 2009.
+Decreto N° 1.407, con Rango, Valor y Fuerza de Ley de Reforma Parcial del de Ley Orgánica de Bienes Públicos, publicado en Gaceta Oficial Extraordinario N° 6.155 de fecha 19 de noviembre de 2014.
+Decreto Ley Orgánica de Precios Justos, publicado en Gaceta Oficial N° 40.787 de fecha 12 de noviembre de 2015.
+Decreto N° 1.402 Ley de las Instituciones del Sector Bancario, publicado en Gaceta Oficial N° 40.557 de fecha martes 8 de diciembre de 2014.
+Ley Orgánica de las Comunas, publicada en Gaceta Oficial N° 6.011, el 21 de diciembre de 2010.
+Ley Orgánica del Poder Popular, publicada en la Gaceta Oficial Extraordinaria N° 6.812, en fecha 06 de junio de 2024.
+Ley Orgánica del Sistema Económico Comunal, publicada en Gaceta Oficial Extraordinario Nº 6.011 de fecha de 21 de diciembre de 2010.
+Decreto N° 9.052, mediante el cual se dicta el Decreto con Rango, Valor y Fuerza de Ley que promueve y regula las nuevas formas asociativas conjuntas entre el estado, la iniciativa comunitaria y privada para el desarrollo de la economía nacional, publicado en Gaceta Oficial N° 39.945 de fecha de 15 de junio de 2012.
+Ley de Infogobierno (Gaceta Oficial N° 40.274 del 17/10/2013)
+Ley sobre Mensaje de Datos y Firmas Electrónicas(DLMDyFE) (Gaceta Oficial N° 37.148 del 28/02/2001)
+Decreto N° 1.413 de Reforma del Decreto con Rango, Valor y Fuerza de Ley para la Promoción y Desarrollo de la Pequeña y Mediana Industria y Unidades de Propiedad Social,  Publicado en Gaceta Oficial N° 40.550 de fecha 27 de noviembre de 2014.
+Ley Constitucional de Precios acordados, publicado en Gaceta Oficial Extraordinaria N° 6.342 de fecha 22 de noviembre de 2017.
+Decreto N° 2.198 de creación del Sistema Centralizado y Estandarizado de compras públicas para la Administración Pública Nacional, publicado en Gaceta Oficial N° 40.836 de fecha de 26 de enero de 2016.
+Decreto Nº 8.795 Reglamento parcial Ley Orgánica del Sistema Económico Comunal, publicado en Gaceta Oficial Nº 39.856 de fecha de 02 de febrero de 2012.
+Providencia SUNDDE N° 003/2014, mediante la cual se fijan Criterios Contables Generales para la Determinación de Precios Justos, publicada en Gaceta Oficial Nº 40.351 de fecha de 7 de febrero de 2014.
+Resolución Mintras N° 9108 sobre Registro Nacional de Empresas y Establecimientos y Solvencia Laboral, publicada en Gaceta Oficial Nº 40.655 de fecha de 7 de mayo de 2015
+Providencia SUNDDE N° 070/2015 Modalidades para la Determinación, Fijación y Marcaje de Precios, publicada en Gaceta Oficial Nº 40.775 de fecha de 27 de octubre de 2015.
+Providencia Nº 001/2016, mediante la cual se regula el Proceso de Adquisición de Bienes por los Órganos y Entes de la Administración Pública Nacional en el Marco del Sistema Centralizado y Estandarizado de Compras Públicas, publicada en Gaceta Oficial Nº 40.906 de fecha de 18 de mayo de 2016.
+Resolución N° 006/2016 de fecha 16 de septiembre de 2016, Órgano Superior del Comando de Abastecimiento Soberano, publicada en la Gaceta Oficial de la República Bolivariana de Venezuela Nº 40.994 de fecha 22 de septiembre de 2016.
+Resolución Conjunta de los Ministerios del Poder Popular con competencia en materia de Planificación y de Economía, Finanzas y Comercio Exterior, mediante la cual se fija el valor de la Unidad para el Cálculo Aritmético del Umbral Máximo y Mínimo (UCAU), vigente y publicada en Gaceta Oficial de la República Bolivariana de Venezuela para el momento del inicio del procedimiento de selección de contratistas.
+Providencia SUNAI 007/2025 sobre Normas de control interno aplicables a contrataciones públicas, publicada en la Gaceta Oficial de la República Bolivariana de Venezuela Nº 43.158 de fecha 27 de junio de 2025.
+Ley Orgánica para la Celeridad y Optimización de Trámites Administrativos, Gaceta Oficial N° 7.018 Extraordinario, de fecha (08) de abril de 2026.
+Debajo en el modal un botón que diga [Cerrar]
+_____________________________________________________________________Luego un campo de texto que tenga Ejemplo: Ley xxxxxxxxx, publicado en Gaceta Oficial N° xxxxx Extraordinario / Ordinario, de fecha xx de xx de xxxx.
+Botón [Agregar]
+Va mostrando en lista las normativas nuevas agregadas a este expediente
+Tipo de campo: Input text.
+Variable: normativa_legal_au_au
+Tipo de dato: Varchar (500)
+MARCADOR EN AUTOMATIZACIÓN: {normativa_legal_au_au}Marcador en los siguientes documentos:
+Pliego de condiciones
+Adjudicación
+_________________________________________________________________________
+📍 Paso 2: Condiciones oferta
+Condiciones de la oferta
+Establezca los parámetros de validez de las manifestaciones de voluntad y las condiciones excepcionales sobre idioma o divisas.
+Indique el número de días de vigencia de la garantía de mantenimiento de la oferta después del período de validez de la misma.
+Artículos 64 LCP; 19 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de campo: Input Numérico.
+Variable: dias_vigencia_garantia_ext_au_au
+Tipo de dato: Interger.
+MARCADOR EN AUTOMATIZACIÓN: {dias_vigencia_garantia_ext_au_au}Marcador en los siguientes documentos:
+¿Admitirá la presentación de propuestas económicas referenciadas en moneda extranjera, bajo la condición obligatoria de que la evaluación comparativa y los pagos se realicen en Bolívares (Bs.) al tipo de cambio oficial del Banco Central de Venezuela (BCV)?
+Artículos 66, Numeral 6 LCP; Artículo 141 del Reglamento de la LCP
+Tipo de campo: botones SÍ/NO
+Variable: moneda_diferente_au_au
+Tipo de dato: (Boolean)
+MARCADOR EN AUTOMATIZACIÓN: {moneda_diferente_au_au}
+Marcador en los siguientes documentos:
+Lógica de frontend: Si la variable moneda_diferente_au_au = SI se despliega la siguiente pregunta:
+Especifique el nombre oficial de la moneda extranjera que se utilizará como referencia (Ejemplo: Dólares de los Estados Unidos de América, Euros)
+Artículos 66, Numeral 6 LCP; Artículo 141 del Reglamento de la LCP
+Tipo de llenado: Input Text.
+Variable: nom_moneda_extranjera_au_au
+Tipo de dato: Varchar (100)
+MARCADOR EN AUTOMATIZACIÓN: {nom_moneda_extranjera_au_au}
+Marcador en los siguientes documentos:
+Lógica para automatización:
+Si la variable moneda_diferente_au_au = NO sustituir el marcador {moneda_diferente_au_au} por:
+C) De la Moneda de las Ofertas:
+Las ofertas deberán ser manifestadas estrictamente en la moneda de curso legal de la República Bolivariana de Venezuela, es decir, en Bolívares (Bs.). No se admitirán ofertas, cotizaciones ni precios referenciados en moneda extranjera. En consecuencia, tanto la evaluación económica como los pagos derivados del contrato se realizarán exclusivamente en la denominación nacional.
+Lógica para automatización:
+Si la variable moneda_diferente_au_au = SÍ sustituir el marcador {moneda_diferente_au_au} por:
+C) De la Moneda de las Ofertas y su Conversión:
+Las ofertas deberán manifestarse en Bolívares (Bs.), pudiendo utilizarse como referencia el/la {nom_moneda_extranjera_au_au}. En caso de que el oferente presente su propuesta referenciada en dicha moneda extranjera, deberá indicar obligatoriamente su equivalente en Bolívares.
+A los fines de la evaluación y comparación de ofertas (Etapa II), la Comisión de Contrataciones utilizará el tipo de cambio oficial del Banco Central de Venezuela (BCV) vigente para la fecha del Acto de Recepción y Apertura de Sobres.
+Los pagos derivados del contrato se realizarán estrictamente en Bolívares (Bs.), calculados a la tasa oficial del BCV vigente para la fecha de cada facturación o hito de pago, conforme a lo estipulado en el contrato, a fin de garantizar el equilibrio económico de la contratación.
+Se admitirá la presentación de documentos técnicos o catálogos en idiomas distintos al castellano, bajo la condición obligatoria de adjuntar una traducción fidedigna realizada por el oferente.
+Artículo 66 de la LCP.
+Tipo de campo: botones SÍ/NO
+Variable: idioma_diferente_au_au
+Tipo de dato: (Boolean)
+MARCADOR EN AUTOMATIZACIÓN: {idioma_diferente_au_au}
+Marcador en los siguientes documentos:
+Especifique el nombre oficial del idioma que permitirá para la presentación de documentos técnicos o catálogos (Ejemplo: Inglés, portugues, francés)
+Artículos 66, Numeral 6 LCP; Artículo 141 del Reglamento de la LCP
+Tipo de llenado: Input Text.
+Variable: nom_idioma_diferente_au_au
+Tipo de dato: Varchar (100)
+MARCADOR EN AUTOMATIZACIÓN: {nom_moneda_extranjera_au_au}
+Marcador en los siguientes documentos:
+Lógica para automatización:
+Si la variable idioma_diferente_au_au = SÍ sustituir el marcador {idioma_diferente_au_au} por:
+D) Del Idioma de las Ofertas:
+La oferta, correspondencia y documentos legales deberán redactarse estrictamente en idioma castellano. Se permitirá la consignación de documentos complementarios, catálogos, folletos o textos impresos originales en idioma extranjero ({nom_idioma_diferente_au_au}), siempre que el oferente adjunte una traducción fidedigna al castellano realizada por su representante legal o traductores autorizados. A los fines de la interpretación y evaluación técnica de la propuesta, prevalecerá la versión en idioma castellano.
+Si la variable idioma_diferente_au_au = NO sustituir el marcador {idioma_diferente_au_au} por:
+D) Del Idioma de las Ofertas:
+La oferta en su totalidad, incluyendo anexos, catálogos y especificaciones técnicas, deberá ser presentada única y exclusivamente en idioma castellano. No se admitirá documentación técnica en idiomas extranjeros, ni siquiera acompañada de traducciones. La presentación de documentos en un idioma distinto al oficial será causal de rechazo de la oferta por incumplimiento de las formalidades de presentación.
+_________________________________________________________
+📍 Paso 3: Responsabilidad social
+Responsabilidad Social (CRS)
+Configure el porcentaje, la modalidad de ejecución y los mecanismos de seguimiento para el Compromiso de Responsabilidad Social.
+Indique el porcentaje (%) destinado al Compromiso de Responsabilidad Social (CRS), de conformidad con lo establecido en el artículo 31 de la Ley de Contrataciones Públicas.
+Artículos 31 LCP y 34 al 50 (exceptúa al 35)  RLCP ; 34 NORMAS DE CONTROL INTERNO SUNAI
+Tipo de llenado: Input Text.
+Variable: porcentaje_responsabilidad_social_au_au
+Tipo de dato: Varchar (100)
+MARCADOR EN AUTOMATIZACIÓN: {porcentaje_responsabilidad_social_au_au}
+Marcador en los siguientes documentos:
+Indique nombre de la unidad técnica administrativa responsable de dar seguimiento y controlar la ejecución y el cumplimiento del compromiso de responsabilidad social (RS)
+Artículos 44 RLCP; 5 NORMAS DE CONTROL INTERNO SUNAI
+Campo de llenado: Input Text.
+Variable: unidad_resp_cumplimiento_crs_au_au
+Tipo de dato: Varchar
+MARCADOR EN AUTOMATIZACIÓN: {unidad_resp_cumplimiento_crs_au_au}Marcador en los siguientes documentos:
+Contrato
+Seleccione la modalidad o categoría legal bajo la cual se ejecutará el Compromiso de Responsabilidad Social (CRS) para este procedimiento, de conformidad con las demandas de desarrollo del entorno del Ente.
+Artículo 6, Numeral 24 de la Ley de Contrataciones Públicas; Artículos 31, 32 de la LCP y 41 del Reglamento de la LCP; Norma 34 de las Normas de Control Interno de la SUNAI.
+Tipo de campo: Dropdown (Menú Desplegable)
+Opciones de la Interfaz (Dropdown):
+- La ejecución de proyectos de desarrollo socio comunitario.
+- La creación de nuevos empleos permanentes.
+- Formación socio productiva de integrantes de la comunidad.
+- Venta de bienes a precios solidarios o al costo.
+- Aportes en dinero o especie a programas sociales determinados por el Estado o a instituciones sin fines de lucro.
+- Cualquier otro que satisfaga las necesidades prioritarias del entorno social del contratante.
+Variable: modalidad_crs_au_au
+Tipo de dato: Varchar(100) (o Enum)
+MARCADOR EN AUTOMATIZACIÓN: {modalidad_crs_au_au}
+Describa detalladamente el proyecto, metas, alcances o el plan específico mediante el cual el oferente adjudicado dará cumplimiento definitivo a la modalidad de Compromiso de Responsabilidad Social seleccionada.
+Artículos 30 y 32 de la Ley de Contrataciones Públicas; Artículos 36, 41 y 44 de su Reglamento; Norma 34 de las Normas de Control Interno de la SUNAI.
+Tipo de campo: Input de texto multilínea
+Variable: forma_cumplimiento_crs_au_au
+Tipo de dato: Varchar
+MARCADOR EN AUTOMATIZACIÓN: {forma_cumplimiento_crs_au_au}
+_________________________________________________________________________
+📍 Paso 4: Garantías y anticipos
+Garantías y anticipos
+Defina las condiciones financieras del contrato, incluyendo las fianzas de fiel cumplimiento, laborales, pólizas de responsabilidad y otorgamiento de anticipos.
+Mantenimiento de la oferta:
+Indique el porcentaje (%) de la Garantía de Mantenimiento de la Oferta, a los fines de asegurar la seriedad de la oferta y su vigencia hasta la firma del contrato, conforme al Artículo 64 de la LCP
+Artículos 64 LCP; 135 RLCP; 19 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de llenado: Input numérico (1,5-2,5)Desde 1,5 hasta 2,5
+Variable: porcentaje_mantenimiento_oferta_au_au
+Tipo de dato: Decimal
+MARCADOR EN AUTOMATIZACIÓN: {porcentaje_responsabilidad_social_au_au}
+Marcador en los siguientes documentos:
+Fiel Cumplimiento:
+Indique el porcentaje (%) de la Garantía de Fiel Cumplimiento (calculado sobre el monto total con IVA), conforme al Art. 123 de la LCP y los criterios de suficiencia de las Normas SUNAI.
+Artículos 123 LCP; 19 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de Campo: Input Numérico (20-100).
+Desde 20% el mínimo
+Variable: porcentaje_fiel_cumplimiento_au_au
+Tipo de dato: Decimal (20,2)
+NOTA: El usuario escribirá en número el monto y en backend se debe sacar el monto en letra
+MARCADOR EN AUTOMATIZACIÓN: {porcentaje_fiel_cumplimiento_au_au}
+Marcador en los siguientes documentos:
+¿Se admitirá la constitución de la Garantía de Fiel Cumplimiento mediante la modalidad de retención (10%) sobre los pagos o valuaciones realizados?
+Artículos 123 LCP; 19 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de campo: botones SÍ/NO
+Variable: retencion_fiel_cumplimiento_au_au
+Tipo de dato: (Boolean)
+NOTA: El usuario escribirá en número el monto y en backend se debe sacar el monto en letra
+MARCADOR EN AUTOMATIZACIÓN: {retencion_fiel_cumplimiento_au_au}
+Marcador en los siguientes documentos:
+Fianza laboral:
+¿Se exigirá la Garantía Laboral para asegurar las obligaciones laborales y de seguridad social, conforme al Art. 124 de la LCP?
+Artículos 124 LCP; 19 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de campo: botones SÍ/NO
+Variable: requiere_garantia_laboral_au_au
+Tipo de dato: (Boolean)
+MARCADOR EN AUTOMATIZACIÓN: {requiere_garantia_laboral_au_au}
+Marcador en los siguientes documentos:
+Lógica de Frontend:  Si requiere_garantia_laboral_au_au = Si se despliega las siguientes preguntas
+Indique el porcentaje (%) de la Garantía Laboral (calculado sobre el costo de la mano de obra), de conformidad con el Art. 124 de la LCP y los criterios de suficiencia de las Normas SUNAI.
+Artículos 124 LCP;   19 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de campo: Input numérico (0-10).
+HASTA 10%
+Variable: porcentaje_garantia_laboral_au_au
+Tipo de dato: Decimal
+MARCADOR EN AUTOMATIZACIÓN: {porcentaje_garantia_laboral_au_au}
+¿Se admitirá la constitución de la Garantía Laboral mediante la modalidad de retención (5%) sobre los pagos o valuaciones realizados?
+Artículos 124 LCP;   19 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de campo: botones SÍ/NO
+Variable: retencion_fianza_laboral_au_au
+Tipo de dato: (Boolean)
+NOTA: El usuario escribirá en número el monto y en backend se debe sacar el monto en letra
+MARCADOR EN AUTOMATIZACIÓN: {retencion_fianza_laboral_au_au}
+Marcador en los siguientes documentos:
+pliego de condiciones
+Responsabilidad civil:
+¿Se exigirá la constitución de una Póliza de Responsabilidad Civil General para cubrir daños a personas, bienes o instalaciones, conforme al Art. 125 de la LCP y el análisis de riesgos de la SUNAI?
+Artículos 125 LCP; 19 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de campo: botones SÍ/NO
+Variable: poliza_responsabilidad_civil_au_au
+Tipo de dato: (Boolean)
+MARCADOR EN AUTOMATIZACIÓN: {poliza_responsabilidad_civil_au_au}
+Marcador en los siguientes documentos:
+pliego de condiciones
+Lógica de Frontend:  Si poliza_responsabilidad_civil_au_au = Si se despliega las siguientes preguntas
+Indique el porcentaje (%) para determinar la suma asegurada, calculado sobre el monto total estimado (con IVA), según la magnitud del riesgo de la ejecución.
+Artículos 125 LCP;   19 NORMAS DE CONTROL INTERNO SUNAI
+Tipo de campo: Input numérico (0-100).
+Variable: porcentaje_responsabilidad_civil_au_au
+Tipo de dato: Decimal
+MARCADOR EN AUTOMATIZACIÓN: {porcentaje_responsabilidad_civil_au_au}
+Indique el monto total de la Suma Asegurada (Bs.) que deberá reflejar la póliza para considerarse suficiente ante los riesgos identificados.
+Artículos 125 LCP;   19 NORMAS DE CONTROL INTERNO SUNAI
+Tipo de Campo: Input Numérico (Formato Moneda).
+Variable: monto_responsabilidad_civil_bs_au_au
+Tipo de dato: Decimal(10,2)
+MARCADOR EN AUTOMATIZACIÓN: {monto_responsabilidad_civil_bs_au_au}
+Anticipo:
+¿Desea otorgar un Anticipo Contractual (máximo 50%) para facilitar el inicio de la ejecución, conforme al Art. 122 de la LCP y los criterios de control de las Normas SUNAI?
+Artículos 122 LCP; 19 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de campo: botones SÍ/NO
+Variable: anticipo_contrato_au_au
+Tipo de dato: (Boolean)
+MARCADOR EN AUTOMATIZACIÓN: {anticipo_contrato_au_au}
+Marcador en los siguientes documentos:
+Lógica de Frontend:  Si la variable anticipo_contrato_au_au = SÍ se despliega las siguiente pregunta
+Indique el porcentaje (%) de anticipo que se otorgará sobre el monto total del contrato (sin IVA).
+Máximo 50%
+Tipo de campo: Input numérico (0-100).
+Variable: porcentaje_anticipo_au_au
+Tipo de dato: Decimal
+MARCADOR EN AUTOMATIZACIÓN: {porcentaje_anticipo_au_au}
+¿Desea otorgar un Anticipo Especial, conforme al Art. 129 de la LCP y los criterios de control de las Normas SUNAI?
+Artículos 129 LCP; 19 NORMAS DE CONTROL INTERNO SUNAI.
+Máximo 20%
+Tipo de campo: botones SÍ/NO
+Variable: anticipo_especial_au_au
+Tipo de dato: (Boolean)
+MARCADOR EN AUTOMATIZACIÓN: {anticipo_especial_au_au}
+Indique el porcentaje (%) de anticipo que se otorgará sobre el monto total del contrato (sin IVA).
+Máximo 20%
+Tipo de campo: Input numérico (0-100).
+Variable: porcentaje_anticipo_especial_au_au
+Tipo de dato: Decimal
+MARCADOR EN AUTOMATIZACIÓN: {porcentaje_anticipo_especial_au_au}
+Lógica para automatización módulo modelo de contrato:
+Si la variable anticipo_contrato_au_au = SÍ, sustituir el marcador {modelo_anticipo_contrato_au_au} por:
+- Garantía de Anticipo: En caso de que “EL CONTRATANTE” otorgue un anticipo, el cual no podrá exceder el 50% del monto del contrato conforme al artículo 122 de la Ley de Contrataciones Públicas, “LA CONTRATISTA” deberá constituir previamente una garantía por el cien por ciento (100%) del monto otorgado. Dicha garantía deberá mantenerse vigente hasta la total amortización del anticipo, la cual se efectuará mediante deducciones proporcionales en los pagos correspondientes.
+Si la variable anticipo_contrato_au_au = NO, eliminar el marcador {modelo_anticipo_contrato_au_au}
+___________________________________________________________________
+Botones debajo del formulario
+[Guardar borrador]
+[Cargar datos iniciales]
+LÓGICAS DE LOS BOTONES
+Variable: estado_aspectos_generales_au_au
+Botón [Guardar borrador]: Siempre guarda la data actual sin validaciones estrictas y actualiza el estado a BORRADOR. El botón de acción principal hace lo siguiente:
+Botón de Acción Principal: [Cargar datos iniciales]
+Notificación para el usuario (Tooltip visual al pasar el cursor si el botón está bloqueado):
+Faltan datos en algunos pasos. Completa todo el recorrido para habilitar esta acción.
+Lógica del Sistema (Redacción técnica para tu documentación):
+Comportamiento UI/UX: El botón de carga inicial se mantiene deshabilitado (disabled) por defecto. El frontend implementa un validador multi-paso que verifica de forma asíncrona la integridad de los datos en cada una de las secciones del formulario. Únicamente cuando el sistema confirma que todos los campos requeridos en la totalidad de los pasos poseen valores válidos, se retira el bloqueo del botón. Acción de Guardado (On-Click): Al hacer clic, el sistema ejecuta la persistencia de los datos en la base de datos y actualiza la variable de control estado_aspectos_generales_au_au al valor 'COMPLETADO' en el checklist interno, validando este bloque para la futura generación del Pliego.
+Al hacer clic en finalizar se genera un pop-up de confirmación
+Título
+¡Aspectos guardados!
+Los datos generales del pliego, incluyendo garantías y normativas, han sido registrados
+[Volver al panel]
+Y redirecciona al usuario a la pantalla de detalle de la fase 1 donde deberá indicar como disponible para generar el documento de actividades previas.

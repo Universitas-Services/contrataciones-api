@@ -16,6 +16,16 @@ export class GeneradorDocumentosController {
   // GENERAR DOCUMENTOS
   // ==========================
 
+  @ApiOperation({ summary: 'Obtener tokens mapeados del Acta de Inicio' })
+  @Get('acta-inicio/:expedienteId/datos')
+  async getDatosActaInicio(@Param('expedienteId') expedienteId: string) {
+    const tokens = await this.generadorDocumentosService.getDatosActaInicio(expedienteId);
+    return {
+      message: 'Datos del Acta de Inicio',
+      data: { tokens },
+    };
+  }
+
   @ApiOperation({ summary: 'Generar Acta de Inicio' })
   @Post('generar/acta-inicio/:expedienteId')
   async generarActaInicio(
@@ -26,6 +36,16 @@ export class GeneradorDocumentosController {
     return {
       message: 'Acta de Inicio generada y guardada exitosamente',
       data,
+    };
+  }
+
+  @ApiOperation({ summary: 'Obtener tokens mapeados del Pliego de Condiciones' })
+  @Get('pliego-condiciones/:expedienteId/datos')
+  async getDatosPliegoCondiciones(@Param('expedienteId') expedienteId: string) {
+    const tokens = await this.generadorDocumentosService.getDatosPliegoCondiciones(expedienteId);
+    return {
+      message: 'Datos del Pliego de Condiciones',
+      data: { tokens },
     };
   }
 
@@ -57,6 +77,34 @@ export class GeneradorDocumentosController {
     );
     return {
       message: 'Llamado a Participar generado y guardado exitosamente',
+      data,
+    };
+  }
+
+  @ApiOperation({
+    summary: 'Obtener tokens mapeados del Requerimiento de Actividades Previas',
+  })
+  @Get('actividades-previas/:expedienteId/datos')
+  async getDatosActividadesPrevias(@Param('expedienteId') expedienteId: string) {
+    const tokens = await this.generadorDocumentosService.getDatosActividadesPrevias(expedienteId);
+    return {
+      message: 'Datos del Requerimiento de Actividades Previas',
+      data: { tokens },
+    };
+  }
+
+  @ApiOperation({ summary: 'Generar Requerimiento de Actividades Previas' })
+  @Post('actividades-previas/:expedienteId/generar')
+  async generarActividadesPrevias(
+    @Param('expedienteId') expedienteId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    const data = await this.generadorDocumentosService.generarActividadesPrevias(
+      expedienteId,
+      user.id,
+    );
+    return {
+      message: 'Requerimiento de Actividades Previas generado y guardado exitosamente',
       data,
     };
   }
@@ -132,6 +180,14 @@ export class GeneradorDocumentosController {
     return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'LLAMADO_PARTICIPAR');
   }
 
+  @ApiOperation({
+    summary: 'Obtener enlace de previsualización Requerimiento Actividades Previas',
+  })
+  @Get('preview/actividades-previas/:expedienteId')
+  async previewActividadesPrevias(@Param('expedienteId') expedienteId: string) {
+    return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'ACTIVIDADES_PREVIAS');
+  }
+
   // ==========================
   // DESCARGAR (DOWNLOAD)
   // ==========================
@@ -159,6 +215,15 @@ export class GeneradorDocumentosController {
     @Res({ passthrough: false }) res: any,
   ) {
     return this.downloadDocumentoInternal(expedienteId, 'LLAMADO_PARTICIPAR', res);
+  }
+
+  @ApiOperation({ summary: 'Descargar Requerimiento de Actividades Previas generado' })
+  @Get('download/actividades-previas/:expedienteId')
+  async downloadActividadesPrevias(
+    @Param('expedienteId') expedienteId: string,
+    @Res({ passthrough: false }) res: any,
+  ) {
+    return this.downloadDocumentoInternal(expedienteId, 'ACTIVIDADES_PREVIAS', res);
   }
 
   @ApiOperation({ summary: 'Preview Registro de Adquirentes' })
@@ -457,16 +522,34 @@ export class GeneradorDocumentosController {
 
   private async proxyCloudinaryDownload(result: { url: string; fileName: string }, res: any) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const axios = require('axios');
+      let fileBuffer: Buffer;
 
-      const response = await axios.get(result.url, {
-        responseType: 'arraybuffer',
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-      });
-
-      const fileBuffer = Buffer.from(response.data);
+      // Desarrollo local: archivo en /uploads/...
+      if (result.url.startsWith('/uploads/')) {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const fs = require('fs');
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const path = require('path');
+        const relative = result.url.replace(/^\/uploads\//, '');
+        const fullPath = path.join(process.cwd(), 'uploads', relative);
+        if (!fs.existsSync(fullPath)) {
+          res.status(404).json({
+            statusCode: 404,
+            message: `Archivo local no encontrado: ${result.url}`,
+          });
+          return;
+        }
+        fileBuffer = fs.readFileSync(fullPath);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const axios = require('axios');
+        const response = await axios.get(result.url, {
+          responseType: 'arraybuffer',
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+        });
+        fileBuffer = Buffer.from(response.data);
+      }
 
       res.setHeader(
         'Content-Type',
@@ -480,7 +563,7 @@ export class GeneradorDocumentosController {
     } catch (error: any) {
       res.status(500).json({
         statusCode: 500,
-        message: 'Error al descargar el archivo desde Cloudinary',
+        message: 'Error al descargar el archivo',
         error: error.message,
       });
     }

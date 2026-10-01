@@ -63,8 +63,9 @@ COPY --from=build --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=build --chown=nestjs:nodejs /app/prisma ./prisma
 COPY --from=build --chown=nestjs:nodejs /app/package*.json ./
 
-# Copy templates for docx generation (commented - folder doesn't exist yet)
-# COPY --from=build --chown=nestjs:nodejs /app/templates ./templates
+# Plantillas DOCX: nest-cli assets copia src/**/*.docx → dist/ (p.ej.
+# dist/generador-documentos/templates/*.docx). El servicio las resuelve con
+# path.join(__dirname, 'templates', templateName) desde dist/generador-documentos.
 
 # Create uploads directory with correct permissions
 RUN mkdir -p /app/uploads && chown -R nestjs:nodejs /app/uploads

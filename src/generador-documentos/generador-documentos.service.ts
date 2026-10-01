@@ -11,7 +11,9 @@ import {
   formatToDDMMYYYY,
   formatCurrencyVE,
 } from '../common/utils/date-formatter.util';
-import { TipoDocumento } from '@prisma/client';
+import { TipoDocumento, EstadoMicromodulo } from '@prisma/client';
+import { MICROMODULO_KEYS, MICROMODULOS } from '../fase1/constants/micromodulos.constants';
+import { mapDatosPliegoCondiciones } from './mappers/pliego-condiciones.mapper';
 
 function formatNormativaLegalForDoc(raw: string | null | undefined): string {
   if (!raw || !raw.trim()) return 'Decreto de Ley de Contrataciones vigente';
@@ -38,7 +40,8 @@ export class GeneradorDocumentosService {
   ) {}
 
   /**
-   * Obtiene la estructura JSON mapeada para el Acta de Inicio
+   * Obtiene la estructura JSON mapeada para el Acta de Inicio.
+   * Gate: debe existir pliego generado (PliegoGenerado o DocumentoGenerado PLIEGO_CONDICIONES).
    */
   async getDatosActaInicio(expedienteId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
@@ -57,6 +60,8 @@ export class GeneradorDocumentosService {
     if (!expediente.fasePreparatoria)
       throw new NotFoundException(`Fase Preparatoria incompleta para este expediente`);
 
+    await this.assertPliegoGeneradoParaActa(expedienteId);
+
     const { ente, comision, unidadUsuaria, fasePreparatoria, modalidad, cronograma } = expediente;
 
     const getMiembro = (area: string) => {
@@ -68,11 +73,30 @@ export class GeneradorDocumentosService {
     const miembroTecnica = getMiembro('AREA_TECNICA');
     const miembroSecretaria = getMiembro('SECRETARIO_A');
 
+    const siNo = (v: boolean | null | undefined): string => {
+      if (v === true) return 'SÍ';
+      if (v === false) return 'NO';
+      return '___';
+    };
+
+    const justificacionMarco = fasePreparatoria.justificacion_contrato_marco_au_au || '___';
+    let viabilidadContratoMarcoTexto: string;
+    if (fasePreparatoria.viabilidadContratoMarco === true) {
+      viabilidadContratoMarcoTexto = `Se deja constancia de la evaluación realizada en las actividades previas respecto a la posibilidad de agrupar la presente contratación o utilizar la figura del contrato marco, según lo establecido en el Art. 24 (j) de las Normas SUNAI, concluyendo lo siguiente: ${justificacionMarco}`;
+    } else if (fasePreparatoria.viabilidadContratoMarco === false) {
+      viabilidadContratoMarcoTexto =
+        'Se deja constancia de la evaluación realizada en las actividades previas respecto a la posibilidad de agrupar la presente contratación o utilizar la figura del contrato marco, según lo establecido en el Art. 24 (j) de las Normas SUNAI, concluyendo que no resulta viable ni procedente su aplicación dadas las características y necesidades específicas de esta contratación.';
+    } else {
+      viabilidadContratoMarcoTexto = '___';
+    }
+
     return {
       nom_ente_contratante: ente?.nombre || '___',
       cod_nomenclatura_proceso_au_au: expediente.codigoNomenclatura || '___',
       loc_ciudad_ente: ente?.ciudad || '___',
-      fec_acta_inicio_au_au: formatDateToSpanishLong(expediente.fechaActaInicio ?? fasePreparatoria.fechaActaInicio),
+      fec_acta_inicio_au_au: formatDateToSpanishLong(
+        expediente.fechaActaInicio ?? fasePreparatoria.fechaActaInicio,
+      ),
       datos_acto_autorizacion_inicio_au_au: fasePreparatoria.datosActoAutorizacionInicio || '___',
       datos_designacion_comision: comision?.datosDesignacionComision || '___',
 
@@ -91,13 +115,13 @@ export class GeneradorDocumentosService {
       ind_comision_certificado: comision?.comisionCertificada
         ? 'están debidamente certificados'
         : 'no cuentan con certificación',
-      desc_objeto_contratacion: expediente.descripcionObjeto || '___',
+      desc_objeto_contratacion_au_au: expediente.descripcionObjeto || '___',
       id_unidad_usuaria: unidadUsuaria?.nombreUnidadUsuaria || '___',
 
       monto_estimado_bs: formatCurrencyVE(Number(modalidad?.montoEstimadoBs)),
       valor_ucau_base: formatCurrencyVE(Number(modalidad?.valorUcauBase)),
 
-      condicion_plurianual_au_au: fasePreparatoria.condicionPlurianual || '___',
+      condicion_plurianual_au_au: siNo(fasePreparatoria.condicionPlurianual),
 
       fec_inicio_disponibilidad_pliego_au_au: formatToDDMMYYYY(
         cronograma?.fechaInicioDisponibilidadPliego,
@@ -117,10 +141,36 @@ export class GeneradorDocumentosService {
       fec_limite_garantias_au_au: formatToDDMMYYYY(cronograma?.fechaLimiteGarantias),
       fec_limite_firma_contrato_au_au: formatToDDMMYYYY(cronograma?.fechaLimiteFirmaContrato),
 
-      viabilidad_contrato_marco: fasePreparatoria.viabilidadContratoMarco || '___',
+      viabilidad_contrato_marco_au_au: viabilidadContratoMarcoTexto,
       tipo_objeto_contratacion: modalidad?.tipoContratacion || '___',
-      tasa_referencial_bcv: expediente.tasaReferencialBcv ? Number(expediente.tasaReferencialBcv).toFixed(4) : '___',
+      tasa_referencial_bcv: expediente.tasaReferencialBcv
+        ? Number(expediente.tasaReferencialBcv).toFixed(4)
+        : '___',
     };
+  }
+
+  /** Gate Fase 1: Acta de Inicio solo si ya existe pliego generado. */
+  private async assertPliegoGeneradoParaActa(expedienteId: string): Promise<void> {
+    const [pliegoGenerado, docPliego] = await Promise.all([
+      this.prisma.pliegoGenerado.findFirst({
+        where: { expedienteId, deletedAt: null },
+        select: { id: true },
+      }),
+      this.prisma.documentoGenerado.findFirst({
+        where: {
+          expedienteId,
+          tipoDocumento: 'PLIEGO_CONDICIONES',
+          deletedAt: null,
+        },
+        select: { id: true },
+      }),
+    ]);
+
+    if (!pliegoGenerado && !docPliego) {
+      throw new BadRequestException(
+        'Debe existir un Pliego de Condiciones generado antes de elaborar el Acta de Inicio',
+      );
+    }
   }
 
   /**
@@ -185,19 +235,223 @@ export class GeneradorDocumentosService {
   }
 
   /**
-   * Obtiene la estructura JSON mapeada para el Pliego de Condiciones
+   * Obtiene la estructura JSON mapeada para el Requerimiento de Actividades Previas.
+   * Gate: micromódulo actividades-previas debe estar COMPLETADO.
+   */
+  async getDatosActividadesPrevias(expedienteId: string) {
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      include: {
+        ente: true,
+        unidadUsuaria: true,
+        fasePreparatoria: true,
+        modalidad: true,
+        comision: { include: { miembros: true } },
+        presupuestoItems: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
+      },
+    });
+
+    if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
+    if (!expediente.fasePreparatoria) {
+      throw new NotFoundException('Fase preparatoria incompleta para este expediente');
+    }
+
+    const f = expediente.fasePreparatoria;
+    if (f.estadoActividadesPrevias !== 'COMPLETADO') {
+      throw new BadRequestException(
+        'El micromódulo Actividades Previas debe estar COMPLETADO para generar el requerimiento',
+      );
+    }
+
+    const siNo = (v: boolean | null | undefined): string => {
+      if (v === true) return 'SÍ';
+      if (v === false) return 'NO';
+      return '___';
+    };
+
+    const tipo = expediente.modalidad?.tipoContratacion;
+    const tipoObjetoLabel =
+      tipo === 'BIENES'
+        ? 'Bienes'
+        : tipo === 'SERVICIOS'
+          ? 'Servicios'
+          : tipo === 'OBRAS'
+            ? 'Obras'
+            : tipo === 'MIXTO'
+              ? 'Mixto'
+              : '___';
+
+    let categorizacion = '___';
+    if (tipo === 'BIENES') {
+      categorizacion = 'ADQUISICIÓN DE MATERIALES O BIENES (X)';
+    } else if (tipo === 'SERVICIOS') {
+      categorizacion = 'PRESTACIÓN DE SERVICIOS (X)';
+    } else if (tipo === 'OBRAS') {
+      categorizacion = `EJECUCIÓN DE OBRAS (X)\nPROYECTO APROBADO: ${siNo(f.proyectoAprobado)}`;
+    } else if (tipo === 'MIXTO') {
+      categorizacion = 'CONTRATACIÓN MIXTA (X)';
+    }
+
+    const tipoContrato =
+      tipo === 'BIENES'
+        ? 'Orden de Compra'
+        : tipo === 'SERVICIOS'
+          ? 'Orden de Servicio'
+          : tipo === 'OBRAS'
+            ? 'Valuación'
+            : tipo === 'MIXTO'
+              ? 'Orden de Compra / Orden de Servicio / Valuación'
+              : '___';
+
+    const textoVan = f.requiereVan
+      ? 'sí se incorporarán estos mecanismos de preferencia en la matriz de evaluación del procedimiento.'
+      : 'no se incorporarán estos mecanismos de preferencia en la matriz de evaluación del procedimiento.';
+
+    const textoPrefLocal = f.indPrefLocal
+      ? 'sí se incorporará el mecanismo de preferencia por regionalización, a aquellos oferentes cuyo domicilio fiscal principal y base operativa se encuentren ubicados en el Municipio de ejecución del objeto, con el fin de fortalecer el tejido productivo local.'
+      : 'no se incorporará el mecanismo de preferencia por regionalización, debido a que la naturaleza técnica del objeto o la oferta de mercado existente en la localidad no permite garantizar la pluralidad de oferentes bajo este criterio territorial.';
+
+    const justificacionNoPymes = f.justificacionPermitePymesCooperativas || '___';
+    const textoPymes = f.permitePymesCooperativas
+      ? 'si es compatible con la escala operativa de PyMES y Cooperativas, garantizando su plena inclusión en el procedimiento y la aplicación de los márgenes de preferencia legal destinados a fomentar la democratización del gasto público.'
+      : `no es compatible con la escala operativa de PyMES y Cooperativas, en virtud de los requerimientos específicos que demanda la ejecución del objeto, fundamentándose técnicamente por: ${justificacionNoPymes}.`;
+
+    // Sección condicional: visible si hay al menos un mecanismo de promoción
+    const activaPromocionEconomica = Boolean(
+      f.requiereVan || f.indPrefLocal || f.permitePymesCooperativas,
+    );
+
+    let viabilidadMarco = '___';
+    if (f.viabilidadContratoMarco === true) {
+      viabilidadMarco = f.justificacion_contrato_marco_au_au
+        ? `SÍ. ${f.justificacion_contrato_marco_au_au}`
+        : 'SÍ';
+    } else if (f.viabilidadContratoMarco === false) {
+      viabilidadMarco = f.justificacion_contrato_marco_au_au
+        ? `NO. ${f.justificacion_contrato_marco_au_au}`
+        : 'NO';
+    }
+
+    const formatoEspecializado =
+      f.requiereEspecializado === true
+        ? f.detalleEspecializado
+          ? `SÍ. ${f.detalleEspecializado}`
+          : 'SÍ'
+        : f.requiereEspecializado === false
+          ? 'NO'
+          : '___';
+
+    const formatoMuestras =
+      f.requiereMuestras === true
+        ? f.detalleProcedimientoMuestras
+          ? `SÍ. ${f.detalleProcedimientoMuestras}`
+          : 'SÍ'
+        : f.requiereMuestras === false
+          ? 'NO'
+          : '___';
+
+    const items = expediente.presupuestoItems || [];
+    const subtotalNum = items.reduce((acc, item) => acc + Number(item.totalItem || 0), 0);
+    const ivaNum = subtotalNum * 0.16;
+
+    const getMiembro = (area: string) =>
+      expediente.comision?.miembros?.find((m) => m.areaRepresentacion === area) || null;
+
+    const miembroJuridica = getMiembro('AREA_JURIDICA');
+    const miembroEconomica = getMiembro('AREA_ECONOMICA_FINANCIERA');
+    const miembroTecnica = getMiembro('AREA_TECNICA');
+    const miembroSecretaria = getMiembro('SECRETARIO_A');
+
+    return {
+      nom_ente_contratante: expediente.ente?.nombre || '___',
+      nom_unidad_usuaria: expediente.unidadUsuaria?.nombreUnidadUsuaria || '___',
+      nom_responsable_unidad_usuaria:
+        expediente.unidadUsuaria?.nombreResponsableUnidadUsuaria || '___',
+      cargo_responsable_unidad_usuaria:
+        expediente.unidadUsuaria?.cargoResponsableUnidadUsuaria || '___',
+
+      tipo_objeto_contratacion: tipoObjetoLabel,
+      num_referencia_snc_au_au: f.numReferenciaSnc || '___',
+      modif_requerimiento_snc_au_au: siNo(f.modifRequerimientoSnc),
+      numero_modif_requerimiento_snc_au_au: f.numeroModifRequerimientoSnc || '___',
+
+      desc_objeto_contratacion_au_au: expediente.descripcionObjeto || '___',
+      justificacion_necesidad_contratacion_au_au: f.justificacionNecesidadContratacion || '___',
+      justificacion_ventajas_au_au: f.justificacionVentajas || '___',
+      viabilidad_marco_agrupacion_au_au: viabilidadMarco,
+
+      categorizacion_contratacion_au_au: categorizacion,
+      proyecto_aprobado_au_au: siNo(f.proyectoAprobado),
+      valor_ucau_base: formatCurrencyVE(Number(expediente.modalidad?.valorUcauBase)),
+      monto_estimado_bs: formatCurrencyVE(Number(expediente.modalidad?.montoEstimadoBs)),
+      sub_total: formatCurrencyVE(subtotalNum),
+      monto_total_renglon_au_au: formatCurrencyVE(subtotalNum + ivaNum),
+      fec_estudio_mercado_au_au: formatToDDMMYYYY(f.fecEstudioMercado),
+      num_certificacion_presupuestaria_au_au: f.numCertificacionPresupuestaria || '___',
+
+      plazo_ejecucion_procedimiento_au_au:
+        f.plazoEjecucionProcedimiento != null ? `${f.plazoEjecucionProcedimiento} días` : '___',
+      lugar_logistica_ejecucion_au_au: f.lugarLogisticaEjecucion || '___',
+      requiere_especializado_au_au: formatoEspecializado,
+      requiere_muestras_au_au: formatoMuestras,
+
+      activa_promocion_economica_au_au: activaPromocionEconomica,
+      requiere_van_au_au: textoVan,
+      ind_pref_local_au_au: textoPrefLocal,
+      permite_pymes_cooperativas_au_au: textoPymes,
+      justificacion_permite_pymes_cooperativas_au_au: justificacionNoPymes,
+
+      tipo_contrato: tipoContrato,
+      requiere_garantia_laboral_au_au: siNo(f.requiereGarantiaLaboral),
+      poliza_responsabilidad_civil_au_au: siNo(f.polizaResponsabilidadCivil),
+      anticipo_contrato_au_au: siNo(f.anticipoContrato),
+      porcentaje_mantenimiento_oferta_au_au:
+        f.porcentajeMantenimientoOferta != null
+          ? formatCurrencyVE(Number(f.porcentajeMantenimientoOferta))
+          : '___',
+      porcentaje_fiel_cumplimiento_au_au:
+        f.porcentajeFielCumplimiento != null
+          ? formatCurrencyVE(Number(f.porcentajeFielCumplimiento))
+          : '___',
+      porcentaje_garantia_laboral_au_au:
+        f.porcentajeGarantiaLaboral != null
+          ? formatCurrencyVE(Number(f.porcentajeGarantiaLaboral))
+          : '___',
+      porcentaje_anticipo_au_au:
+        f.porcentajeAnticipo != null ? formatCurrencyVE(Number(f.porcentajeAnticipo)) : '___',
+
+      nom_completo_miembro_juridica: miembroJuridica?.nombreCompletoMiembro || '___',
+      nom_completo_miembro_economica: miembroEconomica?.nombreCompletoMiembro || '___',
+      nom_completo_miembro_tecnica: miembroTecnica?.nombreCompletoMiembro || '___',
+      nom_completo_miembro_secretaria: miembroSecretaria?.nombreCompletoMiembro || '___',
+
+      items_presupuesto: items.map((item, index) => ({
+        num_renglon: index + 1,
+        especificacion: item.descripcionItem,
+        unidad_medida: item.unidadMedida,
+        cantidad: formatCurrencyVE(Number(item.cantidadRequerida)),
+        precio_unitario: formatCurrencyVE(Number(item.precioUnitarioEstimado)),
+        sub_total: formatCurrencyVE(Number(item.totalItem)),
+        monto_total_renglon: formatCurrencyVE(Number(item.totalItem)),
+      })),
+    };
+  }
+
+  /**
+   * Obtiene la estructura JSON mapeada para el Pliego de Condiciones.
+   * Gate: pliegoReady (micromódulos Fase 1 + especificaciones + presupuesto).
    */
   async getDatosPliegoCondiciones(expedienteId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
       where: { id: expedienteId },
       include: {
         ente: true,
-        fasePreparatoria: true,
+        fasePreparatoria: { include: { especificaciones: true } },
         cronograma: true,
         modalidad: true,
         comision: true,
         autoridad: true,
-        presupuestoItems: true,
+        presupuestoItems: { where: { deletedAt: null } },
       },
     });
 
@@ -206,218 +460,35 @@ export class GeneradorDocumentosService {
     if (!expediente.cronograma) throw new NotFoundException('Cronograma incompleto');
     if (!expediente.modalidad) throw new NotFoundException('Modalidad incompleta');
 
-    const e = expediente;
-    const f = expediente.fasePreparatoria;
-    const c = expediente.cronograma;
-    const m = expediente.modalidad;
+    await this.assertPliegoReady(expedienteId, expediente.fasePreparatoria);
 
-    const items = expediente.presupuestoItems || [];
-    const subtotalNum = items.reduce((acc, item) => acc + Number(item.totalItem), 0);
-    const ivaNum = subtotalNum * 0.16;
+    return mapDatosPliegoCondiciones(expediente);
+  }
 
-    const tipo = m.tipoContratacion;
-    const esServicios = tipo === 'SERVICIOS';
-    const esObras = tipo === 'OBRAS';
-    const esBienes = tipo === 'BIENES';
-    const esServiciosOObras = esServicios || esObras;
-
-    const nomEnte = e.ente?.nombre || '___';
-    const descObjeto = e.descripcionObjeto || '___';
-    const codNomenclatura = e.codigoNomenclatura || '___';
-    const ciudadEnte = e.ente?.ciudad || '___';
-    const estadoEnte = e.ente?.estado || '___';
-    const fechaActoRecep = c.fechaActoRecepcionAperturaSobres
-      ? formatDateToSpanishLong(c.fechaActoRecepcionAperturaSobres)
-      : '___';
-
-    // Texto pliego gratuito / con costo
-    let textoPliegoGratuito = 'Costo del Pliego: Sin costo.';
-    if (!f.pliegoGratuito) {
-      const costoBs = f.costoPliegoBs ? formatCurrencyVE(Number(f.costoPliegoBs)) : '0,00';
-      textoPliegoGratuito = `El costo del pliego es de Bs. ${costoBs}. El pago deberá realizarse en la cuenta ${f.cuentaPagoPliego || 'N/A'} del banco ${f.bancoPagoPliego || 'N/A'} a nombre de ${f.titularPagoPliego || 'N/A'}.`;
-    }
-
-    // Modelo 16 — texto completo según tipo
-    const textoModelo16 = (() => {
-      const encabezado = `MODELO N° 16\nCARTA DE COMPROMISO DE TIEMPO DE EJECUCIÓN, DISPONIBILIDAD y GARANTÍA TÉCNICA/ TIEMPO DE RESPUESTA\n\n${ciudadEnte}, ${fechaActoRecep}.\n\nSeñores:\nCOMISIÓN DE CONTRATACIONES PÚBLICAS\nPresente.-\n\nYo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, de Estado Civil ___________, de profesión (Ocupación; si está inscrito en algún colegio colocar datos o número de Colegiatura) actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, a los fines de dar cumplimiento a lo establecido en el numeral 18 del artículo 66 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas, DECLARO BAJO FE DE JURAMENTO:`;
-      const cierre = `Todo ello para asegurar la eficiencia en la ejecución de la contratación ${descObjeto}, correspondiente al Concurso Abierto N° ${codNomenclatura}\n\nAtentamente,\nRepresentante Legal de la Empresa\nFirma y sello`;
-
-      switch (tipo) {
-        case 'BIENES':
-          return `${encabezado}\nQue mi representada se compromete formalmente a ejecutar la entrega de los bienes o insumos, objeto del proceso, en un lapso de: __________ días hábiles, dicho lapso se contará a partir de la recepción efectiva de la Orden de Compra.\nQue mi representada certifica lo siguiente: Contamos con un Inventario Físico (Stock) de entrega inmediata del ______% de los ítems solicitados.\nQue presentamos garantía, canje o sustitución de los bienes o insumos ofertados por una lapso de: _______ meses contra defectos de fábrica, empaques dañados o vencimiento prematuro.\n${cierre}`;
-        case 'SERVICIOS':
-          return `${encabezado}\nQue mi representada se compromete formalmente a iniciar la ejecución de la prestación de los servicios objeto del proceso, en un lapso de: _________ días hábiles contados a partir de la suscripción del contrato u orden de servicio.\nQue mi representada certifica lo siguiente: Contamos con la Disponibilidad Inmediata y Operatividad del ______% de la maquinaria, equipos o herramientas exigidos en el Pliego de Condiciones.\nQue garantizamos la idoneidad de la prestación del servicio mediante un Tiempo de Respuesta (atención in situ) ante fallas o emergencias de: _______ horas.\n${cierre}`;
-        case 'OBRAS':
-          return `${encabezado}\nQue mi representada se compromete formalmente a iniciar la ejecución de la obra objeto del proceso, en un lapso de: ________ días hábiles contados a partir de la suscripción del contrato.\nQue mi representada certifica lo siguiente: Contamos con la Disponibilidad Inmediata y Operatividad del ______% de la maquinaria, equipos o herramientas exigidos en el Pliego de Condiciones.\n${cierre}`;
-        default:
-          return '';
+  /** Gate alineado a fase1.service: 8 micromódulos + especificaciones + >=1 ítem. */
+  private async assertPliegoReady(expedienteId: string, fase: any): Promise<void> {
+    const missing: string[] = [];
+    for (const key of MICROMODULO_KEYS) {
+      const estado = fase[MICROMODULOS[key].estadoField] as EstadoMicromodulo;
+      if (estado !== EstadoMicromodulo.COMPLETADO) {
+        missing.push(MICROMODULOS[key].etiqueta);
       }
-    })();
-
-    // Modelo 17 — Fianza Laboral (solo SERVICIOS y OBRAS)
-    const textoModelo17 = esServiciosOObras
-      ? `MODELO N° 17\nFIANZA LABORAL\nAFIANZADO: ______________________________\nACREEDOR: "LA CONTRATANTE"\nSUMA AFIANZADA: Bs. ________________\nVIGENCIA: Según texto.-\n\nFIANZA LABORAL Nº: ________\n\nYo, (Nombre del representante del Garante), mayor de edad, domiciliado en la ciudad de ____________________, titular de la cédula de identidad N°. __________________, procediendo en este acto en mi carácter de ___(Carácter del representante del Garante)____________________ de __(Nombre del Garante)___________________ sociedad mercantil constituida y domiciliada en ______________________, inscrita en ____________________, bajo el N°________, tomo ________________, el ________________, en el ___________________, por medio del presente contrato declaro: Constituyo a mi representada en fiadora solidaria y principal pagadora de _____________(Nombre del Contratista)_____________ inscrita en ___________(Datos del Registro Mercantil del Participante)_____________ en lo adelante denominada "EL AFIANZADO", hasta por la suma de _________________________________________ (Bs. __________), de conformidad con el Artículo 124 del Decreto Ley de Contrataciones Públicas, y en el marco del sistema de gestión de riesgos y de las Actividades de Control (Artículo 4 de las Normas de Control Interno SUNAI) establecidas por "LA CONTRATANTE" para proteger el interés público y la seriedad de los procesos de contratación, para garantizar ante "LA CONTRATANTE", el fiel, cabal y oportuno cumplimiento por parte de "LA CONTRATISTA", de todas y cada una de las obligaciones que resulten a su cargo y a favor de "LA CONTRATANTE" según el contrato celebrado entre ambos para ${descObjeto}\n\nLa presente fianza empezará a regir a partir del otorgamiento del referido contrato y permanecerá en vigencia hasta que se dé total cumplimiento a las obligaciones que le corresponden a "LA CONTRATISTA" de acuerdo con el mencionado contrato.\n\nMi representada pagará al Ente Contratante hasta el monto total indicado contra recibo de su primer requerimiento por escrito en que conste que "LA CONTRATISTA" no ha cumplido el Contrato, con indicación expresa de la obligación contractual incumplida, sin que "LA CONTRATANTE" tenga que probar o demostrar las causas o razones del requerimiento o la suma especificada en él.\n\nAsimismo, declaro que la responsabilidad de mi representada ante ustedes y el pago del monto de la garantía no serán descargados en el caso de las modificaciones o enmiendas ulteriores en las disposiciones del contrato, acordadas entre "LA CONTRATANTE" y el Proveedor en relación con las condiciones de implementación del mismo.\n\nMi representada renuncia expresamente a los beneficios acordados por los artículos 1833, 1834 y 1836 del Código Civil de la República Bolivariana de Venezuela.\n\nSe fija como domicilio especial para todos los efectos de esta fianza ciudad ${ciudadEnte}, Estado ${estadoEnte}.\n\nEn ciudad, a los 00 días del mes de _________ del 202_.\n\nEL FIADOR\n(Nota: La Garantía debe ser autenticada ante Notaría Pública y la Afianzadora debe estar inscrita ante la Superintendencia de Seguros).`
-      : '';
-
-    // Modelo 18 — Experiencia del Personal Técnico Clave (SERVICIOS y OBRAS)
-    const textoModelo18 = esServiciosOObras
-      ? `MODELO N° 18\nEXPERIENCIA DEL PERSONAL TÉCNICO CLAVE\nINGENIERO RESIDENTE\n\n${ciudadEnte}, ${fechaActoRecep}.\n\nSeñores:\nCOMISIÓN DE CONTRATACIONES PÚBLICAS\nPresente.-\n\nYo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, de Estado Civil ___________, de profesión (Ocupación; si está inscrito en algún colegio colocar datos o número de Colegiatura) actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, a los fines de asegurar la idoneidad y calidad del objeto de la contratación conforme al numeral 19 del artículo 66 de la Ley de Contrataciones Públicas, DECLARO BAJO FE DE JURAMENTO, que la información presentada en este formulario es veraz y cumple con lo exigido en el pliego de condiciones del proceso N° ${codNomenclatura}, objeto: ${descObjeto}.\n\nNOMBRE COMPLETO | C.I. Nº | PROFESIÓN U OFICIO / GRADO ACADÉMICO | FECHA DE GRADUACIÓN | EXPERIENCIA ESPECÍFICA (AÑOS)\n\nAtentamente,\nRepresentante Legal de la Empresa\nFirma y sello\n\n"Nota: El oferente deberá anexar obligatoriamente a este formato el Currículum Vitae (CV) actualizado, copia del Título Universitario y constancia de inscripción/solvencia en el Colegio de Ingenieros de Venezuela (CIV) del profesional propuesto."`
-      : '';
-
-    return {
-      // --- Datos generales ---
-      desc_objeto_contratacion: descObjeto,
-      cod_nomenclatura_proceso: codNomenclatura,
-      nom_ente_contratante: nomEnte,
-      normativa_legal_au_au: formatNormativaLegalForDoc(f.normativaLegal),
-      valor_ucau_base: formatCurrencyVE(Number(m.valorUcauBase)),
-      denominacion_comision:
-        e.comision?.denominacionComision || 'Comisión de Contrataciones Públicas',
-      dir_fiscal_ente: e.ente?.direccionFiscal || '___',
-      loc_estado_ente: estadoEnte,
-      correo_comision: e.comision?.correoElectronico || '___',
-      telefono_comision: e.comision?.telefono || '___',
-      pag_web_ente: 'www.snd.gob.ve',
-      loc_municipio_ente: e.ente?.municipio || '___',
-      loc_ciudad_ente: ciudadEnte,
-      monto_estimado_bs: formatCurrencyVE(Number(m.montoEstimadoBs)),
-
-      // --- Autoridad máxima ---
-      nom_completo_autoridad: e.autoridad?.nombreCompletoAutoridad || '___',
-      cedula_autoridad: e.autoridad?.cedulaAutoridad || '___',
-      cargo_oficial_autoridad: e.autoridad?.cargoOficialAutoridad || '___',
-      datos_designacion_autoridad: e.autoridad?.datosDesignacionAutoridad || '___',
-
-      // --- Variables nuevas desde FasePreparatoria ---
-      autoridad_aclaratorias_au_au: f.autoridadAclaratorias || '___',
-      dias_vigencia_garantia_ext_au_au: f.diasVigenciaGarantiaExtension?.toString() || '___',
-
-      // --- Fechas del cronograma ---
-      fec_acto_recep_aper_sobres_au_au: fechaActoRecep,
-      hora_acto_recep_aper_au_au: f.horaActoRecepAper || '___',
-      fec_solicitud_aclaratorias_au_au: c.fechaSolicitudAclaratorias
-        ? formatDateToSpanishLong(c.fechaSolicitudAclaratorias)
-        : '___',
-      fec_respuesta_aclaratorias_au_au: c.fechaRespuestaAclaratorias
-        ? formatDateToSpanishLong(c.fechaRespuestaAclaratorias)
-        : '___',
-      fec_modific_pliego_au_au: c.fechaModificacionPliego
-        ? formatDateToSpanishLong(c.fechaModificacionPliego)
-        : '___',
-      fec_inicio_disponibilidad_pliego_au_au: c.fechaInicioDisponibilidadPliego
-        ? formatDateToSpanishLong(c.fechaInicioDisponibilidadPliego)
-        : '___',
-      fec_fin_disponibilidad_pliego_au_au: c.fechaFinDisponibilidadPliego
-        ? formatDateToSpanishLong(c.fechaFinDisponibilidadPliego)
-        : '___',
-      fec_limite_evaluacion_au_au: c.fechaLimiteEvaluacion
-        ? formatDateToSpanishLong(c.fechaLimiteEvaluacion)
-        : '___',
-      fec_limite_adjudicacion_au_au: c.fechaLimiteAdjudicacion
-        ? formatDateToSpanishLong(c.fechaLimiteAdjudicacion)
-        : '___',
-      fec_limite_notificacion_au_au: c.fechaLimiteNotificacion
-        ? formatDateToSpanishLong(c.fechaLimiteNotificacion)
-        : '___',
-
-      // --- Pliego: disponibilidad y costo ---
-      horario_retiro_pliego: f.horarioRetiroPliego || '___',
-      direccion_retiro_pliego: f.direccionRetiroPliego || '___',
-      dias_validez_oferta_au_au: f.diasValidezOferta?.toString() || '30',
-      pliego_gratuito_au_au: textoPliegoGratuito,
-
-      // --- Booleanos condicionales por tipo ---
-      es_bienes: esBienes,
-      es_servicios: esServicios,
-      es_obras: esObras,
-      tipo_objeto_contratacion: esBienes ? 'Bienes' : esServicios ? 'Servicios' : 'Obras',
-
-      // --- Forma de presentación (texto dinámico por tipo) ---
-      forma_presentacion_au_au: (() => {
-        switch (tipo) {
-          case 'BIENES':
-            return [
-              'La oferta deberá incluir una descripción exhaustiva y detallada de las características de los Bienes / insumos ofertados.',
-              'Adicionalmente, los participantes deberán acompañar y consignar con la oferta los siguientes documentos:',
-              'Catálogos, Folletos y/o Fichas Técnicas descriptivas de cada ítem.',
-              'Consignar según Modelo N°17 los siguientes compromisos y certificaciones técnicas:',
-              'Compromiso de Tiempo de Entrega.',
-              'Certificación de Disponibilidad de Inventario (Stock).',
-              'Garantía de los Bienes o Insumos.',
-            ].join('\n');
-          case 'SERVICIOS':
-            return [
-              'La oferta deberá incluir una descripción exhaustiva y detallada de las características técnicas del servicio ofertado.',
-              'Consignar según Modelo N°17 los siguientes compromisos y certificaciones técnicas:',
-              'Compromiso de Tiempo de Ejecución.',
-              'Declaración de Disponibilidad de Maquinaria/Equipos.',
-              'Tiempo de Respuesta (SLA) ante fallas o emergencias.',
-            ].join('\n');
-          case 'OBRAS':
-            return [
-              'La oferta deberá incluir una descripción exhaustiva y detallada de las características técnicas del objeto ofertado.',
-              'Adicionalmente, los participantes deberán acompañar y consignar con la oferta los siguientes documentos:',
-              'Cronograma de Ejecución (Gantt).',
-              'Plan de Trabajo.',
-              'Consignar según Modelo N°17 los siguientes compromisos y certificaciones técnicas:',
-              'Compromiso de Tiempo de Ejecución (ajustado al Cronograma).',
-              'Declaración de Disponibilidad de Maquinaria/Equipos.',
-              'Consignar según Modelo N°18 el siguiente compromiso y certificación técnica:',
-              'Experiencia del personal técnico clave.',
-            ].join('\n');
-          default:
-            return '';
-        }
-      })(),
-
-      // --- Criterios de evaluación (booleanos para secciones condicionales en template) ---
-      es_bienes_criterio_evaluacion_au_au: esBienes,
-      es_servicios_criterio_evaluacion_au_au: esServicios,
-      es_obras_criterio_evaluacion_au_au: esObras,
-
-      // --- Garantías sección XVIII (booleanos para secciones condicionales en template) ---
-      requiere_garantia_laboral_au_au: esServiciosOObras,
-      requiere_responsabilidad_civil_au_au: esServiciosOObras,
-
-      // --- Referencias a modelos en sección X.B (texto o vacío si BIENES) ---
-      ver_modelo_17_au_au: esServiciosOObras ? '9. Fianza Laboral. (Ver Modelo N° 17)' : '',
-      ver_modelo_18_au_au: esServiciosOObras
-        ? '10. Experiencia del personal técnico clave. (Ver Modelo N° 18)'
-        : '',
-
-      // --- Enumeración ANEXO III ---
-      modelo_17_enum_au_au: esServiciosOObras ? 'MODELO N° 17: Fianza Laboral.' : '',
-      modelo_18_enum_au_au: esServiciosOObras
-        ? 'MODELO N° 18: Experiencia del Personal Técnico Clave.'
-        : '',
-
-      // --- Modelos completos (texto legal generado por tipo) ---
-      modelo_16_au_au: textoModelo16,
-      modelo_17_au_au: textoModelo17,
-      modelo_18_au_au: textoModelo18,
-
-      // --- Booleanos legacy (se mantienen para compatibilidad con template condicional) ---
-      es_bienes_modelo_16_au_au: esBienes,
-      es_servicios_modelo_16_au_au: esServicios,
-      es_obras_modelo_16_au_au: esObras,
-      es_servicios_modelo_17_au_au: esServicios,
-      es_obras_modelo_17_au_au: esObras,
-
-      // --- Presupuesto ---
-      items_presupuesto: items.map((item, index) => ({
-        numero: index + 1,
-        descripcion_item_au_au: item.descripcionItem,
-        codigo_partida_au_au: item.codigoPartida,
-        unidad_medida_au_au: item.unidadMedida,
-        cantidad_requerida_au_au: formatCurrencyVE(Number(item.cantidadRequerida)),
-        precio_unitario_estimado_au_au: formatCurrencyVE(Number(item.precioUnitarioEstimado)),
-        total_items_au_au: formatCurrencyVE(Number(item.totalItem)),
-      })),
-      sub_total: formatCurrencyVE(subtotalNum),
-      iva_sub_total: formatCurrencyVE(ivaNum),
-      monto_total_renglon_au_au: formatCurrencyVE(subtotalNum + ivaNum),
-      tasa_referencial_bcv: e.tasaReferencialBcv ? Number(e.tasaReferencialBcv).toFixed(4) : '___',
-    };
+    }
+    const espec = fase.especificaciones;
+    if (!espec || espec.deletedAt) {
+      missing.push('Especificaciones Técnicas');
+    }
+    const totalItems = await this.prisma.presupuestoItem.count({
+      where: { expedienteId, deletedAt: null },
+    });
+    if (totalItems === 0) {
+      missing.push('Presupuesto base (al menos un ítem)');
+    }
+    if (missing.length > 0) {
+      throw new BadRequestException(
+        `El Pliego aún no está listo. Falta completar: ${missing.join(', ')}`,
+      );
+    }
   }
 
   /**
@@ -556,13 +627,50 @@ export class GeneradorDocumentosService {
   // Generador de Pliego
   async generarPliegoCondiciones(expedienteId: string, userId: string) {
     const data = await this.getDatosPliegoCondiciones(expedienteId);
-    return this.generarDocumento(
+    const doc = await this.generarDocumento(
       expedienteId,
       'PLIEGO_CONDICIONES',
       'pliego-condiciones-template.docx',
       userId,
       data,
     );
+
+    // Fase1 progress / Acta miran PliegoGenerado (además de DocumentoGenerado)
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      select: { enteId: true, codigoNomenclatura: true },
+    });
+    if (expediente) {
+      const existente = await this.prisma.pliegoGenerado.findFirst({
+        where: { expedienteId, deletedAt: null },
+      });
+      if (existente) {
+        await this.prisma.pliegoGenerado.update({
+          where: { id: existente.id },
+          data: {
+            urlArchivo: doc.url,
+            tituloPliego: `Pliego de Condiciones - ${expediente.codigoNomenclatura}`,
+            versionDocumento: existente.versionDocumento + 1,
+            estaDesactualizado: false,
+            updatedBy: userId,
+          },
+        });
+      } else {
+        await this.prisma.pliegoGenerado.create({
+          data: {
+            enteId: expediente.enteId,
+            expedienteId,
+            urlArchivo: doc.url,
+            tituloPliego: `Pliego de Condiciones - ${expediente.codigoNomenclatura}`,
+            descripcion: `Pliego generado automáticamente para ${expediente.codigoNomenclatura}`,
+            versionDocumento: 1,
+            createdBy: userId,
+          },
+        });
+      }
+    }
+
+    return doc;
   }
 
   // Placeholder para Llamado
@@ -572,6 +680,17 @@ export class GeneradorDocumentosService {
       expedienteId,
       'LLAMADO_PARTICIPAR',
       'llamado-participar-template.docx',
+      userId,
+      data,
+    );
+  }
+
+  async generarActividadesPrevias(expedienteId: string, userId: string) {
+    const data = await this.getDatosActividadesPrevias(expedienteId);
+    return this.generarDocumento(
+      expedienteId,
+      'ACTIVIDADES_PREVIAS',
+      'requerimiento-actividades-previas-template.docx',
       userId,
       data,
     );
@@ -940,6 +1059,8 @@ export class GeneradorDocumentosService {
         return this.generarPliegoCondiciones(docAnterior.expedienteId, userId);
       case 'LLAMADO_PARTICIPAR':
         return this.generarLlamadoParticipar(docAnterior.expedienteId, userId);
+      case 'ACTIVIDADES_PREVIAS':
+        return this.generarActividadesPrevias(docAnterior.expedienteId, userId);
       case 'REGISTRO_ADQUIRENTES':
         return this.generarRegistroAdquirentes(docAnterior.expedienteId, userId);
       case 'ACTA_RECEPCION':
@@ -962,6 +1083,7 @@ export class GeneradorDocumentosService {
   async getStatusPorExpediente(expedienteId: string) {
     // Lista de tipos de documentos que manejamos actualmente
     const tiposSoportados = [
+      { tipo: 'ACTIVIDADES_PREVIAS', label: 'Requerimiento Actividades Previas' },
       { tipo: 'ACTA_INICIO', label: 'Acta de Inicio' },
       { tipo: 'PLIEGO_CONDICIONES', label: 'Pliego de Condiciones' },
       { tipo: 'LLAMADO_PARTICIPAR', label: 'Llamado a Participar' },
@@ -1365,11 +1487,15 @@ export class GeneradorDocumentosService {
       // Montos del presupuesto
       monto_estimado_bs: formatBs(Number(expediente.modalidad?.montoEstimadoBs ?? 0)),
       valor_ucau_base: formatBs(Number(expediente.modalidad?.valorUcauBase ?? 0)),
-      tasa_referencial_bcv: expediente.tasaReferencialBcv ? Number(expediente.tasaReferencialBcv).toFixed(4) : '___',
+      tasa_referencial_bcv: expediente.tasaReferencialBcv
+        ? Number(expediente.tasaReferencialBcv).toFixed(4)
+        : '___',
 
       // Cronograma y Fase Preparatoria
       fec_limite_evaluacion_au_au: formatearFecha(cronograma?.fechaLimiteEvaluacion),
-      fec_acta_inicio_au_au: formatearFecha(expediente.fechaActaInicio ?? fasePrep?.fechaActaInicio),
+      fec_acta_inicio_au_au: formatearFecha(
+        expediente.fechaActaInicio ?? fasePrep?.fechaActaInicio,
+      ),
       pag_web_ente: '___', // Placeholder para web
       fec_llamado_participar_au_au: formatearFecha(cronograma?.fechaLlamadoParticipar),
       fec_inicio_disponibilidad_pliego_au_au: formatearFecha(
@@ -1480,6 +1606,10 @@ export class GeneradorDocumentosService {
 
   private extractCloudinaryPublicId(url: string): string | null {
     try {
+      // Almacenamiento local de desarrollo: /uploads/...
+      if (url.startsWith('/uploads/')) {
+        return url;
+      }
       const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[^.]+)?$/);
       return match ? match[1] : null;
     } catch {

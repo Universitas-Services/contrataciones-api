@@ -1,0 +1,35 @@
+BRACES:
+{activa_promocion_economica_au_au}
+{condicion_plurianual_au_au}
+{detalle_especializado_au_au}
+{detalle_procedimiento_muestras_au_au}
+{fec_estudio_mercado_au_au}
+{ind_bono_sujeto_au_au}
+{ind_pref_local_au_au}
+{justificacion_contrato_marco_au_au}
+{justificacion_necesidad_contratacion_au_au}
+{justificacion_permite_pymes_cooperativas_au_au}
+{justificacion_ventajas_au_au}
+{lugar_logistica_ejecucion_au_au}
+{modif_requerimiento_snc_au_au}
+{num_certificacion_presupuestaria_au_au}
+{num_referencia_snc_au_au}
+{numero_modif_requerimiento_snc_au_au}
+{permite_pymes_cooperativas_au_au}
+{plazo_ejecucion_procedimiento_au_au}
+{proyecto_aprobado_au_au}
+{puntaje_van_au_au}
+{puntuacion_bono_local_au_au}
+{puntuacion_bono_sujeto_au_au}
+{requiere_especializado_au_au}
+{requiere_muestras_au_au}
+{requiere_van_au_au}
+{tipo_objeto_contratacion}
+{viabilidad_contrato_marco_au_au}
+
+BRACKETS:
+[ Crear Actividades Previas ]
+[Crear las actividades previa]
+[Guardar borrador]
+[SI/NO]
+[Volver al panel]

@@ -1,0 +1,12 @@
+{banco_pago_pliego}
+{costo_pliego_bs_au_au}
+{cuenta_pago_pliego}
+{direccion_retiro_pliego_au_au}
+{hora_acto_recep_aper_au_au}
+{horario_retiro_pliego_au_au}
+{objetivos_especificos_llamado_1_au_au}
+{objetivos_especificos_llamado_2_au_au}
+{objetivos_especificos_llamado_3_au_au}
+{pliego_costo_au_au}
+{rif_pago_pliego}
+{titular_pago_pliego}

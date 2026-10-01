@@ -1,0 +1,67 @@
+PROCEDIMIENTO N°: {cod_nomenclatura_proceso_au_au}MODALIDAD: CONCURSO ABIERTO ACTO ÚNICO APERTURA ÚNICA
+ACTA DE INICIO
+En la ciudad de {loc_ciudad_ente}, a los {fec_acta_inicio_au_au}, en atención al Acto Administrativo de Autorización de Inicio N° {datos_acto_autorizacion_inicio_au_au}, se reúnen en las instalaciones de {nom_ente_contratante}, los ciudadanos miembros de la Comisión de Contrataciones, designados mediante {datos_designacion_comision}, a saber:
+Por el Área Jurídica: {nom_completo_miembro_juridica}, titular de la Cédula de Identidad V.- {cedula_miembro_juridica}.
+Por el Área Económico-Financiera: {nom_completo_miembro_economica}, titular de la Cédula de Identidad V.- {cedula_miembro_economica}.
+Por el Área Técnica: {nom_completo_miembro_tecnica}, titular de la Cédula de Identidad V.- {cedula_miembro_tecnica}.
+Secretaria de la Comisión: {nom_completo_miembro_secretaria}, titular de la Cédula de Identidad V.- {cedula_miembro_secretaria}.
+En uso de las atribuciones conferidas por el Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas y su Reglamento, se procede a levantar la presente Acta de Inicio, dejando constancia de las siguientes decisiones y acuerdos:
+PRIMERO: VERIFICACIÓN DE LA COMISIÓN DE CONTRATACIONES
+Se deja constancia de que, de conformidad con el Artículo 14 de las Normas de Control Interno de la SUNAI, se ha verificado que todos los miembros principales de esta Comisión de Contrataciones {ind_comision_certificado} cuentan con la certificación vigente emitida por el Servicio Nacional de Contrataciones (SNC), según consta en la información recabada.
+SEGUNDO: INICIO FORMAL DEL PROCEDIMIENTOSe da inicio formal al procedimiento de selección de contratista bajo la modalidad de Concurso Abierto Acto Único Apertura Única, de conformidad con lo establecido en los artículos 77 y 78 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas, en atención a la solicitud presentada por la unidad requirente.
+TERCERO: IDENTIFICACIÓN DE LA CONTRATACIÓNEl procedimiento que se inicia tiene por finalidad atender los siguientes requerimientos:
+Objeto de la Contratación: {desc_objeto_contratacion_au_au}.
+Unidad Usuaria Solicitante: {id_unidad_usuaria}.
+Monto Estimado de la Contratación: La cantidad de {monto_estimado_bs}, que incluye el Impuesto al Valor Agregado (IVA).
+Monto Estimado en UCAU: El monto equivale a {valor_ucau_base} UNIDADES PARA EL CÁLCULO ARITMÉTICO DEL UMBRAL MÁXIMO Y MÍNIMO (UCAU).
+Condición Plurianual: {condicion_plurianual_au_au}.
+CUARTO: APROBACIÓN DEL CRONOGRAMA DEL PROCEDIMIENTOEsta Comisión de Contrataciones, a los fines de garantizar la transparencia, la igualdad de participación y la celeridad del proceso, aprueba el siguiente cronograma, el cual regirá las fases del presente procedimiento:
+ETAPA / ACTIVIDAD
+FECHA DESDE / HASTA
+BASE LEGAL (Referencial)
+Disponibilidad del Pliego de Condiciones
+Del  {fec_inicio_disponibilidad_pliego_au_au} al {fec_fin_disponibilidad_pliego_au_au}
+Art. 65 LCP
+Publicación del Llamado a Participar (Web del Ente)
+Del  {fec_inicio_disponibilidad_pliego_au_au} al {fec_fin_disponibilidad_pliego_au_au}
+Art. 79 LCP, 103 RLCP
+Publicación del Llamado a Participar (Web SNC)
+Del  {fec_inicio_disponibilidad_pliego_au_au} al {fec_fin_disponibilidad_pliego_au_au}
+Art. 79 LCP, 103 RLCP
+Plazo para Solicitud de Aclaratorias
+Hasta {fec_solicitud_aclaratorias_au_au}
+Art. 70 LCP
+Plazo para Solicitud de Modificaciones
+Hasta {fec_modific_pliego_au_au}
+Art. 68 LCP
+Plazo para Respuesta de Aclaratorias
+Hasta {fec_respuesta_aclaratorias_au_au}
+Art. 69 LCP
+Acto de Recepción y Apertura de Sobres
+El {fec_acto_recep_aper_sobres_au_au}
+Art. 78.1 LCP
+Emisión del Informe de Recomendación
+{fec_limite_evaluacion_au_au}
+Art. 81.1 LCP
+Acto de Adjudicación
+{fec_limite_adjudicacion_au_au}
+Art. 81.1 LCP
+Notificación de Resultados
+{fec_limite_notificacion_au_au}
+Art. 126 RLCP
+Plazo para la Consignación de Garantías
+{fec_limite_garantias_au_au}
+Art. 127 RLCP
+Plazo para la Firma del Contrato
+{fec_limite_firma_contrato_au_au}
+Art. 117 LCP
+Nota: Las fechas establecidas en el presente cronograma se expresan en días hábiles, salvo indicación contraria. Este cronograma podrá ser objeto de prórroga de conformidad con lo previsto en la normativa aplicable.
+QUINTO: APROBACIÓN DEL LLAMADO A PARTICIPAR Y PLIEGO DE CONDICIONESSe deja constancia de que la Comisión de Contrataciones ha revisado y aprobado el texto del Llamado a Participar y el Pliego de Condiciones que regirá el presente procedimiento, los cuales se anexan a la presente Acta y forman parte integrante del expediente N° {cod_nomenclatura_proceso_au_au}.
+SEXTO: OTRAS CONSIDERACIONES
+{viabilidad_contrato_marco_au_au}.
+SÉPTIMO: CIERRE Y FIRMANo habiendo otro punto que tratar, se da por concluido el acto y se levanta la presente Acta de Inicio. Leída y encontrada conforme, firman los miembros de la Comisión de Contrataciones en la fecha y lugar antes indicados.
+POR LA COMISIÓN DE CONTRATACIONES PÚBLICAS
+{nom_completo_miembro_juridica}C.I. V.- {cedula_miembro_juridica}MIEMBRO PRINCIPAL - ÁREA JURÍDICA
+{nom_completo_miembro_economica}C.I. V.- {cedula_miembro_economica}MIEMBRO PRINCIPAL - ÁREA ECONÓMICO-FINANCIERA
+{nom_completo_miembro_tecnica}C.I. V.- {cedula_miembro_tecnica}MIEMBRO PRINCIPAL - ÁREA TÉCNICA
+{nom_completo_miembro_secretaria}C.I. V.- {cedula_miembro_secretaria}SECRETARIA DE LA COMISIÓN

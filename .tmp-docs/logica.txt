@@ -1,0 +1,420 @@
+Lógicas para automatización de documento PLIEGO DE CONDICIONES:
+
+LÓGICA PARA CONTENIDO SOBRE 1 RECAUDOS LEGALES:
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_carta_manifestacion_voluntad_au_au = false, eliminar el contenido entre los marcadores {#mod_carta_manifestacion_voluntad_au_au} & {/mod_carta_manifestacion_voluntad_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_carta_autorizacion_au_au = false, eliminar el contenido entre los marcadores {#mod_carta_autorizacion_au_au} & {/mod_carta_autorizacion_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_doc_constitutivo_au_au = false, eliminar el contenido entre los marcadores {#mod_doc_constitutivo_au_au} & {/mod_doc_constitutivo_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_copia_rif_vigente_au_au = false, eliminar el marcador {mod_copia_rif_vigente_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_copia_rif_vigente_au_au = true, y la variable sustituto_dj_rif_vigente_au_au = false, sustituir el marcador {mod_copia_rif_vigente_au_au} por:
+- Copia del Registro de Información Fiscal (R.I.F.). 
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_copia_rif_vigente_au_au = true, y la variable sustituto_dj_rif_vigente_au_au = true, sustituir el marcador {mod_copia_rif_vigente_au_au} por:
+- Copia del Registro de Información Fiscal (R.I.F.) o declaración jurada de Registro de Información Fiscal (R.I.F.) (Ver Modelo en Anexo III) en caso de que el proponente acredite que el documento se encuentra en proceso de actualización o trámite ante el SENIAT.
+
+Lógica para automatización del contenido de calificación legal: Si la variable sustituto_dj_rif_vigente_au_au = false, eliminar el contenido entre los marcadores {#sustituto_dj_rif_vigente_au_au} & {/sustituto_dj_rif_vigente_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_certificado_rnc_au_au = false, eliminar el marcador {mod_certificado_rnc_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_certificado_rnc_au_au = true, y la variable sustituto_dj_certificado_rnc_au_au = false, sustituir el marcador {mod_certificado_rnc_au_au} por:
+- Certificado de Inscripción en el Registro Nacional de Contratistas, con el respectivo reporte de calificación o Planilla Resumen.
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_certificado_rnc_au_au = true, y la variable sustituto_dj_certificado_rnc_au_au = true, sustituir el marcador {mod_certificado_rnc_au_au} por:
+
+- Certificado de Inscripción en el Registro Nacional de Contratistas, con el respectivo reporte de calificación o Planilla Resumen o Declaración Jurada de Registro en Trámite (R.N.C.) (Ver Modelo en Anexo III); no obstante, el adjudicado quedará obligado a consignar el certificado en status 'Calificado' vigente como condición indispensable para la formalización del contrato, de conformidad con el Artículo 48 de la LCP.
+
+Lógica para automatización del contenido de calificación legal: Si la variable sustituto_dj_certificado_rnc_au_au = false, eliminar el contenido entre los marcadores {#sustituto_dj_certificado_rnc_au_au} & {/sustituto_dj_certificado_rnc_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_solvencia_laboral_au_au = false, eliminar el contenido entre los marcadores {#mod_solvencia_laboral_au_au} & {/mod_solvencia_laboral_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_declaracion_socios_no_inhabilitados_au_au = false, eliminar el contenido entre los marcadores {#mod_declaracion_socios_no_inhabilitados_au_au} & {/mod_declaracion_socios_no_inhabilitados_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_declaracion_no_deudas_ente_au_au = false, eliminar el contenido entre los marcadores {#mod_declaracion_no_deudas_ente_au_au} & {/mod_declaracion_no_deudas_ente_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_declaracion_no_impedimentos_lcp_au_au = false, eliminar el contenido entre los marcadores {#mod_declaracion_no_impedimentos_lcp_au_au} & {/mod_declaracion_no_impedimentos_lcp_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_declaracion_conocimiento_lugar_au_au = false, eliminar el contenido entre los marcadores {#mod_declaracion_conocimiento_lugar_au_au} & {/mod_declaracion_conocimiento_lugar_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_declaracion_info_financiera_au_au = false, eliminar el contenido entre los marcadores {#mod_declaracion_info_financiera_au_au} & {/mod_declaracion_info_financiera_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_evaluacion_desempeno_au_au = false, eliminar el marcador {mod_evaluacion_desempeno_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_evaluacion_desempeno_au_au = true, y la variable sustituto_dj_eval_desempeno_au_au = false, sustituir el marcador {mod_evaluacion_desempeno_au_au} por:
+-Informe de Evaluación de desempeño en Contrataciones de los últimos dos (2) años, para determinar el Nivel General de Evaluación del Contratista en los últimos veinticuatro (24) meses según el Servicio Nacional de Contratista (SNC), en caso de haber contratado con el Estado.
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_evaluacion_desempeno_au_au = true, y la variable sustituto_dj_eval_desempeno_au_au = true, sustituir el marcador {mod_evaluacion_desempeno_au_au} por:
+
+-Informe de Evaluación de desempeño en Contrataciones:  Su ausencia en la oferta constituye una omisión no sustancial, siempre que se consigne la Declaración Jurada de Evaluación de Desempeño (Ver Anexo III). Asimismo, en aquellos casos donde el oferente no posea historial previo de contratación con el sector público, deberá adjuntar al menos dos (02) referencias comerciales de empresas privadas como medio alternativo para validar su capacidad técnica, de conformidad con lo previsto en los Artículos 51 de la LCP y 61 de su Reglamento
+
+Lógica para automatización del contenido de calificación legal: Si la variable sustituto_dj_eval_desempeno_au_au = false, eliminar el contenido entre los marcadores {#sustituto_dj_eval_desempeno_au_au} & {/sustituto_dj_eval_desempeno_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable ind_otro_recaudo_sobre1_au_au = true, repetir el contenido entre los marcadores {#desc_otro_recaudo_sobre1_au_au} & {/desc_otro_recaudo_sobre1_au_au} las veces que se haya cargado información en la variable desc_otro_recaudo_sobre1_au_au
+
+Lógica para automatización del contenido de calificación legal: Si la variable ind_otro_recaudo_sobre1_au_au = false, eliminar el contenido entre los marcadores {#desc_otro_recaudo_sobre1_au_au} & {/desc_otro_recaudo_sobre1_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable modelo_otro_recaudo_sobre1_au_au = true, repetir el contenido entre los marcadores {#modelo_otro_recaudo_sobre1_au_au} & {/modelo_otro_recaudo_sobre1_au_au} las veces que se haya cargado información en la variable modelo_otro_recaudo_sobre1_au_au
+
+Lógica para automatización del contenido de calificación legal: Si la variable modelo_otro_recaudo_sobre1_au_au = false, eliminar el contenido entre los marcadores {#modelo_otro_recaudo_sobre1_au_au} & {/modelo_otro_recaudo_sobre1_au_au}
+
+LÓGICA PARA CONTENIDO SOBRE 2:
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_carta_oferta_au_au = false, eliminar el contenido entre los marcadores {#mod_carta_oferta_au_au} & {/mod_carta_oferta_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_declaracion_capacidad_financiera_au_au = false, eliminar el contenido entre los marcadores {#mod_declaracion_capacidad_financiera_au_au} & {/mod_declaracion_capacidad_financiera_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_declaracion_compromiso_resp_social_au_au = false, eliminar el contenido entre los marcadores {#mod_declaracion_compromiso_resp_social_au_au} & {/mod_declaracion_compromiso_resp_social_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_garantia_mantenimiento_oferta_au_au = false, eliminar el contenido entre los marcadores {#mod_garantia_mantenimiento_oferta_au_au} & {/mod_garantia_mantenimiento_oferta_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_declaracion_autocalculo_van_au_au = false, eliminar el contenido entre los marcadores {#mod_declaracion_autocalculo_van_au_au} & {/mod_declaracion_autocalculo_van_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_carta_notificaciones_au_au = false, eliminar el contenido entre los marcadores {#mod_carta_notificaciones_au_au} & {/mod_carta_notificaciones_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_garantia_fiel_cumpl_au_au = false, eliminar el contenido entre los marcadores {#mod_garantia_fiel_cumpl_au_au} & {/mod_garantia_fiel_cumpl_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable mod_fianza_laboral_au_au = false, eliminar el contenido entre los marcadores {#mod_fianza_laboral_au_au} & {/mod_fianza_laboral_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable ind_otro_recaudo_sobre2_au_au = true, repetir el contenido entre los marcadores {#desc_otro_recaudo_sobre2_au_au} & {/desc_otro_recaudo_sobre2_au_au} las veces que se haya cargado información en la variable desc_otro_recaudo_sobre2_au_au
+
+Lógica para automatización del contenido de calificación legal: Si la variable ind_otro_recaudo_sobre2_au_au = false, eliminar el contenido entre los marcadores {#desc_otro_recaudo_sobre2_au_au} & {/desc_otro_recaudo_sobre2_au_au}
+
+Lógica para automatización del contenido de calificación legal: Si la variable modelo_otro_recaudo_sobre2_au_au = true, repetir el contenido entre los marcadores {#modelo_otro_recaudo_sobre2_au_au} & {/modelo_otro_recaudo_sobre2_au_au} las veces que se haya cargado información en la variable modelo_otro_recaudo_sobre2_au_au
+
+Lógica para automatización del contenido de calificación legal: Si la variable modelo_otro_recaudo_sobre2_au_au = false, eliminar el contenido entre los marcadores {#modelo_otro_recaudo_sobre2_au_au} & {/modelo_otro_recaudo_sobre2_au_au}
+
+LÓGICA PARA MATRIZ DE CALIFICACIÓN FINANCIERA:
+
+Lógica para automatización del contenido de calificación financiera: Si la variable criterio_calif__finan_descapital_au_au = NO, eliminar el contenido entre los marcadores {#criterio_calif__finan_descapital_au_au} & {/criterio_calif__finan_descapital_au_au} 
+	{#criterio_calif__finan_descapital_au_au}
+	ASPECTO A EVALUAR
+	CRITERIO
+	PUNTAJES
+	Empresa en proceso de descapitalización(Patrimonio Neto < 50% * Capital Social)
+	Si
+	0
+
+	No
+	{puntaje_maximo_descapital_au_au}
+	{/criterio_calif__finan_descapital_au_au}
+
+Lógica para automatización del contenido de calificación financiera: Si la variable criterio_calif__finan_solvencia_au_au = NO, eliminar el contenido entre los marcadores {#criterio_calif__finan_solvencia_au_au} & {/criterio_calif__finan_solvencia_au_au}
+	{#criterio_calif__finan_solvencia_au_au}
+	ASPECTO A EVALUAR
+	CRITERIO
+	PUNTAJES
+	Solvencia(Activo Circulante/Pasivo Circulante)
+	Igual o mayor a{rango_maximo_criterio_solvencia_au_au}
+	{puntaje_maximo_solvencia_au_au}
+
+	Desde {rango_medio_1_criterio_solvencia_au_au} hasta {rango_medio_2_criterio_solvencia_au_au}
+	{puntaje_medio_solvencia_au_au}
+
+	Menor a {rango_minimo_criterio_solvencia_au_au}
+	{puntaje_minimo_solvencia_au_au}
+	{/criterio_calif__finan_solvencia_au_au}
+
+Lógica para automatización del contenido de calificación financiera: Si la variable criterio_calif__finan_rotacion_au_au = NO, eliminar el contenido entre los marcadores {#criterio_calif__finan_rotacion_au_au} & {/criterio_calif__finan_rotacion_au_au}
+{#criterio_calif__finan_rotacion_au_au}
+	ASPECTO A EVALUAR
+	CRITERIO
+	PUNTAJES
+	Rotación cuentas por cobrar (Ventas / Cuentas por Cobrar)
+	Igual o mayor a {rango_maximo_criterio_rotacion_au_au} veces
+	{puntaje_maximo_rotacion_au_au}
+
+	Desde {rango_medio_1_criterio_rotacion_au_au} hasta {rango_medio_2_criterio_rotacion_au_au} veces
+	
+	{puntaje_medio_rotacion_au_au}
+
+	Menor a {rango_minimo_criterio_rotacion_au_au} veces
+	{puntaje_minimo_rotacion_au_au}
+{/criterio_calif__finan_rotacion_au_au}
+
+Lógica para automatización del contenido de calificación financiera: Si la variable criterio_calif__finan_rendimiento_au_au = NO, eliminar el contenido entre los marcadores {#criterio_calif__finan_rendimiento_au_au} & {/criterio_calif__finan_rendimiento_au_au}
+{#criterio_calif__finan_rendimiento_au_au}
+	ASPECTO A EVALUAR
+	CRITERIO
+	PUNTAJES
+	Rendimiento sobre Activos ROA(Utilidad Neta/Activo Total)
+	Igual o mayor a {rango_maximo_criterio_rendimiento_au_au}
+	{puntaje_maximo_rendimiento_au_au}
+
+	Desde {rango_medio_criterio_1_rendimiento_au_au} hasta {rango_medio_criterio_2_rendimiento_au_au}
+	{puntaje_medio_rendimiento_au_au}
+
+	Menor a{rango_minimo_criterio_rendimiento_au_au}
+	{puntaje_minimo_rendimiento_au_au}
+{/criterio_calif__finan_rendimiento_au_au}
+
+Lógica para automatización del contenido de calificación financiera: Si la variable criterio_calif__finan_rentabilidad_au_au = NO, eliminar el contenido entre los marcadores {#criterio_calif__finan_rentabilidad_au_au} & {/criterio_calif__finan_rentabilidad_au_au}
+{#criterio_calif__finan_rentabilidad_au_au}
+	ASPECTO A EVALUAR
+	CRITERIO
+	PUNTAJES
+	Rentabilidad del Patrimonio ROE (Utilidad Neta/Patrimonio)
+	Igual o mayor a{rango_maximo_criterio_rentabilidad_au_au}
+	{puntaje_maximo_rentabilidad_au_au}
+
+	Desde {rango_medio_1_criterio_rentabilidad_au_au} hasta 
+	{rango_medio_2_criterio_rentabilidad_au_au}
+	{puntaje_medio_rentabilidad_au_au}
+
+	Menor a {rango_minimo_criterio_rentabilidad_au_au}
+	{puntaje_minimo_rentabilidad_au_au}
+{/criterio_calif__finan_rentabilidad_au_au}
+
+Lógica para automatización del contenido de calificación financiera: Si la variable criterio_calif__finan_endeudamiento_au_au = NO, eliminar el contenido entre los marcadores {#criterio_calif__finan_endeudamiento_au_au} & {/criterio_calif__finan_endeudamiento_au_au}
+{#criterio_calif__finan_endeudamiento_au_au}
+	ASPECTO A EVALUAR
+	CRITERIO
+	PUNTAJES
+	Endeudamiento(Pasivo Total / Activo Total)
+	Igual o menor a{rango_maximo_criterio_endeudamiento_au_au}
+	{puntaje_maximo_endeudamiento_au_au}
+
+	Desde {rango_medio_1_criterio_endeudamiento_au_au} hasta {rango_medio_2_criterio_endeudamiento_au_au}
+	{puntaje_medio_endeudamiento_au_au}
+
+	Mayor a{rango_minimo_criterio_endeudamiento_au_au}
+	{puntaje_minimo_endeudamiento_au_au}
+{/criterio_calif__finan_endeudamiento_au_au}
+
+LÓGICA PARA CRITERIOS DE CALIFICACIÓN TÉCNICOS:
+
+Lógica para automatización del contenido de calificación técnica:
+Para el contenido entre los marcadores {#criterios_calificacion_tecnica_antes_au_au} & {#criterios_calificacion_tecnica_despues_au_au}:
+insertar una una nueva fila en la tabla por cada criterio creado en la variable criterio_calificacion_tecnica_au_au, 
+rellenando el marcador {criterio_calificacion_tecnica_au_au} con el dato guardado en la variable criterio_calificacion_tecnica_au_au y el marcador {puntuacion_criterio_calificacion_tecnica_au_au} con el dato guardado en la variable puntuacion_criterio_calificacion_tecnica_au_au 
+ 
+CRITERIOS DE CALIFICACIÓN TÉCNICOS
+PUNTOS
+{#criterios_calificacion_tecnica_antes_au_au}{criterio_calificacion_tecnica_au_au}
+{puntuacion_criterio_calificacion_tecnica_au_au}{#criterios_calificacion_tecnica_despues_au_au}
+TOTAL PUNTOS:
+{total_puntuacion_criterio_calificacion_tecnica_au_au}
+
+total_puntuacion_criterio_calificacion_tecnica_au_au = suma de todos los puntuacion_criterio_calificacion_tecnica_au_au
+
+Para el contenido entre los marcadores {#matriz_criterio_calificacion_tecnica_au_au} & {/matriz_criterio_calificacion_tecnica_au_au}:
+insertar una una nueva tabla por cada criterio creado en la variable criterio_calificacion_tecnica_au_au, 
+rellenando el marcador {criterio_calificacion_tecnica_au_au} con el dato guardado en la variable criterio_calificacion_tecnica_au_au; el marcador {rango_criterio_calificacion_tecnica_au_au} con el dato guardado en la variable rango_criterio_calificacion_tecnica_au_au; el marcador {puntuacion_rango_criterio_calificacion_tecnica_au_au} con el dato guardado en la puntuacion_rango_criterio_calificacion_tecnica_au_au y el marcador {desc_criterio_calificacion_tecnica_au_au} con el dato guardado en la {desc_criterio_calificacion_tecnica_au_au}
+{#matriz_criterio_calificacion_tecnica_au_au}
+MATRIZ DE CALIFICACIÓN TÉCNICA
+CRITERIO DE CALIFICACIÓN TÉCNICO A EVALUAR
+{criterio_calificacion_tecnica_au_au}
+RANGOS DE CALIFICACIÓN
+{#criterios_calificacion_tecnica_desde_au_au}{rango_criterio_calificacion_tecnica_au_au}
+{puntuacion_rango_criterio_calificacion_tecnica_au_au}{/criterios_calificacion_tecnica_hasta_au_au}
+{desc_criterio_calificacion_tecnica_au_au}
+{/matriz_criterio_calificacion_tecnica_au_au}
+
+Para el contenido entre los marcadores {#criterios_calificacion_tecnica_desde_au_au} & {/criterios_calificacion_tecnica_hasta_au_au}:
+insertar una una nueva fila en la tabla por cada rango creado en la variable rango_criterio_calificacion_tecnica_au_au
+
+LÓGICA PARA CRITERIOS DE EVALUACIÓN TÉCNICA:
+
+Lógica para automatización del contenido de calificación técnica:
+Para el contenido entre los marcadores {#criterios_evaluacion_tecnica_antes_au_au} & {#criterios_evaluacion_tecnica_despues_au_au}:
+insertar una una nueva fila en la tabla por cada criterio creado en la variable criterio_evaluacion_tecnica_au_au, 
+rellenando el marcador {criterio_evaluacion_tecnica_au_au} con el dato guardado en la variable criterio_evaluacion_tecnica_au_au y el marcador {puntuacion_criterio_evaluacion_tecnica_au_au} con el dato guardado en la variable puntuacion_criterio_evaluacion_tecnica_au_au 
+ 
+
+CRITERIOS TÉCNICOS A EVALUAR
+PUNTOS
+{#criterios_evaluacion_tecnica_antes_au_au}{criterio_evaluacion_tecnica_au_au}
+{puntuacion_criterio_evaluacion_tecnica_au_au}{#criterios_evaluacion_tecnica_despues_au_au}
+TOTAL PUNTOS:
+{total_puntuacion_criterio_evaluacion_tecnica_au_au}
+
+total_puntuacion_criterio_evaluacion_tecnica_au_au = suma de todos los puntuacion_criterio_evaluacion_tecnica_au_au
+
+Para el contenido entre los marcadores {#matriz_criterio_evaluacion_tecnica_au_au} & {/matriz_criterio_evaluacion_tecnica_au_au}:
+insertar una una nueva tabla por cada criterio creado en la variable criterio_evaluacion_tecnica_au_au, 
+rellenando el marcador {criterio_evaluacion_tecnica_au_au} con el dato guardado en la variable criterio_evaluacion_tecnica_au_au; el marcador {rango_criterio_evaluacion_tecnica_au_au} con el dato guardado en la variable rango_criterio_evaluacion_tecnica_au_au; el marcador {puntuacion_rango_criterio_evaluacion_tecnica_au_au} con el dato guardado en la puntuacion_rango_criterio_evaluacion_tecnica_au_au y el marcador {desc_criterio_evaluacion_tecnica_au_au} con el dato guardado en la variable  desc_criterio_evaluacion_tecnica_au_au
+{#matriz_criterio_evaluacion_tecnica_au_au}
+MATRIZ DE EVALUACIÓN TÉCNICA
+CRITERIO TÉCNICO A EVALUAR
+{criterio_evaluacion_tecnica_au_au}
+RANGOS DE EVALUACIÓN
+{#criterios_evaluacion_tecnica_desde_au_au}{rango_criterio_evaluacion_tecnica_au_au}
+{puntuacion_rango_criterio_evaluacion_tecnica_au_au}{/criterios_evaluacion_tecnica_hasta_au_au}
+{desc_criterio_evaluacion_tecnica_au_au}
+{/matriz_criterio_evaluacion_tecnica_au_au}
+
+Para el contenido entre los marcadores {#criterios_evaluacion_tecnica_desde_au_au} & {/criterios_evaluacion_tecnica_hasta_au_au}:
+insertar una una nueva fila en la tabla por cada rango creado en la variable rango_criterio_evaluacion_tecnica_au_au
+
+LÓGICA PARA CRITERIOS DE EVALUACIÓN ECONÓMICA:
+
+Lógica para automatización del contenido de calificación técnica:
+Para el contenido entre los marcadores {#criterios_evaluacion_economico_antes_au_au} & {#criterios_evaluacion_economico_despues_au_au}:
+insertar una una nueva fila en la tabla por cada criterio creado en la variable criterio_evaluacion_economico_au_au, 
+rellenando el marcador {criterio_evaluacion_economico_au_au} con el dato guardado en la variable criterio_evaluacion_economico_au_au y el marcador {puntuacion_criterio_evaluacion_economico_au_au} con el dato guardado en la variable puntuacion_criterio_evaluacion_economico_au_au 
+ 
+
+CRITERIOS ECONÓMICOS A EVALUAR
+PUNTOS
+{#criterios_evaluacion_economico_antes_au_au}{criterio_evaluacion_economico_au_au}
+{puntuacion_criterio_evaluacion_economico_au_au}{#criterios_evaluacion_economico_despues_au_au}
+TOTAL PUNTOS:
+{total_puntuacion_criterio_evaluacion_economico_au_au}
+
+total_puntuacion_criterio_evaluacion_economico_au_au = suma de todos los puntuacion_criterio_evaluacion_economico_au_au
+
+Para el contenido entre los marcadores {#matriz_criterio_evaluacion_economico_au_au} & {/matriz_criterio_evaluacion_economico_au_au}:
+insertar una una nueva tabla por cada criterio creado en la variable criterio_evaluacion_economico_au_au, 
+rellenando el marcador {criterio_evaluacion_economico_au_au} con el dato guardado en la variable criterio_evaluacion_economico_au_au; el marcador {rango_criterio_evaluacion_economico_au_au} con el dato guardado en la variable rango_criterio_evaluacion_economico_au_au; el marcador {puntuacion_rango_criterio_evaluacion_economico_au_au} con el dato guardado en la puntuacion_rango_criterio_evaluacion_economico_au_au y el marcador {desc_criterio_evaluacion_economica_au_au} con el dato guardado en la variable  desc_criterio_evaluacion_economica_au_au
+{#matriz_criterio_evaluacion_economico_au_au}
+MATRIZ DE EVALUACIÓN ECONÓMICA
+CRITERIO ECONÓMICO A EVALUAR
+{criterio_evaluacion_economico_au_au}
+RANGOS DE EVALUACIÓN
+{#criterios_evaluacion_economico_desde_au_au}{rango_criterio_evaluacion_economico_au_au}
+{puntuacion_rango_criterio_evaluacion_economico_au_au}{/criterios_evaluacion_economico_hasta_au_au}
+{desc_criterio_evaluacion_economica_au_au}
+{/matriz_criterio_evaluacion_economico_au_au}
+
+Para el contenido entre los marcadores {#criterios_evaluacion_economico_desde_au_au} & {/criterios_evaluacion_economico_hasta_au_au}:
+insertar una una nueva fila en la tabla por cada rango creado en la variable rango_criterio_evaluacion_economico_au_au
+
+Lógica de automatización para Pliego de condiciones: 
+Si la variable normativa_legal_au_au = null, eliminar el contenido entre los marcadores {#normativa_legal_au_au} & {/normativa_legal_au_au}
+
+Si la variable normativa_legal_au_au = diferente a null, duplicar el contenido entre los marcadores {#normativa_legal_au_au} & {/normativa_legal_au_au} la cantidad de veces que se insertó información en la variable normativa_legal_au_au
+
+Lógica para automatización de Medidas Temporales de Promoción del Desarrollo Económico:
+Lógica de automatización para Pliego de condiciones y Requerimiento: 
+Si la variable activa_promocion_economica_au_au = NO, eliminar el contenido entre los marcadores {#activa_promocion_economica_au_au} & {/activa_promocion_economica_au_au}
+
+Lógica de automatización para Pliego de condiciones
+
+Si requiere_van_au_au = NO, se elimina el contenido de los marcadores {#requiere_van_au_au} & {/requiere_van_au_au}
+
+Si ind_pref_local_au_au = NO, se elimina el contenido de los marcadores {#ind_pref_local_au_au} & {/ind_pref_local_au_au}
+
+Si ind_bono_sujeto_au_au = NO, se elimina el contenido de los marcadores {#ind_bono_sujeto_au_au} & {/ind_bono_sujeto_au_au}
+
+Lógica de automatización para Requerimiento: 
+Lógica de automatización: Si requiere_van_au_au = SÍ, sustituir el marcador {requiere_van_au_au} por:
+sí se incorporarán estos mecanismos de preferencia en la matriz de evaluación del procedimiento.
+
+Lógica de automatización: Si requiere_van_au_au = NO, sustituir el marcador {requiere_van_au_au} por:
+no se incorporarán estos mecanismos de preferencia en la matriz de evaluación del procedimiento.
+
+Lógica de automatización para Requerimiento: 
+Lógica de automatización: Si ind_pref_local_au_au = SÍ, sustituir el marcador {ind_pref_local_au_au} por:
+sí se incorporará el mecanismo de preferencia por regionalización, a aquellos oferentes cuyo domicilio fiscal principal y base operativa se encuentren ubicados en el Municipio de ejecución del objeto, con el fin de fortalecer el tejido productivo local.
+
+Lógica de automatización: Si ind_pref_local_au_au = NO, sustituir el marcador {ind_pref_local_au_au} por:
+no se incorporará el mecanismo de preferencia por regionalización, debido a que la naturaleza técnica del objeto o la oferta de mercado existente en la localidad no permite garantizar la pluralidad de oferentes bajo este criterio territorial.
+
+Lógica de automatización en Requerimiento: Si permite_pymes_cooperativas_au_au = SÍ, sustituir el marcador {permite_pymes_cooperativas_au_au} por: 
+si es compatible con la escala operativa de PyMES y Cooperativas, garantizando su plena inclusión en el procedimiento y la aplicación de los márgenes de preferencia legal destinados a fomentar la democratización del gasto público.
+
+Lógica de automatización en Requerimiento: Si permite_pymes_cooperativas_au_au = NO, sustituir el marcador {permite_pymes_cooperativas_au_au} por: 
+no es compatible con la escala operativa de PyMES y Cooperativas, en virtud de los requerimientos específicos que demanda la ejecución del objeto, fundamentándose técnicamente por: {justificacion_no_pymes_au_au}.
+
+Lógica para automatización Requerimiento:  
+Si la variable tipo_objeto_contratacion = Bienes, sustituir el marcador {categorizacion_contratacion_au_au} por:
+ADQUISICIÓN DE MATERIALES O BIENES (X)
+
+Si la variable tipo_objeto_contratacion = Servicios, sustituir el marcador {categorizacion_contratacion_au_au} por:
+PRESTACIÓN DE SERVICIOS (X)
+
+Si la variable tipo_objeto_contratacion = Obras, sustituir el marcador {categorizacion_contratacion_au_au} por:
+EJECUCIÓN DE OBRAS (X)  
+PROYECTO  APROBADO: {proyecto_aprobado_au_au}
+
+Lógica para automatización pliego de condiciones: 
+Si la variable retencion_fiel_cumplimiento_au_au = SÍ sustituir el marcador {retencion_fiel_cumplimiento_au_au} por:
+- Si se constituye mediante Retención: Previa aprobación del Ente, se efectuará una retención del diez por ciento (10%) sobre los pagos o valuaciones que se realicen, cuyo monto total retenido será reintegrado al momento de la recepción definitiva y cumplimiento del objeto contratado.
+
+Lógica para automatización para pliego de condiciones: 
+Si la variable retencion_fianza_laboral_au_au = SÍ sustituir el marcador {retencion_fianza_laboral_au_au} por:
+2. Si se constituye mediante Retención: Previa aprobación del Ente, se efectuará una retención del cinco por ciento (5%) sobre los pagos o valuaciones que se realicen, cuyo monto total retenido será reintegrado una vez que el contratista demuestre el pago total de sus obligaciones laborales y presente la Solvencia Laboral vigente emitida por el órgano competente, al cierre de la ejecución.
+
+Si la variable requiere_garantia_laboral_au_au = NO, eliminar el contenido entre los marcadores {#requiere_garantia_laboral_au_au} & {/requiere_garantia_laboral_au_au}
+
+Si la variable requiere_garantia_laboral_au_au = NO, eliminar el marcador {modelo_garantia_laboral_au_au}
+
+Lógica para automatización para pliego de condiciones:
+Si la variable poliza_responsabilidad_civil_au_au = SÍ, sustituir el marcador {poliza_responsabilidad_civil_au_au} por:
+
+- Póliza de Responsabilidad Civil: De conformidad con lo previsto en el artículo 125 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas, el participante que resulte beneficiado con la adjudicación se obliga a constituir y mantener vigente durante todo el plazo de ejecución del contrato, una Póliza de Responsabilidad Civil que ampare los daños, pérdidas o perjuicios que pudieren ocasionarse a personas o a la propiedad de terceros, con ocasión de {desc_objeto_contratacion_au_au}.
+Dicha cobertura deberá incluir, sin limitarse a, los daños derivados de los trabajos, el uso de maquinaria, las acciones del personal del contratista y, en caso de que aplique a la naturaleza del servicio, la Responsabilidad Civil Profesional por errores u omisiones.
+La póliza deberá ser emitida por una empresa de seguros de reconocida solvencia en la República, por un monto no menor a {montoResponsabilidadCivilBsLetras} Bolivares (Bs. {monto_responsabilidad_civil_bs_au_au}). o al  {porcentaje_responsabilidad_civil_au_au}% del Contrato. Este instrumento deberá ser consignado y aprobado por el contratante antes de la firma del Acta de Inicio. El incumplimiento de esta obligación será causal de decaimiento de la adjudicación, sin que ello genere derecho a indemnización alguna para la contratista.
+
+Si la variable poliza_responsabilidad_civil_au_au = NO, eliminar el marcador {poliza_responsabilidad_civil_au_au}
+
+Si la variable poliza_responsabilidad_civil_au_au = NO, eliminar el marcador {modelo_poliza_responsabilidad_civil_au_au}
+
+LÓGICA PARA MODELO DE CONTRATO:
+
+LÓGICA PARA AUTOMATIZACIÓN TARJETA 8: GARANTÍAS CONTRACTUALES  MÓDULO MODELO DE CONTRATO:
+Si la variable retencion_fiel_cumplimiento_au_au = SÍ sustituir el marcador {retencion_fiel_cumplimiento_au_au} por:
+o someterse a la retención equivalente del 10% sobre los pagos realizados.
+
+LÓGICA PARA AUTOMATIZACIÓN TARJETA 8: GARANTÍAS CONTRACTUALES  MÓDULO MODELO DE CONTRATO:
+Si la variable requiere_garantia_laboral_au_au = SÍ, sustituir el marcador {modelo_garantia_laboral_au_au} por:
+
+- Garantía Laboral: “LA CONTRATISTA” deberá constituir a favor y a satisfacción de “EL CONTRATANTE”, debidamente autenticada y emitida por una Institución Bancaria o Compañía de Seguros debidamente inscrita por ante la Superintendencia respectiva o Sociedad Nacional de Garantías Recíprocas para la Mediana y Pequeña Industria, por un monto equivalente al {porcentaje_garantia_laboral_au_au}% del costo total de la mano de obra mensual incluida en la estructura de costos de su oferta, la fianza es de [MONTO FIANZA LABORAL LETRAS] Bolívares (Bs. [MONTO FIANZA LABORAL NUMEROS]) la cual deberá permanecer vigente por la duración del contrato y/o que se verifique el definitivo cumplimiento de la obligación afianzada, {modelo_retencion_fianza_laboral_au_au}.
+
+LÓGICA PARA AUTOMATIZACIÓN TARJETA 8: GARANTÍAS CONTRACTUALES  MÓDULO MODELO DE CONTRATO:
+Si la variable retencion_fianza_laboral_au_au = SÍ sustituir el marcador {modelo_retencion_fianza_laboral_au_au} por:
+o se aplicará retención equivalente del cinco por ciento (5%), de conformidad con el artículo 124 de la LCP.
+
+LÓGICA PARA AUTOMATIZACIÓN TARJETA 8: GARANTÍAS CONTRACTUALES  MÓDULO MODELO DE CONTRATO:
+Si la variable poliza_responsabilidad_civil_au_au = SÍ, sustituir el marcador {modelo_poliza_responsabilidad_civil_au_au} por:
+- Póliza de Responsabilidad Civil: “LA CONTRATISTA” se obliga a constituir y mantener vigente durante todo el plazo de ejecución del contrato, una Póliza de Responsabilidad Civil que ampare los daños, pérdidas o perjuicios que pudieren ocasionarse a personas o a la propiedad de terceros, con ocasión de {desc_objeto_contratacion_au_au}.
+Dicha cobertura deberá incluir, sin limitarse a, los daños derivados de los trabajos, el uso de maquinaria, las acciones del personal del contratista y, en caso de que aplique a la naturaleza del servicio, la Responsabilidad Civil Profesional por errores u omisiones.
+La póliza deberá ser emitida por una empresa de seguros de reconocida solvencia en la República, por un monto no menor a {montoResponsabilidadCivilBsLetras} Bolívares (Bs. {monto_responsabilidad_civil_bs_au_au}). o al  {porcentaje_responsabilidad_civil_au_au}% del Contrato. Este instrumento deberá ser consignado y aprobado por “EL CONTRATANTE” antes de la firma del Acta de Inicio. El incumplimiento de esta obligación será causal de decaimiento de la adjudicación, sin que ello genere derecho a indemnización alguna para “LA CONTRATISTA”.
+
+Lógica de Automatización: Para cada fila existente en la tabla relacional tb_modelo_contrato_custom_fase1_au_au para el expediente actual, el motor de plantillas docxtemplater creará de forma iterativa y secuencial una nueva cláusula con su respectivo ordinal calculado, título y cuerpo, ubicándolas al final del contrato de forma limpia entre {#clausulas_custom_au_au} & {/clausulas_custom_au_au}
+
+Lógica de Automatización: 
+Para los marcadores {normativa_general} y {normativa_legal_au_au}
+
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+
+@Injectable()
+export class NormativaPliegoService {
+  constructor(private prisma: PrismaService) {}
+
+  async obtenerNormativaParaTemplate(idExpediente: number) {
+    // 1. Consultar la relación intermedia cargando ambas tablas maestras
+    const relaciones = await this.prisma.tb_expediente_normativa.findMany({
+      where: { id_expediente_au_au: idExpediente },
+      include: {
+        tb_normativa_global: true,
+        tb_normativa_ente: true,
+      },
+    });
+
+    // 2. Clasificar y mapear las normativas seleccionadas en strings limpios
+    const normativasGlobalesList: string[] = [];
+    const normativasEnteList: string[] = [];
+
+    relaciones.forEach((rel) => {
+      if (rel.tb_normativa_global && rel.tb_normativa_global.ind_activo) {
+        normativasGlobalesList.push(`- ${rel.tb_normativa_global.texto_normativa_completo.trim()}`);
+      }
+      if (rel.tb_normativa_ente) {
+        normativasEnteList.push(`- ${rel.tb_normativa_ente.texto_normativa_completo.trim()}`);
+      }
+    });
+
+    // 3. Devolver los bloques de texto unificados con salto de carro (
+)
+    return {
+      normativa_general: normativasGlobalesList.join('
+'),
+      normativa_legal_au_au: normativasEnteList.join('
+'),
+    };
+  }
+}
