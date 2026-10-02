@@ -1,0 +1,901 @@
+PLIEGO DE CONDICIONES
+CONCURSO ABIERTO
+N° {cod_nomenclatura_proceso_au_au}
+{desc_objeto_contratacion_au_au}
+Fecha ________
+PLIEGO DE CONDICIONES
+INTRODUCCIÓN
+El presente Pliego de Condiciones tiene por objeto proveer a los participantes de todos los requerimientos, especificaciones, así como términos, condiciones y demás aspectos que regirán el procedimiento de CONCURSO ABIERTO y que deberán satisfacer en la documentación a ser presentada por cada uno para el proceso de calificación de las personas jurídicas y evaluación de sus respectivas ofertas en el procedimiento de contrataciones bajo la modalidad de concurso abierto en Acto Único de Recepción y Apertura de Sobres signado con el N° {cod_nomenclatura_proceso_au_au}, con el objeto de suscribir con {nom_ente_contratante} contrato de {desc_objeto_contratacion_au_au}.
+Este documento contiene el régimen legal aplicable y normas que regulan el procedimiento de selección del contratista y toda la información inherente a la preparación de las ofertas por parte de los participantes.
+I. RÉGIMEN JURÍDICO APLICABLE
+El presente procedimiento de selección de contratistas se rige de manera formal, expresa e ineludible por el ordenamiento jurídico vigente de la República Bolivariana de Venezuela, el cual comprende de manera enunciativa, mas no limitativa, las siguientes normativas de rango nacional y general:
+{normativa_general}
+Asimismo, en atención a la naturaleza particular de este Ente público, su adscripción y el objeto contractual del presente proceso, resultan de aplicación directa las siguientes normativas y regulaciones específicas:
+{#normativa_legal_au_au} {normativa_legal_au_au}.{/normativa_legal_au_au}
+II. OBJETO DE LA CONTRATACIÓN
+El presente Procedimiento de Contratación tiene por objeto: {desc_objeto_contratacion_au_au}.
+La modalidad de contratación se define según el monto estimado de {valor_ucau_base} UCAU, correspondiendo a un Concurso Abierto.
+III. AUTORIDAD COMPETENTE
+La {denominacion_comision} en adelante y a los fines de este Pliego denominada CCP, es el órgano competente para gestionar el llamado, recibir y responder aclaratorias, calificar a los oferentes, recibir y evaluar ofertas y demás documentos presentados, solicitar aclaratorias e información a los oferentes, redactar el informe de recomendación y notificar y en general sustanciar el procedimiento competitivo de contratación.
+La máxima autoridad o quien éste designe es el órgano competente para dictar el acto administrativo que pone fin al procedimiento de contratación (adjudicación o su equivalente), aprueba y suscribe el contrato de contratación  de adjudicación.
+Toda notificación o requerimiento en la tramitación del presente Concurso deberá dirigirse a la {denominacion_comision}, ubicada {dir_fiscal_ente} Estado {loc_estado_ente}
+Correo Electrónico: {correo_comision};
+Atención:  {denominacion_comision}
+Teléfono: {telefono_comision}.
+IV. LLAMADO Y CRONOGRAMA
+Iniciado el procedimiento, la {denominacion_comision} publicará el llamado o convocatoria del procedimiento en el portal web del Servicio Nacional de Contratistas (www.snc.gob.ve)  y en el del Ente {pag_web_ente} hasta un día antes del fijado para la recepción y apertura de sobres. La disponibilidad del pliego a los interesados se contará a partir del día siguiente a la publicación que ocurra primero.
+Conforme a lo establecido en el artículo 79 del Decreto con Rango y Fuerza de Ley Orgánica de Contrataciones Públicas, se publicará el llamado a participar en la licitación en cuestión.
+El llamado a participar contiene:
+La descripción general y objeto de la contratación;
+La identificación del ente concedente;
+La indicación de la dependencia encargada de distribuir el pliego de condiciones y su dirección exacta;
+La fecha a partir de la cual y hasta cuándo estará disponible el pliego de condiciones, el horario, los requisitos para su obtención, su costo y la forma de pago;
+El sitio, día y hora en que tendrán lugar los actos públicos de recepción y apertura de sobres contentivos de manifestaciones de voluntad y documentos para la calificación, así como también los actos públicos de recepción y apertura de sobres de las ofertas técnicas, económicas y financieras.
+CRONOGRAMA DE ACTIVIDADES
+ETAPA / ACTIVIDAD
+FECHA DESDE / HASTA
+Disponibilidad del Pliego de Condiciones
+Del  {fec_inicio_disponibilidad_pliego_au_au} al {fec_fin_disponibilidad_pliego_au_au}
+Publicación del Llamado a Participar (Web del Ente)
+Del  {fec_inicio_disponibilidad_pliego_au_au} al {fec_fin_disponibilidad_pliego_au_au}
+Publicación del Llamado a Participar (Web SNC)
+Del  {fec_inicio_disponibilidad_pliego_au_au} al {fec_fin_disponibilidad_pliego_au_au}
+Plazo para Solicitud de Aclaratorias
+Hasta {fec_solicitud_aclaratorias_au_au}
+Plazo para Solicitud de Modificaciones
+Hasta {fec_modific_pliego_au_au}
+Plazo para Respuesta de Aclaratorias
+Hasta {fec_respuesta_aclaratorias_au_au}
+Acto de Recepción y Apertura de Sobres
+El {fec_acto_recep_aper_sobres_au_au}
+Emisión del Informe de Recomendación
+El {fec_limite_evaluacion_au_au}
+Acto de Adjudicación
+El {fec_limite_adjudicacion_au_au}
+Notificación de Resultados
+El {fec_limite_notificacion_au_au}
+Plazo para la Consignación de Garantías
+El {fec_limite_garantias_au_au}
+Plazo para la Firma del Contrato
+El {fec_limite_firma_contrato_au_au}
+V. LUGAR Y FECHA DE PRESENTACIÓN DE LOS SOBRES.
+Los sobres contentivos de la manifestación de voluntad de participar, documentos Legales y ofertas, deberán ser presentados en un Acto Único, que será celebrado en la sede de la {denominacion_comision}, ubicada {dir_fiscal_ente}, el cual se llevará a efecto el día {fec_acto_recep_aper_sobres_au_au}, a las {hora_acto_recep_aper_au_au}. Se establecerá un lapso de 30 minutos de espera entre el acto de recepción de documentos y la apertura de sobres.
+A) Mecanismo de Recepción de los Sobres.
+En el presente Procedimiento de Contratación se aplicará la modalidad del Concurso Abierto bajo el mecanismo de Acto Único de conformidad con el artículo 78 numeral 1 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas, en el cual se ejecutará una primera operación destinada a la recepción y apertura del sobre contentivo de: Manifestación de Voluntad de participar, documentos de Calificación y Ofertas. La calificación de los participantes y evaluación de la oferta corresponderá a una operación posterior al acto de recepción y apertura de sobres. En caso que de aquellas Pequeñas y Medianas Industrias, Empresas, Cooperativas, Organizaciones Socio Productivas, consorcios y cualquier forma asociativa que no acrediten su capacidad legal, técnica y financiera, quedarán fuera del Procedimiento de Contratación y, en consecuencia, el examen de la Oferta no tendrá lugar.
+Una vez realizada la calificación, la {denominacion_comision} procederá de manera simultánea a evaluar las ofertas de los oferentes calificados con base a los criterios de selección establecidos en el presente Pliego de Condiciones.
+B) Condición de Participación.
+Pueden participar las Pequeñas y Medianas Industrias, Empresas, Cooperativas, Organizaciones Socio Productivas, Consorcios y cualquier forma asociativa en el presente procedimiento de contratación que cuenten con experiencia comprobada y con la capacidad necesaria para soportar las cargas económicas – financieras que comprenda el objeto del presente procedimiento administrativo de selección; además de eso deberán contar con la capacidad técnica, operativa y/o de producción que garantice una perfecta ejecución, en caso de ser beneficiario de la adjudicación, en el lapso de tiempo estipulado en el presente pliego de condiciones. Al respecto {nom_ente_contratante} a través de su {denominacion_comision}, se reserva el derecho de verificar todos los aspectos que considere pertinentes.
+El citado emplazamiento supone el cumplimiento por parte de {nom_ente_contratante} de su deber fundamental de fomentar la iniciativa económica pública y privada, por cuanto la participación del Estado y los particulares en sus relaciones de intercambio impulsan el desarrollo económico de la nación.
+{nom_ente_contratante} podrá aumentar o disminuir las cantidades requeridas, al momento de la adjudicación, siempre y cuando el aumento de estas se mantenga cuantitativamente dentro del rango que caracteriza la modalidad aplicada, según lo dispuesto en el artículo 101 del Reglamento de la Ley de Contrataciones Públicas, así como las exigencias que se consideren necesarias para la satisfacción de las necesidades del contratante, aun cuando no estuviese previsto en este pliego de condiciones, sin que esto altere el derecho a participar a los oferentes en el momento de las evaluaciones y su ejecución se realizará mediante la suscripción de un Contrato Marco.
+VI. CONTENIDO DEL SOBRE 1: RECAUDOS LEGALES Y FINANCIEROS.
+Las empresas deberán presentar todo lo solicitado en el presente Pliego de Condiciones, en un único sobre, identificado en la parte exterior con los datos de la empresa oferente, colocando los documentos en un (01) archivador de dos aros (CARPETA LOMO ANCHO TAMAÑO OFICIO).
+Forma de Presentación de la Documentación Solicitada.
+Ambas carpetas deberán estar contentivas de todas las secciones a identificar a continuación demarcadas con sus respectivos separadores:
+Las Carpetas contentivas de la manifestación de voluntad, documentación legal y la oferta deberán presentarse en el lugar y fecha arriba indicado, en único sobre, cerrado, sellado, numerado e identificado con los datos de la Pequeña y Mediana Industria, Empresa, Cooperativa, Organización Socio Productiva, Consorcio y cualquier forma asociativa participante del procedimiento, el cual contendrá  toda la documentación solicitada en el presente Pliego de Condiciones para la calificación de los participantes; así como de la correspondiente  Oferta a los fines de practicar la evaluación respectiva.
+Una vez presentadas las ofertas ante la {denominacion_comision} no se admitirá ningún tipo de modificación.
+Las ofertas deberán dirigirse a {nom_ente_contratante};  Las Pequeñas y Medianas Industrias, Empresas, Cooperativas, Organizaciones Socio Productivas, Consorcios y cualquier forma asociativa participantes deben presentar las ofertas con indicación mínima de: bienes a suministrar, tiempo de entrega, precio; así como los tributos correspondientes (I.V.A.) de ser el caso.
+Las ofertas deben estar debidamente selladas y firmadas por el representante legal de la empresa. Vale decir que el original y todas las copias de los documentos requeridos y la oferta deben ser firmados por el Oferente o por una o más personas debidamente autorizadas para representarlo y para obligarlo en virtud del contrato. Todas las páginas de la oferta, excepto las que contengan material técnico o impreso no modificado, llevarán la firma de la persona o personas que firmen la oferta. La oferta y los demás documentos elaborados por el Oferente serán mecanografiados o escritos en tinta indeleble.
+Los documentos requeridos y la oferta no deberán contener textos entre líneas, raspaduras ni tachaduras, salvo cuando fuere necesario para corregir errores del Oferente, en cuyo caso las correcciones deberán llevar la firma de la persona o personas que firmen la oferta. En caso contrario, las correcciones se entenderán como no escritas.
+RÓTULOS DE IDENTIFICACIÓN DE LOS SOBRES
+MODELO DE ETIQUETA.
+SOBRE N°: ______  OFERENTE:_______________________________
+COMISIÓN DE CONTRATACIONES.
+CONCURSO ABIERTO N°___________________
+DESCRIPCIÓN DEL PROCEDIMIENTO: ____________________________
+SOBRE N° 1:
+“RECAUDOS LEGALES, ECONÓMICOS-FINANCIEROS Y TÉCNICOS”
+MODELO DE ETIQUETA.
+SOBRE N°: ______  OFERENTE:_______________________________
+COMISIÓN DE CONTRATACIONES.
+CONCURSO ABIERTO N°___________________
+DESCRIPCIÓN DEL PROCEDIMIENTO: ____________________________
+SOBRE 2:
+OFERTA TÉCNICA Y ECONÓMICA
+Documentación a consignar.
+El participante deberá entregar la documentación que a continuación se solicita y presentarla en un único sobre según el siguiente orden:
+{#mod_carta_manifestacion_voluntad_au_au}-Carta de Manifestación de Voluntad de participar en el Procedimiento de Contratación, y de someterse expresamente a los términos y condiciones del proceso. (Ver Modelo en Anexo III) {/mod_carta_manifestacion_voluntad_au_au}
+{#mod_carta_autorizacion_au_au}-Poder debidamente Autenticado o Autorización simple a la persona encargada de representar a la empresa durante todo el proceso de contratación, suscrita por el representante legal de la empresa, indicado en la planilla resumen emitida por el Registro Nacional de Contratistas, a favor de la persona que participará en los actos del presente proceso de selección de contratista (En caso de firmas conjuntas deberán estar suscritas por todos los accionistas). (Original). Con sus respectivas copias de cédula de identidad. (Ver Modelo en Anexo III) {/mod_carta_autorizacion_au_au}
+{#mod_doc_constitutivo_au_au}-Documento Constitutivo y Estatutario y sus modificaciones debidamente registradas. {/mod_doc_constitutivo_au_au}
+{mod_copia_rif_vigente_au_au}
+{mod_certificado_rnc_au_au}
+{#mod_solvencia_laboral_au_au}-Certificado de Solvencia Laboral; En caso de que el oferente no presente como parte de su oferta dicho documento se considerará una omisión no sustancial; siempre que se incluya como parte de la oferta la constancia de haber presentado  Declaración Jurada de Solvencia Laboral. (Ver Modelo en Anexo III). En este último caso el participante deberá consignar la Solvencia Laboral vigente, o los pagos de Inces, IVSS y Banavih antes de la suscripción del contrato dentro del plazo máximo establecido para tal fin.{/mod_solvencia_laboral_au_au}
+{#mod_declaracion_socios_no_inhabilitados_au_au}-Declaración Jurada de no contar dentro de la conformación y organización de la empresa con personas naturales que participen como socios, miembros o administradores de alguna empresa, sociedad o agrupación que se encuentre inhabilitada.  (Ver Modelo en Anexo III) {/mod_declaracion_socios_no_inhabilitados_au_au}
+{#mod_declaracion_no_deudas_ente_au_au}-Declaración Jurada de Conocimiento de no poseer Obligaciones Exigibles con el Contratante. (Ver Modelo en Anexo III) {/mod_declaracion_no_deudas_ente_au_au}
+{#mod_declaracion_no_impedimentos_lcp_au_au}-Declaración Jurada de No Tener Impedimentos para Participar en los Procedimientos Previstos en el Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas. (Ver Modelo en Anexo III) {/mod_declaracion_no_impedimentos_lcp_au_au}
+{#mod_declaracion_conocimiento_lugar_au_au}- Declaración Jurada de Conocimiento del Lugar donde se Realizará la Ejecución del Objeto de la Contratación (Ver Modelo en Anexo III) {/mod_declaracion_conocimiento_lugar_au_au}
+{#mod_declaracion_info_financiera_au_au}-Declaración Jurada de Información Financiera. (Ver Modelo en Anexo III) {/mod_declaracion_info_financiera_au_au}
+{mod_evaluacion_desempeno_au_au}
+{#desc_otro_recaudo_sobre1_au_au} {desc_otro_recaudo_sobre1_au_au} {/desc_otro_recaudo_sobre1_au_au}
+Aquellos participantes a los que se le haya rescindido contrato o esté en curso el procedimiento de rescisión, será causal de RECHAZO DE LA OFERTA.
+VII. ACLARATORIA DEL PLIEGO
+1. Condiciones generales.
+La petición de aclaratorias podrá dirigirse a la {denominacion_comision}, desde {fec_solicitud_aclaratorias_au_au} hasta el {fec_respuesta_aclaratorias_au_au}, en el horario comprendido de {horario_retiro_pliego}, en la dirección {direccion_retiro_pliego}.
+Toda solicitud de aclaratorias será respondida hasta el {fec_respuesta_aclaratorias_au_au} por la  {denominacion_comision} a todos los participantes en el proceso.
+El plazo para solicitar aclaratorias de la información contenida en el pliego será de Tres (03) días hábiles contados a partir de la fecha en que el Pliego de Condiciones esté a disposición de los participantes y serán respondidas con al menos un día hábil de anticipación a la fecha fijada para la celebración del Acto Único de recepción de los sobres. Dichas solicitudes de aclaratorias podrán ser enviadas a la siguiente dirección electrónica: {correo_comision};
+Cuya información de allí enviada deberá ser confirmada con el correspondiente Acuse de Recibo.
+Los participantes en el Procedimiento de Contratación deberán abstenerse de solicitar cualquier información por otros medios que no sean los aquí establecidos.
+VIII. MODIFICACIONES AL PLIEGO DE CONDICIONES
+La {denominacion_comision} podrá modificar el Pliego de Condiciones hasta el {fec_modific_pliego_au_au}, según lo dispuesto en el Artículo 68 del Decreto con Rango Valor y Fuerza de la Ley de Contrataciones Públicas, un lapso no menor a dos (2) días hábiles antes de la fecha del vencimiento del plazo para la presentación de los sobres contentivos de la Manifestación de Voluntad de Participar, Documentación Legal y Oferta, ya sea por iniciativa propia o en atención de una aclaratoria solicitada por un participante, para que estos últimos consideren las modificaciones realizadas.
+Cualquier modificación formará parte del Pliego de Condiciones y se comunicará por escrito o correo electrónico a todos los Participantes que bien hayan adquirido el pliego del proceso y de los cuales exista constancia de su adquisición.
+La {denominacion_comision} podrá prorrogar el plazo originalmente establecido para la presentación de los sobres contentivos de la Manifestación de Voluntad de Participar, Documentación Legal y Oferta, a partir de la última notificación de modificación.
+IX. CRITERIOS PARA LA CALIFICACIÓN LEGAL DE LOS OFERENTES
+La calificación de los participantes, corresponderá una operación destinada a la verificación y confirmación del examen de capacidad técnica, legal y financiera efectuada preliminarmente por la {denominacion_comision}, a los asistentes al acto público de recepción y apertura de sobres; en tal sentido, calificarán las Pequeñas y Medianas Industrias, Empresas, Cooperativas, Organizaciones Socio Productivas, Consorcios y cualquier forma asociativa que se ajusten a los siguientes criterios de calificación salvo las que manifiesten y fundamenten la aplicación de preferencias en los términos establecidos por la normativa que rige la materia:
+a)  Calificación Legal.
+La calificación legal tendrá carácter prelativo sobre las demás, por cuanto la verificación de la misma condiciona la procedencia del análisis de los restantes aspectos de calificación financiera y técnica, tal calificación legal no tendrá valor numérico por cuanto su naturaleza requiere de un examen cualitativo (no cuantitativo), pudiendo determinar ante la falta de alguno de estos requerimientos la descalificación del oferente relevando a la comisión de contrataciones de la necesidad de realizar la calificación financiera y técnica.
+RECAUDOS LEGALES.
+{#mod_carta_manifestacion_voluntad_au_au}-Carta de Manifestación de Voluntad de participar en el Procedimiento de Contratación, y de someterse expresamente a los términos y condiciones del proceso. (Ver Modelo en Anexo III) {/mod_carta_manifestacion_voluntad_au_au}
+{#mod_carta_autorizacion_au_au}-Poder debidamente Autenticado o Autorización simple a la persona encargada de representar a la empresa durante todo el proceso de contratación, suscrita por el representante legal de la empresa, indicado en la planilla resumen emitida por el Registro Nacional de Contratistas, a favor de la persona que participará en los actos del presente proceso de selección de contratista (En caso de firmas conjuntas deberán estar suscritas por todos los accionistas). (Original). Con sus respectivas copias de cédula de identidad. (Ver Modelo en Anexo III) {/mod_carta_autorizacion_au_au}
+{#mod_doc_constitutivo_au_au}-Documento Constitutivo y Estatutario y sus modificaciones debidamente registradas. {/mod_doc_constitutivo_au_au}
+{mod_copia_rif_vigente_au_au}
+{mod_certificado_rnc_au_au}
+{#mod_solvencia_laboral_au_au}-Certificado de Solvencia Laboral; En caso de que el oferente no presente como parte de su oferta dicho documento se considerará una omisión no sustancial; siempre que se incluya como parte de la oferta la constancia de haber presentado  Declaración Jurada de Solvencia Laboral. (Ver Modelo en Anexo III). En este último caso el participante deberá consignar la Solvencia Laboral vigente, o los pagos de Inces, IVSS y Banavih antes de la suscripción del contrato dentro del plazo máximo establecido para tal fin.{/mod_solvencia_laboral_au_au}
+{#mod_declaracion_socios_no_inhabilitados_au_au}-Declaración Jurada de no contar dentro de la conformación y organización de la empresa con personas naturales que participen como socios, miembros o administradores de alguna empresa, sociedad o agrupación que se encuentre inhabilitada.  (Ver Modelo en Anexo III) {/mod_declaracion_socios_no_inhabilitados_au_au}
+{#mod_declaracion_no_deudas_ente_au_au}-Declaración Jurada de Conocimiento de no poseer Obligaciones Exigibles con el Contratante. (Ver Modelo en Anexo III) {/mod_declaracion_no_deudas_ente_au_au}
+{#mod_declaracion_no_impedimentos_lcp_au_au}-Declaración Jurada de No Tener Impedimentos para Participar en los Procedimientos Previstos en el Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas. (Ver Modelo en Anexo III) {/mod_declaracion_no_impedimentos_lcp_au_au}
+{#mod_declaracion_conocimiento_lugar_au_au}- Declaración Jurada de Conocimiento del Lugar donde se Realizará la Ejecución del Objeto de la Contratación (Ver Modelo en Anexo III) {/mod_declaracion_conocimiento_lugar_au_au}
+{#mod_declaracion_info_financiera_au_au}-Declaración Jurada de Información Financiera. (Ver Modelo en Anexo III) {/mod_declaracion_info_financiera_au_au}
+{mod_evaluacion_desempeno_au_au}
+{#desc_otro_recaudo_sobre1_au_au} {desc_otro_recaudo_sobre1_au_au} {/desc_otro_recaudo_sobre1_au_au}
+Nota: En caso de consorcios o alianzas, la Manifestación de Voluntad deberá ser suscrita por los representantes legales de cada uno de los miembros. Si la persona que firma los documentos no es la persona indicada como representante legal o la autorizada por el documento consorcial para firmar en nombre del Oferente, deberá consignarse la documentación que la faculte para representar al Oferente.
+b) Calificación Financiera.
+El análisis de tipo financiero a los participantes tendrá como propósito establecer su capacidad de contratación. A tal efecto se utilizarán tanto los datos e información solicitada en este Pliego como la derivada del Registro Nacional de Contratistas, a los efectos de evidenciar la aptitud de los oferentes en el presente proceso de contratación.
+Para calificar financieramente se deberá desprender de la información contenida en la Planilla Resumen del RNC, el cumplimiento de los siguientes criterios:
+Indicadores financieros universalmente conocidos.
+No estar en proceso de descapitalización.
+Los criterios antes descritos serán evaluados y ponderados conforme a la Matriz de Calificación Financiera que a continuación se establece:
+MATRIZ DE CALIFICACIÓN FINANCIERA
+{#criterio_calif__finan_descapital_au_au}
+ASPECTO A EVALUAR
+CRITERIO
+PUNTAJES
+Empresa en proceso de descapitalización(Patrimonio Neto < 50% * Capital Social)
+Si
+0
+No
+{puntaje_maximo_descapital_au_au}
+{/criterio_calif__finan_descapital_au_au}
+{#criterio_calif__finan_solvencia_au_au}
+ASPECTO A EVALUAR
+CRITERIO
+PUNTAJES
+Solvencia(Activo Circulante/Pasivo Circulante)
+Igual o mayor a{rango_maximo_criterio_solvencia_au_au}
+{puntaje_maximo_solvencia_au_au}
+Desde {rango_medio_1_criterio_solvencia_au_au} hasta {rango_medio_2_criterio_solvencia_au_au}
+{puntaje_medio_solvencia_au_au}
+Menor a {rango_minimo_criterio_solvencia_au_au}
+{puntaje_minimo_solvencia_au_au}
+{/criterio_calif__finan_solvencia_au_au}
+{#criterio_calif__finan_rotacion_au_au}
+ASPECTO A EVALUAR
+CRITERIO
+PUNTAJES
+Rotación cuentas por cobrar (Ventas / Cuentas por Cobrar)
+Igual o mayor a {rango_maximo_criterio_rotacion_au_au} veces
+{puntaje_maximo_rotacion_au_au}
+Desde {rango_medio_1_criterio_rotacion_au_au} hasta {rango_medio_2_criterio_rotacion_au_au} veces
+{puntaje_medio_rotacion_au_au}
+Menor a {rango_minimo_criterio_rotacion_au_au} veces
+{puntaje_minimo_rotacion_au_au}
+{/criterio_calif__finan_rotacion_au_au}
+{#criterio_calif__finan_rendimiento_au_au}
+ASPECTO A EVALUAR
+CRITERIO
+PUNTAJES
+Rendimiento sobre Activos ROA(Utilidad Neta/Activo Total)
+Igual o mayor a {rango_maximo_criterio_rendimiento_au_au}
+{puntaje_maximo_rendimiento_au_au}
+Desde {rango_medio_criterio_1_rendimiento_au_au} hasta {rango_medio_criterio_2_rendimiento_au_au}
+{puntaje_medio_rendimiento_au_au}
+Menor a{rango_minimo_criterio_rendimiento_au_au}
+{puntaje_minimo_rendimiento_au_au}
+{/criterio_calif__finan_rendimiento_au_au}
+{#criterio_calif__finan_rentabilidad_au_au}
+ASPECTO A EVALUAR
+CRITERIO
+PUNTAJES
+Rentabilidad del Patrimonio ROE (Utilidad Neta/Patrimonio)
+Igual o mayor a{rango_maximo_criterio_rentabilidad_au_au}
+{puntaje_maximo_rentabilidad_au_au}
+Desde {rango_medio_1_criterio_rentabilidad_au_au} hasta
+{rango_medio_2_criterio_rentabilidad_au_au}
+{puntaje_medio_rentabilidad_au_au}
+Menor a {rango_minimo_criterio_rentabilidad_au_au}
+{puntaje_minimo_rentabilidad_au_au}
+{/criterio_calif__finan_rentabilidad_au_au}
+{#criterio_calif__finan_endeudamiento_au_au}
+ASPECTO A EVALUAR
+CRITERIO
+PUNTAJES
+Endeudamiento(Pasivo Total / Activo Total)
+Igual o menor a{rango_maximo_criterio_endeudamiento_au_au}
+{puntaje_maximo_endeudamiento_au_au}
+Desde {rango_medio_1_criterio_endeudamiento_au_au} hasta {rango_medio_2_criterio_endeudamiento_au_au}
+{puntaje_medio_endeudamiento_au_au}
+Mayor a{rango_minimo_criterio_endeudamiento_au_au}
+{puntaje_minimo_endeudamiento_au_au}
+{/criterio_calif__finan_endeudamiento_au_au}
+El puntaje mínimo requerido para superar la Calificación Financiera y avanzar a la fase de Calificación Técnica es de {puntuacion_minima_calif_financiera_au_au} puntos; ante el incumplimiento de esta puntuación mínima el oferente se entiende como descalificado relevando a la comisión de contrataciones de la necesidad de realizar la calificación técnica.
+c) Calificación Técnica:
+Esta calificación consiste en un análisis de tipo técnico a las empresas participantes a fin de identificar su capacidad técnica en cuanto al suministro de bienes, prestación de servicios, ejecución de obras requeridas, con base a información suministrada por el oferente y especificada en el presente pliego de condiciones.
+La calificación técnica se realizará de acuerdo a la Matriz de Calificación Técnica estructurada a tales fines, según la presente tabla:
+1. CRITERIOS DE CALIFICACIÓN TÉCNICOS
+CRITERIOS DE CALIFICACIÓN TÉCNICOS
+PUNTOS
+{#criterios_calificacion_tecnica_antes_au_au}{criterio_calificacion_tecnica_au_au}
+{puntuacion_criterio_calificacion_tecnica_au_au}{#criterios_calificacion_tecnica_despues_au_au}
+TOTAL PUNTOS:
+{total_puntuacion_criterio_calificacion_tecnica_au_au}
+2. PONDERACIÓN DE LOS CRITERIOS DE CALIFICACIÓN:
+{#matriz_criterio_calificacion_tecnica_au_au}
+MATRIZ DE CALIFICACIÓN TÉCNICA
+CRITERIO DE CALIFICACIÓN TÉCNICO A EVALUAR
+{criterio_calificacion_tecnica_au_au}
+RANGOS DE CALIFICACIÓN
+{#criterios_calificacion_tecnica_desde_au_au}{rango_criterio_calificacion_tecnica_au_au}
+{puntuacion_rango_criterio_calificacion_tecnica_au_au}{/criterios_calificacion_tecnica_hasta_au_au}
+{desc_criterio_calificacion_tecnica_au_au}
+{/matriz_criterio_calificacion_tecnica_au_au}
+Solo calificarán aquellos oferentes que obtengan una puntuación mayor o igual a {puntuacion_minima_calif_tecnica_au_au} puntos en la matriz de calificación técnica; ante el incumplimiento de esta puntuación mínima el oferente se entiende como descalificado relevando a la comisión de contrataciones de la necesidad de realizar la Evaluación de las Ofertas.
+X. CONTENIDO SOBRE 2: OFERTA TÉCNICA Y ECONÓMICA
+A) Formas de presentación y documentación a consignar.
+1. La oferta técnico-económica debe presentarse de la siguiente manera:
+Oferta en formato de la empresa, sellado y firmado por su representante legal o por la persona que este último haya autorizado debidamente, en la fecha y hora establecida por el presente pliego de condiciones.
+Su oferta puede presentarse de manera total o parcial, en cualquier caso, las actividades no cotizadas deben aparecer en cero (0).
+En caso de poseer carta de exclusividad de equipos, materiales o bienes debe anexar con la oferta.
+La oferta deberá tener una vigencia mínima de {dias_validez_oferta_au_au} días continuos, contados a partir del acto de recepción y apertura de sobres o del vencimiento de su prórroga, si la hay.
+Por solicitud de la {denominacion_comision}, mediante oficio dictado por su máxima autoridad, el oferente deberá prorrogar el término de validez de su oferta, la cual debe modificarse a partir del momento en que sea requerido.
+Los renglones cotizados u ofertados deben incluir el costo del transporte si diere lugar a ello.
+La oferta debe agregar en casos de obras o servicios que lo requieran: (Presupuesto de la Obra, Análisis de Precios Unitarios (APU) detallados por cada partida, y la Fórmula Polinómica para ajuste de precios (si aplica); cómputos métricos, memoría descriptiva, plan de Seguridad y Salud Laboral específico para el proyecto.)
+{forma_presentacion_au_au}
+B) Documentación a consignar.
+{#mod_carta_oferta_au_au}-Carta Oferta. (Ver Modelo en Anexo III) {/mod_carta_oferta_au_au}
+{#mod_declaracion_capacidad_financiera_au_au}-Declaración Jurada de Contar con la Capacidad Financiera de Contratación. (Ver Modelo en Anexo III) {/mod_declaracion_capacidad_financiera_au_au}
+{#mod_declaracion_compromiso_resp_social_au_au}-Es obligación del Oferente acompañar con la respectiva oferta la Carta Compromiso de Responsabilidad Social, el cual comprende una declaración voluntaria mediante la cual se compromete a dar cumplimiento en el porcentaje establecido. (Ver Modelo en Anexo III) {/mod_declaracion_compromiso_resp_social_au_au}
+{#mod_garantia_mantenimiento_oferta_au_au}-Garantía de mantenimiento de la Oferta: Declaración Jurada o Caución a favor del Ente Contratante (Ver Modelo en Anexo III). {/mod_garantia_mantenimiento_oferta_au_au}
+{#mod_declaracion_autocalculo_van_au_au}-Declaración Jurada de Auto cálculo del V.A.N (Ver Modelo en Anexo III), aquellas empresas que requieran, contar con las preferencias adicionales de las medidas temporales para la promoción, desarrollo, estímulo e inclusión de la Industria Nacional, productoras de bienes, prestadoras de servicios y ejecutoras de obras ubicadas en el país, contempladas en la Ley de Contrataciones Públicas, deberán consignar junto con los requisitos exigidos en el Pliego de Condiciones, el Auto-cálculo del Valor Agregado Nacional (VAN). Este documento no constituye un causal de RECHAZO DE LA OFERTA.
+{#mod_carta_notificaciones_au_au}-Carta de datos para notificaciones. (Ver Modelo en Anexo III).{/mod_carta_notificaciones_au_au}
+{#mod_garantia_fiel_cumpl_au_au}-Garantía de Fiel Cumplimiento del Contrato (Ver Modelo en Anexo III) {/mod_garantia_fiel_cumpl_au_au}
+{#mod_fianza_laboral_au_au}-Fianza Laboral. (Ver Modelo en Anexo III) {/mod_fianza_laboral_au_au}
+{#desc_otro_recaudo_sobre2_au_au} {desc_otro_recaudo_sobre2_au_au} {/desc_otro_recaudo_sobre2_au_au}
+{moneda_diferente_au_au}
+{idioma_diferente_au_au}
+E) Vigencia de la Oferta.
+La oferta tendrá validez desde la fecha de presentación en el Acto de Recepción de Documentos hasta la firma del contrato. Las variaciones de precios que hayan afectado realmente el valor de los bienes contratados fundamentadas por el contratista, por hechos posteriores imprevisibles a la fecha de presentación de la oferta de acuerdo a lo establecido en el artículo 133 de la Ley de Contrataciones Públicas y los artículos 140, 141 y 142 de su Reglamento, se reconocerán y pagarán previo a la aprobación por parte de {nom_ente_contratante} al contratista por medio de los mecanismos establecidos en el contrato.
+NOTA: La {denominacion_comision} podrá solicitar a los oferentes que prorroguen la vigencia de las ofertas, y aquellos que accedan deberán presentar la certificación de la misma; todo esto sin menoscabo de las disposiciones contenidas en el artículo 119 de la Ley de Contrataciones Públicas.
+F) Garantía de Mantenimiento de la Oferta.
+Para asegurar en caso de que se adjudique, el mantenimiento de la oferta hasta el otorgamiento del contrato, los oferentes  deben obligarse a sostener sus ofertas durante el lapso comprendido entre el día en que se celebre el acto de recepción y apertura de sobres y la firma del contrato, en tal sentido, presentarán junto con su oferta, caución o garantía  por el monto correspondiente al 2% del monto total de su oferta sin incluir los tributos  la cual deberá acompañar en original.
+G) Compromiso de Responsabilidad Social.
+El Compromiso de Responsabilidad Social comprende el compromiso que los oferentes establecen en su oferta para el cumplimiento de proyectos destinados a satisfacer la necesidades del entorno social de {nom_ente_contratante} del Municipio {loc_municipio_ente}, o de las comunidades organizadas ubicadas en las áreas de influencia de la misma, dicho acuerdo corresponderá la compra de bienes o prestación de servicios para programas sociales determinados por el contratante con un aporte de {porcentaje_responsabilidad_social_au_au}% del monto total de la oferta sin incluir el impuesto al valor agregado IVA, de conformidad con el Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas; Publicada en Gaceta Oficial de la República Bolivariana de Venezuela Extraordinaria Nº 6.154 de fecha 19 de noviembre de 2014.
+El oferente deberá acompañar junto con su oferta la correspondiente Declaración Jurada del Compromiso de Responsabilidad Social (Ver Modelo en Anexo III) mediante la cual se compromete a dar cumplimiento a la referida obligación en los siguientes términos y condiciones establecidos {forma_responsabilidad_social_au_au}.
+XI. CRITERIOS DE EVALUACIÓN.
+Una vez concluida la calificación de los documentos presentados por los oferentes, la {denominacion_comision} examinará la oferta aplicando los criterios de evaluación establecidos en el presente pliego de condiciones.
+El mecanismo de evaluación de las ofertas comprenderá dos etapas:
+Etapa I: Evaluación técnica de las ofertas.
+Etapa II: Evaluación económica de las ofertas.
+A) Parámetros y Criterios para la Evaluación de Ofertas
+- Etapa I: Evaluación técnica de las ofertas.
+Las ofertas serán analizadas y evaluadas desde el punto de vista técnico por cada renglón o ítems, en base a {total_puntuacion_criterio_evaluacion_tecnica_au_au} puntos.
+1. CRITERIOS TÉCNICOS A EVALUAR
+CRITERIOS TÉCNICOS A EVALUAR
+PUNTOS
+{#criterios_evaluacion_tecnica_antes_au_au}{criterio_evaluacion_tecnica_au_au}
+{puntuacion_criterio_evaluacion_tecnica_au_au}{#criterios_evaluacion_tecnica_despues_au_au}
+TOTAL PUNTOS:
+{total_puntuacion_criterio_evaluacion_tecnica_au_au}
+2. PONDERACIÓN DE LOS CRITERIOS A EVALUAR:
+{#matriz_criterio_evaluacion_tecnica_au_au}
+MATRIZ DE EVALUACIÓN TÉCNICA
+CRITERIO TÉCNICO A EVALUAR
+{criterio_evaluacion_tecnica_au_au}
+RANGOS DE EVALUACIÓN
+{#criterios_evaluacion_tecnica_desde_au_au}{rango_criterio_evaluacion_tecnica_au_au}
+{puntuacion_rango_criterio_evaluacion_tecnica_au_au}{/criterios_evaluacion_tecnica_hasta_au_au}
+{desc_criterio_evaluacion_tecnica_au_au}
+{/matriz_criterio_evaluacion_tecnica_au_au}
+Nota: Se considerará como oferta válida técnicamente, aquella que obtenga una puntuación mínima de {puntuacion_minima_evaluacion_tecnica}  puntos.
+- Etapa II: Evaluación económica de las ofertas.
+Las ofertas serán analizadas y evaluadas desde el punto de vista económico por cada renglón o ítems, en base a {total_puntuacion_criterio_evaluacion_economico_au_au} puntos.
+1. CRITERIOS ECONÓMICOS A EVALUAR
+CRITERIOS ECONÓMICOS A EVALUAR
+PUNTOS
+{#criterios_evaluacion_economico_antes_au_au}{criterio_evaluacion_economico_au_au}
+{puntuacion_criterio_evaluacion_economico_au_au}{#criterios_evaluacion_economico_despues_au_au}
+TOTAL PUNTOS:
+{total_puntuacion_criterio_evaluacion_economico_au_au}
+2. PONDERACIÓN DE LOS CRITERIOS TÉCNICOS:
+{#matriz_criterio_evaluacion_economico_au_au}
+MATRIZ DE EVALUACIÓN ECONÓMICA
+CRITERIO ECONÓMICO A EVALUAR
+{criterio_evaluacion_economico_au_au}
+RANGOS DE EVALUACIÓN
+{#criterios_evaluacion_economico_desde_au_au}{rango_criterio_evaluacion_economico_au_au}
+{puntuacion_rango_criterio_evaluacion_economico_au_au}{/criterios_evaluacion_economico_hasta_au_au}
+{desc_criterio_evaluacion_economica_au_au}
+{/matriz_criterio_evaluacion_economico_au_au}
+B) Matriz de totalización de la Evaluación Técnica y Económica de la Oferta
+EMPRESA
+TOTAL EVALUACIÓN TÉCNICA
+TOTAL EVALUACIÓN ECONÓMICA
+TOTAL
+{total_puntuacion_criterio_evaluacion_tecnica_au_au} pts
+{total_puntuacion_criterio_evaluacion_economica_au_au} pts
+{total_puntuacion_matriz_evaluacion_au_au} pts
+Nota: Si de la evaluación de las ofertas, resultan con la misma puntuación dos o más ofertas, se seleccionará a la empresa que ofrezca mayor disponibilidad. En caso de persistir el empate, se seleccionará a la empresa que ofrezca el menor precio en el renglón correspondiente.
+{#activa_promocion_economica_au_au}
+- Medidas Temporales de Promoción del Desarrollo Económico
+De conformidad con los Artículos 11 y 12 de la Ley de Contrataciones Públicas y los Artículos 9, 10 y 112 de su Reglamento, el Ente Contratante aplica medidas de fomento para incentivar la participación de actores económicos locales y sujetos protegidos por el Estado. Estas preferencias se aplicarán con posterioridad a la evaluación técnica y económica de las ofertas.
+{#requiere_van_au_au}- Del Valor Agregado Nacional (VAN)
+Las preferencias contempladas en la Ley de Contrataciones Públicas, se aplicarán con posterioridad a la Evaluación de las ofertas, considerando las medidas descritas a continuación:
+1.1. Se entenderá por Valor Agregado Nacional (VAN) el resultado de sumar las contribuciones porcentuales en la formación del precio final de cada uno de los componentes de origen nacional que se utilizan para producir un bien, prestar un servicio o ejecutar una obra.
+1.2. Se aplicará a la oferta que sea presentada por un oferente cuyo domicilio principal esté en Venezuela y que tenga mayor incorporación de partes e insumos nacionales y mayor participación de recursos humanos nacionales, incluso en el nivel directivo.
+1.3. Componentes del Valor Agregado Nacional (VAN):
+a) La materia prima e insumos de origen nacional de aplicación directa al bien, servicio u obra, así como el material de envasado y empaque de fabricación nacional.
+b) Los equipos de origen venezolano incorporados como activos fijos en la obra.
+c) El talento humano nacional que interviene en la fabricación del bien, la prestación del servicio y ejecución de la obra, así como en el envasado y empaquetado de los bienes.
+En el caso de las Cooperativas, cuando el trabajo es ejecutado directamente por los asociados, el Valor Agregado Nacional (VAN) por concepto de talento humano se calculará con base a los anticipos societarios, compensaciones y demás regímenes especiales de previsión y protección social previstos en los Estatutos o Reglamentos Internos de la Cooperativa. Sin embargo, cuando las Cooperativas excepcionalmente contraten los servicios de personal no asociado, no deben exceder el veinte por ciento (20%) del número total de asociados de la Cooperativa.
+d) La tecnología de origen nacional aplicada.
+e) Los estudios de ingeniería conceptual y de detalle, así como la inspección y gerencia del servicio u obra, cuando formen parte integral de la oferta, contratados a empresas con domicilio principal en el país, que cumplan con lo establecido en la legislación laboral.
+f) Los servicios profesionales y no profesionales prestados por las personas naturales, cooperativas, las pequeñas y medianas industrias, y otras organizaciones socioproductivas del Sistema Económico Comunal con domicilio principal en la República Bolivariana de Venezuela, empleados en la fabricación del bien, prestación del servido o ejecución de la obra, siempre y cuando el setenta y cinco por ciento (75%) de estos servicios sea prestado por profesionales o personas de nacionalidad venezolana.
+g) Los gastos financieros pagados en la República Bolivariana de Venezuela para la elaboración del bien, prestación del servicio o ejecución de la obra.
+h) La depreciación de equipos instalados en la República Bolivariana de Venezuela, empleados para la fabricación del bien, prestación del servicio o ejecución de la obra, de acuerdo a los siguientes criterios:
+h.1) Para la fabricación de bienes, prestación de servicios y ejecución de obras, la depreciación no podrá ser realizada en un tiempo menor de un (1) año para utensilios y herramientas, cuatro (4) años para maquinarias, equipos e instalación.
+h.2) El valor de depreciación será el valor histórico en libros o el valor según avalúo de activos.
+h.3) La alícuota será la resultante de aplicar el valor de depreciación anual obtenido de la maquinaria, equipos o instalaciones en el período realmente utilizado directamente en la fabricación del bien, ejecución de la obra o prestación del servicio.
+1.4 Se consideran materia prima, insumos y equipos de origen nacional todos aquellos bienes, partes, materiales producidos o fabricados en el país, incorporados en la producción de los bienes, prestación de servicios o ejecución de obras. Podrá ser suministrada por el ente contratante a las unidades productivas contratadas, en sustitución del monto a ser otorgado como anticipo, respetando los lapsos de entrega de este.
+1.5 Se considera Talento Humano los trabajadores incorporados en la producción del bien, prestación del servicio o ejecución de la obra, según los datos declarados al Instituto Venezolano de los Seguros Sociales.
+1.6 Se entenderá por Tecnología de Origen Nacional los desembolsos comprobables que hayan sido realizados en el país para la fabricación del bien, prestación del servicio o ejecución de la obra, que correspondan al producto conformado en parte por componentes intangibles representados por la información registrada en libros, revistas, boletines, manuales, planos, medios magnéticos u ópticos, y el componente tangible físico o material en el que se incorpora el conocimiento en forma de equipos, dispositivos, aparatos, instrumentos, productos y otros elementos materiales involucrados en las actividades humanas y la producción.
+1.7 No serán considerados como Valor Agregado Nacional (VAN):
+1. Las manipulaciones simples destinadas a asegurar la conservación de las mercancías durante su transporte o almacenamiento, tales como la aeración, refrigeración, adición de sustancias, salazón, extracción de partes averiadas y operaciones similares. Salvo en aquellos casos; que con ocasión a la cogestión se demuestre que grupos de personas realicen este tipo de funciones dentro de la empresa.
+2. Las operaciones de desempolvamiento, lavado o limpieza, entresaque, clasificación, selección, división en partes, cribado, tamizado, filtrado, dilución en agua, aplicación de aceite y recortado.
+3. La formación de juegos de mercancías.
+4. La reunión o división de bultos.
+5. La aplicación de marcas, etiquetas o signos distintivos similares a las marcas nacionales.
+6. El servicio de post-venta y garantía de bienes y servicios importados.
+7. Tributos.
+8. Utilidades.
+9. Gastos administrativos no asociados a la fabricación de bien, prestación del servicio o ejecución de obra.
+10. Equipos utilizados para el suministro de bienes o prestación de  servicios.
+11. Equipos utilizados para la ejecución de obras, no incorporados a la misma.
+12. Cualquier otra actividad que no cumpla los supuestos determinantes del Valor Agregado Nacional (VAN), establecidos en el presente pliego.
+1.8. Cuando el participante desee beneficiarse de la puntuación adicional del valor agregado nacional (VAN), deberá presentar Declaración Jurada y auto cálculo del VAN (Ver Modelo en Anexo III) de la oferta indicando los valores nacionales y extranjeros de cada componente del precio, desagregado por cada uno de los componentes que lo integran, anexando soportes que sirvan de base para el cálculo y autorizar a la {denominacion_comision} a que practique cualquier inspección, auditoría necesaria o el examen de los soportes presentados.
+La {denominacion_comision} examinará y evaluará el mayor porcentaje del Valor Agregado Nacional en materia prima e insumos de origen nacional presentado por los oferentes, de acuerdo al siguiente parámetro:
+Preferencia del Valor Agregado Nacional "P (VAN)":  Consistirá en el resultado de multiplicar {puntaje_van_au_au} por la división del porcentaje de valor agregado nacional (VAN) de la oferta evaluada entre el mayor porcentaje de valor agregado nacional ofrecido del conjunto de ofertas no rechazadas.
+Fórmula: P (VAN) = {puntaje_van_au_au} x   %VAN (oferta evaluada)
+%VAN (mayor)
+La {denominacion_comision} asignará el puntaje máximo de {puntaje_van_au_au} a la oferta que acredite el mayor porcentaje de integración nacional. El resto de las ofertas recibirán un puntaje proporcional. La omisión de este recaudo no descalifica al oferente, pero le impide obtener esta bonificación técnica. Esta puntuación adicional será sumada al total obtenido en la evaluación técnica y económica.
+PARÁMETROS DE EVALUACIÓN
+PUNTAJE MÁXIMO
+VALOR AGREGADO NACIONAL (VAN)
+{puntaje_van_au_au}
+{/requiere_van_au_au}
+{#ind_pref_local_au_au}- Preferencia Territorial (Regionalización):En cumplimiento del Artículo 22 de la Ley de Contrataciones Públicas, se otorgará un puntaje adicional a los oferentes que se encuentren domiciliados y posean su base de operaciones principal en el {loc_municipio_ente} o en el Estado {loc_estado_ente}, área de influencia directa de la contratación.
+Requisito de acreditación: El oferente deberá consignar en el Sobre 1 copia del Registro de Información Fiscal (RIF) donde conste su domicilio en la localidad señalada.
+Puntuación: Se asignará una bonificación fija de {puntuacion_bono_local_au_au} puntos al oferente que cumpla fehacientemente con este requisito. {/ind_pref_local_au_au}
+{#ind_bono_sujeto_au_au}- Promoción de PyMES, Cooperativas y Emprendimientos:En cumplimiento de los Artículos 11 de la LCP y 47 del Reglamento, se establece un margen de incentivo para las Pequeñas y Medianas Industrias, Cooperativas y Organizaciones Socioproductivas debidamente constituidas en el país.
+Requisito de acreditación: Si el oferente opta por este incentivo deberá consignar con su oferta el Certificado de Registro PyME vigente (emitido por el Ministerio con competencia en industrias) o el Certificado de Inscripción en SUNACOOP, según corresponda.
+Puntuación: Se asignará una bonificación fija de {puntuacion_bono_sujeto_au_au} puntos a los oferentes que acrediten legalmente su condición de sujeto beneficiario. {/ind_bono_sujeto_au_au}
+- Aplicación del Margen de Preferencia del Cinco por Ciento (5%):De acuerdo con el Artículo 13 de la Ley de Contrataciones Públicas, si tras la aplicación de la Matriz de Totalización la oferta que resulta con la primera opción pertenece a una gran empresa o empresa extranjera, y existe una oferta de producción nacional (VAN), local o de una PyME/Cooperativa cuya diferencia de precio no exceda del cinco por ciento (5%) respecto a la primera, el Ente Contratante adjudicará el contrato a esta última, siempre que haya resultado calificada y técnicamente válida.
+- Matriz de Totalización con Incentivos:Para la determinación de la oferta ganadora, la Comisión de Contrataciones utilizará la siguiente estructura de puntuación final:
+ASPECTO EVALUADO
+PUNTUACIÓN MÁXIMA
+TOTAL EVALUACIÓN TÉCNICA (Etapa I)
+{total_puntuacion_criterio_evaluacion_tecnica_au_au} pts
+TOTAL EVALUACIÓN ECONÓMICA (Etapa II)
+{total_puntuacion_criterio_evaluacion_economica_au_au} pts
+SUBTOTAL EVALUACIÓN BASE
+{total_puntuacion_matriz_evaluacion_au_au} pts
+{#requiere_van_au_au}(+) Bono Valor Agregado Nacional (VAN)
+{puntaje_van_au_au} pts{/requiere_van_au_au}
+{#ind_pref_local_au_au}(+) Bono Preferencia Territorial (Localidad)
+{puntuacion_bono_local_au_au} pts {/ind_pref_local_au_au}
+{#ind_bono_sujeto_au_au}(+) Bono Sujeto Protegido (PyME/Coop)
+{puntuacion_bono_sujeto_au_au} pts {/ind_bono_sujeto_au_au}
+TOTAL GENERAL CON INCENTIVOS
+{total_puntuacion_evaluacion_adicional_au_au}pts
+Nota: La falta de consignación de los certificados o documentos que acrediten la localidad o la condición de PyME/Cooperativa no será causal de rechazo de la oferta, pero impedirá la asignación de los puntajes adicionales aquí descritos.{/activa_promocion_economica_au_au}
+XII. FORMA DE CORRECCIÓN DE LOS ERRORES.
+A) Forma en que se corregirán los errores matemáticos.
+1.Si existiere discrepancia entre el precio unitario y precio total que resulte de multiplicar el precio unitario por las cantidades correspondientes, prevalecerá el precio unitario y el precio total será corregido.
+2.Si existiera discrepancia entre el valor de sumar subtotales y el total consignado en la oferta, prevalecerá el valor de la sumatoria y el total será corregido.
+3.Si existieran discrepancias en el valor de las cantidades con respecto a las solicitadas en las “Especificaciones Técnicas” expuestas en el Anexo II de este pliego de condiciones, pero el monto total sea correcto con respecto a éstas, se corregirán las cantidades. En caso contrario, se rechazará.
+4.En todos los casos anteriores, si por efecto de la corrección resultare un precio total de la oferta superior al valor total de la oferta presentada para el momento del acto único de entrega de sobres, prevalecerá el precio total corregido, en cuyo caso la {denominacion_comision} solicitará al oferente que confirme la corrección.
+5.Si existiera discrepancia entre palabras y cifras, prevalecerá el valor numérico.
+6.En cualquier caso, cuando del producto de la corrección resulte un monto total de la oferta corregido inferior al resultante de la sumatoria de los valores indicados en el análisis de precios
+7. Unitarios o cuadros de totales, la diferencia será considerada un descuento global que, en caso de que el precio se encuentre detallado se imputará en primer término a la partida de utilidad, si ésta no fuere suficiente, a la de costos de administración y ante la insuficiencia de ésta a la de suministros.
+8.La responsabilidad total por los errores en la oferta corresponde al oferente, no podrá en ningún caso negarse a sostener su oferta, a firmar el contrato y presentar sus garantías, pretender correcciones en la Adjudicación, modificaciones del contrato, aumentos, variaciones de precios, ninguna otra variación del, contrato o su ejecución fundamentada en errores que resulten inadvertidos para el Contratante.
+B) Forma en que se corregirán los errores en especificaciones y características técnicas
+Los oferentes deberán presentar las ofertas y demás documentos según las características solicitadas en el presente Pliego de Condiciones. No se corregirán este tipo de errores por cuanto es requisito indispensable que las ofertas deberán ajustarse a las especificaciones solicitadas por la {denominacion_comision}.
+XIII. ACLARATORIA DE LAS OFERTAS
+La {denominacion_comision} podrá solicitar a un oferente que aclare su oferta, a fin de facilitar su examen, evaluación y la comparación de las ofertas. Las solicitudes de aclaratoria y las respuestas correspondientes se harán por escrito o correo electrónico. No se aceptarán cambios en el precio ni en los aspectos sustanciales de la oferta. El plazo de respuesta del oferente será de un (1) día hábil a partir de la fecha de notificación.
+Asimismo, el ente contratante podrá convocar a todos los participantes a los efectos de realizar cualquier aclaratoria, de lo cual se levantará un acta sobre lo expuesto.
+XIV. FUNDAMENTOS PARA EL RECHAZO DE LAS OFERTAS.
+Además de las causales establecidas en la Ley de Contrataciones Públicas y su Reglamento, serán igualmente rechazadas aquellas Ofertas que presenten la ocurrencia de cualquiera de las siguientes circunstancias:
+1.Que no cumplan las condiciones exigidas en las presentes bases.
+2.Ofertas firmadas por personas jurídicas o naturales distintas a las debidamente autorizadas para representar al oferente, o bien la persona legitimada indicada en la Planilla Resumen emanada del Registro Nacional de Contratistas.
+3.Ofertas que excedan la fecha o período correspondiente a la prestación, estipulado en el presente pliego.
+4.Donde el participante omita la presentación de cualquiera de los documentos esenciales requeridos o si los mismos son presentados en forma incompleta, defectuosa o condicionante y el ente contratante no los puede suplir de oficio o cuando dichos documentos no se encuentren vigentes.
+5.Que durante el proceso la empresa es declarada en disolución, liquidación, atraso, quiebra o en cualquier proceso de descapitalización.
+6.Si durante el proceso de calificación, alguna de las empresas de un consorcio o alianza renuncia a participar en el proceso.
+7.Donde se compruebe que el participante ha presentado información falsa o inexacta bien sea de naturaleza técnica, legal, financiera, económica o de identificación y registro.
+8.Ofertas presentadas con cotizaciones de precios variables.
+9.Ofertas entregadas al ente contratante después de la fecha y hora fijada para la recepción o en un lugar distinto al señalado.
+10.En caso de que existan discrepancias sustanciales en el valor de las cantidades con respecto a las solicitadas en las especificaciones técnicas y el monto total sea incorrecto con respecto a éstas, aun ya transcurrido la etapa correspondiente para la posible corrección de disparidades en las ofertas; anteriormente descrita.
+11.Ofertas presentadas sin el Compromiso de Responsabilidad Social, de acuerdo a lo establecido en el presente Pliego de Condiciones.
+12.Por comprobación de incumplimiento de las obligaciones contractuales con cualquier ente público.
+13.Ofertas que incluyan informaciones o datos falsos.
+14.Ofertas cuyo período de validez sea más corto que el requerido.
+15.Ofertas provenientes de un Participante que intente influenciar a la {denominacion_comision} en el proceso de examen, calificación, evaluación y comparación de ofertas y en las decisiones concernientes a la adjudicación del contrato.
+16.Ofertas que tengan omisiones o desviaciones sustanciales a los requisitos exigidos en estos pliegos.
+17.Condicionadas o alternativas, salvo que ello se hubiere permitido en las condiciones del Concurso Abierto.
+18.Diversas que provengan de un mismo proponente.
+19.Presentadas por personas distintas, si se comprueba la participación de cualquiera de ellas o de sus socios directivos o gerentes en la integración o dirección de otro oferente del Concurso Abierto.
+20.Presentada por un oferente respecto al que se haya determinado que ha participado en prácticas de corrupción o prácticas fraudulentas en el procedimiento de que se trate.
+21.Ofertas sin el acompañamiento de una garantía de mantenimiento de la oferta, o que aun existiendo la misma no se ajuste a los documentos de Contratación.
+XV. DERECHO DEL ENTE CONTRATANTE DE DECLARAR DESIERTA LA CONTRATACIÓN.
+El Ente contratante se reserva el derecho de declarar desierta la Contratación y rechazar todas las ofertas, en cualquier momento con anterioridad a la adjudicación de un contrato, en casos debidamente justificados, sin que por ello incurra en responsabilidad alguna respecto a los Participantes afectados por esta decisión. Ello sin perjuicio a lo establecido en la Ley de Contrataciones Públicas en su artículo 113.
+Se considerará causa justificada para declarar desierta la Contratación Total o Parcialmente:
+1.Ninguna oferta ha sido presentada.
+2.Todas las ofertas resulten rechazadas o los oferentes descalificados, de conformidad con lo establecido en el pliego de condiciones.
+3.Esté suficientemente justificado que de continuar el procedimiento podría causarse perjuicio al contratante.
+4.En caso de que los oferentes beneficiarios de la primera, segunda y tercera opción no mantengan su oferta, se nieguen a firmar el contrato, no suministren las garantías requeridas o le sea anulada la adjudicación por haber suministrado información falsa.
+5.Ocurra algún otro supuesto expresamente previsto en el pliego de condiciones.
+Se notificará a todos los oferentes del acto mediante el cual se ponga fin al procedimiento. Igualmente debe notificarse a los oferentes que resulten descalificados o rechazados, del acto por el que se tome tal decisión.
+XVI. CONDICIONES PARA EL OTORGAMIENTO DE LA ADJUDICACIÓN.
+De conformidad con lo establecido en el Artículo 81 de la Ley de Contrataciones Públicas, el procedimiento de selección una vez recibidas las ofertas se cumplirá en los siguientes lapsos máximos:
+Evaluación de las Ofertas e Informe de recomendación: La {denominacion_comision} dispondrá de un lapso de hasta el día {fec_limite_evaluacion_au_au} para el análisis técnico - económico e Informe respectivo.
+Acto de Adjudicación: Recibido el informe, la Máxima Autoridad dictará el acto administrativo de adjudicación o su equivalente en un lapso de hasta el día {fec_limite_adjudicacion_au_au}.
+Notificación de los resultados: Una vez dictado el acto administrativo de adjudicación por la Máxima Autoridad, se procederá a la notificación formal en un lapso de dos (02) días hábiles siguientes a la adjudicación (Art. 126 RLCP). El participante seleccionado deberá manifestar su aceptación o rechazo dentro de los cinco (05) días hábiles siguientes a su notificación.
+El otorgamiento de la Adjudicación corresponderá  a la oferta que resulte con la primera opción al aplicar los criterios de evaluación y cumpla los requisitos establecidos en el presente pliego de condiciones, pudiendo  considerar la segunda o tercera opción, en este mismo orden en caso de que el participante con la primera opción, notificado del resultado del procedimiento, no mantenga su oferta, se niegue a firmar el contrato marco, no suministre las garantías requeridas o le sea anulada la adjudicación por haber suministrado información falsa. Asimismo, para el otorgamiento de la Adjudicación operarán las siguientes condiciones:
+1.Considerando la naturaleza del objeto de la presente contratación se podrá otorgar adjudicaciones parciales cuando ofertas distintas cumplan con los criterios, condiciones y mecanismos previstos en el pliego de condiciones, sin embargo, se podrá otorgar la adjudicación total si hubiere recibido al menos una de ellas, siempre que cumpla con las condiciones del requerimiento y sea conveniente a los intereses del órgano o ente contratante; así mismo se considera conducente el supuesto contenido en el último aparte del artículo 74 del Decreto con Rango Valor y Fuerza de Ley de Contrataciones Públicas.
+2.Cuando todas las ofertas presentadas en sus análisis de precios unitarios, reflejan desviaciones no sustanciales, se adjudicará la contratación a la que presente la menor cantidad de desviaciones, hasta por la cantidad de la oferta presentada, pudiendo la {denominacion_comision} efectuar ajustes en la oferta, previo acuerdo con el oferente, siempre y cuando el monto resultante de estos ajustes sea menor al monto adjudicado, procediéndose a la firma del contrato por el monto ajustado. En caso que el beneficiario de la adjudicación no acepte los ajustes requeridos por la {denominacion_comision}, decaerá la adjudicación y se podrá considerar la segunda y tercera opción bajo el mismo mecanismo antes señalado.
+XVII. FORMA, PLAZO Y CONDICIONES DE LA EJECUCIÓN CONTRACTUAL.
+La forma y condiciones básicas mediante la cual se efectuará la ejecución de la relación contractual serán las que se determinan a continuación:
+A) Inicio de la Ejecución: El lapso de ejecución comenzará a computarse a partir de la fecha de suscripción del Acta de Inicio (para Obras o Servicios continuos) o de la recepción efectiva de la Orden de Compra/Servicio (para Bienes o Servicios puntuales), previo cumplimiento de las garantías de ley.
+B) Condiciones Técnicas y Calidad: La ejecución del objeto contratado (suministro de bienes, prestación de servicios o ejecución de obras) deberá realizarse en estricto apego a las Especificaciones Técnicas, Planos, Alcances y Cronogramas detallados en el Anexo II del presente Pliego.
+El Contratante, a través de la Unidad Usuaria o Inspección designada, verificará in situ la calidad de lo ejecutado. Cualquier bien, servicio u obra que no cumpla con las especificaciones ofertadas será rechazado, debiendo el Contratista sustituirlo o corregirlo a su entero costo y riesgo.
+C) Responsabilidad Operativa y Logística: Todos los costos, logística y gestión relacionados con:
+Personal: (Mano de obra, especialistas, viáticos, seguridad social).
+Logística: (Transporte, carga, descarga, fletes, movilización).
+Recursos: (Maquinaria, equipos, herramientas, materiales, insumos).
+Son responsabilidad exclusiva de EL CONTRATISTA. El Contratante no asumirá responsabilidad laboral, civil ni penal por accidentes o daños sufridos por el personal o equipos del Contratista durante la ejecución.
+D) Supervisión y Control: El Contratante ejercerá la supervisión continua a través de un Inspector (Obras), Supervisor (Servicios) o Receptor de Bienes (Suministros), quienes tendrán la potestad de certificar el avance físico o la conformidad de la entrega para efectos de pago.
+E) Monto estimado de contratación: {monto_estimado_bs} (Bs.), incluyendo el Impuesto al Valor Agregado (I.V.A.), lo cual representa {valor_ucau_base} (UCAU).
+F) Modificaciones: La forma, plazo y condiciones anteriormente descritos podrán ser modificados cuando {nom_ente_contratante} así lo requiera en el marco del ejercicio de las potestades establecidas por el artículo 131 del Decreto con Rango Valor y Fuerza de Ley de Contrataciones Públicas.
+XVIII. DE LAS GARANTÍAS CON OCASIÓN AL CONTRATO.
+A) Garantía de Fiel Cumplimiento: El contratista deberá constituir en un lapso no mayor de cinco (05) días hábiles contados a partir de la notificación de otorgamiento de la adjudicación una Garantía de Fiel Cumplimiento, por una cifra que no podrá ser inferior al {porcentaje_fiel_cumplimiento_au_au}% del monto del contrato incluyendo tributos.
+De acuerdo con lo establecido en el presente Pliego, la forma de constitución será mediante bajo las siguientes condiciones según corresponda:
+- Si se constituye mediante Fianza: Deberá ser expedida por una Institución Bancaria o Empresa de Seguros debidamente inscrita en la Superintendencia correspondiente o Sociedad Nacional de Garantías Recíprocas, constituida a favor de {nom_ente_contratante}. El fiador debe renunciar expresamente a los beneficios de orden y excusión dispuestos en los artículos 1833, 1834 y 1836 del Código Civil.
+{retencion_fiel_cumplimiento_au_au}
+En caso de haberse iniciado la ejecución mediante la retención anteriormente referida, el Contratista podrá, con posterioridad a la firma del contrato, sustituir dicha retención por la constitución de una fianza en los términos y condiciones aquí establecidos.{#requiere_garantia_laboral_au_au}
+B) Fianza Laboral: De conformidad con el artículo 124 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas, el contratista deberá constituir una garantía para asegurar el cumplimiento de sus obligaciones laborales con los trabajadores destinados a la ejecución del objeto contratado. Dicha garantía será por un monto equivalente al {porcentaje_garantia_laboral_au_au}% del costo de la mano de obra incluida en la estructura de costos de su oferta.
+De acuerdo con lo establecido en el presente Pliego, la forma de constitución será mediante bajo las siguientes condiciones según corresponda:
+1. Si se constituye mediante Fianza: Deberá ser debidamente autenticada y emitida por una Institución Bancaria o Compañía de Seguros inscrita en la Superintendencia correspondiente o Sociedad Nacional de Garantías Recíprocas, a favor de {nom_ente_contratante}. El fiador debe renunciar expresamente a los beneficios de orden y excusión dispuestos en los artículos 1833, 1834 y 1836 del Código Civil. Esta fianza deberá permanecer vigente desde el inicio del contrato hasta que se verifique el definitivo cumplimiento de la obligación afianzada.
+{retencion_fianza_laboral_au_au}
+En caso de haberse iniciado la ejecución mediante la retención anteriormente referida, el Contratista podrá, con posterioridad a la firma del contrato, sustituir dicha retención por la constitución de una fianza en los términos y condiciones aquí establecidos.
+{/requiere_garantia_laboral_au_au}
+{poliza_responsabilidad_civil_au_au}
+XIX. DISPOSICIONES GENERALES
+La {denominacion_comision} podrá solicitar a los participantes cualquier otra información que considere de especial interés durante el proceso de la Contratación, a fin de ampliar la información presentada, siempre que la misma no modifique los términos de la presente Contratación.
+1.El incumplimiento por parte del oferente de cualquiera de las bases aquí señaladas es causa de descalificación del Proceso de Contratación.
+2.La {denominacion_comision} se reserva el derecho de declarar desierta la Contratación, diferir, modificar, extender el lapso para la presentación de los recaudos, rechazar las manifestaciones de voluntad y ofertas que no se ajusten a los requisitos, características y condiciones exigidas, recomendar el otorgamiento de la ADJUDICACIÓN (parcial o total), no aceptar ofertas de proveedores, que en procedimiento de contrataciones anteriores a ésta hayan incumplido con el contrato marco para el cuál {nom_ente_contratante} les haya otorgado la ADJUDICACIÓN en los lapsos establecidos; sin que por ello, {nom_ente_contratante} esté obligado a responder en lo mercantil, civil o penalmente ante las empresas participantes o ante terceros.
+XX. DISPOSICIONES FINALES.
+A) Actualización del Presupuesto Base para la evaluación: De conformidad con el artículo 25 de las Normas de Control Interno Aplicables a Contrataciones Públicas dictadas por la Superintendencia Nacional de Auditoría Interna (SUNAI), y siempre que el presupuesto base no haya sido establecido como una causal de rechazo de la oferta, el Ente Contratante se reserva la potestad de actualizar dicho presupuesto base durante la fase de evaluación.
+Esta actualización se realizará con el único fin de determinar la razonabilidad de los precios de las ofertas recibidas, contrastándolas contra una estructura de costos vigente y ajustada a las condiciones económicas del mercado al momento de la evaluación. La aplicación de este mecanismo será debidamente motivada y documentada en el Informe de Recomendación.
+B) Potestad de Reposición del procedimiento: De conformidad con el artículo 22 de las Normas de Control Interno Aplicables a Contrataciones Públicas dictadas por la Superintendencia Nacional de Auditoría Interna (SUNAI), el Ente Contratante se reserva la potestad de ordenar la reposición del presente procedimiento de selección al estado en que se haya omitido una formalidad esencial prevista en la Ley, con el único fin de subsanar dicho vicio y garantizar la legalidad, transparencia y correcta conducción del proceso.
+En caso de que se observen omisiones de formalidades no esenciales, se procederá a subsanarlas sin necesidad de reponer el procedimiento. Esta potestad podrá ser ejercida de oficio en cualquier momento antes del otorgamiento de la adjudicación.
+C) Disponibilidad presupuestaria para contratar: De conformidad con el artículo 74 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas, {nom_ente_contratante} podrá otorgar la adjudicación, sin contar con la totalidad de la disponibilidad presupuestaria, suscribiendo el contrato por el monto disponible y el resto quedará sujeto a la disponibilidad presupuestaria una vez obtenida, previa formalización del contrato y adendas respectivas, sin que la no suscripción genere obligaciones para el contratante.
+D) Capacidad financiera de contratación: Una vez efectuada la calificación de la oferta, la {denominacion_comision} sólo recomendará la adjudicación de aquellas empresas que presenten la Declaración Jurada de Contar con la Capacidad Financiera de Contratación (Ver Modelo en Anexo III) para asumir los compromisos que se puedan generar por la oferta presentada.
+E) Modalidad de Adjudicación e Informe de Recomendación: De conformidad con los Artículos 109 y 111 de la LCP, el Contratante podrá otorgar la adjudicación de manera TOTAL o PARCIAL. Se podrá adjudicar el contrato incluso cuando se presente UNA SOLA OFERTA, siempre que ésta resulte calificada y cumpla con todos los requisitos establecidos. La Máxima Autoridad se reserva la facultad de desestimar todas las ofertas mediante acto motivado (Art. 113 LCP).
+F) Decaimiento de la Adjudicación y Segunda/Tercera Opción: Según los Artículos 109 y 110 de la LCP, si el beneficiario de la adjudicación incurre en cualquiera de los siguientes supuestos:
+No acepta la adjudicación en el plazo de cinco (05) días hábiles.No suministra las garantías (Fiel Cumplimiento o Responsabilidad Civil) en el lapso de cinco (05) días hábiles tras la notificación (Art. 127 RLCP).No formaliza la firma del contrato dentro de los ocho (08) días hábiles (Art. 117 LCP).Se generará automáticamente el Acto de Decaimiento de la Adjudicación, procediendo el Ente a adjudicar a la Segunda Opción o Tercera Opción en su defecto. De no existir más ofertas válidas, el procedimiento se declarará desierto, sin perjuicio de las sanciones de multa e inhabilitación aplicables (Art. 167 y 168 LCP).
+G) Forma, Plazo y Condiciones de Ejecución: Una vez formalizada la firma del contrato, EL CONTRATISTA se obliga a ejecutar el objeto contratado respetando estrictamente el plazo establecido en su oferta. El lapso de ejecución comenzará a computarse:
+Para Bienes: A partir del día siguiente a la recepción de la Orden de Compra.Para Servicios u Obras: A partir de la suscripción del Acta de Inicio o recepción de la Orden de Servicio.Todo ello según los artículos 6 (numeral 33) y 66 (numeral 18) de la LCP. El retraso en el inicio dará lugar a la rescisión unilateral por causa imputable.
+H) Garantías: Será condición obligatoria para aquella empresa que resulte beneficiada con la adjudicación, presentar las garantías que a continuación se especifican:
+-Garantía de Fiel Cumplimiento: Se fija de conformidad con el artículo 123 del Decreto con Rango, Valor y fuerza de Ley de Contrataciones Públicas, la cual podrá ser constituida a través de una de las siguientes opciones:
+- Fianza emitida por una empresa de seguros debidamente inscrita en la superintendencia correspondiente, la cual no podrá ser inferior al {porcentaje_fiel_cumplimiento_au_au}% del monto del contrato incluyendo tributos.
+- Cheque de gerencia emitido por una entidad financiera, el cual no podrá ser inferior al {porcentaje_fiel_cumplimiento_au_au}% del monto del contrato incluyendo tributos.
+{retencion_fiel_cumplimiento_au_au}
+I) Control de Calidad y Verificación de Cumplimiento: Para garantizar la conformidad del objeto contratado, la Unidad Usuaria y/o la unidad de Inspección designada aplicará los protocolos de inspección, medición, pruebas de funcionamiento o ensayos de laboratorio que resulten pertinentes según la naturaleza de la contratación (Bienes, Servicios u Obras). Dicha verificación tendrá como fin certificar que lo entregado o ejecutado por EL CONTRATISTA se ajusta estrictamente a las Especificaciones Técnicas detalladas en el Anexo II, a las normas de calidad nacionales (COVENIN) o internacionales aplicables y a las condiciones ofertadas. La emisión del Acta de Recepción Definitiva o Informe de Conformidad será requisito indispensable para procesar cualquier pago.
+J) Proyecto de contrato que se suscribirá con el beneficiario de la Adjudicación:
+En el presente Pliego se anexa modelo de contrato marco (Ver Anexo IV),  de conformidad con lo previsto en los artículos 130 y 131 del Decreto con Rango Valor y Fuerza de Ley de Contrataciones Públicas, el Órgano Contratante se reserva el derecho a realizar las modificaciones que considere pertinentes al Contrato antes o después del inicio del suministro de bienes, las cuales de acuerdo en lo previsto en los artículos supra mencionados serán notificados por escrito al contratista o contratistas que resulten adjudicados.
+K) Penalización por retraso por incumplimiento del objeto de la contratación: La Norma SUNAI implementa un control de gestión del desempeño contractual, convirtiendo la penalización en una herramienta obligatoria. Al exigir la inclusión de la cláusula y establecer un umbral objetivo (15% del monto) para iniciar la rescisión, se dota a la administración de un mecanismo proactivo para gestionar el incumplimiento y tomar decisiones correctivas de manera oportuna.
+L) Ejecución del Contrato y Vinculación de las Órdenes: En caso de que la presente contratación se adjudique bajo la modalidad de Contrato Marco, la ejecución del mismo se regirá por el siguiente mecanismo de obligatorio cumplimiento:
+- Instrumentación del Requerimiento: Toda solicitud de ejecución (suministro de bienes, prestación de servicios o ejecución de obras) por parte de {nom_ente_contratante} se materializará exclusivamente a través de la emisión formal de una Orden de Compra (para bienes) u Orden de Servicio (para servicios u obras).
+-Vinculación Administrativa (Normativa SUNAI): En estricto cumplimiento del artículo 11 de las Normas Generales de Control Interno (SUNAI), cada Orden emitida deberá contener, de manera visible e inequívoca, la referencia al Número y Fecha del Contrato Marco que la origina. La falta de esta vinculación expresa invalidará el trámite administrativo, siendo causal suficiente para la devolución de la factura y la suspensión del pago correspondiente hasta su subsanación.
+- Prelación y Alcance: La emisión y recepción de la respectiva Orden perfecciona la obligación particular, activando automáticamente la totalidad de las condiciones, precios unitarios, especificaciones técnicas y garantías pactadas en el Contrato Marco. En caso de discrepancia entre el contenido de una Orden y el Contrato Marco, prevalecerán siempre las cláusulas de este último.
+LL) Autocálculo del valor agregado nacional. (VAN): Realizar el Autocálculo del Valor Agregado Nacional de la oferta, general y ponderado, indicando los conceptos señalados en el artículo 16 de la Ley Constitucional contra la Guerra Económica para la Racionalidad y Uniformidad en la Adquisición de Bienes, Servicios, y Obras Públicas, publicado en Gaceta Oficial de la República Bolivariana de Venezuela N° 41.318 de fecha 11 de Enero de 2018, y el artículo 4 del Decreto N° 8.882 de fecha 27 de marzo de 2012, publicado en Gaceta Oficial de la República Bolivariana de Venezuela N° 39.892 de fecha 27 de marzo de 2012, de conformidad con lo establecido en el artículo 11 del Decreto N° 8.832. No será considerado como Valor Agregado Nacional (VAN) lo señalado en el artículo 17 de la referida Ley, así como el artículo 6 del Decreto N° 8.882.
+M) Informe de recomendación: Se elaborará de acuerdo a lo establecido en el artículo 95 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas. El Informe de Recomendación elaborado por la {denominacion_comision}, detallará los resultados del examen de los aspectos legales, financieros y técnicos, así como, lo relativo a los motivos de descalificación o rechazo de las ofertas presentadas y resultado de la aplicación de la matriz de evaluación. En ningún caso, se aplicarán criterios o procedimientos no previstos en el presente pliego de condiciones, ni se modificarán o dejarán de utilizar los establecidos en él.
+Asimismo, en dicho informe se indicará la oferta que resulte con la primera opción, así como la existencia de ofertas que merezcan la segunda y tercera opción.
+ANEXO I
+PRESUPUESTO BASE
+N°  {cod_nomenclatura_proceso_au_au}
+{desc_objeto_contratacion_au_au}.
+ITEM N°
+DESCRIPCIÓN DEL BIEN, SERVICIO U OBRA
+PARTIDA PRESUPUESTARIA
+UNIDAD DE MEDIDA
+CANTIDAD
+PRECIO UNITARIO (BS)
+PRECIO TOTAL (BS)
+{#} 1
+{descripcion_item_au_au}
+{codigo_partida_au_au}
+{unidad_medida_au_au}
+{cantidad_requerida_au_au}
+{precio_unitario_estimado_au_au}
+{total_items_au_au} {/}
+SUB-TOTAL
+{sub_total}
+16% IVA
+{iva_sub_total}
+TOTAL  GENERAL
+{monto_total_renglon_au_au}
+ANEXO II
+ESPECIFICACIONES TÉCNICAS
+N°  {cod_nomenclatura_proceso_au_au}
+{desc_objeto_contratacion_au_au}.
+Nota: Comisión de Contrataciones: En este apartado deben incorporarse íntegramente las especificaciones técnicas definitivas aprobadas para el presente procedimiento de selección (características del bien o servicio, alcances, cómputos métricos, planos, condiciones de entrega, normas COVENIN y controles de calidad aplicables), las cuales servirán de base vinculante para la formulación y evaluación técnica de las ofertas.
+ANEXO III
+MODELOS Y FORMATOS
+{#mod_carta_manifestacion_voluntad_au_au} MODELO: Carta de manifestación de voluntad.{/mod_carta_manifestacion_voluntad_au_au}
+{#mod_carta_autorizacion_au_au} MODELO: Carta de Autorización.{/mod_carta_autorizacion_au_au}
+{#sustituto_dj_rif _vigente_au_au} MODELO: Declaración Jurada de Registro de Información Fiscal (R.I.F.) {/sustituto_dj_rif _vigente_au_au}
+{#sustituto_dj_certificado_rnc_au_au} MODELO: Declaración Jurada de Registro en Trámite (RNC) {/sustituto_dj_certificado_rnc_au_au}
+{#mod_solvencia_laboral_au_au} MODELO: Declaración Jurada de Solvencia Laboral.{/mod_solvencia_laboral_au_au}
+{#mod_declaracion_socios_no_inhabilitados_au_au} MODELO: Declaración Jurada de Conocimiento de no contar dentro de su conformación y organización, con personas naturales que participen como socios, miembros o administradores de alguna empresa, sociedad o agrupación que se encuentre inhabilitada. {/mod_declaracion_socios_no_inhabilitados_au_au}
+{#mod_declaracion_no_deudas_ente_au_au} MODELO: Declaración Jurada de Conocimiento de no poseer Obligaciones Exigibles con el Contratante. {/mod_declaracion_no_deudas_ente_au_au}
+{#mod_declaracion_no_impedimentos_lcp_au_au} MODELO: Declaración Jurada de No Tener Impedimentos para Participar en los Procedimientos Previstos en el Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas.{/mod_declaracion_no_impedimentos_lcp_au_au}
+{#mod_declaracion_conocimiento_lugar_au_au} MODELO: Declaración Jurada de de Conocimiento del Lugar donde se Realizará la Ejecución del Objeto de la Contratación.{/mod_declaracion_conocimiento_lugar_au_au}
+{#mod_declaracion_info_financiera_au_au} MODELO: Declaración Jurada de Información Financiera.{/mod_declaracion_info_financiera_au_au}
+{#sustituto_dj_eval_desempeno_au_au} MODELO: Declaración Jurada de Evaluación de Desempeño.{/sustituto_dj_eval_desempeno_au_au}
+{#modelo_otro_recaudo_sobre1_au_au} MODELO: desc_otro_recaudo_sobre1_au_au {/modelo_otro_recaudo_sobre1_au_au}
+{#mod_carta_oferta_au_au} MODELO: Carta Oferta.{/mod_carta_oferta_au_au}
+{#mod_declaracion_capacidad_financiera_au_au} MODELO: Declaración Jurada de Contar con la Capacidad Financiera de Contratación.{/mod_declaracion_capacidad_financiera_au_au}
+{#mod_declaracion_compromiso_resp_social_au_au} MODELO: Declaración Jurada para el Cumplimiento del Compromiso de Responsabilidad Social.{/mod_declaracion_compromiso_resp_social_au_au}
+{#mod_garantia_mantenimiento_oferta_au_au} MODELO: Garantía de mantenimiento de la Oferta. {/mod_garantia_mantenimiento_oferta_au_au}
+{#mod_declaracion_autocalculo_van_au_au} MODELO: Declaración Jurada y Auto cálculo del V.A.N. {/mod_declaracion_autocalculo_van_au_au}
+{#mod_carta_notificaciones_au_au} MODELO: Carta de Datos para Notificaciones.{/mod_carta_notificaciones_au_au}
+{#mod_garantia_fiel_cumpl_au_au} MODELO: Garantía de Fiel Cumplimiento del Contrato.{/mod_garantia_fiel_cumpl_au_au}
+{#mod_fianza_laboral_au_au} MODELO: Fianza Laboral.{/mod_fianza_laboral_au_au}
+{#modelo_otro_recaudo_sobre2_au_au} MODELO: desc_otro_recaudo_sobre2_au_au {/modelo_otro_recaudo_sobre2_au_au}
+{#mod_carta_manifestacion_voluntad_au_au}MODELO
+CARTA DE MANIFESTACIÓN DE VOLUNTAD
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Quien suscribe, (Identificación completa de la persona) actuando en mi carácter de representante legal de (nombre del oferente e identificación completa, incluyendo datos de Registro y Número de Identificación Fiscal), mediante la presente hacemos constar nuestra voluntad de participar en el Concurso Abierto N°  {cod_nomenclatura_proceso_au_au} correspondiente al {desc_objeto_contratacion_au_au}.
+Cuando {nom_ente_contratante} lo estime conveniente y necesario, podrá requerir la información y/o documentación complementaria para una adecuada calificación de nuestra oferta y estaremos obligados a suministrar. Relevamos a {nom_ente_contratante} de toda responsabilidad en las decisiones que tome con respecto al resultado de la calificación.
+Garantizamos que toda la información presentada y solicitada es verdadera y exacta, y autorizamos a {nom_ente_contratante} para investigar por cualquier medio la certeza y exactitud de la misma.
+Asimismo le informamos que la persona que representará a esta empresa durante todo el proceso, será (Nombre del Representante designado para la Contratación), y recibiremos toda la correspondencia relacionada con el Concurso en la siguiente dirección:
+Dirección: (Domicilio legal de correspondencia de la empresa, ciudad y estado)
+Teléfonos: (Número de teléfonos y celulares)
+Correo electrónico:(Dirección de correo electrónico)
+Nota: En caso de Consorcio, el último párrafo deberá sustituirse por el siguiente:
+"Asimismo le informamos que el Consorcio del cual formamos parte, estará constituido por las empresas (Nombre de las empresas que integran el Consorcio) y la persona que representará al Consorcio durante todo el proceso, será (Nombre del Representante designado para la Contratación)”.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/mod_carta_manifestacion_voluntad_au_au}
+{#mod_carta_autorizacion_au_au}
+MODELO
+CARTA DE AUTORIZACIÓN
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, debidamente facultado para este Acto, por medio de la presente autorizo amplia y suficientemente al (la) ciudadano (a)____________, venezolano (a), mayor de edad, titular de la Cedula de Identidad N°_________, domiciliado (a) en _________________________, para presentar la documentación estipulada en el pliego de condiciones correspondiente al Concurso Abierto N°  {cod_nomenclatura_proceso_au_au} referido a {desc_objeto_contratacion_au_au} y obligando en consecuencia a la empresa que represento.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+NOTA: deberá acompañarse copia de la cédula de identidad del representante legal que otorga la autorización, así como la copia de la cédula de identidad de la persona autorizada.
+{/mod_carta_autorizacion_au_au}
+{#sustituto_dj_rif_vigente_au_au}
+MODELO
+DECLARACIÓN JURADA DE REGISTRO DE INFORMACIÓN FISCAL (R.I.F.)
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, debidamente facultado para este Acto, por medio de la presente y a los fines de participar en el concurso abierto N°  {cod_nomenclatura_proceso_au_au} referido a {desc_objeto_contratacion_au_au} DECLARO BAJO FE DE JURAMENTO que mi representada, cuyo Registro de Información Fiscal (RIF) N° [indicar RIF completo], se encuentra actualmente en fase de ACTUALIZACIÓN ante el Servicio Nacional Integrado de Administración Aduanera y Tributaria (SENIAT). En tal sentido, manifiesto que se están realizando las gestiones necesarias para cumplir con la obligación de actualización de la información registral dentro de los plazos legales correspondientes.
+Información  se indica para que la Comisión de  Contrataciones Públicas proceda a su verificación digital y directa a través del portal oficial del SENIAT, conforme a lo establecido en la Gaceta Oficial de la República Bolivariana de Venezuela N.º 43.435, de fecha 12 de agosto de 2026, y al principio de interoperabilidad administrativa.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/sustituto_dj_rif_vigente_au_au}
+{#sustituto_dj_certificado_rnc_au_au}
+MODELO
+DECLARACIÓN JURADA DE REGISTRO EN TRÁMITE (R.N.C.)
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, debidamente facultado para este Acto, por medio de la presente y a los fines de participar en el concurso abierto N°  {cod_nomenclatura_proceso_au_au} referido a {desc_objeto_contratacion_au_au} DECLARO BAJO FE DE JURAMENTO que mi representada se encuentra debidamente inscrita en el Registro Nacional de Contratistas (R.N.C.) y que, a la fecha de este acto público, el referido registro se encuentra en fase de [ACTUALIZACIÓN / RENOVACIÓN] ante el Servicio Nacional de Contrataciones (S.N.C.), según consta en el comprobante de trámite N° ________________ que se anexa al presente; garantizando bajo mi responsabilidad que la información técnica, legal y financiera suministrada al órgano rector es veraz y refleja la situación actual de la empresa; asumiendo adicionalmente el COMPROMISO FORMAL de consignar el Certificado de Inscripción y Calificación vigente en el RNC como requisito indispensable para la formalización del contrato en caso de resultar beneficiado con la adjudicación, todo ello en estricto cumplimiento del Artículo 48 de la Ley de Contrataciones Públicas y certificando que la presente declaración es fiel reflejo de la realidad administrativa de mi representada.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/sustituto_dj_certificado_rnc_au_au}
+{#mod_solvencia_laboral_au_au}
+MODELO
+DECLARACIÓN JURADA DE SOLVENCIA LABORAL
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, debidamente facultado para este Acto, por medio de la presente y a los fines de participar en el concurso abierto N°  {cod_nomenclatura_proceso_au_au} referido a {desc_objeto_contratacion_au_au} DECLARO BAJO FE DE JURAMENTO que mi representada ha dado cumplimiento de todas sus obligaciones a favor de sus trabajadores y trabajadoras y con los organismos encargados de recaudar las cotizaciones asociadas a los regímenes prestacionales del Sistema de Seguridad Social, así como el acatamiento de las órdenes e instrucciones destinadas a la protección del proceso social de trabajo emanadas de los órganos o entes públicos que consta el Registro Nacional de Entidades de Trabajo, actualmente hemos realizado los pagos correspondientes para el trámite se solvencia laboral, y que actualmente estamos a la espera de la actualización de la información en el sistema de Registro Nacional de Entidades de Trabajo, por lo tanto, certificamos bajo fe de juramento el cumplimiento de todas las obligaciones asumidas como proceso social de trabajo.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/mod_solvencia_laboral_au_au}
+{#mod_declaracion_socios_no_inhabilitados_au_au}
+MODELO
+DECLARACIÓN JURADA DE NO CONTAR DENTRO DE LA CONFORMACIÓN Y ORGANIZACIÓN DE LA EMPRESA CON PERSONAS NATURALES QUE PARTICIPEN COMO SOCIOS, MIEMBROS O ADMINISTRADORES DE ALGUNA EMPRESA, SOCIEDAD O AGRUPACIÓN QUE SE ENCUENTRE INHABILITADA
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, debidamente facultado para este Acto, por medio de la presente y a los fines de participar en el concurso abierto N° {cod_nomenclatura_proceso_au_au} referido a {desc_objeto_contratacion_au_au}, DECLARO BAJO FE DE JURAMENTO, que dentro de la conformación y organización de la empresa no se cuenta con personas naturales que participen como socios, miembros o administradores de alguna empresa, sociedad o agrupación que se encuentre inhabilitada conforme al Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas. Declaración que realizó en estricto cumplimiento de lo establecido en el numeral 23 del artículo 66 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/mod_declaracion_socios_no_inhabilitados_au_au}
+{#mod_declaracion_no_deudas_ente_au_au}
+MODELO
+DECLARACIÓN JURADA DE CONOCIMIENTO DE NO POSEER OBLIGACIONES
+EXIGIBLES CON EL CONTRATANTE
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, debidamente facultado para este Acto,por medio de la presente y a los fines de participar en el concurso abierto N° {cod_nomenclatura_proceso_au_au} referido a {desc_objeto_contratacion_au_au}, DECLARO BAJO FE DE JURAMENTO, que no tengo obligaciones exigibles con el contratante. En caso contrario, declarará el compromiso de subsanar tal situación en un plazo de cinco (5) días hábiles, contados a partir de la fecha de realización del acto público de recepción y apertura de sobres. Declaración que se realiza bajo estricto cumplimiento de lo estipulado en el numeral 22 del artículo 66 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/mod_declaracion_no_deudas_ente_au_au}
+{#mod_declaracion_no_impedimentos_lcp_au_au}
+MODELO
+DECLARACIÓN JURADA DE NO TENER IMPEDIMENTOS PARA PARTICIPAR EN LOS PROCEDIMIENTOS PREVISTOS EN EL DECRETO CON RANGO, VALOR Y FUERZA DE LEY DE CONTRATACIONES PÚBLICAS.
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, debidamente facultado para este Acto, en cumplimiento de lo previsto en el punto QUINTO de la Providencia N° DG/2016/A-0013, de fecha 01 de julio de 2016, emanada de la Comisión Central de Planificación del Servicio Nacional de Contrataciones, DECLARO BAJO FE DE JURAMENTO, que la empresa que represento, no ha realizado reforma de su acta constitutiva o disposicion estatutarias, actos de nombramiento, revocatoria de apoderados, o cualquier otra información que revista interes para su debida identificación, Representación y calificación legal, desde su ultima actualización hasta la interposición de la presente oferta para participar en el Concurso Abierto N° {cod_nomenclatura_proceso_au_au}, correspondiente a {desc_objeto_contratacion_au_au}. Razón por la cual y a la luz de la providencia antes indicada, no existente ningún impedimento para participar en los procedimientos regidos por el Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas (En caso, de haberse realizado las modificaciones antes mencionadas, deberá hacer constar que la Empresa que representa efectuó la notificación al Servicio Nacional de Contratista, anexando copia debidamente recibida por el mencionado Servicio).
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/mod_declaracion_no_impedimentos_lcp_au_au}
+{#mod_declaracion_conocimiento_lugar_au_au}
+MODELO
+DECLARACIÓN JURADA DE CONOCIMIENTO DEL LUGAR DONDE SE REALIZARÁ LA EJECUCIÓN DEL OBJETO DE LA CONTRATACIÓN
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, debidamente facultado para este Acto, por medio de la presente y a los fines de participar en el concurso abierto N° {cod_nomenclatura_proceso_au_au} referido a {desc_objeto_contratacion_au_au}, DECLARO BAJO FE DE JURAMENTO, que tenemos pleno conocimiento del sitio donde se realizará la ejecución del objeto de la presenta contratación. Declaración que se realiza bajo estricto cumplimiento de lo estipulado en el numeral 21 del artículo 66 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/mod_declaracion_conocimiento_lugar_au_au}
+{#mod_declaracion_info_financiera_au_au}
+MODELO
+DECLARACIÓN JURADA DE INFORMACIÓN FINANCIERA
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N°, _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N°____ tomo____ de fecha _______________, debidamente facultado para este Acto, a los fines de participar en el Concurso Abierto N° {cod_nomenclatura_proceso_au_au} referido a {desc_objeto_contratacion_au_au}, DECLARO BAJO FE DE JURAMENTO, que:
+Información Financiera
+Índices o ratios de calificación
+Valor obtenido
+{#criterio_calif__finan_descapital_au_au} Empresa en proceso de descapitalización.  (SI/NO)
+(Patrimonio Neto < 50% * Capital Social) {/criterio_calif__finan_descapital_au_au}
+{#criterio_calif__finan_solvencia_au_au} Solvencia
+S = Activo circulante / Pasivo circulante. {/criterio_calif__finan_solvencia_au_au}
+{#criterio_calif__finan_rotacion_au_au} Rotación cuentas por cobrar
+RCxC= Ventas / Cuentas por Cobrar {/criterio_calif__finan_rotacion_au_au}
+{#criterio_calif__finan_rendimiento_au_au} Rendimiento sobre activos
+ROA = Utilidad Neta/Activo Total {/criterio_calif__finan_rendimiento_au_au}
+{#criterio_calif__finan_rentabilidad_au_au} Rentabilidad del patrimonio
+ROE = Utilidad neta / Patrimonio {/criterio_calif__finan_rentabilidad_au_au}
+{#criterio_calif__finan_endeudamiento_au_au} Endeudamiento
+E= Pasivo total / Activo Total {/criterio_calif__finan_endeudamiento_au_au}
+Lo anterior tiene como finalidad evidenciar la aptitud e idoneidad de mi representada para la Calificación Financiera y nuestro deseo de efectuar la ejecución de {desc_objeto_contratacion_au_au}, correspondiente al Concurso Abierto N°  {cod_nomenclatura_proceso_au_au}.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/mod_declaracion_info_financiera_au_au}
+{#sustituto_dj_eval_desempeno_au_au}
+MODELO
+DECLARACIÓN JURADA DE EVALUACIÓN DE DESEMPEÑO
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N° _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N° ____ tomo ____ de fecha _______________, debidamente facultado para este Acto, por medio de la presente y a los fines de participar en el Concurso Abierto N° {cod_nomenclatura_proceso_au_au} referido a {desc_objeto_contratacion_au_au}, DECLARO BAJO FE DE JURAMENTO que mi representada no cuenta con el Informe de Evaluación de Desempeño actualizado en el portal del Servicio Nacional de Contrataciones (SNC), motivado a [NO HABER SUSCRITO CONTRATOS PREVIOS CON EL SECTOR PÚBLICO / EXISTIR RETRASOS ADMINISTRATIVOS EN LA CARGA DE DATOS POR PARTE DE TERCEROS CONTRATANTES], razón por la cual garantizo bajo mi responsabilidad que el historial de cumplimiento y la especialidad técnica de la empresa son óptimos y se encuentran sustentados en las referencias y soportes físicos adjuntos a esta propuesta; autorizando expresamente al Ente Contratante a realizar las verificaciones necesarias vía interoperabilidad o consulta directa, todo ello de conformidad con el Artículo 51 de la Ley de Contrataciones Públicas en concordancia con el Artículo 61 de su Reglamento; certificando finalmente que la presente declaración es fiel reflejo de la realidad técnica de mi representada.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/sustituto_dj_eval_desempeno_au_au}
+{#modelo_otro_recaudo_sobre1_au_au}
+url_otro_recaudo_sobre1_au_au
+{/modelo_otro_recaudo_sobre1_au_au}
+{#mod_carta_oferta_au_au}
+MODELO
+CARTA OFERTA
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Me dirijo a ustedes, en ocasión de hacer entrega de la OFERTA, correspondiente al Concurso Abierto N°  {cod_nomenclatura_proceso_au_au} referido a {desc_objeto_contratacion_au_au}.
+Igualmente, se participa a la Comisión de Contrataciones que nuestra Empresa tiene pleno conocimiento del modelo de contrato marco y demás normas específicas contenidas en el PLIEGO DE CONDICIONES entregado para este proceso. En consecuencia, la oferta presentada tiene un costo total de _______________________, (BS. 000.000.000,00), incluidos los tributos, lo cual representa en UCAU  (Monto en UCAU).
+Sin otro particular a que referir, se suscribe.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/mod_carta_oferta_au_au}
+{#mod_declaracion_capacidad_financiera_au_au}
+MODELO
+DECLARACIÓN JURADA DE CONTAR CON
+LA CAPACIDAD FINANCIERA DE CONTRATACIÓN
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N° _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N° ____ tomo ____ de fecha _______________, debidamente facultado para este Acto, DECLARO BAJO FE DE JURAMENTO, que la empresa que represento cuenta con la Capacidad Financiera estimada de contratación para asumir los compromisos que se puedan generar por la oferta presentada en el proceso de Concurso Abierto N°  {cod_nomenclatura_proceso_au_au}, correspondiente a {desc_objeto_contratacion_au_au}. En tal sentido, como soporte justificativo anexo a la presente declaración los correspondientes Estados Financieros (Balance General y Estado de Ganancias y Pérdidas al 31 de Diciembre).
+Lo anterior tiene como finalidad evidenciar la aptitud e idoneidad de mi representada para la Calificación Financiera y nuestro deseo de efectuar la ejecución de {desc_objeto_contratacion_au_au}, correspondiente al Concurso Abierto N°  {cod_nomenclatura_proceso_au_au}.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/mod_declaracion_capacidad_financiera_au_au}
+{#mod_declaracion_compromiso_resp_social_au_au}
+MODELO
+DECLARACIÓN JURADA PARA EL CUMPLIMIENTO DEL
+COMPROMISO DE RESPONSABILIDAD SOCIAL
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N° _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N° ____ tomo ____ de fecha _______________, debidamente facultado para este Acto, DECLARO BAJO FE DE JURAMENTO,  a los fines de dar cumplimiento al Compromiso de Responsabilidad Social, de conformidad con lo establecido en el TITULO I, CAPITULO VII del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas, que el aporte será del tres por ciento (3%), sobre el monto de la oferta, sin incluir el Impuesto al Valor Agregado (I.V.A.), esto en función de evidenciar la aptitud e idoneidad de mi representada y nuestro deseo de efectuar la {desc_objeto_contratacion_au_au}, correspondiente al Concurso Abierto N°  {cod_nomenclatura_proceso_au_au}.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/mod_declaracion_compromiso_resp_social_au_au}
+{#mod_garantia_mantenimiento_oferta_au_au}
+MODELO
+GARANTÍA DE MANTENIMIENTO DE LA OFERTA
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N° _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N° ____ tomo ____ de fecha _______________, por medio del presente contrato declaro: Constituyo a mi representado en fiador solidario y principal pagador por la suma de “COLOCAR MONTO DE LA FIANZA SOLICITADA” para garantizar ante  el “LA CONTRATANTE”, que (Nombre del Participante)___________ inscrita en ___________(Datos del Registro Mercantil del Participante)_____________ en lo adelante denominada “LA CONTRATISTA” firmará con el “LA CONTRATANTE”  el Contrato {desc_objeto_contratacion_au_au}, llamado a Contratación N° {cod_nomenclatura_proceso_au_au}, en caso de que “LA CONTRATANTE” obtenga la adjudicación dentro del plazo de validez de la oferta.
+La Fianza de Garantía Mantenimiento de la Oferta será equivalente al 2% del monto base de los Primeros 6 meses de la Oferta sin Iva. La presente obligación será exigible en caso de que se cumpla una cualquiera de las siguientes condiciones:
+1.- Si “LA CONTRATISTA” retira su oferta durante el período de validez estipulado en el formulario de oferta; o,
+2.- Si “LA CONTRATISTA” tras haber sido notificado de la aceptación de su oferta por “LA CONTRATANTE” durante el período de validez de ella: i) No firma el formulario de contrato si tuviera que hacerlo, o, ii) no suministra la garantía de fiel cumplimiento del contrato de conformidad con las instrucciones a los Participantes.
+Mi representada pagará a “LA CONTRATANTE” hasta el monto total indicado contra recibo de su primer requerimiento por escrito sin que “LA CONTRATANTE” tenga que justificar el requerimiento; El Ente Contratante hará constar en el requerimiento que la suma que reclama le es adeudada en razón de una o ambas de las condiciones antes especificadas e indicará expresamente la condición que se ha cumplido.
+Mi representada renuncia expresamente a los beneficios acordados por los artículos 1833, 1834 y 1836 del Código Civil de la República Bolivariana de Venezuela.
+Se fija como domicilio especial para todos los efectos de esta fianza {loc_ciudad_ente}, Estado {loc_estado_ente}.
+Esta garantía permanecerá en vigor hasta ______ días después del período de validez de la oferta, inclusive.
+En (Lugar) a los (Fecha).
+EL FIADOR
+(Nota: La garantía debe ser autenticada ante Notaría Pública.)
+{/mod_garantia_mantenimiento_oferta_au_au}
+{#mod_declaracion_autocalculo_van_au_au}
+DECLARACIÓN JURADA Y AUTO CÁLCULO DEL VAN
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N° _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N° ____ tomo ____ de fecha _______________, debidamente facultado para este Acto, DECLARO BAJO FE DE JURAMENTO, que la información suministrada en el presente formulario y los datos consignados en el Cuadro de Auto Cálculo del Valor Agregado Nacional (VAN) que forma parte integrante del mismo, corresponden al auto cálculo del Valor Agregado Nacional de la oferta presentada por mi representada en el procedimiento {cod_nomenclatura_proceso_au_au}, referido al objeto {desc_objeto_contratacion_au_au}; asimismo, que el cálculo del Valor Agregado Nacional (VAN) ha sido efectuado de conformidad con los parámetros y disposiciones establecidos en el Artículo 16 de la Ley Constitucional contra la Guerra Económica para la Racionalidad y Uniformidad en la Adquisición de Bienes, Servicios y Obras Públicas, así como con las demás disposiciones aplicables y lo previsto en el Pliego de Condiciones; que para la determinación del porcentaje declarado, se han considerado los componentes de origen nacional que intervienen en la formación del precio ofertado y se han excluido aquellos conceptos que, de conformidad con el Artículo 17 de la referida Ley Constitucional, no son considerados como Valor Agregado Nacional (VAN); y que los porcentajes consignados en el cuadro siguiente corresponden a la participación de cada componente en la formación del precio ofertado y que la información suministrada se encuentra respaldada por la documentación y registros correspondientes.
+CUADRO DE AUTO CÁLCULO DEL VAN
+Instrucciones para el oferente:
+Indique, para cada componente, el porcentaje que corresponda a su origen nacional y el porcentaje que corresponda a su origen extranjero o importado, según su participación en la formación del precio ofertado.
+La suma de los porcentajes correspondientes al origen nacional (A) y al origen extranjero o importado (B) determinará el porcentaje total de participación de cada componente (A+B).
+Los valores consignados deberán estar respaldados por la documentación correspondiente y sujetos a verificación conforme a la normativa aplicable.
+A continuación se describen los componentes del VAN:
+COMPONENTE DEL PRECIO
+(Según Art. 16 LCCP)
+% DE ORIGEN NACIONAL (A)
+% DE ORIGEN EXTRANJERO (B)
+TOTAL (A+B)
+Insumos y materias primas.
+Equipos y Bienes de Capital incorporados.
+Talento Humano (Mano de obra y Seguridad Social)
+Tecnología y Transferencia de Conocimiento.
+Servicios profesionales y no profesionales.
+Estudios de Ingeniería y Asistencia Técnica.
+Depreciación de activos ubicados en Venezuela.
+Gastos Financieros pagados en la República.
+PORCENTAJE TOTAL DE VAN DE LA OFERTA
+%
+Nota:
+El porcentaje consignado en la columna “TOTAL (A+B)” representa la participación de cada componente en el precio total ofertado, sumando su porcentaje de origen nacional (A) y de origen extranjero o importado (B).
+El Valor Agregado Nacional (VAN) corresponde a la suma de los porcentajes de origen nacional (A) de los componentes que integran la oferta, de conformidad con la normativa aplicable.
+RESULTADO DEL AUTO CÁLCULO
+Nombre de la Empresa:
+PORCENTAJE (%) VAN
+Auto cálculo del Valor Agregado Nacional (VAN):
+En virtud del resultado consignado, el porcentaje de Valor Agregado Nacional (VAN) indicado en el presente formulario corresponde al auto cálculo efectuado por mi representada, de conformidad con la normativa aplicable y con las condiciones establecidas en el Pliego de Condiciones. Asimismo, AUTORIZO EXPRESAMENTE al órgano o ente contratante, a través de las instancias competentes, para verificar la veracidad de la información declarada y examinar, cuando así corresponda, los documentos, registros, soportes contables y demás elementos utilizados para determinar el porcentaje de VAN declarado, comprometiéndome a mantenerlos a disposición y a suministrar la información y documentación que sea requerida para su comprobación, de conformidad con las competencias legalmente atribuidas al órgano o ente contratante y a los órganos de control correspondientes.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{#mod_carta_notificaciones_au_au}
+MODELO
+CARTA DE DATOS PARA NOTIFICACIONES
+{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.
+Señores:
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+Presente.-
+Yo, (Nombre y Apellidos del Declarante), titular de la cédula de identidad N° _______________, actuando en mi carácter de ________________ de la empresa ________________________, debidamente registrada por ante el Registro Mercantil ______________________ de la Circunscripción Judicial del Estado ___________ bajo el N° ____ tomo ____ de fecha _______________, debidamente facultado para este Acto, a los fines de dar cumplimiento a lo establecido en los artículos 18.4 de la LOPA y 28 de las Normas de Control Interno de la SUNAI, DECLARO BAJO FE DE JURAMENTO, que designamos como persona contacto y dirección legal para recibir todas las notificaciones, aclaratorias y decisiones administrativas que se susciten con ocasión al procedimiento de contratación {desc_objeto_contratacion_au_au}, Concurso Abierto N° {cod_nomenclatura_proceso_au_au}, a los siguientes:
+Persona Autorizada: ____________________________ C.I.: _______________
+Dirección de Correspondencia: ________________________________________
+Teléfonos (Local y Celular): __________________________________________
+Correo Electrónico (Principal): ________________________________________
+Asimismo, mediante la presente AUTORIZO EXPRESAMENTE que las notificaciones sean practicadas por medios electrónicos en la dirección antes señalada, comprometiéndonos a remitir el acuse de recibo correspondiente de forma inmediata.
+Atentamente,
+___________________________
+Representante Legal de la Empresa
+Firma y sello
+{/mod_carta_notificaciones_au_au}
+{#mod_garantia_fiel_cumpl_au_au}
+MODELO
+GARANTÍA DE FIEL CUMPLIMIENTO DEL CONTRATO
+Yo, (Nombre del representante del Garante), mayor de edad, domiciliado en la ciudad de ____________________, titular de la cédula de identidad N°. ____________, procediendo en este acto en mi carácter de ___(Carácter del representante del Garante)______________ de __(Nombre del Garante)________________ sociedad mercantil constituida y domiciliada en __________________, inscrita en ____________________, bajo el N°________, tomo ________________, el ________________, en el ________________, por medio del presente contrato declaro: Constituyo a mi representado en fiador solidario y principal pagador de ____________(Nombre del Contratista)___________ inscrita en ___________(Datos del Registro Mercantil del Participante)_____________ en lo adelante denominada "El Contratista", hasta por la suma de ____________________________ (Bs._________), de conformidad con el Artículo 123 del Decreto Ley de Contrataciones Públicas, y en el marco del sistema de gestión de riesgos y de las Actividades de Control (Artículo 4 de las Normas de Control Interno SUNAI) establecidas por “LA CONTRATANTE” para proteger el interés público y la seriedad de los procesos de contratación, para garantizar ante “LA CONTRATANTE”, el fiel, cabal y oportuno cumplimiento por parte de “LA CONTRATISTA”, de todas y cada una de las obligaciones que resulten a su cargo y a favor de  “LA CONTRATANTE” según el contrato celebrado entre ambos para {desc_objeto_contratacion_au_au}.
+La presente fianza empezará a regir a partir del otorgamiento del referido contrato y permanecerá en vigencia hasta que se dé total cumplimiento a las obligaciones que le corresponden a “LA CONTRATISTA” de acuerdo con el mencionado contrato.
+Mi representada pagará al Ente Contratante hasta el monto total indicado contra recibo de su primer requerimiento por escrito en que conste que “LA CONTRATISTA” no ha cumplido el Contrato, con indicación expresa de la obligación contractual incumplida, sin que “LA CONTRATANTE” tenga que probar o demostrar las causas o razones del requerimiento o la suma especificada en él.
+Asimismo, declaro que la responsabilidad de mi representada ante ustedes y el pago del monto de la garantía no serán descargados en el caso de las modificaciones o enmiendas ulteriores en las disposiciones del contrato, acordadas entre “LA CONTRATANTE” y el Proveedor en relación con las condiciones de implementación del mismo.
+Mi representada renuncia expresamente a los beneficios acordados por los artículos 1833, 1834 y 1836 del Código Civil de la República Bolivariana de Venezuela.
+Se fija como domicilio especial para todos los efectos de esta fianza ciudad {loc_ciudad_ente}, Estado {loc_estado_ente}.
+En ciudad, a los 00 días del mes de _________ del 202_.
+EL FIADOR
+(Nota: La Garantía debe ser autenticada ante Notaría Pública y la Afianzadora debe estar inscrita ante la Superintendencia de Seguros).
+{/mod_garantia_fiel_cumpl_au_au}
+{#mod_fianza_laboral_au_au}
+MODELO
+FIANZA LABORAL
+AFIANZADO:  ______________________________
+ACREEDOR:  “LA CONTRATANTE”
+SUMA AFIANZADA: Bs. ________________
+VIGENCIA: Según texto.-
+FIANZA LABORAL Nº: ________
+Yo, (Nombre del representante del Garante), mayor de edad, domiciliado en la ciudad de ____________________, titular de la cédula de identidad N°. __________________, procediendo en este acto en mi carácter de ___(Carácter del representante del Garante)____________________ de __(Nombre del Garante)___________________ sociedad mercantil constituida y domiciliada en ______________________, inscrita en ____________________, bajo el N°________, tomo ________________, el ________________, en el ___________________, por medio del presente contrato declaro: Constituyo a mi representada en fiadora solidaria y principal pagadora de  _____________(Nombre del Contratista)_____________ inscrita en ___________(Datos del Registro Mercantil del Participante)_____________ en lo adelante denominada “EL AFIANZADO”, hasta por la suma de _________________________________________ (Bs. __________), de conformidad con el Artículo 124 del Decreto Ley de Contrataciones Públicas, y en el marco del sistema de gestión de riesgos y de las Actividades de Control (Artículo 4 de las Normas de Control Interno SUNAI)  establecidas por “LA CONTRATANTE” para proteger el interés público y la seriedad de los procesos de contratación, para garantizar ante “LA CONTRATANTE”, el fiel, cabal y oportuno cumplimiento por parte de “LA CONTRATISTA”, de todas y cada una de las obligaciones que resulten a su cargo y a favor de  “LA CONTRATANTE” según el contrato celebrado entre ambos para {desc_objeto_contratacion_au_au}
+La presente fianza empezará a regir a partir del otorgamiento del referido contrato y permanecerá en vigencia hasta que se dé total cumplimiento a las obligaciones que le corresponden a “LA CONTRATISTA” de acuerdo con el mencionado contrato.
+Mi representada pagará al Ente Contratante hasta el monto total indicado contra recibo de su primer requerimiento por escrito en que conste que “LA CONTRATISTA” no ha cumplido el Contrato, con indicación expresa de la obligación contractual incumplida, sin que “LA CONTRATANTE” tenga que probar o demostrar las causas o razones del requerimiento o la suma especificada en él.
+Asimismo, declaro que la responsabilidad de mi representada ante ustedes y el pago del monto de la garantía no serán descargados en el caso de las modificaciones o enmiendas ulteriores en las disposiciones del contrato, acordadas entre “LA CONTRATANTE” y el Proveedor en relación con las condiciones de implementación del mismo.
+Mi representada renuncia expresamente a los beneficios acordados por los artículos 1833, 1834 y 1836 del Código Civil de la República Bolivariana de Venezuela.
+Se fija como domicilio especial para todos los efectos de esta fianza ciudad {loc_ciudad_ente}, Estado {loc_estado_ente}.
+En ciudad, a los 00 días del mes de _________ del 202_.
+EL FIADOR
+(Nota: La Garantía debe ser autenticada ante Notaría Pública y la Afianzadora debe estar inscrita ante la Superintendencia de Seguros).
+{/mod_fianza_laboral_au_au}
+{#modelo_otro_recaudo_sobre2_au_au}
+url_otro_recaudo_sobre2_au_au
+{/modelo_otro_recaudo_sobre2_au_au}
+ANEXO IV
+MODELO DE CONTRATO MARCO
+CONTRATO Nº: 000000
+Entre, {nom_ente_contratante}, quien en lo sucesivo se denominará (_____), ente adscrito a ___________, representado(a) en este acto por el (la) ciudadano (a) {nom_completo_autoridad}, titular de la cédula de identidad Nº {cedula_autoridad}, en su carácter de {cargo_oficial_autoridad}, que se desprende de la credencial emitida, según {datos_designacion_autoridad}, quien a los efectos de este contrato se denominará “EL CONTRATANTE”, por una parte y por la otra la empresa _____________, C.A., bajo el número de Registro de Información Fiscal N° J-_______-_ en el Registro Mercantil _______, bajo el N° __, Tomo _____,  en fecha ________de los libros llevados por ante este Registro, representada legalmente en este acto por el (la) ciudadano (a) _________________________, C.I. Nº V- _________, y quien en lo sucesivo se denominará “LA CONTRATISTA”, y en conjunto se denominará “LAS PARTES” y por medio del presente instrumento legal han convenido en celebrar un Contrato de  {desc_objeto_contratacion_au_au}, el cual se regirá por las siguientes cláusulas:
+{#clausulas_custom_au_au}CLÁUSULA {num_clausula_custom_au_au}: {titulo_clausula_custom_au_au}
+{cuerpo_clausula_custom_au_au}
+{/clausulas_custom_au_au}
+Se hacen tres (03) ejemplares de un mismo tenor y a un solo efecto, a los _________ días del mes de _______ de 202_.
+POR “LA CONTRATANTE”
+POR “LA CONTRATISTA”

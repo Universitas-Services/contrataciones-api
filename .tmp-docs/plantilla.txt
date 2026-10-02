@@ -1,0 +1,71 @@
+PARA: COMISIÓN DE CONTRATACIONES
+DE: UNIDAD USUARIA
+1.  IDENTIFICACIÓN  Y PLANIFICACIÓN DE LA SOLICITUD
+UNIDAD USUARIA SOLICITANTE: {nom_unidad_usuaria}
+RESPONSABLE: {nom_responsable_unidad_usuaria} 
+CARGO: {cargo_responsable_unidad_usuaria}
+VINCULACIÓN  SNC: Categoría:  {tipo_objeto_contratacion} 
+REFERENCIA SNC: {num_referencia_snc_au_au}
+Modificación del requerimiento: {modif_requerimiento_snc_au_au}     
+Indique el número de modificación del requerimiento en el SNC, de ser el caso: {numero_modif_requerimiento_snc_au_au}
+CERTIFICACIÓN DE NO FRACCIONAMIENTO: Se certifica que este requerimiento no constituye una subdivisión de gastos para eludir la modalidad de Concurso Abierto (Art. 13 Normas SUNAI).
+2. OBJETO Y MOTIVACIÓN
+OBJETO DE LA CONTRATACIÓN: {desc_objeto_contratacion_au_au}
+JUSTIFICACIÓN DE LA NECESIDAD: {justificacion_necesidad_contratacion_au_au}
+VENTAJAS TÉCNICAS Y ECONÓMICAS DE LA CONTRATACIÓN: {justificacion_ventajas_au_au}
+VIABILIDAD DE CONTRATO MARCO / AGRUPACIÓN: {viabilidad_marco_agrupacion_au_au}
+3. CATEGORIZACIÓN  DE LA CONTRATACIÓN Y PRESUPUESTO BASE
+{categorizacion_contratacion_au_au}MONTO  UCAU: {valor_ucau_base}
+MONTO BS.: {monto_estimado_bs}
+Presupuesto Base (Sin IVA): {sub_total}
+Presupuesto Base (Con IVA): {monto_total_renglon_au_au}
+Fecha del Estudio de Mercado / cotizaciones: {fec_estudio_mercado_au_au}
+Certificación de Disponibilidad Presupuestaria: {num_certificacion_presupuestaria_au_au} (ANEXO I)
+Se anexa a este documento el Presupuesto Base (ANEXO II)
+4. ESPECIFICACIONES TÉCNICAS  Y CONDICIONES DE EJECUCIÓN
+4.1 ESPECIFICACIONES TÉCNICAS:
+Describe detalladamente las características, rendimientos y niveles de calidad exigidos para asegurar la funcionalidad del objeto contratado y la transparencia del proceso. 
+Ver el desglose detallado en el  ANEXO III.
+4.2 CONDICIONES DE EJECUCIÓN:  
+PLAZO DE EJECUCIÓN / ENTREGA: {plazo_ejecucion_procedimiento_au_au}
+LUGAR DE ENTREGA/EJECUCIÓN: {lugar_logistica_ejecucion_au_au}
+REQUERIMIENTOS ESPECIALES (Personal/Maquinaria): {requiere_especializado_au_au}
+NECESIDAD DE MUESTRAS FÍSICAS: {requiere_muestras_au_au} 
+Se anexa a este documento el Especificaciones  Técnicas 
+(ANEXO III)
+5. PARÁMETROS DE SELECCIÓN Y FORMALIZACIÓN
+- CRITERIOS PROPUESTOS PARA CALIFICACIÓN DE ACUERDO AL REGLAMENTO:  Se definen los requisitos mínimos de Capacidad Jurídica (Art. 66 RLCP), Solvencia Económica (Art. 67 RLCP) e Idoneidad Técnica y Experiencia (Art. 68 RLCP) que debe cumplir el proveedor para calificar en el proceso. Estos criterios deben ser proporcionales a la magnitud y complejidad del objeto solicitado.
+- CRITERIOS PROPUESTOS PARA EVALUACIÓN: Se definen los criterios de puntuación y sus pesos relativos para seleccionar la oferta ganadora. Debe equilibrar la calidad técnica (tiempos, garantías, valor técnico) y el factor económico (precio), asegurando el cumplimiento de los principios de economía y eficiencia (Art. 66 LCP y Art. 7 RLCP).
+{#activa_promocion_economica_au_au}
+- APLICACIÓN DE PREFERENCIA (VAN / LOCAL): En cumplimiento de los Artículo 13 de la LCP, en concordancia con el Artículo 10 del Reglamento, se evalúa la obligatoriedad de incorporar la mayor participación de componentes de origen nacional y el fomento del entorno local en el procedimiento. En tal sentido, se establece que {requiere_van_au_au} 
+-PREFERENCIA TERRITORIAL (REGIONALIZACIÓN): En cumplimiento de los Artículos 13.2,  22 y 66 numeral 14 de la LCP, en concordancia con el Artículos 47, 112 del Reglamento, se evalúa el fomento del desarrollo económico territorial para favorecer a los oferentes domiciliados en el área de influencia del Ente Contratante. En tal sentido, se establece que {ind_pref_local_au_au}
+- PROMOCIÓN DE PYMES Y COOPERATIVAS: En cumplimiento de los Artículos 11 al 13 de la LCP y 9 al 10 del RLCP, este análisis garantiza que las condiciones técnicas permitan la participación de PyMES y cooperativas, con el fin de democratizar el gasto público y fortalecer el tejido productivo nacional. En tal sentido, se establece que {permite_pymes_cooperativas_au_au} {/activa_promocion_economica_au_au}
+- TIPO DE CONTRATO MODELO: De conformidad con lo establecido en el Artículo 6 numeral 32 de la LCP y el Artículo 132 del Reglamento, se formalizará el compromiso mediante el instrumento jurídico acorde a la naturaleza del objeto: {tipo de contrato} (Bienes: Orden de Compra; Servicios: Orden de Servicio; Obras: Valuación), detallando precio, cantidades y condiciones de entrega conforme al Anexo IV.
+- ANÁLISIS PRELIMINAR DE GARANTÍAS: En cumplimiento de las Normas de Control Interno SUNAI (2025), se realizó una evaluación de riesgos para determinar las garantías proporcionales y necesarias que aseguren la ejecución contractual y protejan el patrimonio del Ente. En tal sentido, y considerando la complejidad del objeto a contratar, se proponen las siguientes garantías para ser incorporadas en el Pliego de Condiciones: 
+- Compromiso de Responsabilidad Social: SÍ
+- Garantía de Mantenimiento de la Oferta: SÍ
+- Garantía Laboral: {requiere_garantia_laboral_au_au} 
+- Póliza de Responsabilidad Civil: {poliza_responsabilidad_civil_au_au}
+- Anticipo Contractual: {anticipo_contrato_au_au}
+Se anexa a este documento el TIPO DE CONTRATO MODELO 
+(ANEXO IV)
+6. SUSCRIPCIÓN Y VALIDACIÓN DEL REQUERIMIENTO
+Someto a consideración de la Comisión de Contrataciones, en su carácter de Unidad Contratante conforme al Artículo 6 numeral 3 de la Ley de Contrataciones Públicas, el presente requerimiento técnico y financiero, a los fines de que se proceda a la sustanciación y gestión del procedimiento de selección bajo la modalidad de Concurso Abierto, de acuerdo con las potestades legales que le han sido conferidas.
+Considerado por :  COMISIÓN DE CONTRATACIONES
+FIRMAS : 
+MIEMBRO PRINCIPAL ÁREA JURÍDICA.: {nom_completo_miembro_juridica}
+MIEMBRO PRINCIPAL ÁREA ECON-FINAN.: {nom_completo_miembro_economica}
+MIEMBRO PRINCIPAL ÁREA TÉC.: {nom_completo_miembro_tecnica}
+SECRETARIA DE COMISIÓN: {nom_completo_miembro_secretaria}
+OBSERVACIONES: 
+______________________________________________________________________
+Suscrito por: 
+
+Firma: ___________________________
+
+{nom_responsable_unidad_usuaria}
+
+{cargo_responsable_unidad_usuaria}
+
+UNIDAD USUARIA
+Unidad para el cálculo aritmético  (UCAU):  {valor_ucau_base} Bs.
