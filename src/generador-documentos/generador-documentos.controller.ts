@@ -65,6 +65,16 @@ export class GeneradorDocumentosController {
     };
   }
 
+  @ApiOperation({ summary: 'Obtener tokens mapeados del Llamado a Participar' })
+  @Get('llamado-participar/:expedienteId/datos')
+  async getDatosLlamadoParticipar(@Param('expedienteId') expedienteId: string) {
+    const tokens = await this.generadorDocumentosService.getDatosLlamadoParticipar(expedienteId);
+    return {
+      message: 'Datos del Llamado a Participar',
+      data: { tokens },
+    };
+  }
+
   @ApiOperation({ summary: 'Generar Llamado a Participar' })
   @Post('generar/llamado-participar/:expedienteId')
   async generarLlamadoParticipar(

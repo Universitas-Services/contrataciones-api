@@ -60,7 +60,7 @@ export class GeneradorDocumentosService {
     if (!expediente.fasePreparatoria)
       throw new NotFoundException(`Fase Preparatoria incompleta para este expediente`);
 
-    await this.assertPliegoGeneradoParaActa(expedienteId);
+    await this.assertPliegoGenerado(expedienteId, 'el Acta de Inicio');
 
     const { ente, comision, unidadUsuaria, fasePreparatoria, modalidad, cronograma } = expediente;
 
@@ -149,8 +149,11 @@ export class GeneradorDocumentosService {
     };
   }
 
-  /** Gate Fase 1: Acta de Inicio solo si ya existe pliego generado. */
-  private async assertPliegoGeneradoParaActa(expedienteId: string): Promise<void> {
+  /**
+   * Gate Fase 1: Acta / Llamado requieren pliego generado
+   * (PliegoGenerado o DocumentoGenerado PLIEGO_CONDICIONES).
+   */
+  private async assertPliegoGenerado(expedienteId: string, documentoLabel: string): Promise<void> {
     const [pliegoGenerado, docPliego] = await Promise.all([
       this.prisma.pliegoGenerado.findFirst({
         where: { expedienteId, deletedAt: null },
@@ -168,13 +171,14 @@ export class GeneradorDocumentosService {
 
     if (!pliegoGenerado && !docPliego) {
       throw new BadRequestException(
-        'Debe existir un Pliego de Condiciones generado antes de elaborar el Acta de Inicio',
+        `Debe existir un Pliego de Condiciones generado antes de elaborar ${documentoLabel}`,
       );
     }
   }
 
   /**
-   * Obtiene la estructura JSON mapeada para el Llamado a Participar
+   * Obtiene la estructura JSON mapeada para el Llamado a Participar.
+   * Gate: debe existir pliego generado (igual que Acta / progress Fase 1).
    */
   async getDatosLlamadoParticipar(expedienteId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
@@ -192,20 +196,36 @@ export class GeneradorDocumentosService {
     if (!expediente.fasePreparatoria) throw new NotFoundException('Fase preparatoria incompleta');
     if (!expediente.cronograma) throw new NotFoundException('Cronograma incompleto');
 
+    await this.assertPliegoGenerado(expedienteId, 'el Llamado a Participar');
+
     const e = expediente;
     const f = expediente.fasePreparatoria;
     const c = expediente.cronograma;
 
-    let textoPliegoGratuito = 'El Pliego de Condiciones será entregado de forma gratuita.';
+    // DATOS LLAMADOS: pliego_costo SÍ = tiene costo; en Prisma pliegoGratuito=true = sin costo
+    let pliegoCostoTexto = 'Costo del Pliego: Sin costo.';
     if (!f.pliegoGratuito) {
       const costoBs = f.costoPliegoBs ? formatCurrencyVE(Number(f.costoPliegoBs)) : '0,00';
-      textoPliegoGratuito = `El costo del pliego es de Bs. ${costoBs}. El pago deberá realizarse en la cuenta ${f.cuentaPagoPliego || 'N/A'} del banco ${f.bancoPagoPliego || 'N/A'} a nombre de ${f.titularPagoPliego || 'N/A'}.`;
+      pliegoCostoTexto = `El COSTO para la adquisición de dicho pliego es de Bs. ${costoBs} (No reembolsables) a ser depositados en la cuenta del Banco ${f.bancoPagoPliego || '___'} Nº ${f.cuentaPagoPliego || '___'} (RIF: ${f.rifPagoPliego || '___'}) a favor de ${f.titularPagoPliego || '___'}`;
     }
 
+    const horarioRetiro = f.horarioRetiroPliego || '___';
+    const direccionRetiro = f.direccionRetiroPliego || '___';
+
     return {
-      nom_ente_contratante: e.ente.nombre || '___',
+      nom_ente_contratante: e.ente?.nombre || '___',
+      // Tokens plantilla nueva
+      cod_nomenclatura_proceso_au_au: e.codigoNomenclatura || '___',
+      desc_objeto_contratacion_au_au: e.descripcionObjeto || '___',
+      direccion_retiro_pliego_au_au: direccionRetiro,
+      horario_retiro_pliego_au_au: horarioRetiro,
+      // Misma clave sin _au_au (aparece en sección aclaratorias de la plantilla)
+      horario_retiro_pliego: horarioRetiro,
+      direccion_retiro_pliego: direccionRetiro,
+      // Alias legacy por si alguna plantilla vieja aún los usa
       cod_nomenclatura_proceso: e.codigoNomenclatura || '___',
       desc_objeto_contratacion: e.descripcionObjeto || '___',
+
       objetivos_especificos_llamado_1_au_au: f.objetivosEspecificos1 || '___',
       objetivos_especificos_llamado_2_au_au: f.objetivosEspecificos2 || '___',
       objetivos_especificos_llamado_3_au_au: f.objetivosEspecificos3 || '___',
@@ -213,18 +233,17 @@ export class GeneradorDocumentosService {
         ? formatDateToSpanishLong(c.fechaActoRecepcionAperturaSobres)
         : '___',
       hora_acto_recep_aper_au_au: f.horaActoRecepAper || '___',
-      dir_fiscal_ente: e.ente.direccionFiscal || '___',
-      direccion_retiro_pliego: f.direccionRetiroPliego || '___',
+      dir_fiscal_ente: e.ente?.direccionFiscal || '___',
       fec_inicio_disponibilidad_pliego_au_au: c.fechaInicioDisponibilidadPliego
         ? formatDateToSpanishLong(c.fechaInicioDisponibilidadPliego)
         : '___',
       fec_fin_disponibilidad_pliego_au_au: c.fechaFinDisponibilidadPliego
         ? formatDateToSpanishLong(c.fechaFinDisponibilidadPliego)
         : '___',
-      horario_retiro_pliego: f.horarioRetiroPliego || '___',
       correo_comision: e.comision?.correoElectronico || '___',
       telefono_comision: e.comision?.telefono || '___',
-      pliego_gratuito_au_au: textoPliegoGratuito,
+      pliego_costo_au_au: pliegoCostoTexto,
+      pliego_gratuito_au_au: pliegoCostoTexto,
       fec_solicitud_aclaratorias_au_au: c.fechaSolicitudAclaratorias
         ? formatDateToSpanishLong(c.fechaSolicitudAclaratorias)
         : '___',
