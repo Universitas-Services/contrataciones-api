@@ -1,17 +1,37 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { v2 as cloudinary } from 'cloudinary';
 import * as streamifier from 'streamifier';
+import * as fs from 'fs';
+import * as path from 'path';
 import { IStorageService } from '../common/interfaces/storage-service.interface';
 
 @Injectable()
 export class CloudinaryService implements IStorageService {
+  private readonly logger = new Logger(CloudinaryService.name);
+  private readonly useLocalFallback: boolean;
+  private readonly uploadDir = path.join(process.cwd(), 'uploads');
+
   constructor() {
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+    const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
+    const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
+    this.useLocalFallback = !cloudName || !apiKey || !apiSecret;
+
+    if (this.useLocalFallback) {
+      this.logger.warn(
+        'Cloudinary no configurado — usando almacenamiento local en /uploads (solo desarrollo)',
+      );
+      if (!fs.existsSync(this.uploadDir)) {
+        fs.mkdirSync(this.uploadDir, { recursive: true });
+      }
+    } else {
+      cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret,
+      });
+    }
   }
 
   async uploadFile(file: Buffer, folder: string, filename?: string): Promise<string> {
@@ -27,6 +47,17 @@ export class CloudinaryService implements IStorageService {
       const pathParts = folder.split('/');
       resolvedFilename = pathParts.pop() || 'file';
       resolvedFolder = pathParts.join('/');
+    }
+
+    if (this.useLocalFallback) {
+      const relativePath = path.join(resolvedFolder, resolvedFilename).replace(/\\/g, '/');
+      const fullPath = path.join(this.uploadDir, relativePath);
+      const directory = path.dirname(fullPath);
+      if (!fs.existsSync(directory)) {
+        fs.mkdirSync(directory, { recursive: true });
+      }
+      fs.writeFileSync(fullPath, file);
+      return `/uploads/${relativePath}`;
     }
 
     // Detect resource type based on file extension
@@ -59,6 +90,15 @@ export class CloudinaryService implements IStorageService {
   }
 
   async deleteFile(publicId: string): Promise<void> {
+    if (this.useLocalFallback) {
+      const relative = publicId.replace(/^\/uploads\//, '');
+      const fullPath = path.join(this.uploadDir, relative);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+      return;
+    }
+
     try {
       await cloudinary.uploader.destroy(publicId);
     } catch {

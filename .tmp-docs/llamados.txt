@@ -1,0 +1,120 @@
+Título:
+Configuración del llamado Público Defina los detalles logísticos para la disponibilidad y adquisición del Pliego de Condiciones.
+A Objetivos del procedimiento
+Describa tres objetivos específicos relacionados con el objeto del procedimiento de contratación.
+Artículos 80.6 LCP; 107.1 RLCP; 3 NORMAS DE CONTROL INTERNO SUNAI.
+Objetivo 1
+Tipo de campo: Input de texto.
+Variable: objetivos_especificos_llamado_1_au_au
+Tipo de dato: Varchar (255)
+Objetivo 2
+Tipo de campo: Input de texto.
+Variable: objetivos_especificos_llamado_2_au_au
+Tipo de dato: Varchar (255)
+Objetivo 3
+Tipo de campo: Input de texto.
+Variable: objetivos_especificos_llamado_3_au_au
+Tipo de dato: Varchar (255)
+MARCADOR EN AUTOMATIZACIÓN:Lógica: se deben hacer tres campos Input de texto, el primer campo input se guardará en la variable {objetivos_especificos_llamado_1_au_au} el segundo campo input se guardará en la variable {objetivos_especificos_llamado_2_au_au} el tercer campo input se guardará en la variable {objetivos_especificos_llamado_3_au_au}
+Marcador en los siguientes documentos:
+Llamado
+B Disponibilidad del pliego
+Indique la dirección exacta de la dependencia donde estará disponible el pliego de condiciones (si es física).
+Artículos 80.3 LCP; 7 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de campo: Input de texto.
+Valor por defecto: Dirección del Ente (Editable)
+Variable: direccion_retiro_pliego_au_au
+Tipo de dato: Varchar (255)
+MARCADOR EN AUTOMATIZACIÓN: {direccion_retiro_pliego_au_au}Marcador en los siguientes documentos:
+Llamado
+Pliego de condiciones
+Indique el horario de atención para la disponibilidad del pliego.
+Artículos 80.3 LCP; 7 NORMAS DE CONTROL INTERNO SUNAI.
+Ejemplo: 08:00am a 12:00m y 01:00pm a 04:00pm
+Tipo de campo: Input de texto.
+Variable: horario_retiro_pliego_au_au
+Tipo de dato: Varchar (255)
+MARCADOR EN AUTOMATIZACIÓN: {horario_retiro_pliego_au_au}Marcador en los siguientes documentos:
+Llamado
+Pliego de condiciones
+¿El pliego de condiciones tendrá un costo?
+Tipo de campo: botones SÍ/NO
+Variable: pliego_costo_au_au
+Tipo de dato: (Boolean)
+MARCADOR EN AUTOMATIZACIÓN: {pliego_costo_au_au}
+Marcador en los siguientes documentos:
+Llamado
+Si {pliego_costo_au_au} = SÍ, se despliegan las siguientes 4 preguntas.
+Si {pliego_costo_au_au} = NO, continua con la pregunta: Indique la hora del Acto de Recepción y Apertura de las manifestaciones de voluntad de participar, documentos de calificación y ofertas.
+_________________________________________________________________________
+(Lógica para el from: Esta sección sólo aparecerá si la respuesta es SÍ en la pregunta anterior).
+Indique los datos para el pago del pliego.
+Artículos 80.3.6 LCP; 3 NORMAS DE CONTROL INTERNO SUNAI.
+Indique el costo en bolívares (Bs) del pliego de condiciones.
+Ejemplo: 2.000,00
+Tipo de campo: Input Númerico.
+Variable: costo_pliego_bs_au_au
+Tipo de dato: Decimal
+MARCADOR EN AUTOMATIZACIÓN
+Un input dinámico tipo buscador que mostrará las cuentas bancarias registradas en el apartado cuentas bancarias para que el usuario elija la cuenta que desea utilizar para ese procedimiento, de no estar la cuenta a usar al final debe haber un boton de agregar nueva cuenta
+[+Agregar nueva cuenta]
+Indique el nombre del Banco para el pago del pliego.
+Ejemplo: Banco de Venezuela
+Tipo de llenado: Input Text.
+Variable: banco_pago_pliego_au_au
+Tipo de dato: Varchar (100)
+MARCADOR EN AUTOMATIZACIÓN:
+Indique el número de la cuenta para el pago del pliego.
+Ejemplo: 0102-0123-45-1234567890
+Tipo de llenado: Input Alfanumérico.
+Variable: cuenta_pago_pliego_au_au
+Tipo de dato: Varchar (20)
+MARCADOR EN AUTOMATIZACIÓN:
+Indique el nombre del Titular de la cuenta para el pago del pliego.
+Ejemplo: Gobernación del Estado Lara
+Tipo de llenado: Input Text.
+Variable: titular_pago_pliego_au_au
+Tipo de dato: Varchar (100)
+Indique el RIF del Titular de la cuenta para el pago del pliego.
+Ejemplo: G-00000000-0
+Tipo de llenado: Input numerico.
+Variable: rif_pago_pliego_au_au
+Tipo de dato: Varchar (100)
+MARCADOR EN AUTOMATIZACIÓN:
+[Guardar cuenta]
+Si la variable pliego_costo_au_au = NO
+entonces se sustituye el marcador {pliego_costo_au_au} por:
+Costo del Pliego: Sin costo.
+Si la variable pliego_costo_au_au = SÍ
+entonces se sustituye el marcador {pliego_costo_au_au} por:
+El COSTO para la adquisición de dicho pliego es de Bs. {costo_pliego_bs_au_au} (No reembolsables) a ser depositados en la cuenta del Banco {banco_pago_pliego} Nº {cuenta_pago_pliego} (RIF: {rif_pago_pliego}) a favor de {titular_pago_pliego}
+______________________________________________________________
+C Logística del actoIndique la hora del acto de recepción y apertura de las manifestaciones de voluntad de participar, documentos de calificación y ofertas.
+Artículos 78.1, 80.4 LCP; 96 RLCP; 3 NORMAS DE CONTROL INTERNO SUNAI.
+Ejemplo: 10:00am
+Tipo de campo: Input de hora.
+Variable: hora_acto_recep_aper_au_au
+Tipo de dato: Varchar (255)
+MARCADOR EN AUTOMATIZACIÓN: {hora_acto_recep_aper_au_au}Marcador en los siguientes documentos:
+Llamado
+Pliego de condiciones
+Acta de recepción de sobres
+Acta de apertura de sobres
+Informe de recomendación
+_________________________________________________________________________
+Botones debajo del formulario
+[Guardar borrador]
+[Configurar el llamado]
+BOTÓN [Borrador]:  Redirecciona al usuario de nuevo a la pantalla de detalle del expediente en la Fase 1 LÓGICAS DE LOS BOTONES
+Variable: estado_llamado_au_au
+Botón [Guardar borrador]: Siempre guarda la data actual sin validaciones estrictas y actualiza el estado a BORRADOR. El botón de acción principal hace lo siguiente:
+BOTÓN Principal [Configurar el llamado]:
+Notificación para el usuario (Tooltip visual al pasar el cursor si el botón está bloqueado):
+Faltan campos por llenar. Completa el formulario para habilitar esta acción.
+Lógica del Sistema (Redacción técnica para tu documentación):
+Comportamiento UI/UX: El botón principal se inicializa en estado bloqueado (disabled). El frontend implementa un validador que escucha los cambios en el formulario; una vez que confirma que todos los campos requeridos (logística, horarios, costo del pliego y fechas del cronograma) poseen datos válidos, remueve el estado de bloqueo y habilita la interacción. Acción de Guardado (On-Click): Al hacer clic, el sistema ejecuta el guardado definitivo de los datos y actualiza la variable de control estado_llamado_au_au al valor 'COMPLETADO' dentro del checklist interno, registrando el micromódulo como validado para la futura emisión del Pliego.
+Al hacer click se muestra un pop-up de confirmación de carga
+Título:
+¡Información cargada!
+Los datos logísticos del llamado han sido registrados exitosamente [Volver al panel]
+Y redirecciona al usuario a la pantalla de detalle de la fase 1 donde deberá indicar como disponible para generar el documento de actividades previas.

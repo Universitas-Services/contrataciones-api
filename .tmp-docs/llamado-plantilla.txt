@@ -1,0 +1,37 @@
+DESCRIPCIÓN GENERAL.
+El(La) {nom_ente_contratante}, en cumplimiento de lo establecido en el Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas, convoca a todas las personas naturales o jurídicas, nacionales o extranjeras, debidamente inscritas en el Registro Nacional de Contratistas (RNC), a participar en el procedimiento de selección de contratista bajo la modalidad de Concurso Abierto.
+OBJETIVOS DEL PROYECTO.
+Los objetivos específicos que se persiguen con esta contratación son:
+{objetivos_especificos_llamado_1_au_au}
+{objetivos_especificos_llamado_2_au_au}
+{objetivos_especificos_llamado_3_au_au}
+NOMENCLATURA
+OBJETO
+CONCURSO ABIERTO N° {cod_nomenclatura_proceso_au_au}
+{desc_objeto_contratacion_au_au}
+ACTO RECEPCIÓN VOLUNTAD DE PARTICIPAR Y OFERTA
+El Acto Único de Recepción y Apertura de sobres contentivos de las Manifestaciones de Voluntad, Documentos de Calificación y Ofertas, se celebrará en la fecha, hora y lugar que se indican a continuación:
+Día: {fec_acto_recep_aper_sobres_au_au}
+Hora: {hora_acto_recep_aper_au_au}
+Lugar: {dir_fiscal_ente}
+DISPONIBILIDAD DEL PLIEGO DE CONDICIONES
+El Pliego de Condiciones, que contiene todos los requisitos y especificaciones del proceso, estará disponible para los interesados bajo las siguientes condiciones:
+Dirección para retirar: {direccion_retiro_pliego_au_au}
+Plazo de disponibilidad: Desde el {fec_inicio_disponibilidad_pliego_au_au} hasta el {fec_fin_disponibilidad_pliego_au_au}.
+Horario de atención: {horario_retiro_pliego_au_au}.
+Contacto:
+-Correo electrónico: {correo_comision}
+-Teléfono: {telefono_comision}
+{pliego_costo_au_au}
+Requisitos para el retiro: Los interesados deberán presentar el comprobante de pago (si aplica) y una comunicación solicitando formalmente el retiro del pliego, identificada con los datos de la empresa y del representante legal o persona autorizada.
+PERÍODO DE ACLARATORIAS
+Se establece el siguiente cronograma para las solicitudes y respuestas de aclaratorias sobre el contenido del pliego:
+Plazo para Solicitudes: Desde el {fec_solicitud_aclaratorias_au_au} hasta el {fec_respuesta_aclaratorias_au_au}, en el horario comprendido de {horario_retiro_pliego}.
+Plazo para Respuestas: Las respuestas a las aclaratorias serán notificadas a todos los participantes a más tardar el día {fec_respuesta_aclaratorias_au_au}.
+INFORMACIÓN PARA ADQUIRIR EL PLIEGO DE CONDICIONES
+La participación en este procedimiento implica la aceptación plena de todas las condiciones establecidas en el Pliego de Condiciones.
+El Ente Contratante se reserva el derecho de tomar las decisiones que, conforme a la Ley, estime convenientes para el resguardo de sus intereses, incluyendo la potestad de modificar, suspender, dar por terminado o declarar desierto el proceso, sin que ello genere derecho a reclamo o indemnización por parte de los participantes.
+En caso de no poder asistir personalmente el representante legal de la empresa participante, dicha solicitud, deberá ir acompañada por carta de AUTORIZACIÓN otorgada por el representante legal y fotocopia de la cédula de identidad de la persona que retirará el pliego.
+La Comisión de Contrataciones Públicas podrá modificar el Pliego de Condiciones, suspender ó reponer el proceso de contratación, rechazar las ofertas que no se ajusten a las condiciones exigidas; declarar desierto el proceso, darlo por terminado, ampliar los lapsos y/o tomar cualquier decisión que estime conveniente a sus intereses, sin que en ningún caso haya lugar a reclamo o indemnización por parte de los participantes.
+COMISIÓN DE CONTRATACIONES PÚBLICAS
+{nom_ente_contratante}

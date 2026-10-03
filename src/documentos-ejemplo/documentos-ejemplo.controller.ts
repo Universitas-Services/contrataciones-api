@@ -84,7 +84,7 @@ export class DocumentosEjemploController {
   @ApiOperation({
     summary: 'Cargar un documento de ejemplo',
     description:
-      'Sube el nombre y la imagen en una sola llamada (JPG, PNG o WEBP, máximo 5 MB). ' +
+      'Sube el nombre y el archivo en una sola llamada (JPG, PNG, WEBP, PDF o DOCX, máximo 10 MB). ' +
       'Si no se envía código, se asigna el siguiente de la serie: documento-01, documento-02…',
   })
   @ApiConsumes('multipart/form-data')
@@ -107,8 +107,8 @@ export class DocumentosEjemploController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }), // 5MB
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }), // 10MB
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|pdf|docx|doc)$/ }),
         ],
       }),
     )
@@ -133,8 +133,9 @@ export class DocumentosEjemploController {
   @Roles('UNIVERSITAS')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({
-    summary: 'Reemplazar la imagen de un documento de ejemplo',
-    description: 'Conserva el código y los datos; sólo cambia la imagen.',
+    summary: 'Reemplazar el archivo de un documento de ejemplo',
+    description:
+      'Conserva el código y los datos; sólo cambia el archivo (JPG, PNG, WEBP, PDF o DOCX, máximo 10 MB).',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -149,8 +150,8 @@ export class DocumentosEjemploController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }),
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/ }),
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }), // 10MB
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|pdf|docx|doc)$/ }),
         ],
       }),
     )

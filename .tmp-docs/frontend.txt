@@ -1,0 +1,333 @@
+Actividades Previas Requerimiento:
+
+Título principal: 
+Elaboración de Actividades Previas
+Complete los datos justificativos, técnicos y estratégicos que sustentan la necesidad de la contratación para generar el documento oficial 
+
+📑 Estructura del Stepper Web: Formulario de Actividades Previa
+
+📍 Paso 1: Identificación y responsables
+
+Identificación y responsables Designe a la dependencia solicitante y registre las referencias de la Programación Anual de Compras ante el Servicio Nacional de Contrataciones (SNC).
+
+Contenido de la advertencia: Los datos de la Unidad Usuaria y responsable se han sincronizado automáticamente desde la opción que seleccionó en la fase 0.
+
+Indique el número de referencia del requerimiento asignado en la Programación Anual de Compras registrada ante el Servicio Nacional de Contratistas (SNC).
+Artículos 38.1 LCP;  7 RLCP; 38. 5, 91.1. 9 LOCGR; 24 LIT.a NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de llenado: Input Text.
+Variable: num_referencia_snc_au_au
+Tipo de dato: Varchar (100)
+MARCADOR EN AUTOMATIZACIÓN: {num_referencia_snc_au_au}
+Marcador en los siguientes documentos: 
+Requerimiento
+
+¿El requerimiento original registrado ante el SNC ha sido objeto de alguna modificación posterior?
+Artículos 38.2 LCP; 7 RLCP; 38.5, 91.1.9 LOCGR; 24 LIT.a NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de campo: botones SÍ/NO
+Variable: modif_requerimiento_snc_au_au
+Tipo de dato: (Boolean)
+MARCADOR EN AUTOMATIZACIÓN: {modif_requerimiento_snc_au_au}
+Marcador en los siguientes documentos:
+Requerimiento
+
+Lógica de Frontend:  Si la variable modif_requerimiento_snc_au_au = SI, entonces mostrar la siguiente pregunta:
+
+Indique el Número de Referencia de la Modificación registrada ante el SNC.
+Artículos 38.2 LCP; 7 RLCP; 38.5, 91.1.9 LOCGR; 24 LIT.a NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de llenado: Input Text.
+Variable: numero_modif_requerimiento_snc_au_au
+Tipo de dato: Varchar (100)
+MARCADOR EN AUTOMATIZACIÓN: {numero_modif_requerimiento_snc_au_au}
+Marcador en los siguientes documentos: 
+Requerimiento
+
+_________________________________________________________________
+
+📍 Paso 2: Objeto y justificación
+
+Objeto y justificación del requerimiento  Describa el propósito de la contratación, establezca sus ventajas institucionales y su vinculación estratégica.
+
+Justifique la necesidad de la contratación, indicando el beneficio institucional esperado y su vinculación directa con las metas del Plan Operativo Anual (POA).
+Artículos 7 RLCP; 12 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de Campo: Área de Texto.
+Variable: justificacion_necesidad_contratacion_au_au
+Tipo de dato: Varchar (255)
+MARCADOR EN AUTOMATIZACIÓN: {justificacion_necesidad_contratacion_au_au}
+Marcador en los siguientes documentos:  
+Requerimiento
+
+Describa las ventajas técnicas y económicas que justifican esta contratación
+Ejemplo: mejor tecnología, ahorro de costos o mayor durabilidad.
+Artículos 11, 12, 13 LCP; 7 RLCP; 17, 22 LCC; 12 NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de Campo: Área de Texto.
+Variable: justificacion_ventajas_au_au
+Tipo de dato: Varchar (255)
+MARCADOR EN AUTOMATIZACIÓN: {justificacion_ventajas_au_au}Marcador en los siguientes documentos:  
+Requerimiento
+
+¿La contratación es de ejecución plurianual? 
+Artículo 107.2 RLCP;  17, 22, 65 LCC; 38. 5, 91. 1. 9. 29  LOCGR; 10 NORMAS DE CONTROL INTERNO NORMAS DE CONTROL INTERNO SUNAI
+
+Checkbox: [SI/NO]
+Variable: condicion_plurianual_au_au
+Tipo de dato: Boolean
+
+LÓGICA DE FRONTEND:
+Si condicion_plurianual_au_au = SI  se debe mostrar en pantalla debajo de la respuesta el siguiente mensaje:
+
+MARCADOR EN AUTOMATIZACIÓN: {condicion_plurianual_au_au}Marcador en los siguientes documentos:
+Acta de inicio
+
+Lógica de Frontend:  Si la variable {tipo_objeto_contratacion} = Obras, entonces mostrar la siguiente pregunta:
+
+¿Cuenta con el proyecto correspondiente aprobado por la instancia técnica competente?
+Artículos 24, literal k, Normas NORMAS DE CONTROL INTERNO SUNAI; 19 de LOPA.
+Tipo de campo: botones SÍ/NO
+Variable: proyecto_aprobado_au_au
+Tipo de dato: (Boolean)
+MARCADOR EN AUTOMATIZACIÓN: {proyecto_aprobado_au_au}
+Marcador en los siguientes documentos:
+Requerimiento
+
+¿Es su requerimiento técnico compatible con la capacidad operativa y escala productiva de las PyMES y Cooperativas? 
+Artículos 11 al 13 de la LCP y 9 al 10 del RLCP,
+Tipo de campo: Botones SÍ / NO (Toggle / Radio Buttons).
+Variable: permite_pymes_cooperativas_au_au
+Tipo de dato: Boolean
+MARCADOR EN AUTOMATIZACIÓN: {permite_pymes_cooperativas_au_au}
+Requerimiento
+
+Lógica de Frontend:  Si la variable permite_pymes_cooperativas_au_au = NO se despliega las siguientes pregunta
+Indique la justificación del por qué NO se permitirá la participación de PyMES y cooperativas.
+Artículos 11 al 13 de la LCP y 9 al 10 del RLCP,
+Tipo de llenado: Input Text
+Variable: justificacion_permite_pymes_cooperativas_au_au
+Tipo de dato: Varchar
+
+MARCADOR EN AUTOMATIZACIÓN: {justificacion_permite_pymes_cooperativas_au_au}Marcador en los siguientes documentos: 
+
+Para esta contratación ¿es viable agruparla en un solo procedimiento o utilizar la figura del contrato marco?
+Artículo 107.6 RLCP; 17, 22, 65 LCC; 38. 5, 91. 1. 9. 29  LOCGR; 11, 24.J NORMAS DE CONTROL INTERNO NORMAS DE CONTROL INTERNO SUNAI
+Tipo de campo: botones SÍ/NO
+Variable: viabilidad_contrato_marco_au_au
+Tipo de dato: Boolean
+MARCADOR EN AUTOMATIZACIÓN: {viabilidad_contrato_marco_au_au}Marcador en los siguientes documentos:  
+Requerimiento
+Acta de inicio
+
+LÓGICA DE FRONTEND:
+SI viabilidad_contrato_marco_au_au = SI desplegar la siguiente pregunta:
+
+Deje constancia de la evaluación sobre la viabilidad de agrupar esta contratación o utilizar un contrato marco.
+Artículo 107.6 RLCP; 17, 22, 65 LCC; 38. 5, 91. 1. 9. 29  LOCGR; 11, 24.J NORMAS DE CONTROL INTERNO NORMAS DE CONTROL INTERNO SUNAI
+
+Tipo de llenado: Input Text.
+Variable: justificacion_contrato_marco_au_au
+Tipo de dato: Varchar (255)
+Lógica para automatización en el documento Acta de InicioSI viabilidad_contrato_marco_au_au = SI, sustituir el marcador {viabilidad_contrato_marco_au_au} por:
+Se deja constancia de la evaluación realizada en las actividades previas respecto a la posibilidad de agrupar la presente contratación o utilizar la figura del contrato marco, según lo establecido en el Art. 24 (j) de las Normas SUNAI, concluyendo lo siguiente: {justificacion_contrato_marco_au_au}SI viabilidad_contrato_marco_au_au = NO, sustituir el marcador {viabilidad_contrato_marco_au_au} por:
+Se deja constancia de la evaluación realizada en las actividades previas respecto a la posibilidad de agrupar la presente contratación o utilizar la figura del contrato marco, según lo establecido en el Art. 24 (j) de las Normas SUNAI, concluyendo que no resulta viable ni procedente su aplicación dadas las características y necesidades específicas de esta contratación.
+
+___________________________________________________________________
+
+📍 Paso 3: Logística de ejecución
+
+Logística y Condiciones de ejecución  Determine los plazos, certificaciones presupuestarias, ubicación y los requerimientos logísticos especiales para el cumplimiento del contrato.
+
+Indique la fecha del estudio de mercado o análisis de costos que sustenta el presupuesto base de esta contratación.
+Artículos 59 LCP y 24 literal "c" de las Normas SUNAI.
+Tipo de Campo: Selector de Fecha (Datepicker).
+Variable: fec_estudio_mercado_au_au
+Tipo de dato: Date
+MARCADOR EN AUTOMATIZACIÓN: {fec_estudio_mercado_au_au}Marcador en los siguientes documentos:
+Requerimiento
+
+Indique el número de referencia de la Certificación de Disponibilidad Presupuestaria (CDP) que garantiza la suficiencia de fondos para el presente requerimiento.
+Artículos 74 LCP; 7, 94 RLCP; 38.1.2, 91.1.12 LOCGR; 24 LIT.d NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de llenado: Input Text.
+Variable: num_certificacion_presupuestaria_au_au
+Tipo de dato: Varchar (100)
+MARCADOR EN AUTOMATIZACIÓN: {num_certificacion_presupuestaria_au_au}
+Marcador en los siguientes documentos: 
+Requerimiento
+
+Indique el plazo de ejecución o tiempo de entrega (en días) correspondiente a este procedimiento.
+Artículos 78.1 LCP; 17, 18, 22 LCC; 38.1.5, 91.1.9.29 LOCGR; 24 (e) NORMAS CONTROL INTERNO NORMAS DE CONTROL INTERNO SUNAI
+Tipo de llenado: Input numérico
+Variable: plazo_ejecucion_procedimiento_au_au
+Tipo de dato: Text.
+MARCADOR EN AUTOMATIZACIÓN: {plazo_ejecucion_procedimiento_au_au}Marcador en los siguientes documentos:
+Requerimiento
+
+Indique la ubicación geográfica y dirección exacta para la entrega de los bienes o ejecución del objeto (Estado, Municipio y Dirección), detallando las condiciones de acceso y logística (horarios, restricciones de carga/descarga o permisos especiales) que el oferente deba considerar para su propuesta.
+Artículos: 7 RLCP; 24 literal "e" NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de llenado: Input Text.
+Variable: lugar_logistica_ejecucion_au_au
+Tipo de dato: Varchar (500)
+MARCADOR EN AUTOMATIZACIÓN: {lugar_logistica_ejecucion_au_au}
+Marcador en los siguientes documentos: 
+Requerimiento
+
+¿La entrega o ejecución requiere de personal especializado, maquinaria de descarga o instalaciones específicas por parte del Ente?
+Artículos: 7 RLCP; 24 literal "b" NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de campo: botones SÍ/NO
+Variable: requiere_especializado_au_au
+Tipo de dato: (Boolean)
+MARCADOR EN AUTOMATIZACIÓN: {requiere_especializado_au_au}
+Marcador en los siguientes documentos: 
+Requerimiento
+
+Lógica de Frontend:  Si la variable requiere_especializado_au_au = SÍ  se despliega las siguientes pregunta:
+
+Describa detalladamente el personal, maquinaria o instalaciones necesarias.
+Tipo de llenado: TextArea (Alfanumérico).
+Variable: detalle_especializado_au_au
+Tipo de dato: Varchar (+500)
+MARCADOR EN AUTOMATIZACIÓN: {detalle_especializado_au_au}
+Marcador en los siguientes documentos: 
+Requerimiento
+
+LÓGICA DE AUTOMATIZACIÓN
+Si la variable requiere_especializado_au_au = SÍ, sustituir el marcador {requiere_especializado_au_au} por:
+El Ente Contratante proveerá los siguientes recursos específicos: {detalle_especializado_au_au}.
+
+Si la variable requiere_especializado_au_au = NO, sustituir el marcador {requiere_especializado_au_au} por:
+No aplica. El contratista deberá proveer la totalidad de los recursos técnicos, humanos y logísticos necesarios para la entrega o ejecución.
+
+¿Se requiere que los oferentes consignen muestras físicas para validar la calidad de los bienes o insumos, de conformidad con la normativa legal vigente para contrataciones públicas?
+Artículos: 66.17 LCP; 24 literal "b" NORMAS DE CONTROL INTERNO SUNAI.
+Tipo de llenado: botones SÍ/NO
+Variable: requiere_muestras_au_au
+Tipo de dato: (Boolean)
+MARCADOR EN AUTOMATIZACIÓN: {requiere_muestras_au_au}
+Marcador en los siguientes documentos: 
+Requerimiento
+
+Lógica de Frontend:  Si la variable requiere_muestras_au_au = SÍ  se despliega las siguiente pregunta:
+
+Describa detalladamente qué ítems requieren muestras, la cantidad de las mismas y el procedimiento técnico que se utilizará para su evaluación (Ej: pruebas de resistencia, validación de material, encendido, etc.).
+Tipo de llenado: TextArea (Alfanumérico).
+Variable: detalle_procedimiento_muestras_au_au
+Tipo de dato: Varchar (+500)
+MARCADOR EN AUTOMATIZACIÓN: {detalle_procedimiento_muestras_au_au}
+Marcador en los siguientes documentos: 
+Requerimiento
+
+LÓGICA DE AUTOMATIZACIÓN
+Si la variable requiere_muestras_au_au = SÍ, sustituir el marcador {requiere_muestras_au_au} por:
+A los fines de garantizar el cumplimiento de los estándares de calidad, se exigirá la presentación de muestras físicas bajo las siguientes condiciones: {detalle_procedimiento_muestras_au_au}. Dichas muestras serán evaluadas de forma objetiva previa al otorgamiento de la conformidad técnica.
+
+Si la variable requiere_muestras_au_au = NO, sustituir el marcador {requiere_muestras_au_au} por:
+No aplica. La validación de la calidad y cumplimiento se realizará exclusivamente mediante el análisis de las especificaciones técnicas y certificaciones consignadas en la oferta técnica.
+
+___________________________________________________________________
+📍 Paso 4: Promoción económica
+
+Medidas de promoción económica  Configure los mecanismos de preferencia e incentivos legales destinados a promover la participación local, el Valor Agregado Nacional y las PyMES.
+
+¿Desea activar la aplicación de las medidas temporales de promoción del desarrollo económico para favorecer la participación de PyMES, Cooperativas y Nuevos Emprendimientos en este procedimiento, de conformidad con los Artículos 11 y 12 de la LCP y 9 y 10 del RLCP? 
+Artículos 11, 12 y 13 de la Ley de Contrataciones Públicas; Artículos 9 y 10 del Reglamento de la Ley de Contrataciones Públicas; Norma 34 de las Normas de Control Interno de la SUNAI 2025.
+
+Tipo de campo: Selector SÍ/NO (Radio Button / Toggle) 
+Variable: activa_promocion_economica_au_au 
+Tipo de dato: Boolean
+MARCADOR EN AUTOMATIZACIÓN: {activa_promocion_economica_au_au}
+
+Lógica de Frontend:  Si la variable activa_promocion_economica_au_au = NO  se despliega la siguiente advertencia
+
+⚠️ Aviso de Control Interno:Al marcar NO, usted declara que el objeto de esta contratación no se encuentra sujeto a medidas de protección especial para PyMES o Cooperativas según los planes de desarrollo del Ejecutivo Nacional. El pliego se generará bajo criterios ordinarios de evaluación.
+
+Automatización de Salida: Se disparará la inyección automática de la cláusula de "Régimen General de Evaluación" en la Sección XI del Pliego de Condiciones de salida.
+
+Lógica de Frontend:  Si la variable activa_promocion_economica_au_au = SI  se despliegan de forma interactiva los submódulos A, B y C
+
+SUB-MÓDULO A: VALOR AGREGADO NACIONAL (VAN)
+
+¿Se incorporarán los mecanismos de preferencia por Valor Agregado Nacional (VAN) en la matriz de evaluación del procedimiento competitivo? 
+Artículos 13 y 22 LCP; 15 y 16 de la Ley Constitucional contra la Guerra Económica para la Racionalidad y Uniformidad en la Adquisición de Bienes, Servicios y Obras Públicas.
+Tipo de campo: Botones SÍ / NO (Toggle / Radio Buttons).
+Variable: requiere_van_au_au
+Tipo de dato: Boolean
+MARCADOR EN AUTOMATIZACIÓN: {requiere_van_au_au}
+
+Lógica de Frontend:  Si la variable requiere_van_au_au = SÍ se despliega las siguientes pregunta
+Indique la puntuación máxima (bonificación adicional) que se otorgará al oferente que presente el mayor porcentaje de Valor Agregado Nacional (VAN) en su propuesta. 
+Artículos 13 LCP; 15 de la Ley Constitucional contra la Guerra Económica para la Racionalidad y Uniformidad en la Adquisición de Bienes, Servicios y Obras Públicas.
+Tipo de campo: Input numérico.
+Variable: puntaje_van_au_au
+Tipo de dato: Integer
+Máximo 10ptos
+MARCADOR EN AUTOMATIZACIÓN: {puntaje_van_au_au}
+
+Regla de Validación: El valor ingresado debe ser mayor a 0.00
+NOTA: Dato de Entrada Carga de contenido de los sobres 1 y 2: El sistema debe tener ya automáticamente como disponible el contenido del VAN en sobre 2 emitido bajo las especificaciones técnicas del pliego.
+
+SUB-MÓDULO B: PREFERENCIA TERRITORIAL (REGIONALIZACIÓN)
+
+¿Desea otorgar una bonificación de puntaje a los oferentes domiciliados localmente para fomentar el desarrollo económico y social del municipio o estado sede del Ente Contratante? 
+Artículo 22 de la Ley de Contrataciones Públicas (Fomento del desarrollo del entorno local).
+Tipo de campo: Selector SÍ/NO (Radio Button) 
+Variable: ind_pref_local_au_au 
+Tipo de dato: Boolean
+MARCADOR EN AUTOMATIZACIÓN: {ind_pref_local_au_au}
+
+Lógica de Frontend:  Si la variable ind_pref_local_au_au = SÍ se despliega la siguiente pregunta
+
+Indique el puntaje adicional que se otorgará al oferente que certifique estar domiciliado fiscal y comercialmente en el Municipio o Estado sede del Ente Contratante. 
+Artículo 22 de la Ley de Contrataciones Públicas; Norma 24 de las Normas de Control Interno de la SUNAI 2025.
+Tipo de campo: Input numérico decimal 
+Variable: puntuacion_bono_local_au_au 
+Tipo de dato: Decimal(5,2)
+
+MARCADOR EN AUTOMATIZACIÓN: {puntuacion_bono_local_au_au}
+
+Dato de Entrada Post-Oferta (Fase 2): Se verificará físicamente que la dirección fiscal indicada en el Registro Único de Información Fiscal (RIF) vigente y la Licencia de Actividades Económicas (Patente Municipal) correspondan a la jurisdicción territorial configurada para el Ente.
+
+SUB-MÓDULO C: CATEGORÍA DE SUJETO (PROTECCIÓN A PyMES Y COOPERATIVAS)
+
+¿Desea asignar una puntuación adicional a las pequeñas, medianas industrias, cooperativas y emprendimientos del país para democratizar la adjudicación de contratos públicos? 
+Artículo 11 de la Ley de Contrataciones Públicas.
+Tipo de campo: Selector SÍ/NO (Radio Button) 
+Variable: ind_bono_sujeto_au_au 
+Tipo de dato: Boolean
+MARCADOR EN AUTOMATIZACIÓN: {ind_bono_sujeto_au_au}
+
+Comportamiento UI: Si se selecciona SÍ, se habilita en caliente la pregunta N° 6 para definir el puntaje. Si se selecciona NO, se oculta y se deshabilita.
+
+Indique el puntaje adicional que se otorgará a los proponentes que acrediten legalmente su condición de Pequeña y Mediana Industria (PyME), Cooperativa, Empresa de Propiedad Social o Unidad Productiva Familiar. 
+Artículo 11 de la Ley de Contrataciones Públicas; Norma 34 de las Normas de Control Interno de la SUNAI 2025.
+Tipo de campo: Input numérico decimal 
+Variable: puntuacion_bono_sujeto_au_au 
+Tipo de dato: Decimal(5,2)
+MARCADOR EN AUTOMATIZACIÓN: {puntuacion_bono_sujeto_au_au}
+Dato de Entrada Post-Oferta (Fase 2): El oferente deberá presentar en el Sobre 1 el Certificado de Registro de PyME vigente (emitido por el Ministerio competente) o su debida inscripción y solvencia ante la Superintendencia Nacional de Cooperativas (SUNACOOP).
+
+_________________________________________________________________________
+
+Botones debajo del formulario
+
+[Guardar borrador] 
+
+[Crear las actividades previa]
+LÓGICAS DE LOS BOTONES 
+
+Variable: estado_actividades_previas_au_au
+Botón [Guardar borrador]: Siempre guarda la data actual sin validaciones estrictas y actualiza el estado a BORRADOR. El botón de acción principal hace lo siguiente: 
+Botón de Acción Principal: [ Crear Actividades Previas ] 
+
+Notificación para el usuario (Tooltip visual al pasar el cursor si el botón está bloqueado):
+Faltan datos por llenar. Completa el formulario para habilitar esta acción.
+Lógica del Sistema (Redacción técnica para tu documentación):
+Comportamiento UI/UX: El botón se mantiene en estado deshabilitado (disabled) por defecto. El frontend evalúa en tiempo real los inputs; una vez que detecta que ningún campo obligatorio se encuentra vacío, remueve el bloqueo y activa el botón. Acción de Guardado (On-Click): Al hacer clic, el sistema envía la data final, actualiza la variable estado_actividades_previas_au_au al valor 'COMPLETADO' y, consecuentemente, dispara el evento que habilita la generación del documento maestro "Actividades Previas" en el panel lateral.
+
+Al hacer clic en Crear las actividades previa se genera un pop-up de confirmación 
+
+19051114300
+
+Título
+¡Datos guardados con éxito!
+
+Ha completado con éxito los datos para generar el documento de actividades previa desde el panel principal 
+[Volver al panel]
+
+Y redirecciona al usuario a la pantalla de detalle de la fase 1 donde deberá indicar como disponible para generar el documento de actividades previas.

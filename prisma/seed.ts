@@ -9,6 +9,8 @@ import {
   EstadoMicromodulo,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { TEXTOS_NORMATIVA_GLOBAL } from './data/normativa-global.data';
+import { CLAUSULAS_GENERICAS_SEED } from './data/clausulas-genericas.data';
 
 const prisma = new PrismaClient();
 
@@ -720,38 +722,11 @@ async function main() {
   console.log('📚 Creando Biblioteca de Normativa...');
 
   await prisma.normativaGlobal.createMany({
-    data: [
-      {
-        adminUniversitasId: universitas.id,
-        textoNormativaCompleto:
-          'Artículo 55. Podrá procederse por Concurso Abierto cuando el contrato a ser otorgado sea por un monto estimado superior a veinte mil unidades de cuenta dinámica para el cálculo aritmético del umbral máximo y mínimo (20.000 U.C.A.U.).',
-        indActivo: true,
-      },
-      {
-        adminUniversitasId: universitas.id,
-        textoNormativaCompleto:
-          'Artículo 101. Se podrá proceder excepcionalmente por Contratación Directa, con independencia del monto de la contratación, en los supuestos taxativamente enumerados en el presente artículo, previo acto motivado de la máxima autoridad del órgano o ente contratante.',
-        indActivo: true,
-      },
-      {
-        adminUniversitasId: universitas.id,
-        textoNormativaCompleto:
-          'Artículo 113. El órgano o ente contratante declarará desierto el procedimiento de selección de contratistas cuando no se presenten ofertas, cuando ninguna de las ofertas presentadas resulte calificada, o cuando las ofertas presentadas no cumplan con las condiciones establecidas en el pliego de condiciones.',
-        indActivo: true,
-      },
-      {
-        adminUniversitasId: universitas.id,
-        textoNormativaCompleto:
-          'Artículo 68 del Reglamento. Los criterios de calificación técnica y la puntuación mínima aprobatoria deberán establecerse en el pliego de condiciones, garantizando su objetividad y su relación directa con el objeto de la contratación.',
-        indActivo: true,
-      },
-      {
-        adminUniversitasId: universitas.id,
-        textoNormativaCompleto:
-          'Norma 24, literal b, de las Normas de Control Interno SUNAI 2025. En las especificaciones técnicas deberán incorporarse las condiciones de soporte y garantías de idoneidad necesarias para proteger el patrimonio del Ente.',
-        indActivo: true,
-      },
-    ],
+    data: TEXTOS_NORMATIVA_GLOBAL.map((texto) => ({
+      adminUniversitasId: universitas.id,
+      textoNormativaCompleto: texto,
+      indActivo: true,
+    })),
   });
 
   await prisma.normativaEnte.createMany({
@@ -777,50 +752,11 @@ async function main() {
   console.log('📜 Creando Biblioteca de Cláusulas...');
 
   await prisma.clausulaGenerica.createMany({
-    data: [
-      {
-        adminUniversitasId: universitas.id,
-        tituloClausulaGenerica: 'Objeto del contrato',
-        cuerpoClausulaGenerica:
-          '<p>El presente contrato tiene por objeto {desc_objeto_contratacion_au_au}, conforme al pliego de condiciones del procedimiento {cod_nomenclatura_proceso_au_au}.</p>',
-      },
-      {
-        adminUniversitasId: universitas.id,
-        tituloClausulaGenerica: 'Monto del contrato',
-        cuerpoClausulaGenerica:
-          '<p>El monto total del contrato asciende a {monto_contrato_bs} bolívares, sujeto a las condiciones de pago establecidas en el pliego de condiciones.</p>',
-      },
-      {
-        adminUniversitasId: universitas.id,
-        tituloClausulaGenerica: 'Plazo de ejecución',
-        cuerpoClausulaGenerica:
-          '<p>El plazo de ejecución será de {plazo_ejecucion_procedimiento_au_au} días continuos, contados a partir de la fecha del acta de inicio.</p>',
-      },
-      {
-        adminUniversitasId: universitas.id,
-        tituloClausulaGenerica: 'Garantía de fiel cumplimiento',
-        cuerpoClausulaGenerica:
-          '<p>El contratista constituirá una garantía de fiel cumplimiento equivalente al {porcentaje_fiel_cumplimiento_au_au}% del monto del contrato, vigente hasta la recepción definitiva.</p>',
-      },
-      {
-        adminUniversitasId: universitas.id,
-        tituloClausulaGenerica: 'Anticipo',
-        cuerpoClausulaGenerica:
-          '<p>El Ente otorgará un anticipo equivalente al {porcentaje_anticipo_au_au}% del monto del contrato, previa constitución de la garantía correspondiente.</p>',
-      },
-      {
-        adminUniversitasId: universitas.id,
-        tituloClausulaGenerica: 'Compromiso de Responsabilidad Social',
-        cuerpoClausulaGenerica:
-          '<p>El contratista se obliga a cumplir el Compromiso de Responsabilidad Social equivalente al {porcentaje_responsabilidad_social_au_au}% del monto del contrato, bajo la modalidad {modalidad_crs_au_au}.</p>',
-      },
-      {
-        adminUniversitasId: universitas.id,
-        tituloClausulaGenerica: 'Resolución de controversias',
-        cuerpoClausulaGenerica:
-          '<p>Las controversias derivadas del presente contrato se resolverán por la vía administrativa; agotada esta, serán competentes los tribunales de la República Bolivariana de Venezuela.</p>',
-      },
-    ],
+    data: CLAUSULAS_GENERICAS_SEED.map((c) => ({
+      adminUniversitasId: universitas.id,
+      tituloClausulaGenerica: c.titulo,
+      cuerpoClausulaGenerica: c.cuerpo,
+    })),
   });
 
   await prisma.clausulaBibliotecaEnte.createMany({

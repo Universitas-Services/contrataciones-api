@@ -1,0 +1,44 @@
+name: Seed Database
+
+# Ejecución MANUAL: Actions → Seed Database → Run workflow
+# Útil cuando no se puede sembrar desde la PC (P1001 a Render).
+#
+# Requisito: secret del repo RENDER_DATABASE_URL =
+#   External Database URL de Render + ?sslmode=require
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Escribe SEED para confirmar (borra y recrea TODOS los datos)'
+        required: true
+        type: string
+
+jobs:
+  seed:
+    name: Run Prisma seed
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'SEED'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Prisma generate
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.RENDER_DATABASE_URL }}
+
+      - name: Run seed
+        run: npm run seed
+        env:
+          DATABASE_URL: ${{ secrets.RENDER_DATABASE_URL }}
+          SEED_FORCE: '1'
