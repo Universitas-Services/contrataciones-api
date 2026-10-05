@@ -721,12 +721,13 @@ export class GeneradorDocumentosService {
 
   /**
    * Obtiene datos mapeados para el Registro de Adquirentes del Pliego.
+   * Tokens alineados al prototipo registro-adquirentes-template.docx (14 marcadores).
+   * Gate: al menos un adquirente activo en el expediente.
    */
   async getDatosRegistroAdquirentes(expedienteId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
       where: { id: expedienteId },
       include: {
-        ente: true,
         comision: { include: { miembros: true } },
         adquirientesPliego: {
           where: { deletedAt: null },
@@ -738,26 +739,24 @@ export class GeneradorDocumentosService {
 
     if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
 
-    const { ente, comision } = expediente;
-
-    const getMiembro = (area: string, tipo?: string) => {
-      return (
-        comision?.miembros?.find(
-          (m) => m.areaRepresentacion === area && (!tipo || m.tipoMiembro === tipo),
-        ) || null
+    if (expediente.adquirientesPliego.length === 0) {
+      throw new BadRequestException(
+        'Debe registrar al menos un adquirente del pliego antes de generar el documento.',
       );
-    };
+    }
 
-    const secretario = getMiembro('SECRETARIO_A', 'MIEMBRO_PRINCIPAL');
+    const { comision } = expediente;
+
+    const secretario =
+      comision?.miembros?.find(
+        (m) => m.areaRepresentacion === 'SECRETARIO_A' && m.tipoMiembro === 'MIEMBRO_PRINCIPAL',
+      ) || null;
 
     return {
-      nom_ente_contratante: ente?.nombre || '___',
       cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
       desc_objeto_contratacion: expediente.descripcionObjeto || '___',
-      denominacion_comision: comision?.denominacionComision || '___',
       datos_designacion_comision: comision?.datosDesignacionComision || '___',
-      fec_acto_adquisicion_pliego: formatDateToSpanishLong(new Date()),
-      // Loop de adquirientes — nombre "adquirientes" con "i" para coincidir con la plantilla
+      // Loop {#adquirientes} — nombre con "i" para coincidir con la plantilla
       adquirientes: expediente.adquirientesPliego.map((adq, index) => ({
         numero: index + 1,
         fec_adquisicion_pliego_au_au: formatToDDMMYYYY(adq.fechaAdquisicion),
@@ -767,7 +766,8 @@ export class GeneradorDocumentosService {
           adq.direccionFiscalProveedorAdquirente || '___',
         telefono_proveedor_adquirente_au_au: adq.telefonoProveedorAdquirente || '___',
         correo_proveedor_adquirente_au_au: adq.correoProveedorAdquirente || '___',
-        datos_pago_pliego_au_au: adq.datosPagoPliego || '___',
+        // Opcional en el formulario: vacío si no hay depósito/transferencia
+        datos_pago_pliego_au_au: adq.datosPagoPliego || '',
       })),
       nom_completo_miembro_secretaria: secretario?.nombreCompletoMiembro || '___',
       cedula_miembro_secretaria: secretario?.cedulaMiembro || '___',
@@ -789,7 +789,8 @@ export class GeneradorDocumentosService {
 
   /**
    * Obtiene datos mapeados para el Acta de Recepción de Sobres.
-   * No incluye monto — en este acto solo se recibe físicamente el sobre.
+   * Solo 15 tokens de cabecera/comisión/firma. La tabla de oferentes queda vacía
+   * a propósito (imprimir y llenar a mano). Gate: ≥1 oferta activa.
    */
   async getDatosActaRecepcionSobres(expedienteId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
@@ -801,12 +802,18 @@ export class GeneradorDocumentosService {
         cronograma: true,
         ofertas: {
           where: { deletedAt: null },
-          orderBy: { createdAt: 'asc' },
+          select: { id: true },
         },
       },
     });
 
     if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
+
+    if (expediente.ofertas.length === 0) {
+      throw new BadRequestException(
+        'Debe registrar al menos un oferente antes de generar el Acta de Recepción de Sobres.',
+      );
+    }
 
     const { ente, comision, fasePreparatoria, cronograma } = expediente;
     const getMiembroPrincipal = (area: string) =>
@@ -814,42 +821,29 @@ export class GeneradorDocumentosService {
         (m) => m.areaRepresentacion === area && m.tipoMiembro === 'MIEMBRO_PRINCIPAL',
       ) || null;
 
+    const juridica = getMiembroPrincipal('AREA_JURIDICA');
+    const economica = getMiembroPrincipal('AREA_ECONOMICA_FINANCIERA');
+    const tecnica = getMiembroPrincipal('AREA_TECNICA');
+    const secretaria = getMiembroPrincipal('SECRETARIO_A');
+
     return {
-      nom_ente_contratante: ente?.nombre || '___',
-      cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
-      desc_objeto_contratacion: expediente.descripcionObjeto || '___',
-      denominacion_comision: comision?.denominacionComision || '___',
-      datos_designacion_comision: comision?.datosDesignacionComision || '___',
-      dir_fiscal_ente: ente?.direccionFiscal || '___',
+      hora_acto_recep_aper_au_au: fasePreparatoria?.horaActoRecepAper || '___',
       fec_acto_recep_aper_sobres_au_au: formatDateToSpanishLong(
         cronograma?.fechaActoRecepcionAperturaSobres,
       ),
-      hora_acto_recep_aper_au_au: fasePreparatoria?.horaActoRecepAper || '___',
-      loc_ciudad_ente: ente?.ciudad || '___',
-      // Loop con clave "adquirientes" para coincidir con {#adquirientes} de la plantilla
-      adquirientes: expediente.ofertas.map((of, index) => ({
-        numero: index + 1,
-        nombre_proveedor_oferente_au_au: of.nombreProveedorOferente || '___',
-        rif_proveedor_oferente_au_au: of.rifProveedorOferente || '___',
-        nombre_rep_legal_oferente_au_au: of.nombreRepLegalOferente || '___',
-        cedula_rep_legal_oferente_au_au: of.cedulaRepLegalOferente || '___',
-        num_sobres_entregados_au_au: of.numeroSobresEntregados,
-      })),
-      nom_completo_miembro_juridica:
-        getMiembroPrincipal('AREA_JURIDICA')?.nombreCompletoMiembro || '___',
-      cedula_miembro_juridica: getMiembroPrincipal('AREA_JURIDICA')?.cedulaMiembro || '___',
-      // Alias para {cedula_miembro_juridico} (sin "a") que aparece en el texto narrativo
-      cedula_miembro_juridico: getMiembroPrincipal('AREA_JURIDICA')?.cedulaMiembro || '___',
-      nom_completo_miembro_economica:
-        getMiembroPrincipal('AREA_ECONOMICA_FINANCIERA')?.nombreCompletoMiembro || '___',
-      cedula_miembro_economica:
-        getMiembroPrincipal('AREA_ECONOMICA_FINANCIERA')?.cedulaMiembro || '___',
-      nom_completo_miembro_tecnica:
-        getMiembroPrincipal('AREA_TECNICA')?.nombreCompletoMiembro || '___',
-      cedula_miembro_tecnica: getMiembroPrincipal('AREA_TECNICA')?.cedulaMiembro || '___',
-      nom_completo_miembro_secretaria:
-        getMiembroPrincipal('SECRETARIO_A')?.nombreCompletoMiembro || '___',
-      cedula_miembro_secretaria: getMiembroPrincipal('SECRETARIO_A')?.cedulaMiembro || '___',
+      dir_fiscal_ente: ente?.direccionFiscal || '___',
+      nom_ente_contratante: ente?.nombre || '___',
+      datos_designacion_comision: comision?.datosDesignacionComision || '___',
+      nom_completo_miembro_juridica: juridica?.nombreCompletoMiembro || '___',
+      cedula_miembro_juridica: juridica?.cedulaMiembro || '___',
+      nom_completo_miembro_economica: economica?.nombreCompletoMiembro || '___',
+      cedula_miembro_economica: economica?.cedulaMiembro || '___',
+      nom_completo_miembro_tecnica: tecnica?.nombreCompletoMiembro || '___',
+      cedula_miembro_tecnica: tecnica?.cedulaMiembro || '___',
+      nom_completo_miembro_secretaria: secretaria?.nombreCompletoMiembro || '___',
+      cedula_miembro_secretaria: secretaria?.cedulaMiembro || '___',
+      cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
+      desc_objeto_contratacion: expediente.descripcionObjeto || '___',
     };
   }
 
@@ -868,7 +862,8 @@ export class GeneradorDocumentosService {
 
   /**
    * Obtiene datos mapeados para el Acta de Apertura de Sobres.
-   * Incluye los montos de cada oferta (se abre el sobre en este acto).
+   * Solo 15 tokens de cabecera/comisión/firma. La tabla de resultados queda vacía
+   * a propósito (imprimir y llenar a mano). Gate: ≥1 oferta activa.
    */
   async getDatosActaAperturaSobres(expedienteId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
@@ -880,12 +875,18 @@ export class GeneradorDocumentosService {
         cronograma: true,
         ofertas: {
           where: { deletedAt: null },
-          orderBy: { createdAt: 'asc' },
+          select: { id: true },
         },
       },
     });
 
     if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
+
+    if (expediente.ofertas.length === 0) {
+      throw new BadRequestException(
+        'Debe registrar al menos un oferente antes de generar el Acta de Apertura de Sobres.',
+      );
+    }
 
     const { ente, comision, fasePreparatoria, cronograma } = expediente;
     const getMiembroPrincipal = (area: string) =>
@@ -893,44 +894,29 @@ export class GeneradorDocumentosService {
         (m) => m.areaRepresentacion === area && m.tipoMiembro === 'MIEMBRO_PRINCIPAL',
       ) || null;
 
+    const juridica = getMiembroPrincipal('AREA_JURIDICA');
+    const economica = getMiembroPrincipal('AREA_ECONOMICA_FINANCIERA');
+    const tecnica = getMiembroPrincipal('AREA_TECNICA');
+    const secretaria = getMiembroPrincipal('SECRETARIO_A');
+
     return {
-      nom_ente_contratante: ente?.nombre || '___',
-      cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
-      desc_objeto_contratacion: expediente.descripcionObjeto || '___',
-      denominacion_comision: comision?.denominacionComision || '___',
-      datos_designacion_comision: comision?.datosDesignacionComision || '___',
-      dir_fiscal_ente: ente?.direccionFiscal || '___',
+      hora_acto_recep_aper_au_au: fasePreparatoria?.horaActoRecepAper || '___',
       fec_acto_recep_aper_sobres_au_au: formatDateToSpanishLong(
         cronograma?.fechaActoRecepcionAperturaSobres,
       ),
-      hora_acto_recep_aper_au_au: fasePreparatoria?.horaActoRecepAper || '___',
-      loc_ciudad_ente: ente?.ciudad || '___',
-      // Loop con clave "adquirientes" para coincidir con {#adquirientes} de la plantilla
-      adquirientes: expediente.ofertas.map((of, index) => ({
-        numero: index + 1,
-        nombre_proveedor_oferente_au_au: of.nombreProveedorOferente || '___',
-        rif_proveedor_oferente_au_au: of.rifProveedorOferente || '___',
-        nombre_rep_legal_oferente_au_au: of.nombreRepLegalOferente || '___',
-        cedula_rep_legal_oferente_au_au: of.cedulaRepLegalOferente || '___',
-        datos_registro_mercantil_proveedor_oferente_au_au:
-          of.datosRegistroMercantilProveedorOferente || '___',
-        monto_oferta_bs_au_au: formatCurrencyVE(Number(of.montoOfertaBs)),
-      })),
-      nom_completo_miembro_juridica:
-        getMiembroPrincipal('AREA_JURIDICA')?.nombreCompletoMiembro || '___',
-      cedula_miembro_juridica: getMiembroPrincipal('AREA_JURIDICA')?.cedulaMiembro || '___',
-      // Alias para el marcador con typo {cedula_miembro_juridico} (sin "a") que aparece en el texto narrativo
-      cedula_miembro_juridico: getMiembroPrincipal('AREA_JURIDICA')?.cedulaMiembro || '___',
-      nom_completo_miembro_economica:
-        getMiembroPrincipal('AREA_ECONOMICA_FINANCIERA')?.nombreCompletoMiembro || '___',
-      cedula_miembro_economica:
-        getMiembroPrincipal('AREA_ECONOMICA_FINANCIERA')?.cedulaMiembro || '___',
-      nom_completo_miembro_tecnica:
-        getMiembroPrincipal('AREA_TECNICA')?.nombreCompletoMiembro || '___',
-      cedula_miembro_tecnica: getMiembroPrincipal('AREA_TECNICA')?.cedulaMiembro || '___',
-      nom_completo_miembro_secretaria:
-        getMiembroPrincipal('SECRETARIO_A')?.nombreCompletoMiembro || '___',
-      cedula_miembro_secretaria: getMiembroPrincipal('SECRETARIO_A')?.cedulaMiembro || '___',
+      dir_fiscal_ente: ente?.direccionFiscal || '___',
+      nom_ente_contratante: ente?.nombre || '___',
+      datos_designacion_comision: comision?.datosDesignacionComision || '___',
+      nom_completo_miembro_juridica: juridica?.nombreCompletoMiembro || '___',
+      cedula_miembro_juridica: juridica?.cedulaMiembro || '___',
+      nom_completo_miembro_economica: economica?.nombreCompletoMiembro || '___',
+      cedula_miembro_economica: economica?.cedulaMiembro || '___',
+      nom_completo_miembro_tecnica: tecnica?.nombreCompletoMiembro || '___',
+      cedula_miembro_tecnica: tecnica?.cedulaMiembro || '___',
+      nom_completo_miembro_secretaria: secretaria?.nombreCompletoMiembro || '___',
+      cedula_miembro_secretaria: secretaria?.cedulaMiembro || '___',
+      cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
+      desc_objeto_contratacion: expediente.descripcionObjeto || '___',
     };
   }
 
@@ -1610,7 +1596,174 @@ export class GeneradorDocumentosService {
     };
   }
 
+  /**
+   * Causal Art. 113 LCP → 1 | 2 | 3.
+   * Acepta el texto completo del desplegable o variantes sin el prefijo "N.".
+   */
+  private resolveCausalDesierto(causal: string | null | undefined): 1 | 2 | 3 | null {
+    if (!causal?.trim()) return null;
+    const t = causal.trim();
+    if (t.startsWith('1.') || /ninguna oferta haya sido presentada/i.test(t)) return 1;
+    if (t.startsWith('2.') || /todas las ofertas resulten rechazadas/i.test(t)) return 2;
+    if (t.startsWith('3.') || /perjuicio al contratante/i.test(t)) return 3;
+    return null;
+  }
+
+  /**
+   * Tokens del Informe de Recomendación Desierto #1
+   * (ninguna oferta presentada). Plantilla: informe-desierto-1-template.docx
+   */
+  async getDatosInformeDesierto1(expedienteId: string) {
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      include: {
+        ente: true,
+        comision: { include: { miembros: true } },
+        modalidad: true,
+        cronograma: true,
+        fasePreparatoria: true,
+      },
+    });
+
+    if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
+
+    if (!expediente.declaratoriaDesierto) {
+      throw new BadRequestException(
+        'El expediente no está declarado desierto. No se puede generar el Informe Desierto #1.',
+      );
+    }
+
+    const causalNum = this.resolveCausalDesierto(expediente.causalDeclaratoriaDesierto);
+    if (causalNum !== 1) {
+      throw new BadRequestException(
+        'El Informe Desierto #1 solo aplica cuando la causal es "1. Ninguna oferta haya sido presentada."',
+      );
+    }
+
+    const { ente, comision, modalidad, cronograma, fasePreparatoria } = expediente;
+    const getMiembroPrincipal = (area: string) =>
+      comision?.miembros?.find(
+        (m) => m.areaRepresentacion === area && m.tipoMiembro === 'MIEMBRO_PRINCIPAL',
+      ) || null;
+
+    const juridica = getMiembroPrincipal('AREA_JURIDICA');
+    const economica = getMiembroPrincipal('AREA_ECONOMICA_FINANCIERA');
+    const tecnica = getMiembroPrincipal('AREA_TECNICA');
+    const secretaria = getMiembroPrincipal('SECRETARIO_A');
+
+    const formatBs = (num: number) =>
+      num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // En el narrativo: "numeral {causal_...}" → preferir "1" si viene el texto completo
+    const causalToken = expediente.causalDeclaratoriaDesierto?.trim().startsWith('1.')
+      ? '1'
+      : expediente.causalDeclaratoriaDesierto?.trim() || '1';
+
+    return {
+      cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
+      desc_objeto_contratacion: expediente.descripcionObjeto || '___',
+      loc_ciudad_ente: ente?.ciudad || '___',
+      fec_limite_evaluacion_au_au: formatDateToSpanishLong(cronograma?.fechaLimiteEvaluacion),
+      nom_ente_contratante: ente?.nombre || '___',
+      nom_completo_miembro_juridica: juridica?.nombreCompletoMiembro || '___',
+      cedula_miembro_juridico: juridica?.cedulaMiembro || '___',
+      nom_completo_miembro_economica: economica?.nombreCompletoMiembro || '___',
+      cedula_miembro_economica: economica?.cedulaMiembro || '___',
+      nom_completo_miembro_tecnica: tecnica?.nombreCompletoMiembro || '___',
+      cedula_miembro_tecnica: tecnica?.cedulaMiembro || '___',
+      nom_completo_miembro_secretaria: secretaria?.nombreCompletoMiembro || '___',
+      cedula_miembro_secretaria: secretaria?.cedulaMiembro || '___',
+      datos_designacion_comision: comision?.datosDesignacionComision || '___',
+      monto_estimado_bs: formatBs(Number(modalidad?.montoEstimadoBs ?? 0)),
+      valor_ucau_base: formatBs(Number(modalidad?.valorUcauBase ?? 0)),
+      fec_acta_inicio_au_au: formatDateToSpanishLong(
+        expediente.fechaActaInicio ?? fasePreparatoria?.fechaActaInicio,
+      ),
+      // EntePublico aún no tiene URL web; placeholder hasta que exista el campo
+      pag_web_ente: '___',
+      fec_llamado_participar_au_au: formatDateToSpanishLong(cronograma?.fechaLlamadoParticipar),
+      fec_inicio_disponibilidad_pliego_au_au: formatDateToSpanishLong(
+        cronograma?.fechaInicioDisponibilidadPliego,
+      ),
+      fec_fin_disponibilidad_pliego_au_au: formatDateToSpanishLong(
+        cronograma?.fechaFinDisponibilidadPliego,
+      ),
+      fec_acto_recep_aper_sobres_au_au: formatDateToSpanishLong(
+        cronograma?.fechaActoRecepcionAperturaSobres,
+      ),
+      hora_acto_recep_aper_au_au: fasePreparatoria?.horaActoRecepAper || '___',
+      causal_declaratoria_desierto_au_au: causalToken,
+      justificacion_declaratoria_desierto_au_au:
+        expediente.justificacionDeclaratoriaDesierto || '___',
+    };
+  }
+
+  /**
+   * Datos del informe: si el expediente está desierto, enruta por causal.
+   * Hoy solo Desierto #1; #2/#3 responden 400 hasta mañana.
+   */
+  async getDatosInformeRecomendacionSegunCaso(expedienteId: string) {
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      select: {
+        id: true,
+        declaratoriaDesierto: true,
+        causalDeclaratoriaDesierto: true,
+      },
+    });
+
+    if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
+
+    if (expediente.declaratoriaDesierto) {
+      const causal = this.resolveCausalDesierto(expediente.causalDeclaratoriaDesierto);
+      if (causal === 1) return this.getDatosInformeDesierto1(expedienteId);
+      if (causal === 2 || causal === 3) {
+        throw new BadRequestException(
+          `El Informe de Recomendación Desierto #${causal} aún no está disponible. Use causal 1 por ahora.`,
+        );
+      }
+      throw new BadRequestException(
+        'Causal de declaratoria de desierto no reconocida. Use una de las 3 opciones del Art. 113 LCP.',
+      );
+    }
+
+    return this.getDatosInformeRecomendacion(expedienteId);
+  }
+
   async generarInformeRecomendacion(expedienteId: string, userId: string) {
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      select: {
+        id: true,
+        declaratoriaDesierto: true,
+        causalDeclaratoriaDesierto: true,
+      },
+    });
+
+    if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
+
+    if (expediente.declaratoriaDesierto) {
+      const causal = this.resolveCausalDesierto(expediente.causalDeclaratoriaDesierto);
+      if (causal === 1) {
+        const data = await this.getDatosInformeDesierto1(expedienteId);
+        return this.generarDocumento(
+          expedienteId,
+          'INFORME_RECOMENDACION',
+          'informe-desierto-1-template.docx',
+          userId,
+          data,
+        );
+      }
+      if (causal === 2 || causal === 3) {
+        throw new BadRequestException(
+          `El Informe de Recomendación Desierto #${causal} aún no está disponible.`,
+        );
+      }
+      throw new BadRequestException(
+        'Causal de declaratoria de desierto no reconocida. Use una de las 3 opciones del Art. 113 LCP.',
+      );
+    }
+
     const data = await this.getDatosInformeRecomendacion(expedienteId);
     return this.generarDocumento(
       expedienteId,
