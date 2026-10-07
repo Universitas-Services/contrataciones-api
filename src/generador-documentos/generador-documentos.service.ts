@@ -15,6 +15,10 @@ import { TipoDocumento, EstadoMicromodulo } from '@prisma/client';
 import { MICROMODULO_KEYS, MICROMODULOS } from '../fase1/constants/micromodulos.constants';
 import { mapDatosPliegoCondiciones } from './mappers/pliego-condiciones.mapper';
 import { RECAUDOS_CATALOGO } from '../fase1/constants/recaudos-legales.constants';
+import {
+  esPrimeraOpcion,
+  prelacionEfectiva,
+} from '../evaluacion-fase3/gestion-adjudicacion/prelacion.util';
 
 function formatNormativaLegalForDoc(raw: string | null | undefined): string {
   if (!raw || !raw.trim()) return 'Decreto de Ley de Contrataciones vigente';
@@ -1383,11 +1387,18 @@ export class GeneradorDocumentosService {
         ofertas: {
           where: { deletedAt: null },
           include: {
-            evaluacion: { include: { sobre1: true, sobre2: true } },
+            evaluacion: {
+              include: {
+                sobre1: true,
+                sobre2: true,
+                dictamenAdjudicacion: true,
+              },
+            },
           },
           orderBy: { createdAt: 'asc' },
         },
         informeRecomendacion: true,
+        dictamenesAdjudicacion: { where: { deletedAt: null } },
       },
     });
 
@@ -1396,6 +1407,17 @@ export class GeneradorDocumentosService {
     const tipoContratacion = expediente.modalidad?.tipoContratacion || 'SERVICIOS';
     const rangos = this.getRangosEvaluacion(tipoContratacion);
     const informe = expediente.informeRecomendacion;
+    // Preferir garantía/CRS/plazo desde dictámenes (Gestión); fallback informe legacy.
+    const dictamenRef =
+      expediente.dictamenesAdjudicacion.find((d) => d.tipoDictamen === 'TOTAL') ||
+      expediente.dictamenesAdjudicacion.find((d) => d.oferenteAdjudicadoProcedimiento === true) ||
+      null;
+    const indGarantia = dictamenRef?.indVerificadoGarantia ?? informe?.indVerificadoGarantia;
+    const indCrs = dictamenRef?.indVerificadoCrs ?? informe?.indVerificadoCrs;
+    const plazoGanadora =
+      dictamenRef?.plazoEjecucionOfertaGanadora ??
+      dictamenRef?.plazoEjecucionOfertaParcial ??
+      informe?.plazoEjecucionOfertaGanadora;
     const cronograma = expediente.cronograma;
     const fasePrep = expediente.fasePreparatoria;
     const comision = expediente.comision;
@@ -1463,7 +1485,7 @@ export class GeneradorDocumentosService {
       };
     });
 
-    // Matriz de totalización ordenada por posición de prelación
+    // Matriz de totalización ordenada por prelación efectiva (adjudicación ?? evaluación)
     const prelacionOrden = [
       'Primera Opción',
       'Segunda Opción',
@@ -1475,19 +1497,28 @@ export class GeneradorDocumentosService {
     const evaluaciones = expediente.ofertas
       .filter((of) => of.evaluacion)
       .sort((a, b) => {
-        const ia = prelacionOrden.indexOf(a.evaluacion!.posicionPrelacion || '');
-        const ib = prelacionOrden.indexOf(b.evaluacion!.posicionPrelacion || '');
+        const pa = prelacionEfectiva(
+          a.evaluacion!.posicionPrelacion,
+          a.evaluacion!.posicionPrelacionAdjudicacion,
+        );
+        const pb = prelacionEfectiva(
+          b.evaluacion!.posicionPrelacion,
+          b.evaluacion!.posicionPrelacionAdjudicacion,
+        );
+        const ia = prelacionOrden.indexOf(pa || '');
+        const ib = prelacionOrden.indexOf(pb || '');
         return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
       })
       .map((of) => {
         const ev = of.evaluacion!;
+        const efectiva = prelacionEfectiva(ev.posicionPrelacion, ev.posicionPrelacionAdjudicacion);
         return {
           nombre_proveedor_evaluado_au_au: ev.nombreProveedorEvaluado || '___',
           total_tecnica_au_au: Number(ev.totalTecnica ?? 0),
           total_economica_au_au: Number(ev.totalEconomica ?? 0),
           total_van_au_au: Number(ev.totalVan ?? 0),
           total_evaluacion_oferente_au_au: Number(ev.totalEvaluacion ?? 0),
-          posicion_prelacion_au_au: ev.posicionPrelacion || '___',
+          posicion_prelacion_au_au: efectiva || '___',
           monto_oferta_bs_au_au: Number(ev.sobre2?.montoOfertaBs ?? 0),
           rif_proveedor_evaluado_au_au: ev.rifProveedorEvaluado || '___',
         };
@@ -1523,6 +1554,11 @@ export class GeneradorDocumentosService {
     let textoFormalidades = 'No se observaron omisiones de formalidades durante el procedimiento.';
     if (informe?.observacionFormalidades) {
       textoFormalidades = `Se observó ${informe.omisionFormalidades || '___'}, y se decidió ${informe.subsanacionActo || '___'} mediante ${informe.datosActoSubsanacion || '___'} para garantizar la legalidad del proceso.`;
+    }
+
+    let textoItemsSinOfertas = 'No existen ítems del presupuesto sin ofertas.';
+    if (informe?.existeItemsSinOfertas) {
+      textoItemsSinOfertas = `Existen ítems sin ofertas: ${informe.itemsSinOfertas || '___'}. Motivo: ${informe.motivoItemsSinOfertas || '___'}.`;
     }
 
     return {
@@ -1632,10 +1668,14 @@ export class GeneradorDocumentosService {
 
       // Informe de Recomendación
       actualizacion_presupuesto_au_au: textoActualizacionPresupuesto,
-      ind_verificado_garantia_au_au: boolToSiNo(informe?.indVerificadoGarantia),
-      ind_verificado_crs_au_au: boolToSiNo(informe?.indVerificadoCrs),
+      existe_items_sin_ofertas_au_au: boolToSiNo(informe?.existeItemsSinOfertas),
+      items_sin_ofertas_au_au: informe?.itemsSinOfertas || '___',
+      motivo_items_sin_ofertas_au_au: informe?.motivoItemsSinOfertas || '___',
+      texto_items_sin_ofertas_au_au: textoItemsSinOfertas,
+      ind_verificado_garantia_au_au: boolToSiNo(indGarantia),
+      ind_verificado_crs_au_au: boolToSiNo(indCrs),
       observacion_formalidades_au_au: textoFormalidades,
-      plazo_ejecucion_oferta_ganadora_au_au: informe?.plazoEjecucionOfertaGanadora ?? '___',
+      plazo_ejecucion_oferta_ganadora_au_au: plazoGanadora ?? '___',
     };
   }
 
@@ -1860,6 +1900,86 @@ export class GeneradorDocumentosService {
   }
 
   async getDatosAdjudicacion(expedienteId: string) {
+    // Preferir dictámenes Gestión Fase 3; fallback a Adjudicacion legacy (Elaboración).
+    const dictamenes = await this.prisma.dictamenAdjudicacion.findMany({
+      where: {
+        expedienteId,
+        deletedAt: null,
+        OR: [{ tipoDictamen: 'TOTAL' }, { oferenteAdjudicadoProcedimiento: true }],
+      },
+      include: {
+        evaluacion: true,
+        expediente: {
+          include: {
+            autoridad: true,
+            ente: true,
+            cronograma: true,
+            fasePreparatoria: true,
+            modalidad: true,
+          },
+        },
+      },
+    });
+
+    if (dictamenes.length > 0) {
+      const exp = dictamenes[0].expediente;
+      const firmas = await this.getFirmasExpediente(exp);
+      const crono = exp.cronograma;
+      const fasePrep = exp.fasePreparatoria;
+      const tipoContratacion = exp.modalidad?.tipoContratacion || 'SERVICIOS';
+      const criterios = this.criteriosEvaluacionPorTipo(tipoContratacion);
+
+      const adjudicados = dictamenes.map((d) => ({
+        nombre: d.evaluacion.nombreProveedorEvaluado || '___',
+        rif: d.evaluacion.rifProveedorEvaluado || '___',
+        monto: Number(d.montoAdjudicadoTotal ?? d.montoAdjudicadoParcial ?? 0),
+        partida: d.partidasAdjudicadasTotal || d.partidasAdjudicadasParcial || '___',
+      }));
+
+      const primario = adjudicados[0];
+      const montoTotal = adjudicados.reduce((s, a) => s + a.monto, 0);
+
+      return {
+        ...firmas,
+        nom_ente_contratante: exp.ente?.nombre || '___',
+        cod_nomenclatura_proceso: exp.codigoNomenclatura || '___',
+        cod_nomenclatura_proceso_au_au: exp.codigoNomenclatura || '___',
+        desc_objeto_contratacion: exp.descripcionObjeto || '___',
+        desc_objeto_contratacion_au_au: exp.descripcionObjeto || '___',
+        normativa_legal: formatNormativaLegalForDoc(fasePrep?.normativaLegal),
+        fec_llamado_participar_au_au: crono?.fechaLlamadoParticipar
+          ? formatDateToSpanishLong(crono.fechaLlamadoParticipar)
+          : '___',
+        fec_acto_recep_aper_sobres_au_au: crono?.fechaActoRecepcionAperturaSobres
+          ? formatDateToSpanishLong(crono.fechaActoRecepcionAperturaSobres)
+          : '___',
+        dir_fiscal_ente: exp.ente?.direccionFiscal || '___',
+        fec_limite_evaluacion_au_au: crono?.fechaLimiteEvaluacion
+          ? formatDateToSpanishLong(crono.fechaLimiteEvaluacion)
+          : '___',
+        fec_limite_adjudicacion_au_au: crono?.fechaLimiteAdjudicacion
+          ? formatDateToSpanishLong(crono.fechaLimiteAdjudicacion)
+          : '___',
+        loc_ciudad_ente: exp.ente?.ciudad || '___',
+        criterio_1_evaluacion_au_au: criterios[0] || '___',
+        criterio_2_evaluacion_au_au: criterios[1] || '___',
+        criterio_3_evaluacion_au_au: criterios[2] || '___',
+        criterio_4_evaluacion_au_au: criterios[3] || '___',
+        oferente_primera_opción_au_au: adjudicados.map((a) => a.nombre).join('; ') || '___',
+        rif_proveedor_evaluado_au_au: primario?.rif || '___',
+        monto_adjudicado_bs_au_au: formatCurrencyVE(montoTotal),
+        partida_presupuest_gasto_au_au: primario?.partida || '___',
+        monto_crs_bs_au_au: '___',
+        referencia_recomendacion_au_au: 'Informe de Recomendación — Gestión Fase 3',
+        caracter_adjudicacion_au_au: exp.caracterAdjudicacion || '___',
+        adjudicados,
+        adquirientes: adjudicados.map((a) => ({
+          codigo_partida_au_au: a.partida,
+          total_items_au_au: formatCurrencyVE(a.monto),
+        })),
+      };
+    }
+
     const adjudicacion = await this.prisma.adjudicacion.findUnique({
       where: { expedienteId },
       include: {
@@ -1878,36 +1998,19 @@ export class GeneradorDocumentosService {
       },
     });
 
-    if (!adjudicacion) throw new NotFoundException('Adjudicación no encontrada');
+    if (!adjudicacion) {
+      throw new NotFoundException(
+        'No hay dictámenes de adjudicación ni registro legacy de Adjudicación.',
+      );
+    }
 
     const firmas = await this.getFirmasExpediente(adjudicacion.expediente);
     const exp = adjudicacion.expediente;
     const crono = exp.cronograma;
     const fasePrep = exp.fasePreparatoria;
-
-    // Criterios fijos por tipo
-    const tipoContratacion = exp.modalidad?.tipoContratacion || 'SERVICIOS';
-    const criteriosPorTipo: Record<string, string[]> = {
-      BIENES: [
-        'Tiempo de entrega a partir de la recepción de la Orden de compra.',
-        'Garantía de los insumos.',
-        'Características de los insumos.',
-        'Disponibilidad de los insumos requeridos.',
-      ],
-      SERVICIOS: [
-        'Plan de trabajo y metodología propuesta.',
-        'Perfil del personal Técnico clave.',
-        'Disponibilidad de Equipos y Herramientas.',
-        'Tiempo de respuesta ante fallas.',
-      ],
-      OBRAS: [
-        'Cronograma de Ejecución y Plan de Trabajo.',
-        'Experiencia de Ingeniero Residente.',
-        'Maquinaria y Equipos disponibles (propios / alquilados).',
-        'Memoria Descriptiva / Metodología de Ejecución.',
-      ],
-    };
-    const criterios = criteriosPorTipo[tipoContratacion] || criteriosPorTipo['SERVICIOS'];
+    const criterios = this.criteriosEvaluacionPorTipo(
+      exp.modalidad?.tipoContratacion || 'SERVICIOS',
+    );
 
     return {
       ...firmas,
@@ -1951,8 +2054,8 @@ export class GeneradorDocumentosService {
       partida_presupuest_gasto_au_au: adjudicacion.partidaPresupuestariaGasto || '___',
       monto_crs_bs_au_au: formatCurrencyVE(Number(adjudicacion.montoCrsBs)),
       referencia_recomendacion_au_au: adjudicacion.referenciaRecomendacion || '___',
+      caracter_adjudicacion_au_au: exp.caracterAdjudicacion || 'TOTAL',
 
-      // Mapeo adaptado para el loop {#adquirientes} que solicita la plantilla para mostrar la partida
       adquirientes: [
         {
           codigo_partida_au_au: adjudicacion.partidaPresupuestariaGasto || '___',
@@ -1960,6 +2063,30 @@ export class GeneradorDocumentosService {
         },
       ],
     };
+  }
+
+  private criteriosEvaluacionPorTipo(tipoContratacion: string): string[] {
+    const criteriosPorTipo: Record<string, string[]> = {
+      BIENES: [
+        'Tiempo de entrega a partir de la recepción de la Orden de compra.',
+        'Garantía de los insumos.',
+        'Características de los insumos.',
+        'Disponibilidad de los insumos requeridos.',
+      ],
+      SERVICIOS: [
+        'Plan de trabajo y metodología propuesta.',
+        'Perfil del personal Técnico clave.',
+        'Disponibilidad de Equipos y Herramientas.',
+        'Tiempo de respuesta ante fallas.',
+      ],
+      OBRAS: [
+        'Cronograma de Ejecución y Plan de Trabajo.',
+        'Experiencia de Ingeniero Residente.',
+        'Maquinaria y Equipos disponibles (propios / alquilados).',
+        'Memoria Descriptiva / Metodología de Ejecución.',
+      ],
+    };
+    return criteriosPorTipo[tipoContratacion] || criteriosPorTipo['SERVICIOS'];
   }
 
   async generarAdjudicacion(expedienteId: string, userId: string) {
@@ -2142,19 +2269,51 @@ export class GeneradorDocumentosService {
     };
 
     const evaluaciones = await this.prisma.evaluacionResultados.findMany({
-      where: { oferta: { expedienteId } },
-      include: { oferta: true },
+      where: { oferta: { expedienteId }, deletedAt: null },
+      include: { oferta: true, dictamenAdjudicacion: true },
     });
 
-    const ganadora = evaluaciones.find((e) => e.posicionPrelacion === 'Primera Opción');
-    const perdedoras = evaluaciones.filter(
-      (e) => e.posicionPrelacion && e.posicionPrelacion !== 'Primera Opción',
-    );
+    const dictamenes = evaluaciones
+      .map((e) => e.dictamenAdjudicacion)
+      .filter((d): d is NonNullable<typeof d> => !!d && !d.deletedAt);
+
+    let ganadoras = evaluaciones.filter((e) => {
+      const efectiva = prelacionEfectiva(e.posicionPrelacion, e.posicionPrelacionAdjudicacion);
+      return esPrimeraOpcion(efectiva);
+    });
+    let perdedoras = evaluaciones.filter((e) => {
+      if (!e.oferenteCalificado) return false;
+      const efectiva = prelacionEfectiva(e.posicionPrelacion, e.posicionPrelacionAdjudicacion);
+      return !!efectiva && !esPrimeraOpcion(efectiva);
+    });
+
+    // Si hay dictámenes Gestión: ganadores = adjudicados; no adjudicados = dictamen false o resto calificados
+    if (dictamenes.length > 0) {
+      const adjudicadoIds = new Set(
+        dictamenes
+          .filter((d) => d.tipoDictamen === 'TOTAL' || d.oferenteAdjudicadoProcedimiento === true)
+          .map((d) => d.evaluacionId),
+      );
+      const noAdjudicadoIds = new Set(
+        dictamenes
+          .filter((d) => d.oferenteAdjudicadoProcedimiento === false)
+          .map((d) => d.evaluacionId),
+      );
+      ganadoras = evaluaciones.filter((e) => adjudicadoIds.has(e.id));
+      perdedoras = evaluaciones.filter(
+        (e) => noAdjudicadoIds.has(e.id) || (e.oferenteCalificado && !adjudicadoIds.has(e.id)),
+      );
+    }
 
     const documentosGenerados: any[] = [];
+    const nombrePrimera =
+      ganadoras
+        .map((g) => g.nombreProveedorEvaluado)
+        .filter(Boolean)
+        .join('; ') || '___';
 
-    // Generar Notificación Adjudicado
-    if (ganadora) {
+    // Generar Notificación Adjudicado (multi si parcial)
+    for (const ganadora of ganadoras) {
       const dataAdjudicado = {
         ...commonData,
         oferente_primera_opción_au_au: ganadora.nombreProveedorEvaluado || '___',
@@ -2181,7 +2340,7 @@ export class GeneradorDocumentosService {
       const dataNoAdjudicado = {
         ...commonData,
         oferente_no_adjudicado_au_au: perdedora.nombreProveedorEvaluado || '___',
-        oferente_primera_opción_au_au: ganadora?.nombreProveedorEvaluado || '___',
+        oferente_primera_opción_au_au: nombrePrimera,
         rif_proveedor_evaluado_au_au: perdedora.rifProveedorEvaluado || '___',
         correo_proveedor_evaluado_au_au: perdedora.oferta.proveedorId
           ? (

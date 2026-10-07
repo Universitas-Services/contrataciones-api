@@ -371,6 +371,8 @@ model ExpedienteContratacion {
   declaratoriaDesierto              Boolean                 @default(false) @map("declaratoria_desierto_au_au")
   causalDeclaratoriaDesierto        String?                 @map("causal_declaratoria_desierto_au_au") @db.VarChar(255)
   justificacionDeclaratoriaDesierto String?                 @map("justificacion_declaratoria_desierto_au_au")
+  /// TOTAL | PARCIAL — carácter de adjudicación (Gestión Fase 3)
+  caracterAdjudicacion              String?                 @map("caracter_adjudicacion_au_au") @db.VarChar(20)
   adjudicacion                      Adjudicacion?
   documentosGenerados               DocumentoGenerado[]
   ofertas                           OfertaPresentada[]
@@ -387,6 +389,7 @@ model ExpedienteContratacion {
   pliegosGenerados                  PliegoGenerado[]
   presupuestoItems                  PresupuestoItem[]
   informeRecomendacion              InformeRecomendacion?
+  dictamenesAdjudicacion            DictamenAdjudicacion[]
 
   @@index([enteId, estatusProceso])
   @@index([codigoNomenclatura])
@@ -792,7 +795,10 @@ model EvaluacionResultados {
   justificacionEvaluadoTecnico String?  @map("justificacion_evaluado_tecnico_au_au")
 
   // ── Posición de prelación ──────────────────────────────────────────
+  /// Ranking por puntaje (Fase 2) — calculado por el servidor (ranking denso).
   posicionPrelacion String? @map("posicion_prelacion_au_au") @db.VarChar(50)
+  /// Prelación efectiva tras dictamen PARCIAL adjudicado (Gestión Fase 3).
+  posicionPrelacionAdjudicacion String? @map("posicion_prelacion_adjudicacion_au_au") @db.VarChar(50)
 
   // ── Totales calculados ─────────────────────────────────────────────
   totalTecnica    Decimal? @map("total_tecnica_au_au") @db.Decimal(5, 2)
@@ -819,10 +825,11 @@ model EvaluacionResultados {
   createdBy String?
   updatedBy String?
 
-  oferta              OfertaPresentada    @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  oferta              OfertaPresentada     @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
   sobre1              Sobre1?
   sobre2              Sobre2?
   documentosGenerados DocumentoGenerado[]
+  dictamenAdjudicacion DictamenAdjudicacion?
 
   @@index([ofertaId])
   @@map("tb_evaluacion_resultados")
@@ -935,6 +942,12 @@ model InformeRecomendacion {
   montoNuevoPresupuesto            Decimal? @map("monto_nuevo_presupuesto_au_au") @db.Decimal(15, 2)
   justificacionActualizacionPresup String?  @map("justificacion_actualizacion_presupuesto_au_au")
 
+  /// Ítems del presupuesto sin ofertas (Gestión Fase 3)
+  existeItemsSinOfertas Boolean? @map("existe_items_sin_ofertas_au_au")
+  itemsSinOfertas       String?  @map("items_sin_ofertas_au_au")
+  motivoItemsSinOfertas String?  @map("motivo_items_sin_ofertas_au_au")
+
+  /// Legacy: preferir leer desde DictamenAdjudicacion al generar DOCX
   indVerificadoGarantia Boolean? @map("ind_verificado_garantia_au_au")
   indVerificadoCrs      Boolean? @map("ind_verificado_crs_au_au")
 
@@ -943,6 +956,7 @@ model InformeRecomendacion {
   subsanacionActo         String?  @map("subsanacion_acto_au_au")
   datosActoSubsanacion    String?  @map("datos_acto_subsanacion_au_au")
 
+  /// Legacy: preferir leer desde dictamen TOTAL
   plazoEjecucionOfertaGanadora Int? @map("plazo_ejecucion_oferta_ganadora_au_au")
 
   createdAt DateTime  @default(now())
@@ -954,6 +968,47 @@ model InformeRecomendacion {
   expediente ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
 
   @@map("tb_informe_recomendacion")
+}
+
+/// Dictamen de adjudicación por oferente evaluado (Gestión Fase 3 — TOTAL/PARCIAL)
+model DictamenAdjudicacion {
+  id           String @id @default(uuid())
+  expedienteId String @map("id_expediente")
+  evaluacionId String @unique @map("id_evaluacion")
+
+  /// TOTAL | PARCIAL (copia del carácter al momento del dictamen)
+  tipoDictamen String @map("tipo_dictamen_au_au") @db.VarChar(20)
+
+  // ── TOTAL ──────────────────────────────────────────────────────────
+  partidasAdjudicadasTotal       String?  @map("partidas_adjudicadas_total_au_au")
+  montoAdjudicadoTotal           Decimal? @map("monto_adjudicado_total_au_au") @db.Decimal(15, 2)
+  plazoEjecucionOfertaGanadora   Int?     @map("plazo_ejecucion_oferta_ganadora_au_au")
+
+  // ── PARCIAL ────────────────────────────────────────────────────────
+  oferenteAdjudicadoProcedimiento Boolean? @map("oferente_adjudicado_procedimiento_au_au")
+  causaNoAdjudicado               String?  @map("causa_no_adjudicado_au_au")
+  cantidadRenglones               Int?     @map("cantidad_renglones_au_au")
+  alcanceAdjudicacionParcial      String?  @map("alcance_adjudicacion_parcial_au_au")
+  partidasAdjudicadasParcial      String?  @map("partidas_adjudicadas_parcial_au_au")
+  montoAdjudicadoParcial          Decimal? @map("monto_adjudicado_parcial_au_au") @db.Decimal(15, 2)
+  plazoEjecucionOfertaParcial     Int?     @map("plazo_ejecucion_oferta_parcial_au_au")
+
+  // ── Comunes (adjudicado) ───────────────────────────────────────────
+  indVerificadoGarantia Boolean? @map("ind_verificado_garantia_au_au")
+  indVerificadoCrs      Boolean? @map("ind_verificado_crs_au_au")
+  notificacionGenerada  Boolean  @default(false) @map("notificacion_generada_au_au")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  expediente ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  evaluacion EvaluacionResultados   @relation(fields: [evaluacionId], references: [id], onDelete: Cascade)
+
+  @@index([expedienteId])
+  @@map("tb_dictamen_adjudicacion")
 }
 
 model Adjudicacion {
