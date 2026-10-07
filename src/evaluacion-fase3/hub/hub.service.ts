@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { SnapshotService } from './snapshot.service';
 import { ScoringService } from './scoring.service';
+import { PrelacionService } from './prelacion.service';
 import type { UsuarioActual } from '../../common/types/usuario-actual.type';
 import type {
   PlantillasSnapshot,
@@ -37,6 +38,7 @@ export class HubService {
     private readonly prisma: PrismaService,
     private readonly snapshot: SnapshotService,
     private readonly scoring: ScoringService,
+    private readonly prelacion: PrelacionService,
   ) {}
 
   /** Lee una columna JSON con su tipo, cayendo al valor por defecto si está vacía. */
@@ -150,6 +152,16 @@ export class HubService {
     );
 
     const promocionActiva = plantillas.promocion !== null;
+    const posicionPrelacion = (evaluacion.posicionPrelacion as string | null) ?? null;
+    const estadoEval = this.json<EstadoEvaluacion>(
+      evaluacion.hubEvaluacion,
+      this.evaluacionVacia(),
+    );
+    // Fuente de verdad: columna BD (ranking denso), no el form del cliente.
+    estadoEval.form = {
+      ...estadoEval.form,
+      posicionPrelacion: posicionPrelacion ?? '',
+    };
 
     return {
       evaluacionId: evaluacion.id as string,
@@ -161,6 +173,10 @@ export class HubService {
         montoOfertaBs: Number(evaluacion.oferta.montoOfertaBs),
       },
       resultadoFinal,
+      /** Ranking denso calculado por el servidor (solo lectura). */
+      posicionPrelacion,
+      puntuacionFinal:
+        evaluacion.totalEvaluacion != null ? Number(evaluacion.totalEvaluacion) : null,
       activeModulo: (evaluacion.hubActiveModulo as ModuloHub) ?? 'legal',
       unlocked,
       plantillaLegal: plantillas.legal,
@@ -170,7 +186,7 @@ export class HubService {
       plantillaTecnica: plantillas.tecnica,
       tecnica: this.json<EstadoTecnica>(evaluacion.hubTecnica, this.tecnicaVacia()),
       plantillaEvaluacion: plantillas.evaluacion,
-      evaluacion: this.json<EstadoEvaluacion>(evaluacion.hubEvaluacion, this.evaluacionVacia()),
+      evaluacion: estadoEval,
       // Cuando la promoción no está activa el front no debe mostrar la pestaña.
       plantillaPromocion: plantillas.promocion,
       promocion: promocionActiva
@@ -320,7 +336,12 @@ export class HubService {
       // Se refleja también en las columnas históricas del modelo.
       oferenteCalificadoLegal: cumple,
       justificacionCalificadoLegal: form?.justificacion ?? null,
+      ...(cumple ? {} : { oferenteCalificado: false, posicionPrelacion: null }),
     });
+
+    if (!cumple) {
+      await this.prelacion.recalcularPorExpediente(evaluacion.oferta.expedienteId);
+    }
 
     return this.obtenerHub(evaluacionId, user);
   }
@@ -380,7 +401,12 @@ export class HubService {
       hubResultadoFinal: resultado.cumple ? 'en_evaluacion' : 'descalificado',
       oferenteCalificadoFinanciera: resultado.cumple,
       justificacionCalificadaFinanciera: form?.justificacion ?? null,
+      ...(resultado.cumple ? {} : { oferenteCalificado: false, posicionPrelacion: null }),
     });
+
+    if (!resultado.cumple) {
+      await this.prelacion.recalcularPorExpediente(evaluacion.oferta.expedienteId);
+    }
 
     return this.obtenerHub(evaluacionId, user);
   }
@@ -445,7 +471,12 @@ export class HubService {
       totalCalifTecnica: resultado.total,
       oferenteCalificadoTecnica: resultado.cumple,
       justificacionCalificadoTecnica: form?.justificacion ?? null,
+      ...(resultado.cumple ? {} : { oferenteCalificado: false, posicionPrelacion: null }),
     });
+
+    if (!resultado.cumple) {
+      await this.prelacion.recalcularPorExpediente(evaluacion.oferta.expedienteId);
+    }
 
     return this.obtenerHub(evaluacionId, user);
   }
@@ -471,6 +502,7 @@ export class HubService {
     const estado = this.json<EstadoEvaluacion>(evaluacion.hubEvaluacion, this.evaluacionVacia());
     this.assertNoConfirmado(estado.submitted, 'Evaluación y puntaje');
 
+    // posicionPrelacion del cliente se ignora: la calcula el servidor (ranking denso).
     const nuevoEstado: EstadoEvaluacion = {
       ...this.evaluacionVacia(),
       form: {
@@ -482,7 +514,7 @@ export class HubService {
           criterios: form?.economica?.criterios ?? {},
           justificacion: form?.economica?.justificacion ?? '',
         },
-        posicionPrelacion: form?.posicionPrelacion ?? '',
+        posicionPrelacion: '',
       },
     };
 
@@ -513,11 +545,6 @@ export class HubService {
     ];
 
     const ambosCumplen = resTecnica.cumple && resEconomica.cumple;
-
-    // La prelación sólo se exige cuando el oferente sigue en carrera.
-    if (ambosCumplen && !nuevoEstado.form.posicionPrelacion.trim()) {
-      errores.push('Debe indicar la posición de prelación del oferente.');
-    }
     this.assertSinErrores(errores);
 
     nuevoEstado.submitted = true;
@@ -536,7 +563,7 @@ export class HubService {
       nuevoUnlocked = this.cerrarTodo();
       resultadoFinal = 'descalificado';
     } else if (promocionActiva) {
-      // Con promoción activa el proceso sigue: falta sumar los bonos.
+      // Con promoción: la prelación definitiva se fija al confirmar promocion.
       nuevoUnlocked = { ...unlocked, promocion: true };
       resultadoFinal = 'en_evaluacion';
     } else {
@@ -554,9 +581,19 @@ export class HubService {
       totalEvaluacion: nuevoEstado.notaBase,
       oferenteEvaluadoTecnico: resTecnica.cumple,
       justificacionEvaluadoTecnico: nuevoEstado.form.tecnica.justificacion || null,
-      posicionPrelacion: nuevoEstado.form.posicionPrelacion || null,
-      oferenteCalificado: ambosCumplen && !promocionActiva ? true : undefined,
+      // No persistir input manual; el ranking escribe la columna.
+      posicionPrelacion: null,
+      ...(ambosCumplen && !promocionActiva
+        ? { oferenteCalificado: true }
+        : !ambosCumplen
+          ? { oferenteCalificado: false }
+          : {}),
     });
+
+    // Sin promo + calificado, o descalificado → recalcular ranking del expediente.
+    if (!ambosCumplen || (ambosCumplen && !promocionActiva)) {
+      await this.prelacion.recalcularPorExpediente(evaluacion.oferta.expedienteId);
+    }
 
     return this.obtenerHub(evaluacionId, user);
   }
@@ -623,6 +660,8 @@ export class HubService {
       totalEvaluacion: resultado.puntuacionFinalConBonos,
       oferenteCalificado: true,
     });
+
+    await this.prelacion.recalcularPorExpediente(evaluacion.oferta.expedienteId);
 
     return this.obtenerHub(evaluacionId, user);
   }

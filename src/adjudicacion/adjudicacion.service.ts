@@ -23,14 +23,26 @@ export class AdjudicacionService {
       );
     }
 
-    // Buscar oferta ganadora (Primera Opción)
-    const evaluacionGanadora = await this.prisma.evaluacionResultados.findFirst({
+    // Legacy Elaboración: un ganador. Match case-insensitive de "Primera Opción"
+    // (ranking evaluación o prelación de adjudicación parcial).
+    // Gestión Fase 3 usa dictámenes (/evaluacion-fase3/.../dictamenes), no este endpoint.
+    const candidatas = await this.prisma.evaluacionResultados.findMany({
       where: {
-        oferta: { expedienteId },
-        posicionPrelacion: 'Primera Opción',
+        deletedAt: null,
+        oferta: { expedienteId, deletedAt: null },
+        OR: [
+          { posicionPrelacion: { equals: 'Primera Opción', mode: 'insensitive' } },
+          {
+            posicionPrelacionAdjudicacion: {
+              equals: 'Primera Opción',
+              mode: 'insensitive',
+            },
+          },
+        ],
       },
       include: { oferta: true },
     });
+    const evaluacionGanadora = candidatas[0];
 
     if (!evaluacionGanadora) {
       throw new BadRequestException(

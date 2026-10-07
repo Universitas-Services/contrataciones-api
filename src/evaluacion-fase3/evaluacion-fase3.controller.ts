@@ -57,7 +57,9 @@ export class EvaluacionFase3Controller {
   @ApiOperation({
     summary: 'Listar evaluaciones de un expediente (Paginado y Filtrado)',
     description:
-      'Retorna evaluaciones con Sobre1 y Sobre2, soportando paginación, búsqueda por RIF y filtro por estatus.',
+      'Incluye posicionPrelacion (ranking denso servidor, solo lectura), ' +
+      'posicionPrelacionAdjudicacion, posicionPrelacionEfectiva y dictamenResumen. ' +
+      'Empates comparten etiqueta (ranking denso). Varias "Primera Opción" son válidas.',
   })
   @ApiParam({ name: 'expedienteId', description: 'ID del expediente de contratación' })
   async findAllByExpediente(

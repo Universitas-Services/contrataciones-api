@@ -4,6 +4,10 @@ import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { TipoDocumento } from '@prisma/client';
+import {
+  esPrimeraOpcion,
+  prelacionEfectiva,
+} from '../evaluacion-fase3/gestion-adjudicacion/prelacion.util';
 
 @ApiTags('📄 Generador de Documentos')
 @ApiBearerAuth('JWT-auth')
@@ -501,14 +505,21 @@ export class GeneradorDocumentosController {
   @ApiOperation({ summary: 'Preview Notificación (Adjudicado o No Adjudicado)' })
   @Get('preview/notificacion/evaluacion/:evaluacionId')
   async previewNotificacion(@Param('evaluacionId') evaluacionId: string) {
-    // Determine the type based on whether it's the winner or not
     const evaluacion = await this.generadorDocumentosService[
       'prisma'
     ].evaluacionResultados.findUnique({
       where: { id: evaluacionId },
+      include: { dictamenAdjudicacion: true },
     });
+    const efectiva = prelacionEfectiva(
+      evaluacion?.posicionPrelacion,
+      evaluacion?.posicionPrelacionAdjudicacion,
+    );
+    const adjudicadoPorDictamen =
+      evaluacion?.dictamenAdjudicacion?.tipoDictamen === 'TOTAL' ||
+      evaluacion?.dictamenAdjudicacion?.oferenteAdjudicadoProcedimiento === true;
     const tipo =
-      evaluacion?.posicionPrelacion === 'Primera Opción'
+      adjudicadoPorDictamen || esPrimeraOpcion(efectiva)
         ? 'NOTIFICACION_ADJUDICADO'
         : 'NOTIFICACION_NO_ADJUDICADO';
     return this.generadorDocumentosService.getPreviewUrlByEvaluacion(evaluacionId, tipo);
@@ -524,9 +535,17 @@ export class GeneradorDocumentosController {
       'prisma'
     ].evaluacionResultados.findUnique({
       where: { id: evaluacionId },
+      include: { dictamenAdjudicacion: true },
     });
+    const efectiva = prelacionEfectiva(
+      evaluacion?.posicionPrelacion,
+      evaluacion?.posicionPrelacionAdjudicacion,
+    );
+    const adjudicadoPorDictamen =
+      evaluacion?.dictamenAdjudicacion?.tipoDictamen === 'TOTAL' ||
+      evaluacion?.dictamenAdjudicacion?.oferenteAdjudicadoProcedimiento === true;
     const tipo =
-      evaluacion?.posicionPrelacion === 'Primera Opción'
+      adjudicadoPorDictamen || esPrimeraOpcion(efectiva)
         ? 'NOTIFICACION_ADJUDICADO'
         : 'NOTIFICACION_NO_ADJUDICADO';
 

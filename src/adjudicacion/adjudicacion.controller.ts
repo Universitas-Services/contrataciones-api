@@ -9,7 +9,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../common/interfaces/authenticated-user.interface';
 
-@ApiTags('⚖️ Adjudicación (Fase 4)')
+@ApiTags('⚖️ Adjudicación (Fase 4 — legacy Elaboración)')
 @ApiBearerAuth('JWT-auth')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('expedientes/:expedienteId/adjudicacion')
@@ -18,7 +18,12 @@ export class AdjudicacionController {
 
   @Post()
   @Roles('ADMIN_ENTE', 'EJECUTOR')
-  @ApiOperation({ summary: 'Crear acta de adjudicación' })
+  @ApiOperation({
+    summary: 'Crear acta de adjudicación (legacy — 1 ganador)',
+    description:
+      'Flujo Elaboración/Fase 4 antigua. El hub Gestión Fase 3 usa ' +
+      'PUT /evaluacion-fase3/expediente/:id/dictamenes/:evaluacionId/(total|parcial).',
+  })
   create(
     @Param('expedienteId') expedienteId: string,
     @Body() createDto: CreateAdjudicacionDto,

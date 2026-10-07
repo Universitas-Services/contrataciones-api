@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateEvaluacionDto } from './dto/create-evaluacion.dto';
 import { UpdateSobre1Dto } from './dto/update-sobre1.dto';
@@ -198,11 +203,13 @@ export class EvaluacionFase3Service {
         include: {
           sobre1: true,
           sobre2: true,
+          dictamenAdjudicacion: true,
           oferta: {
             select: {
               nombreProveedorOferente: true,
               rifProveedorOferente: true,
               expedienteId: true,
+              montoOfertaBs: true,
             },
           },
         },
@@ -212,8 +219,27 @@ export class EvaluacionFase3Service {
       }),
     ]);
 
+    // Enriquecer: prelación efectiva + flags dictamen (Gestión Fase 3 / Fase 2 ranking).
+    const enriched = data.map((row) => {
+      const posicionPrelacionEfectiva =
+        row.posicionPrelacionAdjudicacion ?? row.posicionPrelacion ?? null;
+      const dictamen = row.dictamenAdjudicacion;
+      return {
+        ...row,
+        posicionPrelacionEfectiva,
+        dictamenResumen: dictamen
+          ? {
+              id: dictamen.id,
+              tipoDictamen: dictamen.tipoDictamen,
+              oferenteAdjudicadoProcedimiento: dictamen.oferenteAdjudicadoProcedimiento,
+              notificacionGenerada: dictamen.notificacionGenerada,
+            }
+          : null,
+      };
+    });
+
     return {
-      data,
+      data: enriched,
       meta: {
         total,
         page,
@@ -422,8 +448,7 @@ export class EvaluacionFase3Service {
       updateDataEval.oferenteCalificado = dto.oferenteCalificado;
     if (dto.motivoDescalificacion !== undefined)
       updateDataEval.motivoDescalificacion = dto.motivoDescalificacion;
-    if (dto.posicionPrelacion !== undefined)
-      updateDataEval.posicionPrelacion = dto.posicionPrelacion;
+    // posicionPrelacion: ignorado — ranking denso del servidor (hub / PrelacionService).
 
     // Upsert Sobre2
     if (evaluacion.sobre2) {
@@ -539,8 +564,7 @@ export class EvaluacionFase3Service {
     if (dto.justificacionEvaluadoTecnico !== undefined)
       updateData.justificacionEvaluadoTecnico = dto.justificacionEvaluadoTecnico;
 
-    // Prelación
-    if (dto.posicionPrelacion !== undefined) updateData.posicionPrelacion = dto.posicionPrelacion;
+    // posicionPrelacion: ignorado — ranking denso del servidor.
 
     await this.prisma.evaluacionResultados.update({
       where: { id: evaluacionId },
@@ -580,31 +604,80 @@ export class EvaluacionFase3Service {
       throw new NotFoundException('Expediente no encontrado');
     }
 
+    const pick = <T>(canon: T | undefined, alias: T | undefined): T | undefined =>
+      canon !== undefined ? canon : alias;
+
+    const normalizado = {
+      existeItemsSinOfertas: pick(dto.existeItemsSinOfertas, dto.existeItemsSinOfertasAuAu),
+      itemsSinOfertas: pick(dto.itemsSinOfertas, dto.itemsSinOfertasAuAu),
+      motivoItemsSinOfertas: pick(dto.motivoItemsSinOfertas, dto.motivoItemsSinOfertasAuAu),
+      actualizacionPresupuesto: pick(
+        dto.actualizacionPresupuesto,
+        dto.actualizacionPresupuestoAuAu,
+      ),
+      montoNuevoPresupuesto: pick(dto.montoNuevoPresupuesto, dto.montoNuevoPresupuestoAuAu),
+      justificacionActualizacionPresup: pick(
+        dto.justificacionActualizacionPresup,
+        dto.justificacionActualizacionPresupuestoAuAu,
+      ),
+      indVerificadoGarantia: dto.indVerificadoGarantia,
+      indVerificadoCrs: dto.indVerificadoCrs,
+      observacionFormalidades: pick(dto.observacionFormalidades, dto.observacionFormalidadesAuAu),
+      omisionFormalidades: pick(dto.omisionFormalidades, dto.omisionFormalidadesAuAu),
+      subsanacionActo: pick(dto.subsanacionActo, dto.subsanacionActoAuAu),
+      datosActoSubsanacion: pick(dto.datosActoSubsanacion, dto.datosActoSubsanacionAuAu),
+      plazoEjecucionOfertaGanadora: dto.plazoEjecucionOfertaGanadora,
+    };
+
+    if (dto.validarCompleto) {
+      const errores: string[] = [];
+      if (typeof normalizado.existeItemsSinOfertas !== 'boolean') {
+        errores.push('existeItemsSinOfertas es obligatorio');
+      }
+      if (typeof normalizado.actualizacionPresupuesto !== 'boolean') {
+        errores.push('actualizacionPresupuesto es obligatorio');
+      }
+      if (typeof normalizado.observacionFormalidades !== 'boolean') {
+        errores.push('observacionFormalidades es obligatorio');
+      }
+      if (normalizado.existeItemsSinOfertas === true) {
+        if (!normalizado.itemsSinOfertas?.trim()) errores.push('itemsSinOfertas es obligatorio');
+        if (!normalizado.motivoItemsSinOfertas?.trim()) {
+          errores.push('motivoItemsSinOfertas es obligatorio');
+        }
+      }
+      if (normalizado.actualizacionPresupuesto === true) {
+        if (normalizado.montoNuevoPresupuesto == null) {
+          errores.push('montoNuevoPresupuesto es obligatorio');
+        }
+        if (!normalizado.justificacionActualizacionPresup?.trim()) {
+          errores.push('justificacionActualizacionPresup es obligatorio');
+        }
+      }
+      if (normalizado.observacionFormalidades === true) {
+        if (!normalizado.omisionFormalidades?.trim()) {
+          errores.push('omisionFormalidades es obligatorio');
+        }
+        if (!normalizado.subsanacionActo?.trim()) errores.push('subsanacionActo es obligatorio');
+      }
+      if (errores.length) {
+        throw new BadRequestException({
+          message: 'Informe incompleto',
+          errors: errores,
+        });
+      }
+    }
+
     const existente = await this.prisma.informeRecomendacion.findUnique({
       where: { expedienteId },
     });
 
-    const data: any = {
+    const data: Record<string, unknown> = {
       updatedBy: userId,
     };
 
-    const campos = [
-      'actualizacionPresupuesto',
-      'montoNuevoPresupuesto',
-      'justificacionActualizacionPresup',
-      'indVerificadoGarantia',
-      'indVerificadoCrs',
-      'observacionFormalidades',
-      'omisionFormalidades',
-      'subsanacionActo',
-      'datosActoSubsanacion',
-      'plazoEjecucionOfertaGanadora',
-    ] as const;
-
-    for (const campo of campos) {
-      if ((dto as any)[campo] !== undefined) {
-        data[campo] = (dto as any)[campo];
-      }
+    for (const [campo, valor] of Object.entries(normalizado)) {
+      if (valor !== undefined) data[campo] = valor;
     }
 
     let informe;
@@ -615,7 +688,7 @@ export class EvaluacionFase3Service {
       });
     } else {
       informe = await this.prisma.informeRecomendacion.create({
-        data: { expedienteId, ...data, createdBy: userId },
+        data: { expedienteId, ...data, createdBy: userId } as any,
       });
     }
 
