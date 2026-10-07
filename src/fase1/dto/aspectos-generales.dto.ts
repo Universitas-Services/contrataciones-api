@@ -109,49 +109,8 @@ export class AspectosGeneralesDto {
   @IsBoolean()
   retencionFielCumplimiento?: boolean;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  requiereGarantiaLaboral?: boolean;
-
-  @ApiPropertyOptional({ example: 10 })
-  @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  porcentajeGarantiaLaboral?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  retencionFianzaLaboral?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  polizaResponsabilidadCivil?: boolean;
-
-  @ApiPropertyOptional({ example: 20 })
-  @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  porcentajeResponsabilidadCivil?: number;
-
-  @ApiPropertyOptional({ example: 500000.0 })
-  @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  montoResponsabilidadCivilBs?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsBoolean()
-  anticipoContrato?: boolean;
-
-  @ApiPropertyOptional({ example: 30, description: 'Porcentaje de anticipo (máximo 50)' })
-  @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  porcentajeAnticipo?: number;
+  // requiereGarantiaLaboral / polizaResponsabilidadCivil / anticipoContrato
+  // (+ follow-ups) se capturan en Actividades Previas.
 
   @ApiPropertyOptional()
   @IsOptional()

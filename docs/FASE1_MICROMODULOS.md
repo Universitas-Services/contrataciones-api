@@ -449,6 +449,12 @@ pueden saltar llamando la API directamente.
   exige justificación.
 - Con promoción económica activa: VAN entre 1 y 10; los bonos exigen puntuación
   mayor a 0.
+- **Garantía laboral / póliza RC / anticipo contractual** (SI/NO + follow-ups)
+  se capturan aquí (ya no en Aspectos Generales):
+  - `requiereGarantiaLaboral` → si SI: `porcentajeGarantiaLaboral`, `retencionFianzaLaboral`
+  - `polizaResponsabilidadCivil` → si SI: `porcentajeResponsabilidadCivil`, `montoResponsabilidadCivilBs`
+  - `anticipoContrato` → si SI: `porcentajeAnticipo` (máx. 50%)
+  - Endpoints: `PUT/POST .../actividades-previas` (body camelCase).
 
 **Llamado**
 
@@ -457,10 +463,10 @@ pueden saltar llamando la API directamente.
 
 **Aspectos Generales**
 
-- Porcentajes de CRS, mantenimiento de oferta, fiel cumplimiento y
-  responsabilidad civil: entre 0 y 100.
-- **Anticipo máximo 50%** (normal y especial).
+- Porcentajes de CRS, mantenimiento de oferta y fiel cumplimiento: entre 0 y 100.
+- **Anticipo especial** (sigue aquí): máx. 50% si aplica.
 - Moneda o idioma distintos exigen indicar cuál.
+- Ya **no** incluye garantía laboral, póliza RC ni anticipo contractual (ver Actividades Previas).
 
 **Calificación Legal**
 
@@ -528,7 +534,8 @@ Lo corregido:
 - Enum nuevo `EstadoMicromodulo` (`PENDIENTE | BORRADOR | COMPLETADO`).
 - Valor `ACTIVIDADES_PREVIAS` agregado al enum `TipoDocumento`.
 - En `tb_fase_preparatoria`: 8 columnas de estado + `phase_complete_au_au`,
-  22 campos de Actividades Previas, 21 de Aspectos Generales,
+  campos de Actividades Previas (incluye garantía laboral / póliza RC / anticipo),
+  Aspectos Generales (sin esas 3 preguntas; conserva anticipo especial),
   `rif_pago_pliego_au_au`, y 5 columnas JSONB.
 - Tabla nueva `tb_fase1_especificaciones` (metadata del archivo, 1:1 con la fase).
 - Tabla nueva `tb_cuentas_bancarias_ente` (N:1 con el Ente).
