@@ -1,0 +1,65 @@
+==== PROTO
+size=12131 chars=5218 uniq=59
+{#desc_otro_recaudo_sobre2_au_au}
+{#mod_carta_autorizacion_au_au}
+{#mod_carta_manifestacion_voluntad_au_au}
+{#mod_carta_notificaciones_au_au}
+{#mod_carta_oferta_au_au}
+{#mod_certificado_rnc_au_au}
+{#mod_copia_rif_vigente_au_au}
+{#mod_declaracion_autocalculo_van_au_au}
+{#mod_declaracion_capacidad_financiera_au_au}
+{#mod_declaracion_compromiso_resp_social_au_au}
+{#mod_declaracion_conocimiento_lugar_au_au}
+{#mod_declaracion_info_financiera_au_au}
+{#mod_declaracion_no_deudas_ente_au_au}
+{#mod_declaracion_no_impedimentos_lcp_au_au}
+{#mod_declaracion_socios_no_inhabilitados_au_au}
+{#mod_doc_constitutivo_au_au}
+{#mod_evaluacion_desempeño_au_au}
+{#mod_fianza_laboral_au_au}
+{#mod_garantia_fiel_cumpl_au_au}
+{#mod_garantia_mantenimiento_oferta_au_au}
+{#mod_solvencia_laboral_au_au}
+{/desc_otro_recaudo_sobre1_au_au}
+{/desc_otro_recaudo_sobre2_au_au}
+{/mod_carta_autorizacion_au_au}
+{/mod_carta_manifestacion_voluntad_au_au}
+{/mod_carta_notificaciones_au_au}
+{/mod_carta_oferta_au_au}
+{/mod_certificado_rnc_au_au}
+{/mod_copia_rif_vigente_au_au}
+{/mod_declaracion_autocalculo_van_au_au}
+{/mod_declaracion_capacidad_financiera_au_au}
+{/mod_declaracion_compromiso_resp_social_au_au}
+{/mod_declaracion_info_financiera_au_au}
+{/mod_declaracion_no_impedimentos_lcp_au_au}
+{/mod_declaracion_socios_no_inhabilitados_au_au}
+{/mod_doc_constitutivo_au_au}
+{/mod_evaluacion_desempeño_au_au}
+{/mod_fianza_laboral_au_au}
+{/mod_garantia_fiel_cumpl_au_au}
+{/mod_garantia_mantenimiento_oferta_au_au}
+{/mod_solvencia_laboral_au_au}
+{cedula_miembro_economica}
+{cedula_miembro_juridico}
+{cedula_miembro_secretaria}
+{cedula_miembro_tecnica}
+{cedula_rep_legal_evaluado_au_au}
+{cod_nomenclatura_proceso}
+{datos_designacion_comision}
+{desc_objeto_contratacion}
+{desc_otro_recaudo_sobre1_au_au}
+{desc_otro_recaudo_sobre2_au_au}
+{fec_acto_recep_aper_sobres_au_au}
+{loc_ciudad_ente}
+{nom_completo_miembro_economica}
+{nom_completo_miembro_juridica}
+{nom_completo_miembro_secretaria}
+{nom_completo_miembro_tecnica}
+{nombre_proveedor_evaluado_au_au}
+{nombre_rep_legal_evaluado_au_au}
+
+--- TEXT ---
+REPÚBLICA BOLIVARIANA DE VENEZUELACOMISIÓN DE CONTRATACIONES PÚBLICAS“{desc_objeto_contratacion}”.N° {cod_nomenclatura_proceso}{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.Participante: {nombre_proveedor_evaluado_au_au}.Representante Legal: {nombre_rep_legal_evaluado_au_au}.C.I. N°: {cedula_rep_legal_evaluado_au_au}.Contenido Sobre N°1: “RECAUDOS LEGALES Y FINANCIEROS”.SiNoObservaciones{#mod_carta_manifestacion_voluntad_au_au} - Carta de Manifestación de Voluntad. (Ver Modelo en Anexo III) {/mod_carta_manifestacion_voluntad_au_au}{#mod_carta_autorizacion_au_au} - Carta de Autorización. (Ver Modelo en Anexo III) {/mod_carta_autorizacion_au_au}{#mod_doc_constitutivo_au_au} - Documento Constitutivo y Estatutario y sus modificaciones debidamente registradas {/mod_doc_constitutivo_au_au}{#mod_copia_rif_vigente_au_au} - Copia del Registro de Información Fiscal. (R.I.F.) vigente {/mod_copia_rif_vigente_au_au}{#mod_certificado_rnc_au_au} - Certificado de Inscripción en el Registro Nacional de Contratistas, con el respectivo reporte de calificación o Planilla Resumen. {/mod_certificado_rnc_au_au}{#mod_solvencia_laboral_au_au} - Certificado de Solvencia Laboral o Declaración Jurada de Solvencia Laboral. (Ver Modelo en Anexo III) {/mod_solvencia_laboral_au_au}{#mod_declaracion_socios_no_inhabilitados_au_au} - Declaración Jurada de Conocimiento de no contar dentro de su conformación y organización con personas naturales que participen como socios, miembros o administradores de alguna empresa, sociedad o agrupación que se encuentre inhabilitada. (Ver Modelo en Anexo III)  {/mod_declaracion_socios_no_inhabilitados_au_au}{#mod_declaracion_no_deudas_ente_au_au} - Declaración Jurada de Conocimiento de no poseer Obligaciones Exigibles con el Contratante. (Ver Modelo en Anexo III) {#mod_declaracion_no_deudas_ente_au_au}{#mod_declaracion_no_impedimentos_lcp_au_au} - Declaración Jurada de No Tener Impedimentos para Participar en los Procedimientos Previstos en el Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas. (Ver Modelo en Anexo III) {/mod_declaracion_no_impedimentos_lcp_au_au}{#mod_declaracion_conocimiento_lugar_au_au} - Declaración Jurada de Conocimiento del Lugar donde se Realizará la Ejecución del Objeto de la Contratación. {#mod_declaracion_conocimiento_lugar_au_au}{#mod_declaracion_info_financiera_au_au} - Declaración Jurada de Información Financiera. (Ver Modelo en Anexo III) {/mod_declaracion_info_financiera_au_au}{#mod_evaluacion_desempeño_au_au} - Informe de Evaluación de desempeño en Contrataciones. {/mod_evaluacion_desempeño_au_au}{/desc_otro_recaudo_sobre1_au_au} - {desc_otro_recaudo_sobre1_au_au}. {/desc_otro_recaudo_sobre1_au_au}POR LA COMISIÓN DE CONTRATACIONES PÚBLICAS:{nom_completo_miembro_juridica}C.I.{cedula_miembro_juridico}ÁREA JURÍDICA{nom_completo_miembro_economica}C.I.{cedula_miembro_economica}ÁREA ECONÓMICA Y FINANCIERA{nom_completo_miembro_tecnica}C.I.{cedula_miembro_tecnica}ÁREA TÉCNICA{nom_completo_miembro_secretaria}C.I.{cedula_miembro_secretaria}SECRETARIO(A) DE LA COMISIÓNDE CONTRATACIONES PÚBLICAS Designada mediante {datos_designacion_comision}REPÚBLICA BOLIVARIANA DE VENEZUELACOMISIÓN DE CONTRATACIONES PÚBLICAS“{desc_objeto_contratacion}”.N° {cod_nomenclatura_proceso}{loc_ciudad_ente}, {fec_acto_recep_aper_sobres_au_au}.Participante: {nombre_proveedor_evaluado_au_au}.Representante Legal: {nombre_rep_legal_evaluado_au_au}.C.I. N°: {cedula_rep_legal_evaluado_au_au}.Contenido Sobre N°2: “OFERTA TÉCNICA Y ECONÓMICA”.SiNoObservaciones- Oferta técnico-económica.{#mod_carta_oferta_au_au} - Carta Oferta. (Ver Modelo en Anexo III) {/mod_carta_oferta_au_au}{#mod_declaracion_capacidad_financiera_au_au} - Declaración Jurada de Contar con la Capacidad Financiera de Contratación. (Ver Modelo en Anexo III) {/mod_declaracion_capacidad_financiera_au_au}{#mod_declaracion_compromiso_resp_social_au_au} - Declaración Jurada para el Cumplimiento del Compromiso de Responsabilidad Social. (Ver Modelo en Anexo III) {/mod_declaracion_compromiso_resp_social_au_au}{#mod_garantia_mantenimiento_oferta_au_au} - Garantía de mantenimiento de la Oferta (Ver Modelo en Anexo III) {/mod_garantia_mantenimiento_oferta_au_au}{#mod_declaracion_autocalculo_van_au_au} - Declaración Jurada de Auto cálculo del V.A.N (Ver Modelo en Anexo III) (OPCIONAL) {/mod_declaracion_autocalculo_van_au_au}{#mod_carta_notificaciones_au_au} - Carta de Datos para Notificaciones. {/mod_carta_notificaciones_au_au}{#mod_garantia_fiel_cumpl_au_au} - Garantía de Fiel Cumplimiento del Contrato. {/mod_garantia_fiel_cumpl_au_au}{#mod_fianza_laboral_au_au}- Fianza Laboral (Si aplica). {/mod_fianza_laboral_au_au}{#desc_otro_recaudo_sobre2_au_au} - {desc_otro_recaudo_sobre2_au_au}. {/desc_otro_recaudo_sobre2_au_au}POR LA COMISIÓN DE CONTRATACIONES PÚBLICAS:{nom_completo_miembro_juridica}C.I.{cedula_miembro_juridico}ÁREA JURÍDICA{nom_completo_miembro_economica}C.I.{cedula_miembro_economica}ÁREA ECONÓMICA Y FINANCIERA{nom_completo_miembro_tecnica}C.I.{cedula_miembro_tecnica}ÁREA TÉCNICA{nom_completo_miembro_secretaria}C.I.{cedula_miembro_secretaria}SECRETARIO(A) DE LA COMISIÓNDE CONTRATACIONES PÚBLICAS Designada mediante {datos_designacion_comision}
+--- END ---

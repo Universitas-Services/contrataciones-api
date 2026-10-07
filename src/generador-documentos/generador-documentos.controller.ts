@@ -324,8 +324,29 @@ export class GeneradorDocumentosController {
   }
 
   // ==========================
-  // FASE 3 — Lista de Cotejo e Informe de Recomendación
+  // FASE 2/3 — Lista de Cotejo e Informe de Recomendación
   // ==========================
+
+  @ApiOperation({
+    summary: 'Obtener tokens mapeados de la Lista de Cotejo',
+    description:
+      'Checklist vacío: filas = recaudos exigidos en Fase 1 (mod_* / personalizados). ' +
+      'No incluye SI/NO ni observaciones de la evaluación.',
+  })
+  @Get('lista-cotejo/:expedienteId/:evaluacionId/datos')
+  async getDatosListaCotejo(
+    @Param('expedienteId') expedienteId: string,
+    @Param('evaluacionId') evaluacionId: string,
+  ) {
+    const tokens = await this.generadorDocumentosService.getDatosListaCotejo(
+      expedienteId,
+      evaluacionId,
+    );
+    return {
+      message: 'Datos de la Lista de Cotejo',
+      data: { tokens },
+    };
+  }
 
   @ApiOperation({ summary: 'Generar Lista de Cotejo para un oferente evaluado' })
   @Post('generar/lista-cotejo/:expedienteId/:evaluacionId')

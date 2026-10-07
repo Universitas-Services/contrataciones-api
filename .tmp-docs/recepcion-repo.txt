@@ -1,0 +1,29 @@
+==== REPO
+size=9348 chars=2588 uniq=23 occ=34
+{#adquirientes}
+{/adquirientes}
+{cedula_miembro_economica}
+{cedula_miembro_juridica}
+{cedula_miembro_juridico}
+{cedula_miembro_secretaria}
+{cedula_miembro_tecnica}
+{cedula_rep_legal_oferente_au_au}
+{cod_nomenclatura_proceso}
+{datos_designacion_comision}
+{desc_objeto_contratacion}
+{dir_fiscal_ente}
+{fec_acto_recep_aper_sobres_au_au}
+{hora_acto_recep_aper_au_au}
+{nom_completo_miembro_economica}
+{nom_completo_miembro_juridica}
+{nom_completo_miembro_secretaria}
+{nom_completo_miembro_tecnica}
+{nom_ente_contratante}
+{nombre_proveedor_oferente_au_au}
+{nombre_rep_legal_oferente_au_au}
+{num_sobres_entregados_au_au}
+{rif_proveedor_oferente_au_au}
+
+--- TEXT ---
+REPÚBLICA BOLIVARIANA DE VENEZUELA{nom_ente_contratante}COMISIÓN DE CONTRATACIONES PÚBLICAS{desc_objeto_contratacion}N° {cod_nomenclatura_proceso}ACTA DE RECEPCIÓN DE SOBRESSiendo las {hora_acto_recep_aper_au_au} del día {fec_acto_recep_aper_sobres_au_au}, se instaló en {dir_fiscal_ente}, la Comisión de Contrataciones Públicas de {nom_ente_contratante}, designada mediante {datos_designacion_comision}, conformada por el ÁREA JURÍDICA: {nom_completo_miembro_juridica}, C.I. {cedula_miembro_juridico}; por el ÁREA ECONÓMICA-FINANCIERA: {nom_completo_miembro_economica}, C.I. {cedula_miembro_economica}; por el ÁREA TÉCNICA: {nom_completo_miembro_tecnica}, C.I. {cedula_miembro_tecnica}; y como SECRETARIO(A) DE LA COMISIÓN: {nom_completo_miembro_secretaria}, C.I. {cedula_miembro_secretaria}, con el fin de proceder con el ACTO PÚBLICO DE RECEPCIÓN DE SOBRES CONTENTIVO DE LA MANIFESTACIÓN DE VOLUNTAD DE PARTICIPAR, LOS RECAUDOS LEGALES-FINANCIEROS Y DE OFERTA TÉCNICA-ECONÓMICA, para el Concurso Abierto N° {cod_nomenclatura_proceso} denominado: {desc_objeto_contratacion}.Toma la palabra __________, quien preside el órgano colegiado, declara abierta la fase de RECEPCIÓN de sobres para el procedimiento competitivo de selección de contratistas para: “{desc_objeto_contratacion}”.Vencido el lapso de espera reglamentario, se llamó a los participantes presentes a consignar sus sobres, dejando constancia de que se recibieron ofertas de los siguientes participantes:EMPRESARIFREPRESENTANTE CÉDULA SOBRES ENTREGADOS FIRMA{#adquirientes}{nombre_proveedor_oferente_au_au}{rif_proveedor_oferente_au_au}{nombre_rep_legal_oferente_au_au}{cedula_rep_legal_oferente_au_au}{num_sobres_entregados_au_au} {/adquirientes}Culminado el lapso y habiéndo recibido los sobres de los oferentes antes mencionados, se da por terminado el acto de recepción. Se informa a los presentes que, a continuación, se procederá a iniciar el acto de apertura de los sobres consignados.Se levanta la presente acta y, en señal de conformidad, firman los asistentes al acto.OBSERVACIONES E INCIDENCIAS DEL ACTO:Se deja constancia de lo siguiente: POR LA COMISIÓN DE CONTRATACIONES PÚBLICAS:_________________________{nom_completo_miembro_juridica}C.I. {cedula_miembro_juridica}ÁREA JURÍDICA_________________________{nom_completo_miembro_economica}C.I. {cedula_miembro_economica}ÁREA ECONÓMICA Y FINANCIERA_________________________{nom_completo_miembro_tecnica}C.I. {cedula_miembro_tecnica}ÁREA TÉCNICA_________________________{nom_completo_miembro_secretaria}C.I. {cedula_miembro_secretaria}SECRETARIO(A) DE LA COMISIÓN
+--- END ---

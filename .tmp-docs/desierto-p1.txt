@@ -1,0 +1,31 @@
+==== P1
+size=10985 chars=3621 uniq=25
+{causal_declaratoria_desierto_au_au}
+{cedula_miembro_economica}
+{cedula_miembro_juridico}
+{cedula_miembro_secretaria}
+{cedula_miembro_tecnica}
+{cod_nomenclatura_proceso}
+{datos_designacion_comision}
+{desc_objeto_contratacion}
+{fec_acta_inicio_au_au}
+{fec_acto_recep_aper_sobres_au_au}
+{fec_fin_disponibilidad_pliego_au_au}
+{fec_inicio_disponibilidad_pliego_au_au}
+{fec_limite_evaluacion_au_au}
+{fec_llamado_participar_au_au}
+{hora_acto_recep_aper_au_au}
+{justificacion_declaratoria_desierto_au_au}
+{loc_ciudad_ente}
+{monto_estimado_bs}
+{nom_completo_miembro_economica}
+{nom_completo_miembro_juridica}
+{nom_completo_miembro_secretaria}
+{nom_completo_miembro_tecnica}
+{nom_ente_contratante}
+{pag_web_ente}
+{valor_ucau_base}
+
+--- TEXT ---
+INFORME DE RECOMENDACIÓN PARA LA ADJUDICACIÓN DEL PROCEDIMIENTO N° {cod_nomenclatura_proceso}“{desc_objeto_contratacion}”{loc_ciudad_ente}, {fec_limite_evaluacion_au_au}CONTENIDO DEL INFORMEPRIMERA PARTE: ANTECEDENTES Y ASPECTOS FORMALES DEL PROCEDIMIENTO1. IDENTIFICACIÓN DE LA COMISIÓN DE CONTRATACIONESLos suscritos, miembros de la Comisión de Contrataciones de {nom_ente_contratante}, a saber: Área Jurídica: {nom_completo_miembro_juridica} C.I. {cedula_miembro_juridico}, Área Económico-Financiera: {nom_completo_miembro_economica} C.I. {cedula_miembro_economica}, Área Técnica: {nom_completo_miembro_tecnica} C.I. {cedula_miembro_tecnica}, y Secretario(a): {nom_completo_miembro_secretaria} C.I. {cedula_miembro_secretaria}, designados mediante {datos_designacion_comision}, elaboramos el presente informe de conformidad con el artículo 95 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas.2. OBJETO Y MODALIDAD DE LA CONTRATACIÓNEl objeto de esta contratación  es la “{desc_objeto_contratacion}”, bajo la modalidad de Concurso Abierto Acto Único. El presupuesto base estimado asciende a la cantidad de Bs.{monto_estimado_bs} equivalente a {valor_ucau_base} UCAU., por lo que se procedió a iniciar la Modalidad de Selección de Contratista por “CONCURSO ABIERTO”, de acuerdo con lo establecido en el artículo 77 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas.3. CRONOLOGÍA E IDENTIFICACIÓN DE LOS OFERENTESEl procedimiento se inició formalmente mediante Acta de Inicio de fecha {fec_acta_inicio_au_au}. En cumplimiento a la normativa, el llamado a participar fue debidamente publicado en la página web del Ente ({pag_web_ente}) y del SNC (www.snc.gob.ve) a partir del {fec_llamado_participar_au_au}. Consecuentemente, el pliego de condiciones estuvo disponible desde el {fec_inicio_disponibilidad_pliego_au_au} hasta el {fec_fin_disponibilidad_pliego_au_au}. Para los interesados que retiraron el pliego de condiciones y asistieron al Acto Público de Recepción y Apertura de Sobres, celebrado el día {fec_acto_recep_aper_sobres_au_au} a las {hora_acto_recep_aper_au_au}; acto en el cual no se recibieron ofertas. RECOMENDACIÓN DE DECLARATORIA DE DESIERTOVisto el análisis técnico-legal precedente, y en estricto cumplimiento de lo previsto en el Artículo 113 de la Ley de Contrataciones Públicas y las Normas de Control Interno de la SUNAI, esta Comisión de Contrataciones recomienda formalmente a la Máxima Autoridad:PRIMERO: DECLARAR DESIERTO el procedimiento de Concurso Abierto N° {cod_nomenclatura_proceso}, correspondiente al objeto “{desc_objeto_contratacion}”, por la concurrencia del supuesto previsto en el numeral {causal_declaratoria_desierto_au_au} del Artículo 113 de la LCP, toda vez que: {justificacion_declaratoria_desierto_au_au}.SEGUNDO: INSTRUIR a la Unidad Usuaria y a la unidad solicitante la revisión inmediata de las especificaciones técnicas, el presupuesto base y las condiciones del pliego, a los fines de evaluar la procedencia de un nuevo llamado a contratación bajo la modalidad que resulte pertinente según la ley.Informe que se emite en {loc_ciudad_ente}, a los {fec_limite_evaluacion_au_au}.POR LA COMISIÓN DE CONTRATACIONES PÚBLICAS:{nom_completo_miembro_juridica}C.I. {cedula_miembro_juridico}ÁREA JURÍDICA{nom_completo_miembro_economica}C.I.{cedula_miembro_economica}ÁREA ECONÓMICA Y FINANCIERA{nom_completo_miembro_tecnica}C.I. {cedula_miembro_tecnica}ÁREA TÉCNICA{nom_completo_miembro_secretaria}C.I. {cedula_miembro_secretaria}SECRETARIO(A) DE LA COMISIÓNDE CONTRATACIONES PÚBLICAS Designada mediante {datos_designacion_comision}
+--- END ---

@@ -10,17 +10,19 @@ Este documento explica los documentos Word que el backend genera en Fase 2 (post
 2. **Acta de Recepción de Sobres**
 3. **Acta de Apertura de Sobres**
 4. **Informe de Recomendación Desierto #1** (causal “ninguna oferta”)
+5. **Lista de Cotejo (Bienes)** — checklist vacío por oferente evaluado
 
 ---
 
 ## 1. Resumen ejecutivo
 
-| #   | Documento en UI                     | Tipo en BD              | Gate UI / backend   | Quién lo genera |
-| --- | ----------------------------------- | ----------------------- | ------------------- | --------------- |
-| 1   | Registro de Adquirentes del Pliego  | `REGISTRO_ADQUIRENTES`  | ≥1 adquirente       | Generador       |
-| 2   | Acta de Recepción de Sobres         | `ACTA_RECEPCION`        | ≥1 oferente         | Generador       |
-| 3   | Acta de Apertura de Sobres          | `ACTA_APERTURA`         | ≥1 oferente         | Generador       |
-| 4   | Informe Recomendación (Desierto #1) | `INFORME_RECOMENDACION` | desierto + causal 1 | Generador       |
+| #   | Documento en UI                     | Tipo en BD              | Gate UI / backend                         | Quién lo genera |
+| --- | ----------------------------------- | ----------------------- | ----------------------------------------- | --------------- |
+| 1   | Registro de Adquirentes del Pliego  | `REGISTRO_ADQUIRENTES`  | ≥1 adquirente                             | Generador       |
+| 2   | Acta de Recepción de Sobres         | `ACTA_RECEPCION`        | ≥1 oferente                               | Generador       |
+| 3   | Acta de Apertura de Sobres          | `ACTA_APERTURA`         | ≥1 oferente                               | Generador       |
+| 4   | Informe Recomendación (Desierto #1) | `INFORME_RECOMENDACION` | desierto + causal 1                       | Generador       |
+| 5   | Lista de Cotejo (Bienes)            | `LISTA_COTEJO`          | evaluación + ≥1 recaudo exigido en Fase 1 | Generador       |
 
 **Importante para frontend:**
 
@@ -28,6 +30,7 @@ Este documento explica los documentos Word que el backend genera en Fase 2 (post
 - El mapeo a tokens Word (`{campo_au_au}`) lo hace **solo el backend**.
 - El frontend **no** rellena plantillas. Solo orquesta: listar → generar → preview/download.
 - En **Acta de Recepción** y **Acta de Apertura**, las tablas de oferentes/resultados del Word salen **vacías a propósito** (imprimir y llenar a mano en el acto).
+- En **Lista de Cotejo**, las columnas Si/No/Observaciones salen **vacías**; las filas son solo los recaudos marcados exigidos en Fase 1 (no las respuestas SI/NO de la evaluación).
 
 ---
 
@@ -332,8 +335,75 @@ Toast sugerido: `Informe de Recomendación generado exitosamente.`
 
 ---
 
-## 9. Próximos documentos
+## 9. Lista de Cotejo (Bienes)
+
+Checklist **vacío** por oferente evaluado. Sirve para cotejar en el acto: el Word muestra solo el texto del recaudo; las columnas Si / No / Observaciones quedan en blanco (sin tokens).
+
+### 9.1 Qué filas aparecen
+
+Fuente de verdad (en este orden):
+
+1. `plantillasSnapshot` de la evaluación (congelado al abrir el hub Fase 3), o
+2. micromódulo `calificacionLegalData` de Fase 1 si aún no hay snapshot.
+
+| Caso en Fase 1                         | En el Word                                       |
+| -------------------------------------- | ------------------------------------------------ |
+| Recaudo de catálogo exigido (`true`)   | Fila visible (`{#mod_..._au_au}`)                |
+| Recaudo no exigido / `false`           | Fila omitida                                     |
+| N personalizados exigidos              | N filas en loop `desc_otro_recaudo_sobreX_au_au` |
+| Oferta técnico-económica (Sobre 2)     | Siempre visible en este checklist vacío          |
+| SI/NO / observaciones de la evaluación | **No** se imprimen                               |
+
+### 9.2 Gate
+
+| Condición                                                       | Resultado         |
+| --------------------------------------------------------------- | ----------------- |
+| Evaluación inexistente o de otro expediente                     | **404** / **400** |
+| Ningún recaudo exigido en Fase 1 (catálogo + personalizados)    | **400**           |
+| ≥1 recaudo exigido (además de la oferta técnico-económica fija) | Genera OK         |
+
+Mensaje 400 típico:
+
+> No hay recaudos exigidos en la Calificación Legal de Fase 1 para generar la Lista de Cotejo.
+
+Toast sugerido:
+
+> Lista de Cotejo generada exitosamente.
+
+### 9.3 Endpoints del generador
+
+Requiere `evaluacionId` (un Word por oferente evaluado).
+
+| Acción              | Método | Ruta                                                                       |
+| ------------------- | ------ | -------------------------------------------------------------------------- |
+| Preview tokens (QA) | `GET`  | `/generador-documentos/lista-cotejo/{expedienteId}/{evaluacionId}/datos`   |
+| Generar             | `POST` | `/generador-documentos/generar/lista-cotejo/{expedienteId}/{evaluacionId}` |
+| Preview archivo     | `GET`  | `/generador-documentos/preview/lista-cotejo/evaluacion/{evaluacionId}`     |
+| Descargar           | `GET`  | `/generador-documentos/download/lista-cotejo/evaluacion/{evaluacionId}`    |
+
+Tipo en BD: `LISTA_COTEJO` (asociado a la evaluación).
+
+### 9.4 Tokens principales (respuesta de `/datos`)
+
+Cabecera: `nombre_proveedor_evaluado_au_au`, `nombre_rep_legal_evaluado_au_au`, `cedula_rep_legal_evaluado_au_au`, `desc_objeto_contratacion`, `cod_nomenclatura_proceso`, `loc_ciudad_ente`, `fec_acto_recep_aper_sobres_au_au`, miembros de comisión (`cedula_miembro_juridico`, etc.), `datos_designacion_comision`.
+
+Visibilidad: booleanos `mod_*_au_au` + `oferta_tecnico_economica_au_au`.
+
+Personalizados: arrays `desc_otro_recaudo_sobre1_au_au` / `desc_otro_recaudo_sobre2_au_au` con objetos `{ desc_otro_recaudo_sobreX_au_au: "descripción" }`.
+
+### 9.5 Flujo UI
+
+```
+1. Tener evaluación del oferente (hub Fase 3 / evaluación resultados)
+2. (Opcional QA) GET .../lista-cotejo/{expedienteId}/{evaluacionId}/datos
+3. POST .../generar/lista-cotejo/{expedienteId}/{evaluacionId}
+4. Preview / Download por evaluacionId
+5. Imprimir y marcar Si/No/Obs a mano en el acto
+```
+
+---
+
+## 10. Próximos documentos
 
 - Informe Desierto #2 y #3 (plantillas con loops a corregir + mapper de calificación/evaluación)
-- Lista de Cotejo (`LISTA_COTEJO`)
 - Informe de adjudicación (cuando no hay desierto) — ya existe stub; refinar según prototipo final

@@ -14,6 +14,7 @@ import {
 import { TipoDocumento, EstadoMicromodulo } from '@prisma/client';
 import { MICROMODULO_KEYS, MICROMODULOS } from '../fase1/constants/micromodulos.constants';
 import { mapDatosPliegoCondiciones } from './mappers/pliego-condiciones.mapper';
+import { RECAUDOS_CATALOGO } from '../fase1/constants/recaudos-legales.constants';
 
 function formatNormativaLegalForDoc(raw: string | null | undefined): string {
   if (!raw || !raw.trim()) return 'Decreto de Ley de Contrataciones vigente';
@@ -1139,8 +1140,20 @@ export class GeneradorDocumentosService {
   // =========================================================================
 
   /**
-   * Mapea datos para la plantilla lista-cotejo-template.docx
-   * Marcadores: {nombre_proveedor_evaluado_au_au}, {carta_manifestacion_voluntad_au_au}, etc.
+   * Id camelCase de Fase 1 (modCartaOfertaAuAu) → clave Docxtemplater (mod_carta_oferta_au_au).
+   */
+  private camelRecaudoIdToToken(id: string): string {
+    return (
+      id
+        .replace(/AuAu$/, '')
+        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+        .toLowerCase() + '_au_au'
+    );
+  }
+
+  /**
+   * Checklist vacío: filas = recaudos exigidos en Fase 1 (mod_* / personalizados).
+   * No imprime SI/NO ni observaciones de la evaluación.
    */
   async getDatosListaCotejo(expedienteId: string, evaluacionId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
@@ -1149,115 +1162,145 @@ export class GeneradorDocumentosService {
         ente: true,
         comision: { include: { miembros: true } },
         cronograma: true,
+        fasePreparatoria: true,
       },
     });
     if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
 
     const evaluacion = await this.prisma.evaluacionResultados.findUnique({
       where: { id: evaluacionId },
-      include: { sobre1: true, sobre2: true },
+      include: { oferta: { select: { expedienteId: true } } },
     });
     if (!evaluacion) throw new NotFoundException(`Evaluación ${evaluacionId} no encontrada`);
+    if (evaluacion.oferta.expedienteId !== expedienteId) {
+      throw new BadRequestException('La evaluación no pertenece a este expediente.');
+    }
 
-    const boolSi = (val: boolean | null | undefined) => (val === true ? 'SI' : '');
-    const boolNo = (val: boolean | null | undefined) => (val === false ? 'NO' : '');
+    // Preferir snapshot congelado del hub; si no existe, leer Fase 1.
+    type ItemSnap = {
+      id: string;
+      sobre: 1 | 2;
+      etiquetaCorta?: string;
+      personalizado?: boolean;
+    };
+    let items: ItemSnap[] = [];
+    const snap = evaluacion.plantillasSnapshot as { legal?: { items?: ItemSnap[] } } | null;
+    if (snap?.legal?.items?.length) {
+      items = snap.legal.items;
+    } else {
+      const data =
+        (expediente.fasePreparatoria?.calificacionLegalData as {
+          exigidos?: Record<string, boolean>;
+          personalizados?: Array<{
+            id?: string;
+            sobre?: number;
+            descripcion?: string;
+            exigido?: boolean;
+          }>;
+        }) || {};
+      const exigidos = data.exigidos ?? {};
+      for (const recaudo of RECAUDOS_CATALOGO) {
+        if (exigidos[recaudo.id] === true) {
+          items.push({
+            id: recaudo.id,
+            sobre: recaudo.sobre,
+            etiquetaCorta: recaudo.etiquetaCorta,
+            personalizado: false,
+          });
+        }
+      }
+      const personalizados = Array.isArray(data.personalizados) ? data.personalizados : [];
+      personalizados.forEach((p, i) => {
+        if (p?.exigido !== true) return;
+        items.push({
+          id: String(p?.id ?? `personalizado-${i + 1}`),
+          sobre: p?.sobre === 2 ? 2 : 1,
+          etiquetaCorta: String(p?.descripcion ?? `Recaudo personalizado ${i + 1}`),
+          personalizado: true,
+        });
+      });
+      // Ítem fijo Sobre 2 (igual que snapshot.service)
+      items.push({
+        id: 'ofertaTecnicoEconomicaAuAu',
+        sobre: 2,
+        etiquetaCorta: 'Oferta técnico-económica',
+        personalizado: false,
+      });
+    }
 
-    const s1 = evaluacion.sobre1;
-    const s2 = evaluacion.sobre2;
+    const catalogIds = new Set(RECAUDOS_CATALOGO.map((r) => r.id));
+    const modFlags: Record<string, boolean> = {};
+    for (const recaudo of RECAUDOS_CATALOGO) {
+      modFlags[this.camelRecaudoIdToToken(recaudo.id)] = false;
+    }
+    modFlags.oferta_tecnico_economica_au_au = false;
+
+    const otrosSobre1: Array<{ desc_otro_recaudo_sobre1_au_au: string }> = [];
+    const otrosSobre2: Array<{ desc_otro_recaudo_sobre2_au_au: string }> = [];
+
+    for (const item of items) {
+      if (item.personalizado) {
+        const desc = item.etiquetaCorta || 'Recaudo personalizado';
+        if (item.sobre === 2) {
+          otrosSobre2.push({ desc_otro_recaudo_sobre2_au_au: desc });
+        } else {
+          otrosSobre1.push({ desc_otro_recaudo_sobre1_au_au: desc });
+        }
+        continue;
+      }
+      if (item.id === 'ofertaTecnicoEconomicaAuAu') {
+        modFlags.oferta_tecnico_economica_au_au = true;
+        continue;
+      }
+      if (catalogIds.has(item.id)) {
+        modFlags[this.camelRecaudoIdToToken(item.id)] = true;
+      }
+    }
+
+    // Siempre se coteja la oferta técnico-económica en el checklist vacío
+    modFlags.oferta_tecnico_economica_au_au = true;
+
+    const exigidosCatalogo = Object.entries(modFlags).filter(
+      ([k, v]) => v && k !== 'oferta_tecnico_economica_au_au',
+    ).length;
+    if (exigidosCatalogo === 0 && otrosSobre1.length === 0 && otrosSobre2.length === 0) {
+      throw new BadRequestException(
+        'No hay recaudos exigidos en la Calificación Legal de Fase 1 para generar la Lista de Cotejo.',
+      );
+    }
+
     const comision = expediente.comision;
-    const getMiembro = (area: string) =>
-      comision?.miembros?.find((m) => m.areaRepresentacion === area) || null;
+    const getMiembroPrincipal = (area: string) =>
+      comision?.miembros?.find(
+        (m) => m.areaRepresentacion === area && m.tipoMiembro === 'MIEMBRO_PRINCIPAL',
+      ) || null;
 
-    const mJuridica = getMiembro('AREA_JURIDICA');
-    const mEconomica = getMiembro('AREA_ECONOMICA_FINANCIERA');
-    const mTecnica = getMiembro('AREA_TECNICA');
-    const mSecretaria = getMiembro('SECRETARIO_A');
+    const juridica = getMiembroPrincipal('AREA_JURIDICA');
+    const economica = getMiembroPrincipal('AREA_ECONOMICA_FINANCIERA');
+    const tecnica = getMiembroPrincipal('AREA_TECNICA');
+    const secretaria = getMiembroPrincipal('SECRETARIO_A');
 
     return {
-      // Datos del expediente
-      nom_ente_contratante: expediente.ente?.nombre || '___',
       cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
       desc_objeto_contratacion: expediente.descripcionObjeto || '___',
       loc_ciudad_ente: expediente.ente?.ciudad || '___',
-      fec_acto_recep_aper_sobres_au_au: expediente.cronograma?.fechaActoRecepcionAperturaSobres
-        ? expediente.cronograma.fechaActoRecepcionAperturaSobres.toLocaleDateString('es-VE')
-        : '___',
-
-      // Datos del oferente evaluado
+      fec_acto_recep_aper_sobres_au_au: formatDateToSpanishLong(
+        expediente.cronograma?.fechaActoRecepcionAperturaSobres,
+      ),
       nombre_proveedor_evaluado_au_au: evaluacion.nombreProveedorEvaluado || '___',
-      rif_proveedor_evaluado_au_au: evaluacion.rifProveedorEvaluado || '___',
       nombre_rep_legal_evaluado_au_au: evaluacion.nombreRepLegalEvaluado || '___',
       cedula_rep_legal_evaluado_au_au: evaluacion.cedulaRepLegalEvaluado || '___',
-
-      // Sección A — Sobre N°1
-      carta_manifestacion_voluntad_au_au_si: boolSi(s1?.cartaManifestacionVoluntad),
-      carta_manifestacion_voluntad_au_au_no: boolNo(s1?.cartaManifestacionVoluntad),
-      obs_carta_manifestacion_voluntad_au_au: s1?.obsCartaManifestacionVoluntad || '',
-      carta_autorizacion_au_au_si: boolSi(s1?.cartaAutorizacion),
-      carta_autorizacion_au_au_no: boolNo(s1?.cartaAutorizacion),
-      obs_carta_autorizacion_au_au: s1?.obsCartaAutorizacion || '',
-      copia_rif_vigente_au_au_si: boolSi(s1?.copiaRifVigente),
-      copia_rif_vigente_au_au_no: boolNo(s1?.copiaRifVigente),
-      obs_copia_rif_vigente_au_au: s1?.obsCopiaRifVigente || '',
-      certificado_rnc_au_au_si: boolSi(s1?.certificadoRnc),
-      certificado_rnc_au_au_no: boolNo(s1?.certificadoRnc),
-      obs_certificado_rnc_au_au: s1?.obsCertificadoRnc || '',
-      solvencia_laboral_au_au_si: boolSi(s1?.solvenciaLaboral),
-      solvencia_laboral_au_au_no: boolNo(s1?.solvenciaLaboral),
-      obs_solvencia_laboral_au_au: s1?.obsSolvenciaLaboral || '',
-      declaracion_socios_no_inhabilitados_au_au_si: boolSi(s1?.declaracionSociosNoInhabilitados),
-      declaracion_socios_no_inhabilitados_au_au_no: boolNo(s1?.declaracionSociosNoInhabilitados),
-      obs_declaracion_socios_no_inhabilitados_au_au: s1?.obsDeclaracionSociosNoInhabilitados || '',
-      declaracion_no_deudas_ente_au_au_si: boolSi(s1?.declaracionNoDeudas),
-      declaracion_no_deudas_ente_au_au_no: boolNo(s1?.declaracionNoDeudas),
-      obs_declaracion_no_deudas_ente_au_au: s1?.obsDeclaracionNoDeudas || '',
-      declaracion_no_impedimentos_lcp_au_au_si: boolSi(s1?.declaracionNoImpedimentosLcp),
-      declaracion_no_impedimentos_lcp_au_au_no: boolNo(s1?.declaracionNoImpedimentosLcp),
-      obs_declaracion_no_impedimentos_lcp_au_au: s1?.obsDeclaracionNoImpedimentosLcp || '',
-      declaracion_info_financiera_au_au_si: boolSi(s1?.declaracionInfoFinanciera),
-      declaracion_info_financiera_au_au_no: boolNo(s1?.declaracionInfoFinanciera),
-      obs_declaracion_info_financiera_au_au: s1?.obsDeclaracionInfoFinanciera || '',
-      relacion_servicios_prestados_au_au_si: boolSi(s1?.relacionServiciosPrestados),
-      relacion_servicios_prestados_au_au_no: boolNo(s1?.relacionServiciosPrestados),
-      obs_relacion_servicios_prestados_au_au: s1?.obsRelacionServiciosPrestados || '',
-      referencias_comerciales_au_au_si: boolSi(s1?.referenciasComerciales),
-      referencias_comerciales_au_au_no: boolNo(s1?.referenciasComerciales),
-      obs_referencias_comerciales_au_au: s1?.obsReferenciasComerciales || '',
-
-      // Sección B — Sobre N°2
-      oferta_tecnico_economica_au_au_si: boolSi(s2?.ofertaTecnicoEconomica),
-      oferta_tecnico_economica_au_au_no: boolNo(s2?.ofertaTecnicoEconomica),
-      obs_oferta_tecnico_economica_au_au: s2?.obsOfertaTecnicoEconomica || '',
-      carta_oferta_au_au_si: boolSi(s2?.cartaOferta),
-      carta_oferta_au_au_no: boolNo(s2?.cartaOferta),
-      obs_carta_oferta_au_au: s2?.obsCartaOferta || '',
-      declaracion_capacidad_financiera_au_au_si: boolSi(s2?.declaracionCapacidadFinanciera),
-      declaracion_capacidad_financiera_au_au_no: boolNo(s2?.declaracionCapacidadFinanciera),
-      obs_declaracion_capacidad_financiera_au_au: s2?.obsDeclaracionCapacidadFinanciera || '',
-      declaracion_compromiso_resp_social_au_au_si: boolSi(s2?.declaracionCompromisoRespSocial),
-      declaracion_compromiso_resp_social_au_au_no: boolNo(s2?.declaracionCompromisoRespSocial),
-      obs_declaracion_compromiso_resp_social_au_au: s2?.obsDeclaracionCompromisoRespSocial || '',
-      garantia_mantenimiento_oferta_au_au_si: boolSi(s2?.garantiaMantenimientoOferta),
-      garantia_mantenimiento_oferta_au_au_no: boolNo(s2?.garantiaMantenimientoOferta),
-      obs_garantia_mantenimiento_oferta_au_au: s2?.obsGarantiaMantenimientoOferta || '',
-      declaracion_autocalculo_van_au_au_si: boolSi(s2?.declaracionAutocalculoVan),
-      declaracion_autocalculo_van_au_au_no: boolNo(s2?.declaracionAutocalculoVan),
-      obs_declaracion_autocalculo_van_au_au: s2?.obsDeclaracionAutocalculoVan || '',
-
-      // Calificación
-      oferente_calificado_au_au:
-        boolSi(evaluacion.oferenteCalificado) || boolNo(evaluacion.oferenteCalificado) || '___',
-      motivo_descalificacion_oferente_au_au: evaluacion.motivoDescalificacion || '',
-
-      // Miembros de la Comisión
-      nom_completo_miembro_juridica: mJuridica?.nombreCompletoMiembro || '___',
-      cedula_miembro_juridico: mJuridica?.cedulaMiembro || '___',
-      nom_completo_miembro_economica: mEconomica?.nombreCompletoMiembro || '___',
-      cedula_miembro_economica: mEconomica?.cedulaMiembro || '___',
-      nom_completo_miembro_tecnica: mTecnica?.nombreCompletoMiembro || '___',
-      cedula_miembro_tecnica: mTecnica?.cedulaMiembro || '___',
-      nom_completo_miembro_secretaria: mSecretaria?.nombreCompletoMiembro || '___',
-      cedula_miembro_secretaria: mSecretaria?.cedulaMiembro || '___',
+      ...modFlags,
+      desc_otro_recaudo_sobre1_au_au: otrosSobre1,
+      desc_otro_recaudo_sobre2_au_au: otrosSobre2,
+      nom_completo_miembro_juridica: juridica?.nombreCompletoMiembro || '___',
+      cedula_miembro_juridico: juridica?.cedulaMiembro || '___',
+      nom_completo_miembro_economica: economica?.nombreCompletoMiembro || '___',
+      cedula_miembro_economica: economica?.cedulaMiembro || '___',
+      nom_completo_miembro_tecnica: tecnica?.nombreCompletoMiembro || '___',
+      cedula_miembro_tecnica: tecnica?.cedulaMiembro || '___',
+      nom_completo_miembro_secretaria: secretaria?.nombreCompletoMiembro || '___',
+      cedula_miembro_secretaria: secretaria?.cedulaMiembro || '___',
       datos_designacion_comision: comision?.datosDesignacionComision || '___',
     };
   }
