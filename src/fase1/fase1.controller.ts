@@ -59,7 +59,12 @@ export class Fase1Controller {
 
   @Put('actividades-previas')
   @Roles(...ROLES_ESCRITURA)
-  @ApiOperation({ summary: 'Guardar borrador de Actividades Previas' })
+  @ApiOperation({
+    summary: 'Guardar borrador de Actividades Previas',
+    description:
+      'Incluye garantía laboral, póliza de responsabilidad civil y anticipo contractual ' +
+      '(antes en Aspectos Generales).',
+  })
   guardarActividadesPrevias(
     @Param('expedienteId') expedienteId: string,
     @Body() dto: ActividadesPreviasDto,
@@ -70,7 +75,11 @@ export class Fase1Controller {
 
   @Post('actividades-previas/completar')
   @Roles(...ROLES_ESCRITURA)
-  @ApiOperation({ summary: 'Completar Actividades Previas (desbloquea el resto de la fase)' })
+  @ApiOperation({
+    summary: 'Completar Actividades Previas (desbloquea el resto de la fase)',
+    description:
+      'Exige SI/NO de garantía laboral, póliza RC y anticipo contractual (+ % si aplica).',
+  })
   completarActividadesPrevias(
     @Param('expedienteId') expedienteId: string,
     @Body() dto: ActividadesPreviasDto,

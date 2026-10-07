@@ -160,4 +160,50 @@ export class ActividadesPreviasDto {
   @IsNumber()
   @Type(() => Number)
   puntuacionBonoSujeto?: number;
+
+  // ── Garantías / póliza / anticipo (movidos desde Aspectos Generales) ──
+
+  @ApiPropertyOptional({ description: '¿Requiere garantía laboral?' })
+  @IsOptional()
+  @IsBoolean()
+  requiereGarantiaLaboral?: boolean;
+
+  @ApiPropertyOptional({ example: 10 })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  porcentajeGarantiaLaboral?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  retencionFianzaLaboral?: boolean;
+
+  @ApiPropertyOptional({ description: '¿Requiere póliza de responsabilidad civil?' })
+  @IsOptional()
+  @IsBoolean()
+  polizaResponsabilidadCivil?: boolean;
+
+  @ApiPropertyOptional({ example: 20 })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  porcentajeResponsabilidadCivil?: number;
+
+  @ApiPropertyOptional({ example: 500000.0 })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  montoResponsabilidadCivilBs?: number;
+
+  @ApiPropertyOptional({ description: '¿El contrato contempla anticipo?' })
+  @IsOptional()
+  @IsBoolean()
+  anticipoContrato?: boolean;
+
+  @ApiPropertyOptional({ example: 30, description: 'Porcentaje de anticipo (máximo 50)' })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  porcentajeAnticipo?: number;
 }

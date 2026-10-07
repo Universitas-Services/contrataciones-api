@@ -113,6 +113,47 @@ function validarActividadesPrevias(datos: Datos, ctx: ContextoValidacion): strin
     }
   }
 
+  // Garantías / póliza / anticipo (movidos desde Aspectos Generales)
+  requerirBooleano(e, datos, 'requiereGarantiaLaboral', '¿Requiere garantía laboral?');
+  if (datos.requiereGarantiaLaboral === true) {
+    requerirEnRango(
+      e,
+      datos,
+      'porcentajeGarantiaLaboral',
+      'El porcentaje de garantía laboral',
+      0,
+      100,
+    );
+    requerirBooleano(e, datos, 'retencionFianzaLaboral', '¿Aplica retención de fianza laboral?');
+  }
+
+  requerirBooleano(
+    e,
+    datos,
+    'polizaResponsabilidadCivil',
+    '¿Requiere póliza de responsabilidad civil?',
+  );
+  if (datos.polizaResponsabilidadCivil === true) {
+    requerirEnRango(
+      e,
+      datos,
+      'porcentajeResponsabilidadCivil',
+      'El porcentaje de responsabilidad civil',
+      0,
+      100,
+    );
+    const monto = Number(datos.montoResponsabilidadCivilBs);
+    if (vacio(datos.montoResponsabilidadCivilBs) || Number.isNaN(monto) || monto <= 0) {
+      e.push('El monto de responsabilidad civil debe ser mayor a 0.');
+    }
+  }
+
+  requerirBooleano(e, datos, 'anticipoContrato', '¿El contrato contempla anticipo?');
+  if (datos.anticipoContrato === true) {
+    // El anticipo no puede superar el 50% del monto del contrato.
+    requerirEnRango(e, datos, 'porcentajeAnticipo', 'El porcentaje de anticipo', 0, 50);
+  }
+
   return e;
 }
 
@@ -211,45 +252,7 @@ function validarAspectosGenerales(datos: Datos): string[] {
     '¿Aplica retención de fiel cumplimiento?',
   );
 
-  requerirBooleano(e, datos, 'requiereGarantiaLaboral', '¿Requiere garantía laboral?');
-  if (datos.requiereGarantiaLaboral === true) {
-    requerirEnRango(
-      e,
-      datos,
-      'porcentajeGarantiaLaboral',
-      'El porcentaje de garantía laboral',
-      0,
-      100,
-    );
-    requerirBooleano(e, datos, 'retencionFianzaLaboral', '¿Aplica retención de fianza laboral?');
-  }
-
-  requerirBooleano(
-    e,
-    datos,
-    'polizaResponsabilidadCivil',
-    '¿Requiere póliza de responsabilidad civil?',
-  );
-  if (datos.polizaResponsabilidadCivil === true) {
-    requerirEnRango(
-      e,
-      datos,
-      'porcentajeResponsabilidadCivil',
-      'El porcentaje de responsabilidad civil',
-      0,
-      100,
-    );
-    const monto = Number(datos.montoResponsabilidadCivilBs);
-    if (vacio(datos.montoResponsabilidadCivilBs) || Number.isNaN(monto) || monto <= 0) {
-      e.push('El monto de responsabilidad civil debe ser mayor a 0.');
-    }
-  }
-
-  requerirBooleano(e, datos, 'anticipoContrato', '¿El contrato contempla anticipo?');
-  if (datos.anticipoContrato === true) {
-    // El anticipo no puede superar el 50% del monto del contrato.
-    requerirEnRango(e, datos, 'porcentajeAnticipo', 'El porcentaje de anticipo', 0, 50);
-  }
+  // Garantía laboral / póliza RC / anticipo contractual → Actividades Previas.
 
   requerirBooleano(e, datos, 'anticipoEspecial', '¿Aplica anticipo especial?');
   if (datos.anticipoEspecial === true) {

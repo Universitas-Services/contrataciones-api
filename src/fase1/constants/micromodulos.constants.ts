@@ -55,6 +55,15 @@ const ACTIVIDADES_PREVIAS_CAMPOS = [
   'puntuacionBonoLocal',
   'indBonoSujeto',
   'puntuacionBonoSujeto',
+  // Garantías / póliza / anticipo (antes en Aspectos Generales)
+  'requiereGarantiaLaboral',
+  'porcentajeGarantiaLaboral',
+  'retencionFianzaLaboral',
+  'polizaResponsabilidadCivil',
+  'porcentajeResponsabilidadCivil',
+  'montoResponsabilidadCivilBs',
+  'anticipoContrato',
+  'porcentajeAnticipo',
 ] as const;
 
 const LLAMADO_CAMPOS = [
@@ -89,14 +98,6 @@ const ASPECTOS_GENERALES_CAMPOS = [
   'porcentajeMantenimientoOferta',
   'porcentajeFielCumplimiento',
   'retencionFielCumplimiento',
-  'requiereGarantiaLaboral',
-  'porcentajeGarantiaLaboral',
-  'retencionFianzaLaboral',
-  'polizaResponsabilidadCivil',
-  'porcentajeResponsabilidadCivil',
-  'montoResponsabilidadCivilBs',
-  'anticipoContrato',
-  'porcentajeAnticipo',
   'anticipoEspecial',
   'porcentajeAnticipoEspecial',
 ] as const;
