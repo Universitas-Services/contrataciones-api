@@ -1,0 +1,30 @@
+==== REPO
+size=10324 chars=3700 uniq=24
+{#adquirientes}
+{/adquirientes}
+{cedula_miembro_economica}
+{cedula_miembro_juridica}
+{cedula_miembro_juridico}
+{cedula_miembro_secretaria}
+{cedula_miembro_tecnica}
+{cedula_rep_legal_oferente_au_au}
+{cod_nomenclatura_proceso}
+{datos_designacion_comision}
+{datos_registro_mercantil_proveedor_oferente_au_au}
+{desc_objeto_contratacion}
+{dir_fiscal_ente}
+{fec_acto_recep_aper_sobres_au_au}
+{hora_acto_recep_aper_au_au}
+{nom_completo_miembro_economica}
+{nom_completo_miembro_juridica}
+{nom_completo_miembro_secretaria}
+{nom_completo_miembro_tecnica}
+{nom_ente_contratante}
+{nombre_proveedor_oferente_au_au}
+{nombre_rep_legal_oferente_au_au}
+{numero}
+{rif_proveedor_oferente_au_au}
+
+--- TEXT ---
+REPÚBLICA BOLIVARIANA DE VENEZUELA{nom_ente_contratante}COMISIÓN DE CONTRATACIONES PÚBLICAS{desc_objeto_contratacion}N° {cod_nomenclatura_proceso}ACTA DE APERTURA DE SOBRESSiendo las {hora_acto_recep_aper_au_au} del día {fec_acto_recep_aper_sobres_au_au}, instalada en {dir_fiscal_ente}, la Comisión de Contrataciones Públicas de {nom_ente_contratante}, designada por intermedio de {datos_designacion_comision} conformada por: ÁREA JURÍDICA: {nom_completo_miembro_juridica}, C.I. {cedula_miembro_juridico}; por el ÁREA ECONÓMICA-FINANCIERA: {nom_completo_miembro_economica}, C.I. {cedula_miembro_economica}; por el ÁREA TÉCNICA: {nom_completo_miembro_tecnica}, C.I. {cedula_miembro_tecnica}; y como SECRETARIO(A) DE LA COMISIÓN: {nom_completo_miembro_secretaria}, C.I. {cedula_miembro_secretaria}, con el fin de proceder a determinar el inicio y consumación del ACTO DE APERTURA DE SOBRES CONTENTIVO DE LA MANIFESTACIÓN DE VOLUNTAD DE PARTICIPAR, LOS RECAUDOS LEGALES-FINANCIEROS Y DE OFERTA TÉCNICA-ECONÓMICA, para el Concurso Abierto N° {cod_nomenclatura_proceso} denominado: {desc_objeto_contratacion}.Toma la palabra ________, quien preside el órgano colegiado, declara abierta  la fase de APERTURA de Sobres, en atención a los artículos 78.1, 91, 92 y 93 Decreto de Rango Valor y Fuerza de Ley de Contrataciones Públicas y el artículo 96 del Reglamento de la Ley de Contrataciones Públicas, en el procedimiento competitivo de selección de contratistas para: “{desc_objeto_contratacion}”.Efectuada la revisión de los documentos consignados por las empresas asistentes, de acuerdo a lo estipulado en la lista de cotejo diseñada para evidenciar su consonancia con lo exigido en el Pliego de Condiciones y la normativa que rige la materia de Contrataciones Públicas, en la lista de cotejo (CHECK LIST) que se anexa; y de conformidad con la Ley, se procedió a la apertura de los sobres consignados en el acto de recepción previo, anunciando en voz alta el contenido y el monto de cada oferta. A continuación, se deja constancia de los resultados:N°EMPRESA OFERENTERIFREPRESENTANTE LEGAL C.I.MONTO DE LA OFERTA (Bs.)OBSERVACIONES PRELIMINARES{#adquirientes}{numero}{nombre_proveedor_oferente_au_au}{rif_proveedor_oferente_au_au}{nombre_rep_legal_oferente_au_au}{cedula_rep_legal_oferente_au_au}{datos_registro_mercantil_proveedor_oferente_au_au} {/adquirientes}Nota: La verificación del contenido de los sobres se realizó de manera cuantitativa, sin entrar en el análisis cualitativo de la validez o legalidad de los documentos, lo cual será objeto de una fase posterior de análisis por parte de esta Comisión.No habiendo otro asunto que tratar, y habiéndo constancia pública de los participantes y los montos de sus ofertas, se da por concluido el presente acto. Se levanta la presente acta en señal de conformidad, la cual es firmada por los miembros de la Comisión y los representantes de las empresas participantes al acto. OBSERVACIONES E INCIDENCIAS DEL ACTO:Se deja constancia de lo siguiente: POR LA COMISIÓN DE CONTRATACIONES PÚBLICAS:__________________________________________________{nom_completo_miembro_juridica}{nom_completo_miembro_economica}C.I. {cedula_miembro_juridica}C.I. {cedula_miembro_economica}Miembro Principal - Área JurídicaMiembro Principal - Área Econ.-Fin._____________________________________________{nom_completo_miembro_tecnica}{nom_completo_miembro_secretaria}C.I. {cedula_miembro_tecnica}C.I. {cedula_miembro_secretaria}Miembro Principal - Área TécnicaSecretario(a) de la ComisiónPOR LAS EMPRESAS PARTICIPANTES: Firma: ________________________Empresa: {nombre_proveedor_oferente_au_au}Nombre: {nombre_rep_legal_oferente_au_au}C.I.: {cedula_rep_legal_oferente_au_au}
+--- END ---

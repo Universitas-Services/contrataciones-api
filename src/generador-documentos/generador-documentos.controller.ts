@@ -123,6 +123,16 @@ export class GeneradorDocumentosController {
   // GESTIÓN DE PARTICIPANTES
   // ==========================
 
+  @ApiOperation({ summary: 'Obtener tokens mapeados del Registro de Adquirentes' })
+  @Get('registro-adquirentes/:expedienteId/datos')
+  async getDatosRegistroAdquirentes(@Param('expedienteId') expedienteId: string) {
+    const tokens = await this.generadorDocumentosService.getDatosRegistroAdquirentes(expedienteId);
+    return {
+      message: 'Datos del Registro de Adquirentes',
+      data: { tokens },
+    };
+  }
+
   @ApiOperation({ summary: 'Generar Registro de Adquirentes del Pliego' })
   @Post('generar/registro-adquirentes/:expedienteId')
   async generarRegistroAdquirentes(
@@ -136,6 +146,16 @@ export class GeneradorDocumentosController {
     return { message: 'Registro de Adquirentes generado exitosamente', data };
   }
 
+  @ApiOperation({ summary: 'Obtener tokens mapeados del Acta de Recepción de Sobres' })
+  @Get('acta-recepcion-sobres/:expedienteId/datos')
+  async getDatosActaRecepcionSobres(@Param('expedienteId') expedienteId: string) {
+    const tokens = await this.generadorDocumentosService.getDatosActaRecepcionSobres(expedienteId);
+    return {
+      message: 'Datos del Acta de Recepción de Sobres',
+      data: { tokens },
+    };
+  }
+
   @ApiOperation({ summary: 'Generar Acta de Recepción de Sobres' })
   @Post('generar/acta-recepcion-sobres/:expedienteId')
   async generarActaRecepcionSobres(
@@ -147,6 +167,16 @@ export class GeneradorDocumentosController {
       user.id,
     );
     return { message: 'Acta de Recepción de Sobres generada exitosamente', data };
+  }
+
+  @ApiOperation({ summary: 'Obtener tokens mapeados del Acta de Apertura de Sobres' })
+  @Get('acta-apertura-sobres/:expedienteId/datos')
+  async getDatosActaAperturaSobres(@Param('expedienteId') expedienteId: string) {
+    const tokens = await this.generadorDocumentosService.getDatosActaAperturaSobres(expedienteId);
+    return {
+      message: 'Datos del Acta de Apertura de Sobres',
+      data: { tokens },
+    };
   }
 
   @ApiOperation({ summary: 'Generar Acta de Apertura de Sobres' })
@@ -294,8 +324,29 @@ export class GeneradorDocumentosController {
   }
 
   // ==========================
-  // FASE 3 — Lista de Cotejo e Informe de Recomendación
+  // FASE 2/3 — Lista de Cotejo e Informe de Recomendación
   // ==========================
+
+  @ApiOperation({
+    summary: 'Obtener tokens mapeados de la Lista de Cotejo',
+    description:
+      'Checklist vacío: filas = recaudos exigidos en Fase 1 (mod_* / personalizados). ' +
+      'No incluye SI/NO ni observaciones de la evaluación.',
+  })
+  @Get('lista-cotejo/:expedienteId/:evaluacionId/datos')
+  async getDatosListaCotejo(
+    @Param('expedienteId') expedienteId: string,
+    @Param('evaluacionId') evaluacionId: string,
+  ) {
+    const tokens = await this.generadorDocumentosService.getDatosListaCotejo(
+      expedienteId,
+      evaluacionId,
+    );
+    return {
+      message: 'Datos de la Lista de Cotejo',
+      data: { tokens },
+    };
+  }
 
   @ApiOperation({ summary: 'Generar Lista de Cotejo para un oferente evaluado' })
   @Post('generar/lista-cotejo/:expedienteId/:evaluacionId')
@@ -312,7 +363,28 @@ export class GeneradorDocumentosController {
     return { message: 'Lista de Cotejo generada exitosamente', data };
   }
 
-  @ApiOperation({ summary: 'Generar Informe de Recomendación del expediente' })
+  @ApiOperation({
+    summary: 'Obtener tokens mapeados del Informe de Recomendación',
+    description:
+      'Si el expediente está desierto con causal 1, devuelve tokens del Informe Desierto #1. ' +
+      'Causales 2 y 3 aún no disponibles. Sin desierto, tokens del informe de adjudicación.',
+  })
+  @Get('informe-recomendacion/:expedienteId/datos')
+  async getDatosInformeRecomendacion(@Param('expedienteId') expedienteId: string) {
+    const tokens =
+      await this.generadorDocumentosService.getDatosInformeRecomendacionSegunCaso(expedienteId);
+    return {
+      message: 'Datos del Informe de Recomendación',
+      data: { tokens },
+    };
+  }
+
+  @ApiOperation({
+    summary: 'Generar Informe de Recomendación del expediente',
+    description:
+      'Con declaratoria desierta + causal 1 usa la plantilla Desierto #1. ' +
+      'Preview/download: mismos endpoints bajo INFORME_RECOMENDACION.',
+  })
   @Post('generar/informe-recomendacion/:expedienteId')
   async generarInformeRecomendacion(
     @Param('expedienteId') expedienteId: string,

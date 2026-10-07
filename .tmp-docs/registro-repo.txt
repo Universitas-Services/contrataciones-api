@@ -1,0 +1,21 @@
+==== REPO
+size=8323 chars=1206 uniq=15 occ=15
+{#adquirientes}
+{/adquirientes}
+{cedula_miembro_secretaria}
+{cod_nomenclatura_proceso}
+{correo_proveedor_adquirente_au_au}
+{datos_designacion_comision}
+{datos_pago_pliego_au_au}
+{desc_objeto_contratacion}
+{direccion_fiscal_proveedor_adquirente_au_au}
+{fec_adquisicion_pliego_au_au}
+{nom_completo_miembro_secretaria}
+{nom_ente_contratante}
+{nombre_proveedor_adquiriente_au_au}
+{numero}
+{telefono_proveedor_adquirente_au_au}
+
+--- TEXT ---
+REPÚBLICA BOLIVARIANA DE VENEZUELA{nom_ente_contratante}COMISIÓN DE CONTRATACIONESREGISTRO DE ADQUIRENTES DEL PLIEGO DE CONDICIONESNOMENCLATURA DEL PROCEDIMIENTO: {cod_nomenclatura_proceso}OBJETO: {desc_objeto_contratacion}A continuación, se deja constancia de las personas naturales o jurídicas que han adquirido el Pliego de Condiciones para participar en el presente procedimiento de contratación, a los fines de realizar las notificaciones correspondientes, de conformidad con lo establecido en el Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas y su Reglamento.N°FECHA DEADQUISICIÓNEMPRESA ADQUIRIENTEDOMICILIO FISCALTELÉFONOCORREO ELECTRÓNICODEPÓSITO/TRANSFERENCIA{#adquirientes}{numero}{fec_adquisicion_pliego_au_au}{nombre_proveedor_adquiriente_au_au}{direccion_fiscal_proveedor_adquirente_au_au}{telefono_proveedor_adquirente_au_au}{correo_proveedor_adquirente_au_au}{datos_pago_pliego_au_au}{/adquirientes}Este registro se emite y se archiva en el expediente del procedimiento a los fines legales consiguientes.POR LA COMISIÓN DE CONTRATACIONES PÚBLICASSECRETARIO(A) DE LA COMISIÓN{nom_completo_miembro_secretaria}C.I.- {cedula_miembro_secretaria}{datos_designacion_comision}
+--- END ---
