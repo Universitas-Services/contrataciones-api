@@ -335,35 +335,24 @@ export class GeneradorDocumentosController {
     summary: 'Obtener tokens mapeados de la Lista de Cotejo',
     description:
       'Checklist vacío: filas = recaudos exigidos en Fase 1 (mod_* / personalizados). ' +
-      'No incluye SI/NO ni observaciones de la evaluación.',
+      'No incluye SI/NO ni observaciones.',
   })
-  @Get('lista-cotejo/:expedienteId/:evaluacionId/datos')
-  async getDatosListaCotejo(
-    @Param('expedienteId') expedienteId: string,
-    @Param('evaluacionId') evaluacionId: string,
-  ) {
-    const tokens = await this.generadorDocumentosService.getDatosListaCotejo(
-      expedienteId,
-      evaluacionId,
-    );
+  @Get('lista-cotejo/:expedienteId/datos')
+  async getDatosListaCotejo(@Param('expedienteId') expedienteId: string) {
+    const tokens = await this.generadorDocumentosService.getDatosListaCotejo(expedienteId);
     return {
       message: 'Datos de la Lista de Cotejo',
       data: { tokens },
     };
   }
 
-  @ApiOperation({ summary: 'Generar Lista de Cotejo para un oferente evaluado' })
-  @Post('generar/lista-cotejo/:expedienteId/:evaluacionId')
+  @ApiOperation({ summary: 'Generar Lista de Cotejo del expediente' })
+  @Post('generar/lista-cotejo/:expedienteId')
   async generarListaCotejo(
     @Param('expedienteId') expedienteId: string,
-    @Param('evaluacionId') evaluacionId: string,
     @CurrentUser() user: { id: string },
   ) {
-    const data = await this.generadorDocumentosService.generarListaCotejo(
-      expedienteId,
-      evaluacionId,
-      user.id,
-    );
+    const data = await this.generadorDocumentosService.generarListaCotejo(expedienteId, user.id);
     return { message: 'Lista de Cotejo generada exitosamente', data };
   }
 
@@ -401,10 +390,10 @@ export class GeneradorDocumentosController {
     return { message: 'Informe de Recomendación generado exitosamente', data };
   }
 
-  @ApiOperation({ summary: 'Preview Lista de Cotejo por evaluación' })
-  @Get('preview/lista-cotejo/evaluacion/:evaluacionId')
-  async previewListaCotejoByEvaluacion(@Param('evaluacionId') evaluacionId: string) {
-    return this.generadorDocumentosService.getPreviewUrlByEvaluacion(evaluacionId, 'LISTA_COTEJO');
+  @ApiOperation({ summary: 'Preview Lista de Cotejo' })
+  @Get('preview/lista-cotejo/:expedienteId')
+  async previewListaCotejo(@Param('expedienteId') expedienteId: string) {
+    return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'LISTA_COTEJO');
   }
 
   @ApiOperation({ summary: 'Preview Informe de Recomendación' })
@@ -413,17 +402,13 @@ export class GeneradorDocumentosController {
     return this.generadorDocumentosService.getPreviewUrl(expedienteId, 'INFORME_RECOMENDACION');
   }
 
-  @ApiOperation({ summary: 'Descargar Lista de Cotejo por evaluación' })
-  @Get('download/lista-cotejo/evaluacion/:evaluacionId')
-  async downloadListaCotejoByEvaluacion(
-    @Param('evaluacionId') evaluacionId: string,
+  @ApiOperation({ summary: 'Descargar Lista de Cotejo' })
+  @Get('download/lista-cotejo/:expedienteId')
+  async downloadListaCotejo(
+    @Param('expedienteId') expedienteId: string,
     @Res({ passthrough: false }) res: any,
   ) {
-    const result = await this.generadorDocumentosService.downloadByEvaluacion(
-      evaluacionId,
-      'LISTA_COTEJO',
-    );
-    return this.proxyCloudinaryDownload(result, res);
+    return this.downloadDocumentoInternal(expedienteId, 'LISTA_COTEJO', res);
   }
 
   @ApiOperation({ summary: 'Descargar Informe de Recomendación' })

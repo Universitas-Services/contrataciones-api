@@ -337,30 +337,27 @@ Toast sugerido: `Informe de Recomendación generado exitosamente.`
 
 ## 9. Lista de Cotejo (Bienes)
 
-Checklist **vacío** por oferente evaluado. Sirve para cotejar en el acto: el Word muestra solo el texto del recaudo; las columnas Si / No / Observaciones quedan en blanco (sin tokens).
+Checklist **vacío** por expediente (no requiere evaluación). Sirve para cotejar en el acto: el Word muestra solo el texto del recaudo; las columnas Si / No / Observaciones quedan en blanco. Los datos del oferente salen como `___` para ser llenados a mano el día del acto.
 
 ### 9.1 Qué filas aparecen
 
-Fuente de verdad (en este orden):
+Fuente de verdad:
 
-1. `plantillasSnapshot` de la evaluación (congelado al abrir el hub Fase 3), o
-2. micromódulo `calificacionLegalData` de Fase 1 si aún no hay snapshot.
+1. Micromódulo `calificacionLegalData` de Fase 1.
 
-| Caso en Fase 1                         | En el Word                                       |
-| -------------------------------------- | ------------------------------------------------ |
-| Recaudo de catálogo exigido (`true`)   | Fila visible (`{#mod_..._au_au}`)                |
-| Recaudo no exigido / `false`           | Fila omitida                                     |
-| N personalizados exigidos              | N filas en loop `desc_otro_recaudo_sobreX_au_au` |
-| Oferta técnico-económica (Sobre 2)     | Siempre visible en este checklist vacío          |
-| SI/NO / observaciones de la evaluación | **No** se imprimen                               |
+| Caso en Fase 1                       | En el Word                                       |
+| ------------------------------------ | ------------------------------------------------ |
+| Recaudo de catálogo exigido (`true`) | Fila visible (`{#mod_..._au_au}`)                |
+| Recaudo no exigido / `false`         | Fila omitida                                     |
+| N personalizados exigidos            | N filas en loop `desc_otro_recaudo_sobreX_au_au` |
+| Oferta técnico-económica (Sobre 2)   | Siempre visible en este checklist vacío          |
 
 ### 9.2 Gate
 
-| Condición                                                       | Resultado         |
-| --------------------------------------------------------------- | ----------------- |
-| Evaluación inexistente o de otro expediente                     | **404** / **400** |
-| Ningún recaudo exigido en Fase 1 (catálogo + personalizados)    | **400**           |
-| ≥1 recaudo exigido (además de la oferta técnico-económica fija) | Genera OK         |
+| Condición                                                       | Resultado |
+| --------------------------------------------------------------- | --------- |
+| Ningún recaudo exigido en Fase 1 (catálogo + personalizados)    | **400**   |
+| ≥1 recaudo exigido (además de la oferta técnico-económica fija) | Genera OK |
 
 Mensaje 400 típico:
 
@@ -372,20 +369,20 @@ Toast sugerido:
 
 ### 9.3 Endpoints del generador
 
-Requiere `evaluacionId` (un Word por oferente evaluado).
+Requiere `expedienteId` (un solo Word por expediente).
 
-| Acción              | Método | Ruta                                                                       |
-| ------------------- | ------ | -------------------------------------------------------------------------- |
-| Preview tokens (QA) | `GET`  | `/generador-documentos/lista-cotejo/{expedienteId}/{evaluacionId}/datos`   |
-| Generar             | `POST` | `/generador-documentos/generar/lista-cotejo/{expedienteId}/{evaluacionId}` |
-| Preview archivo     | `GET`  | `/generador-documentos/preview/lista-cotejo/evaluacion/{evaluacionId}`     |
-| Descargar           | `GET`  | `/generador-documentos/download/lista-cotejo/evaluacion/{evaluacionId}`    |
+| Acción              | Método | Ruta                                                         |
+| ------------------- | ------ | ------------------------------------------------------------ |
+| Preview tokens (QA) | `GET`  | `/generador-documentos/lista-cotejo/{expedienteId}/datos`    |
+| Generar             | `POST` | `/generador-documentos/generar/lista-cotejo/{expedienteId}`  |
+| Preview archivo     | `GET`  | `/generador-documentos/preview/lista-cotejo/{expedienteId}`  |
+| Descargar           | `GET`  | `/generador-documentos/download/lista-cotejo/{expedienteId}` |
 
-Tipo en BD: `LISTA_COTEJO` (asociado a la evaluación).
+Tipo en BD: `LISTA_COTEJO` (asociado al expediente).
 
 ### 9.4 Tokens principales (respuesta de `/datos`)
 
-Cabecera: `nombre_proveedor_evaluado_au_au`, `nombre_rep_legal_evaluado_au_au`, `cedula_rep_legal_evaluado_au_au`, `desc_objeto_contratacion`, `cod_nomenclatura_proceso`, `loc_ciudad_ente`, `fec_acto_recep_aper_sobres_au_au`, miembros de comisión (`cedula_miembro_juridico`, etc.), `datos_designacion_comision`.
+Cabecera: `desc_objeto_contratacion`, `cod_nomenclatura_proceso`, `loc_ciudad_ente`, `fec_acto_recep_aper_sobres_au_au`, miembros de comisión (`cedula_miembro_juridico`, etc.), `datos_designacion_comision`. Los datos del proveedor (`nombre_proveedor_evaluado_au_au`, etc.) salen como `___`.
 
 Visibilidad: booleanos `mod_*_au_au` + `oferta_tecnico_economica_au_au`.
 
@@ -394,11 +391,11 @@ Personalizados: arrays `desc_otro_recaudo_sobre1_au_au` / `desc_otro_recaudo_sob
 ### 9.5 Flujo UI
 
 ```
-1. Tener evaluación del oferente (hub Fase 3 / evaluación resultados)
-2. (Opcional QA) GET .../lista-cotejo/{expedienteId}/{evaluacionId}/datos
-3. POST .../generar/lista-cotejo/{expedienteId}/{evaluacionId}
-4. Preview / Download por evaluacionId
-5. Imprimir y marcar Si/No/Obs a mano en el acto
+1. Tener configurado el micromódulo Calificación Legal en Fase 1
+2. (Opcional QA) GET .../lista-cotejo/{expedienteId}/datos
+3. POST .../generar/lista-cotejo/{expedienteId}
+4. Preview / Download por expedienteId
+5. Imprimir tantas copias como oferentes existan y llenarlas a mano en el acto
 ```
 
 ---
