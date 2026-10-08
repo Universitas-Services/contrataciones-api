@@ -1159,7 +1159,7 @@ export class GeneradorDocumentosService {
    * Checklist vacío: filas = recaudos exigidos en Fase 1 (mod_* / personalizados).
    * No imprime SI/NO ni observaciones de la evaluación.
    */
-  async getDatosListaCotejo(expedienteId: string, evaluacionId: string) {
+  async getDatosListaCotejo(expedienteId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
       where: { id: expedienteId },
       include: {
@@ -1171,66 +1171,51 @@ export class GeneradorDocumentosService {
     });
     if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
 
-    const evaluacion = await this.prisma.evaluacionResultados.findUnique({
-      where: { id: evaluacionId },
-      include: { oferta: { select: { expedienteId: true } } },
-    });
-    if (!evaluacion) throw new NotFoundException(`Evaluación ${evaluacionId} no encontrada`);
-    if (evaluacion.oferta.expedienteId !== expedienteId) {
-      throw new BadRequestException('La evaluación no pertenece a este expediente.');
-    }
-
-    // Preferir snapshot congelado del hub; si no existe, leer Fase 1.
     type ItemSnap = {
       id: string;
       sobre: 1 | 2;
       etiquetaCorta?: string;
       personalizado?: boolean;
     };
-    let items: ItemSnap[] = [];
-    const snap = evaluacion.plantillasSnapshot as { legal?: { items?: ItemSnap[] } } | null;
-    if (snap?.legal?.items?.length) {
-      items = snap.legal.items;
-    } else {
-      const data =
-        (expediente.fasePreparatoria?.calificacionLegalData as {
-          exigidos?: Record<string, boolean>;
-          personalizados?: Array<{
-            id?: string;
-            sobre?: number;
-            descripcion?: string;
-            exigido?: boolean;
-          }>;
-        }) || {};
-      const exigidos = data.exigidos ?? {};
-      for (const recaudo of RECAUDOS_CATALOGO) {
-        if (exigidos[recaudo.id] === true) {
-          items.push({
-            id: recaudo.id,
-            sobre: recaudo.sobre,
-            etiquetaCorta: recaudo.etiquetaCorta,
-            personalizado: false,
-          });
-        }
-      }
-      const personalizados = Array.isArray(data.personalizados) ? data.personalizados : [];
-      personalizados.forEach((p, i) => {
-        if (p?.exigido !== true) return;
+    const items: ItemSnap[] = [];
+    const data =
+      (expediente.fasePreparatoria?.calificacionLegalData as {
+        exigidos?: Record<string, boolean>;
+        personalizados?: Array<{
+          id?: string;
+          sobre?: number;
+          descripcion?: string;
+          exigido?: boolean;
+        }>;
+      }) || {};
+    const exigidos = data.exigidos ?? {};
+    for (const recaudo of RECAUDOS_CATALOGO) {
+      if (exigidos[recaudo.id] === true) {
         items.push({
-          id: String(p?.id ?? `personalizado-${i + 1}`),
-          sobre: p?.sobre === 2 ? 2 : 1,
-          etiquetaCorta: String(p?.descripcion ?? `Recaudo personalizado ${i + 1}`),
-          personalizado: true,
+          id: recaudo.id,
+          sobre: recaudo.sobre,
+          etiquetaCorta: recaudo.etiquetaCorta,
+          personalizado: false,
         });
-      });
-      // Ítem fijo Sobre 2 (igual que snapshot.service)
-      items.push({
-        id: 'ofertaTecnicoEconomicaAuAu',
-        sobre: 2,
-        etiquetaCorta: 'Oferta técnico-económica',
-        personalizado: false,
-      });
+      }
     }
+    const personalizados = Array.isArray(data.personalizados) ? data.personalizados : [];
+    personalizados.forEach((p, i) => {
+      if (p?.exigido !== true) return;
+      items.push({
+        id: String(p?.id ?? `personalizado-${i + 1}`),
+        sobre: p?.sobre === 2 ? 2 : 1,
+        etiquetaCorta: String(p?.descripcion ?? `Recaudo personalizado ${i + 1}`),
+        personalizado: true,
+      });
+    });
+    // Ítem fijo Sobre 2 (igual que snapshot.service)
+    items.push({
+      id: 'ofertaTecnicoEconomicaAuAu',
+      sobre: 2,
+      etiquetaCorta: 'Oferta técnico-económica',
+      personalizado: false,
+    });
 
     const catalogIds = new Set(RECAUDOS_CATALOGO.map((r) => r.id));
     const modFlags: Record<string, boolean> = {};
@@ -1291,9 +1276,9 @@ export class GeneradorDocumentosService {
       fec_acto_recep_aper_sobres_au_au: formatDateToSpanishLong(
         expediente.cronograma?.fechaActoRecepcionAperturaSobres,
       ),
-      nombre_proveedor_evaluado_au_au: evaluacion.nombreProveedorEvaluado || '___',
-      nombre_rep_legal_evaluado_au_au: evaluacion.nombreRepLegalEvaluado || '___',
-      cedula_rep_legal_evaluado_au_au: evaluacion.cedulaRepLegalEvaluado || '___',
+      nombre_proveedor_evaluado_au_au: '___',
+      nombre_rep_legal_evaluado_au_au: '___',
+      cedula_rep_legal_evaluado_au_au: '___',
       ...modFlags,
       desc_otro_recaudo_sobre1_au_au: otrosSobre1,
       desc_otro_recaudo_sobre2_au_au: otrosSobre2,
@@ -1309,15 +1294,15 @@ export class GeneradorDocumentosService {
     };
   }
 
-  async generarListaCotejo(expedienteId: string, evaluacionId: string, userId: string) {
-    const data = await this.getDatosListaCotejo(expedienteId, evaluacionId);
+  async generarListaCotejo(expedienteId: string, userId: string) {
+    const data = await this.getDatosListaCotejo(expedienteId);
     return this.generarDocumento(
       expedienteId,
       'LISTA_COTEJO',
       'lista-cotejo-template.docx',
       userId,
       data,
-      evaluacionId,
+      undefined, // Sin evaluación asociada
     );
   }
 
