@@ -20,14 +20,6 @@ export class DictamenTotalDto {
   @Type(() => Number)
   plazoEjecucionOfertaGanadoraAuAu: number;
 
-  @ApiProperty({ description: 'ind_verificado_garantia_au_au' })
-  @IsBoolean()
-  indVerificadoGarantiaAuAu: boolean;
-
-  @ApiProperty({ description: 'ind_verificado_crs_au_au' })
-  @IsBoolean()
-  indVerificadoCrsAuAu: boolean;
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()

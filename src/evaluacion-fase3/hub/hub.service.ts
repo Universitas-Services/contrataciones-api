@@ -91,7 +91,7 @@ export class HubService {
     return {
       submitted: false,
       oferenteCalificadoLegal: null,
-      form: { items: {}, justificacion: '' },
+      form: { items: {}, justificacion: '', indVerificadoGarantia: null, indVerificadoCrs: null },
     };
   }
 
@@ -292,7 +292,12 @@ export class HubService {
     const nuevoEstado: EstadoLegal = {
       submitted: false,
       oferenteCalificadoLegal: null,
-      form: { items, justificacion: form?.justificacion ?? '' },
+      form: {
+        items,
+        justificacion: form?.justificacion ?? '',
+        indVerificadoGarantia: form?.indVerificadoGarantia ?? null,
+        indVerificadoCrs: form?.indVerificadoCrs ?? null,
+      },
     };
 
     if (accion === 'draft') {
@@ -315,6 +320,13 @@ export class HubService {
         errores.push(`Falta responder SI/NO en "${item.etiquetaCorta}".`);
       }
     }
+    // Sobre 2: verificaciones que alimentan el Informe de Recomendación. No deciden el dictamen.
+    if (typeof form?.indVerificadoGarantia !== 'boolean') {
+      errores.push('Debe indicar si se verificó la garantía de mantenimiento de la oferta.');
+    }
+    if (typeof form?.indVerificadoCrs !== 'boolean') {
+      errores.push('Debe indicar si se verificó el compromiso de responsabilidad social.');
+    }
     this.assertSinErrores(errores);
 
     // Sólo los eliminatorios deciden el dictamen. El VAN se coteja pero no tumba.
@@ -336,6 +348,8 @@ export class HubService {
       // Se refleja también en las columnas históricas del modelo.
       oferenteCalificadoLegal: cumple,
       justificacionCalificadoLegal: form?.justificacion ?? null,
+      indVerificadoGarantia: form.indVerificadoGarantia ?? null,
+      indVerificadoCrs: form.indVerificadoCrs ?? null,
       ...(cumple ? {} : { oferenteCalificado: false, posicionPrelacion: null }),
     });
 

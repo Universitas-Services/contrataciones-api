@@ -31,6 +31,7 @@ Body carácter: `{ "caracterAdjudicacion": "TOTAL" | "PARCIAL" }` → **409** si
 
 - **TOTAL:** dictamen solo a Primera Opción de evaluación.
 - **PARCIAL:** dictamen a cada calificado; si adjudicado → `posicionPrelacionAdjudicacion = "Primera Opción"` (no borra ranking Fase 2).
+- **Garantía de mantenimiento / CRS ya NO van en los dictámenes** (TOTAL ni PARCIAL). Se quitaron `indVerificadoGarantiaAuAu` e `indVerificadoCrsAuAu` del body: ahora se responden por oferente en el **hub de Calificación Legal (Sobre 2)** — ver `docs/FRONTEND_DOCUMENTOS_FASE2.md` §8.5.
 
 ## 3. Informe
 
@@ -42,7 +43,7 @@ GET  /evaluacion-fase3/informe/:expedienteId
 Campos nuevos: `existeItemsSinOfertas`, `itemsSinOfertas`, `motivoItemsSinOfertas` (+ aliases `*AuAu`).  
 Alias justificación: `justificacionActualizacionPresupuestoAuAu` → `justificacionActualizacionPresup`.  
 Enviar `validarCompleto: true` para exigir booleanos raíz + condicionales.  
-Garantía/CRS/plazo: preferir dictamen (legacy en informe aún aceptado).
+Plazo: preferir dictamen (legacy en informe aún aceptado). Garantía/CRS ya no existen en el informe: se leen de la evaluación del oferente adjudicado (hub legal).
 
 ## 4. Documentos (paths existentes)
 

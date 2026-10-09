@@ -217,8 +217,6 @@ export class GestionAdjudicacionService {
       partidasAdjudicadasTotal: dto.partidasAdjudicadasTotalAuAu,
       montoAdjudicadoTotal: dto.montoAdjudicadoTotalAuAu,
       plazoEjecucionOfertaGanadora: dto.plazoEjecucionOfertaGanadoraAuAu,
-      indVerificadoGarantia: dto.indVerificadoGarantiaAuAu,
-      indVerificadoCrs: dto.indVerificadoCrsAuAu,
       notificacionGenerada: dto.notificacionGenerada ?? false,
       // limpiar campos parciales
       oferenteAdjudicadoProcedimiento: true,
@@ -275,8 +273,6 @@ export class GestionAdjudicacionService {
       if (dto.plazoEjecucionOfertaParcialAuAu == null) {
         faltantes.push('plazoEjecucionOfertaParcialAuAu');
       }
-      if (dto.indVerificadoGarantiaAuAu == null) faltantes.push('indVerificadoGarantiaAuAu');
-      if (dto.indVerificadoCrsAuAu == null) faltantes.push('indVerificadoCrsAuAu');
       if (faltantes.length) {
         throw new BadRequestException(
           `Faltan campos para adjudicación parcial: ${faltantes.join(', ')}`,
@@ -297,8 +293,6 @@ export class GestionAdjudicacionService {
       plazoEjecucionOfertaParcial: adjudicado
         ? (dto.plazoEjecucionOfertaParcialAuAu ?? null)
         : null,
-      indVerificadoGarantia: adjudicado ? (dto.indVerificadoGarantiaAuAu ?? null) : null,
-      indVerificadoCrs: adjudicado ? (dto.indVerificadoCrsAuAu ?? null) : null,
       notificacionGenerada: dto.notificacionGenerada ?? false,
       partidasAdjudicadasTotal: null,
       montoAdjudicadoTotal: null,
