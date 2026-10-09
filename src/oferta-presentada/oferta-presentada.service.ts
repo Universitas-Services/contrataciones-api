@@ -11,17 +11,6 @@ export class OfertaPresentadaService {
     private readonly proveedoresService: ProveedoresService,
   ) {}
 
-  private async invalidarDocumentos(expedienteId: string) {
-    await this.prisma.documentoGenerado.updateMany({
-      where: {
-        expedienteId,
-        deletedAt: null,
-        tipoDocumento: { in: ['ACTA_RECEPCION', 'ACTA_APERTURA'] },
-      },
-      data: { estaDesactualizado: true },
-    });
-  }
-
   /**
    * Crear una oferta presentada.
    */
@@ -96,8 +85,6 @@ export class OfertaPresentadaService {
         proveedor: { select: { nombre: true, rif: true } },
       },
     });
-
-    await this.invalidarDocumentos(dto.expedienteId);
 
     return result;
   }
@@ -238,11 +225,6 @@ export class OfertaPresentadaService {
       }
     }
 
-    await this.invalidarDocumentos(result.expedienteId);
-    if (ofertaActual.expedienteId !== result.expedienteId) {
-      await this.invalidarDocumentos(ofertaActual.expedienteId);
-    }
-
     return result;
   }
 
@@ -259,8 +241,6 @@ export class OfertaPresentadaService {
         updatedBy: userId,
       },
     });
-
-    await this.invalidarDocumentos(oferta.expedienteId);
 
     return { message: 'Oferta eliminada exitosamente' };
   }

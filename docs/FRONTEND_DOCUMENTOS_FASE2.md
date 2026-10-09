@@ -19,8 +19,8 @@ Este documento explica los documentos Word que el backend genera en Fase 2 (post
 | #   | Documento en UI                     | Tipo en BD              | Gate UI / backend                         | Quién lo genera |
 | --- | ----------------------------------- | ----------------------- | ----------------------------------------- | --------------- |
 | 1   | Registro de Adquirentes del Pliego  | `REGISTRO_ADQUIRENTES`  | ≥1 adquirente                             | Generador       |
-| 2   | Acta de Recepción de Sobres         | `ACTA_RECEPCION`        | ≥1 oferente                               | Generador       |
-| 3   | Acta de Apertura de Sobres          | `ACTA_APERTURA`         | ≥1 oferente                               | Generador       |
+| 2   | Acta de Recepción de Sobres         | `ACTA_RECEPCION`        | Sin gate (tabla vacía a mano)             | Generador       |
+| 3   | Acta de Apertura de Sobres          | `ACTA_APERTURA`         | Sin gate (tabla vacía a mano)             | Generador       |
 | 4   | Informe Recomendación (Desierto #1) | `INFORME_RECOMENDACION` | desierto + causal 1                       | Generador       |
 | 5   | Lista de Cotejo (Bienes)            | `LISTA_COTEJO`          | evaluación + ≥1 recaudo exigido en Fase 1 | Generador       |
 
@@ -162,7 +162,7 @@ Todos requieren JWT.
 
 Documento del acto público de recepción. El backend rellena cabecera, comisión y firmas; **la tabla de oferentes queda en blanco** para llenado manual al imprimir.
 
-### 6.1 CRUD de oferentes (gate, no filas del Word)
+### 6.1 CRUD de oferentes (no alimenta el Word)
 
 Base: `/oferta-presentada`
 
@@ -178,18 +178,11 @@ Campos del formulario (DTO): `rifProveedorOferente`, `nombreProveedorOferente`, 
 
 > `montoOfertaBs` y registro mercantil **no** se imprimen en Recepción ni en Apertura (tablas vacías a mano); quedan en BD para otros docs / evaluación.
 
-Al crear / editar / eliminar, el backend marca `ACTA_RECEPCION` y `ACTA_APERTURA` como `estaDesactualizado: true`.
+El CRUD de oferentes **no** marca `ACTA_RECEPCION` ni `ACTA_APERTURA` como desactualizadas (el Word no incluye oferentes).
 
 ### 6.2 Gate
 
-| Condición   | UI                    | Backend                  |
-| ----------- | --------------------- | ------------------------ |
-| 0 oferentes | Generar deshabilitado | `POST generar` → **400** |
-| ≥1 oferente | Generar habilitado    | Genera OK                |
-
-Mensaje 400:
-
-> Debe registrar al menos un oferente antes de generar el Acta de Recepción de Sobres.
+**No hay gate de oferentes.** El botón Generar va siempre habilitado: el acta se imprime antes/durante el acto y la tabla se llena a mano. El backend no responde 400 por falta de oferentes (solo 404 si el expediente no existe).
 
 Toast sugerido:
 
@@ -215,11 +208,10 @@ Toast sugerido:
 ### 6.5 Flujo UI
 
 ```
-1. GET /oferta-presentada/expediente/{expedienteId}
-2. Registrar oferentes del acto
-3. Si count >= 1 → habilitar Generar Acta de Recepción
-4. POST .../generar/acta-recepcion-sobres/{expedienteId}
-5. Preview / Download → imprimir y completar tabla a mano
+1. Botón Generar Acta de Recepción siempre habilitado
+2. POST .../generar/acta-recepcion-sobres/{expedienteId}
+3. Preview / Download → imprimir y completar tabla a mano
+4. (Independiente) Registrar oferentes en /oferta-presentada para evaluación / docs siguientes
 ```
 
 ---
@@ -230,16 +222,7 @@ Documento del acto público de apertura. El backend rellena cabecera, comisión 
 
 ### 7.1 Gate
 
-Mismo CRUD de oferentes que la sección 6 (`/oferta-presentada`). Misma regla:
-
-| Condición   | UI                    | Backend                  |
-| ----------- | --------------------- | ------------------------ |
-| 0 oferentes | Generar deshabilitado | `POST generar` → **400** |
-| ≥1 oferente | Generar habilitado    | Genera OK                |
-
-Mensaje 400:
-
-> Debe registrar al menos un oferente antes de generar el Acta de Apertura de Sobres.
+Misma regla que la sección 6: **no hay gate de oferentes**. Botón Generar siempre habilitado; sin 400 por falta de oferentes.
 
 Toast sugerido:
 
@@ -266,10 +249,9 @@ Toast sugerido:
 ### 7.4 Flujo UI
 
 ```
-1. GET /oferta-presentada/expediente/{expedienteId}
-2. Si count >= 1 → habilitar Generar Acta de Apertura (puede ser en paralelo a Recepción)
-3. POST .../generar/acta-apertura-sobres/{expedienteId}
-4. Preview / Download → imprimir y completar tabla / firmas a mano
+1. Botón Generar Acta de Apertura siempre habilitado (puede ser en paralelo a Recepción)
+2. POST .../generar/acta-apertura-sobres/{expedienteId}
+3. Preview / Download → imprimir y completar tabla / firmas a mano
 ```
 
 ---

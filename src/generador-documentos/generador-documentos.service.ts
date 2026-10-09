@@ -795,7 +795,7 @@ export class GeneradorDocumentosService {
   /**
    * Obtiene datos mapeados para el Acta de Recepción de Sobres.
    * Solo 15 tokens de cabecera/comisión/firma. La tabla de oferentes queda vacía
-   * a propósito (imprimir y llenar a mano). Gate: ≥1 oferta activa.
+   * a propósito (imprimir y llenar a mano), por eso no exige oferentes registrados.
    */
   async getDatosActaRecepcionSobres(expedienteId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
@@ -805,20 +805,10 @@ export class GeneradorDocumentosService {
         comision: { include: { miembros: true } },
         fasePreparatoria: true,
         cronograma: true,
-        ofertas: {
-          where: { deletedAt: null },
-          select: { id: true },
-        },
       },
     });
 
     if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
-
-    if (expediente.ofertas.length === 0) {
-      throw new BadRequestException(
-        'Debe registrar al menos un oferente antes de generar el Acta de Recepción de Sobres.',
-      );
-    }
 
     const { ente, comision, fasePreparatoria, cronograma } = expediente;
     const getMiembroPrincipal = (area: string) =>
@@ -868,7 +858,7 @@ export class GeneradorDocumentosService {
   /**
    * Obtiene datos mapeados para el Acta de Apertura de Sobres.
    * Solo 15 tokens de cabecera/comisión/firma. La tabla de resultados queda vacía
-   * a propósito (imprimir y llenar a mano). Gate: ≥1 oferta activa.
+   * a propósito (imprimir y llenar a mano), por eso no exige oferentes registrados.
    */
   async getDatosActaAperturaSobres(expedienteId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
@@ -878,20 +868,10 @@ export class GeneradorDocumentosService {
         comision: { include: { miembros: true } },
         fasePreparatoria: true,
         cronograma: true,
-        ofertas: {
-          where: { deletedAt: null },
-          select: { id: true },
-        },
       },
     });
 
     if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
-
-    if (expediente.ofertas.length === 0) {
-      throw new BadRequestException(
-        'Debe registrar al menos un oferente antes de generar el Acta de Apertura de Sobres.',
-      );
-    }
 
     const { ente, comision, fasePreparatoria, cronograma } = expediente;
     const getMiembroPrincipal = (area: string) =>
