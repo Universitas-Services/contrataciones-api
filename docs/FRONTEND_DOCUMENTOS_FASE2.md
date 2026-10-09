@@ -16,13 +16,13 @@ Este documento explica los documentos Word que el backend genera en Fase 2 (post
 
 ## 1. Resumen ejecutivo
 
-| #   | Documento en UI                     | Tipo en BD              | Gate UI / backend                         | Quién lo genera |
-| --- | ----------------------------------- | ----------------------- | ----------------------------------------- | --------------- |
-| 1   | Registro de Adquirentes del Pliego  | `REGISTRO_ADQUIRENTES`  | ≥1 adquirente                             | Generador       |
-| 2   | Acta de Recepción de Sobres         | `ACTA_RECEPCION`        | Sin gate (tabla vacía a mano)             | Generador       |
-| 3   | Acta de Apertura de Sobres          | `ACTA_APERTURA`         | Sin gate (tabla vacía a mano)             | Generador       |
-| 4   | Informe Recomendación (Desierto #1) | `INFORME_RECOMENDACION` | desierto + causal 1                       | Generador       |
-| 5   | Lista de Cotejo (Bienes)            | `LISTA_COTEJO`          | evaluación + ≥1 recaudo exigido en Fase 1 | Generador       |
+| #   | Documento en UI                    | Tipo en BD              | Gate UI / backend                         | Quién lo genera |
+| --- | ---------------------------------- | ----------------------- | ----------------------------------------- | --------------- |
+| 1   | Registro de Adquirentes del Pliego | `REGISTRO_ADQUIRENTES`  | ≥1 adquirente                             | Generador       |
+| 2   | Acta de Recepción de Sobres        | `ACTA_RECEPCION`        | Sin gate (tabla vacía a mano)             | Generador       |
+| 3   | Acta de Apertura de Sobres         | `ACTA_APERTURA`         | Sin gate (tabla vacía a mano)             | Generador       |
+| 4   | Informe Recomendación (Desierto)   | `INFORME_RECOMENDACION` | desierto + causal 1, 2 o 3 (ver §8)       | Generador       |
+| 5   | Lista de Cotejo (Bienes)           | `LISTA_COTEJO`          | evaluación + ≥1 recaudo exigido en Fase 1 | Generador       |
 
 **Importante para frontend:**
 
@@ -256,9 +256,9 @@ Toast sugerido:
 
 ---
 
-## 8. Informe de Recomendación — Desierto #1
+## 8. Informe de Recomendación — Desierto #1, #2 y #3
 
-Cuando el expediente se declara desierto con la **causal 1** (ninguna oferta presentada), el mismo endpoint de Informe de Recomendación genera la plantilla Desierto #1.
+Cuando el expediente se declara desierto, el mismo endpoint de Informe de Recomendación genera la plantilla que corresponde a la causal (1, 2 o 3).
 
 ### 8.1 Declarar desierto
 
@@ -277,19 +277,26 @@ Body:
 
 Causales del desplegable (Art. 113 LCP):
 
-| #   | Texto (preferido)                                         | Informe automatizado  |
-| --- | --------------------------------------------------------- | --------------------- |
-| 1   | `1. Ninguna oferta haya sido presentada.`                 | **Sí** (esta entrega) |
-| 2   | `2. Todas las ofertas resulten rechazadas...`             | Pendiente (mañana)    |
-| 3   | `3. Esté suficientemente justificado que de continuar...` | Pendiente (mañana)    |
+| #   | Texto (preferido)                                         | Informe automatizado |
+| --- | --------------------------------------------------------- | -------------------- |
+| 1   | `1. Ninguna oferta haya sido presentada.`                 | **Sí** — Desierto #1 |
+| 2   | `2. Todas las ofertas resulten rechazadas...`             | **Sí** — Desierto #2 |
+| 3   | `3. Esté suficientemente justificado que de continuar...` | **Sí** — Desierto #3 |
 
-### 8.2 Gate para generar Desierto #1
+### 8.2 Gate para generar
 
-| Condición                                | Resultado                                |
-| ---------------------------------------- | ---------------------------------------- |
-| `declaratoriaDesierto = true` + causal 1 | Genera plantilla Desierto #1             |
-| Desierto + causal 2 o 3                  | **400** (aún no disponible)              |
-| Sin desierto                             | Usa el informe de adjudicación existente |
+| Condición                                                                         | Resultado                                |
+| --------------------------------------------------------------------------------- | ---------------------------------------- |
+| `declaratoriaDesierto = true` + causal 1                                          | Genera plantilla Desierto #1             |
+| Desierto + causal 2 o 3 + ≥1 oferente con Calificación Legal confirmada en el hub | Genera plantilla Desierto #2 o #3        |
+| Desierto + causal 2 o 3 sin ninguna Calificación Legal confirmada                 | **400**                                  |
+| Sin desierto                                                                      | Usa el informe de adjudicación existente |
+
+Qué toma cada plantilla del hub de evaluación (por oferente):
+
+- **#2:** oferentes del acto, requisitos preliminares (garantía / CRS), calificación legal (X en Si/No por recaudo), financiera (valor y puntos por índice), técnica (puntos y rango elegido) y descalificados.
+- **#3:** todo lo del #2 + oferentes que superaron la calificación, evaluación técnica y económica, promoción económica (VAN / localidad / PyME) y matriz de totalización.
+- Las matrices genéricas (criterios y rangos) salen de lo exigido en el Pliego (Fase 1).
 
 ### 8.3 Endpoints (mismos paths; el backend elige plantilla)
 
@@ -307,13 +314,41 @@ Toast sugerido: `Informe de Recomendación generado exitosamente.`
 ### 8.4 Flujo UI
 
 ```
-1. PATCH .../declarar-desierto con causal 1 + justificación
-2. Habilitar Generar Informe de Recomendación (Desierto #1)
+1. PATCH .../declarar-desierto con la causal + justificación
+2. Habilitar Generar Informe de Recomendación (causal 2/3: tras confirmar la Calificación Legal de al menos un oferente)
 3. POST .../generar/informe-recomendacion/{expedienteId}
 4. Preview / Download
 ```
 
 > `pag_web_ente` aún no existe en el modelo del ente; el Word sale con `___` hasta que se agregue ese dato.
+
+### 8.5 Cambio en el hub de Calificación Legal (Sobre 2) — garantía y CRS
+
+Las preguntas _“Se verificó que la empresa oferente consignó la garantía de mantenimiento de la oferta”_ y _“Se verificó que la empresa oferente presentó el compromiso de responsabilidad social”_ **se movieron de los dictámenes de Fase 3 al Sobre 2 de la Calificación Legal**, por oferente.
+
+`PATCH /evaluacion-fase3/{evaluacionId}/hub/legal` — dentro de `form` se agregan dos booleanos:
+
+```json
+{
+  "action": "confirm",
+  "form": {
+    "items": { "...": { "consignado": "SI" } },
+    "justificacion": "...",
+    "indVerificadoGarantia": true,
+    "indVerificadoCrs": false
+  }
+}
+```
+
+| Campo                   | Variable                        | Tipo            | Regla                                              |
+| ----------------------- | ------------------------------- | --------------- | -------------------------------------------------- |
+| `indVerificadoGarantia` | `ind_verificado_garantia_au_au` | boolean (Sí/No) | Obligatorio al **confirmar**; opcional en borrador |
+| `indVerificadoCrs`      | `ind_verificado_crs_au_au`      | boolean (Sí/No) | Obligatorio al **confirmar**; opcional en borrador |
+
+- No cambian si el oferente califica o no legalmente.
+- Se devuelven en `GET` del hub dentro de `legal.form`.
+- En el Informe de Recomendación salen como **SÍ / NO** (tabla “Verificación de requisitos preliminares”).
+- Ya **no** se envían en los dictámenes TOTAL/PARCIAL ni en el informe de Fase 3.
 
 ---
 
@@ -384,5 +419,4 @@ Personalizados: arrays `desc_otro_recaudo_sobre1_au_au` / `desc_otro_recaudo_sob
 
 ## 10. Próximos documentos
 
-- Informe Desierto #2 y #3 (plantillas con loops a corregir + mapper de calificación/evaluación)
 - Informe de adjudicación (cuando no hay desierto) — ya existe stub; refinar según prototipo final

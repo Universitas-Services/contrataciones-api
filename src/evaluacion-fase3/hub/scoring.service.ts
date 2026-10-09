@@ -27,6 +27,25 @@ export interface ResultadoPromocion {
 }
 
 /**
+ * Puntaje de un índice financiero según en qué banda cae el valor.
+ * Exportado para que el generador de documentos reconstruya el puntaje por criterio.
+ */
+export function puntajeIndice(criterio: CriterioIndice, valor: number): number {
+  const { rangos, mode } = criterio;
+
+  if (mode === 'inverso') {
+    // En endeudamiento el mejor resultado es el valor más bajo.
+    if (valor <= rangos.rangoMaximo) return rangos.puntajeMaximo;
+    if (valor <= rangos.rangoMinimo) return rangos.puntajeMedio;
+    return rangos.puntajeMinimo;
+  }
+
+  if (valor >= rangos.rangoMaximo) return rangos.puntajeMaximo;
+  if (valor >= rangos.rangoMinimo) return rangos.puntajeMedio;
+  return rangos.puntajeMinimo;
+}
+
+/**
  * Motor de puntaje del hub. Replica en servidor las mismas reglas que el front
  * usa para previsualizar; el valor que se persiste es siempre el de aquí.
  */
@@ -48,20 +67,8 @@ export class ScoringService {
     return Number.isFinite(n) ? n : null;
   }
 
-  /** Puntaje de un índice financiero según en qué banda cae el valor. */
   private puntajeIndice(criterio: CriterioIndice, valor: number): number {
-    const { rangos, mode } = criterio;
-
-    if (mode === 'inverso') {
-      // En endeudamiento el mejor resultado es el valor más bajo.
-      if (valor <= rangos.rangoMaximo) return rangos.puntajeMaximo;
-      if (valor <= rangos.rangoMinimo) return rangos.puntajeMedio;
-      return rangos.puntajeMinimo;
-    }
-
-    if (valor >= rangos.rangoMaximo) return rangos.puntajeMaximo;
-    if (valor >= rangos.rangoMinimo) return rangos.puntajeMedio;
-    return rangos.puntajeMinimo;
+    return puntajeIndice(criterio, valor);
   }
 
   // ── Financiera ───────────────────────────────────────────────────────────

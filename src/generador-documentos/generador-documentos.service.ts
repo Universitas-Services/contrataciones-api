@@ -11,9 +11,10 @@ import {
   formatToDDMMYYYY,
   formatCurrencyVE,
 } from '../common/utils/date-formatter.util';
-import { TipoDocumento, EstadoMicromodulo } from '@prisma/client';
+import { Prisma, TipoDocumento, EstadoMicromodulo } from '@prisma/client';
 import { MICROMODULO_KEYS, MICROMODULOS } from '../fase1/constants/micromodulos.constants';
 import { mapDatosPliegoCondiciones } from './mappers/pliego-condiciones.mapper';
+import { mapOferentesDesierto } from './mappers/informe-desierto.mapper';
 import { RECAUDOS_CATALOGO } from '../fase1/constants/recaudos-legales.constants';
 import {
   esPrimeraOpcion,
@@ -1372,13 +1373,17 @@ export class GeneradorDocumentosService {
     const tipoContratacion = expediente.modalidad?.tipoContratacion || 'SERVICIOS';
     const rangos = this.getRangosEvaluacion(tipoContratacion);
     const informe = expediente.informeRecomendacion;
-    // Preferir garantía/CRS/plazo desde dictámenes (Gestión); fallback informe legacy.
+    // Plazo desde dictámenes (Gestión); fallback informe legacy.
     const dictamenRef =
       expediente.dictamenesAdjudicacion.find((d) => d.tipoDictamen === 'TOTAL') ||
       expediente.dictamenesAdjudicacion.find((d) => d.oferenteAdjudicadoProcedimiento === true) ||
       null;
-    const indGarantia = dictamenRef?.indVerificadoGarantia ?? informe?.indVerificadoGarantia;
-    const indCrs = dictamenRef?.indVerificadoCrs ?? informe?.indVerificadoCrs;
+    // Garantía/CRS se verifican en el hub legal (Sobre 2) del oferente adjudicado.
+    const evaluacionAdjudicada = dictamenRef
+      ? expediente.ofertas.find((of) => of.evaluacion?.id === dictamenRef.evaluacionId)?.evaluacion
+      : undefined;
+    const indGarantia = evaluacionAdjudicada?.indVerificadoGarantia;
+    const indCrs = evaluacionAdjudicada?.indVerificadoCrs;
     const plazoGanadora =
       dictamenRef?.plazoEjecucionOfertaGanadora ??
       dictamenRef?.plazoEjecucionOfertaParcial ??
@@ -1688,6 +1693,22 @@ export class GeneradorDocumentosService {
       );
     }
 
+    return this.datosBaseInformeDesierto(expediente, 1);
+  }
+
+  /** Cabecera, comisión, cronograma y causal comunes a los 3 informes de desierto. */
+  private datosBaseInformeDesierto(
+    expediente: Prisma.ExpedienteContratacionGetPayload<{
+      include: {
+        ente: true;
+        comision: { include: { miembros: true } };
+        modalidad: true;
+        cronograma: true;
+        fasePreparatoria: true;
+      };
+    }>,
+    causalNum: 1 | 2 | 3,
+  ) {
     const { ente, comision, modalidad, cronograma, fasePreparatoria } = expediente;
     const getMiembroPrincipal = (area: string) =>
       comision?.miembros?.find(
@@ -1702,10 +1723,8 @@ export class GeneradorDocumentosService {
     const formatBs = (num: number) =>
       num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    // En el narrativo: "numeral {causal_...}" → preferir "1" si viene el texto completo
-    const causalToken = expediente.causalDeclaratoriaDesierto?.trim().startsWith('1.')
-      ? '1'
-      : expediente.causalDeclaratoriaDesierto?.trim() || '1';
+    // En el narrativo: "numeral {causal_...}" → solo el número de la causal
+    const causalToken = String(causalNum);
 
     return {
       cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
@@ -1747,8 +1766,64 @@ export class GeneradorDocumentosService {
   }
 
   /**
-   * Datos del informe: si el expediente está desierto, enruta por causal.
-   * Hoy solo Desierto #1; #2/#3 responden 400 hasta mañana.
+   * Tokens del Informe de Recomendación Desierto #2 (ofertas rechazadas / descalificados)
+   * y #3 (perjuicio al contratante; incluye evaluación y promoción).
+   * Plantillas: informe-desierto-2-template.docx / informe-desierto-3-template.docx
+   */
+  async getDatosInformeDesierto23(expedienteId: string, causalNum: 2 | 3) {
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      include: {
+        ente: true,
+        comision: { include: { miembros: true } },
+        modalidad: true,
+        cronograma: true,
+        fasePreparatoria: true,
+        presupuestoItems: { where: { deletedAt: null } },
+        ofertas: {
+          where: { deletedAt: null },
+          include: { evaluacion: true },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
+    });
+
+    if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
+    if (!expediente.fasePreparatoria || !expediente.cronograma || !expediente.modalidad) {
+      throw new BadRequestException(
+        'El expediente no tiene Fase 1, cronograma o modalidad completos para generar el informe.',
+      );
+    }
+    if (!expediente.declaratoriaDesierto) {
+      throw new BadRequestException(
+        `El expediente no está declarado desierto. No se puede generar el Informe Desierto #${causalNum}.`,
+      );
+    }
+
+    const oferentes = mapOferentesDesierto(expediente.ofertas, {
+      incluirEvaluacion: causalNum === 3,
+    });
+    if ((oferentes.calificacion_legal_au_au as unknown[]).length === 0) {
+      throw new BadRequestException(
+        `Debe confirmar la Calificación Legal de al menos un oferente en el hub antes de generar el Informe Desierto #${causalNum}.`,
+      );
+    }
+
+    // Matrices y recaudos tal como se exigieron en el pliego (Fase 1)
+    const pliego = mapDatosPliegoCondiciones(expediente);
+    const promocionActiva = Boolean(pliego.activa_promocion_economica_au_au);
+
+    return {
+      ...pliego,
+      ...this.datosBaseInformeDesierto(expediente, causalNum),
+      ...oferentes,
+      total_matriz_1_evaluacion_au_au: !promocionActiva,
+      total_matriz_2_evaluacion_au_au: promocionActiva,
+    };
+  }
+
+  /**
+   * Datos del informe: si el expediente está desierto, enruta por causal (#1, #2 o #3).
    */
   async getDatosInformeRecomendacionSegunCaso(expedienteId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
@@ -1765,11 +1840,7 @@ export class GeneradorDocumentosService {
     if (expediente.declaratoriaDesierto) {
       const causal = this.resolveCausalDesierto(expediente.causalDeclaratoriaDesierto);
       if (causal === 1) return this.getDatosInformeDesierto1(expedienteId);
-      if (causal === 2 || causal === 3) {
-        throw new BadRequestException(
-          `El Informe de Recomendación Desierto #${causal} aún no está disponible. Use causal 1 por ahora.`,
-        );
-      }
+      if (causal === 2 || causal === 3) return this.getDatosInformeDesierto23(expedienteId, causal);
       throw new BadRequestException(
         'Causal de declaratoria de desierto no reconocida. Use una de las 3 opciones del Art. 113 LCP.',
       );
@@ -1803,8 +1874,13 @@ export class GeneradorDocumentosService {
         );
       }
       if (causal === 2 || causal === 3) {
-        throw new BadRequestException(
-          `El Informe de Recomendación Desierto #${causal} aún no está disponible.`,
+        const data = await this.getDatosInformeDesierto23(expedienteId, causal);
+        return this.generarDocumento(
+          expedienteId,
+          'INFORME_RECOMENDACION',
+          `informe-desierto-${causal}-template.docx`,
+          userId,
+          data,
         );
       }
       throw new BadRequestException(

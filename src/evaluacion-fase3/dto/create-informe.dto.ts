@@ -88,20 +88,6 @@ export class CreateInformeDto {
   justificacionActualizacionPresupuestoAuAu?: string;
 
   @ApiPropertyOptional({
-    description: 'Legacy — preferir dictamen. ind_verificado_garantia_au_au',
-  })
-  @IsBoolean()
-  @IsOptional()
-  indVerificadoGarantia?: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Legacy — preferir dictamen. ind_verificado_crs_au_au',
-  })
-  @IsBoolean()
-  @IsOptional()
-  indVerificadoCrs?: boolean;
-
-  @ApiPropertyOptional({
     description:
       '¿Se observaron omisiones de formalidades durante el proceso? (observacion_formalidades_au_au)',
   })

@@ -118,6 +118,10 @@ export interface RespuestaLegal {
 export interface FormLegal {
   items: Record<string, RespuestaLegal>;
   justificacion: string;
+  /** Sobre 2: ¿se verificó la garantía de mantenimiento de la oferta? (ind_verificado_garantia_au_au) */
+  indVerificadoGarantia?: boolean | null;
+  /** Sobre 2: ¿se verificó el compromiso de responsabilidad social? (ind_verificado_crs_au_au) */
+  indVerificadoCrs?: boolean | null;
 }
 
 export interface RespuestaFinanciera {

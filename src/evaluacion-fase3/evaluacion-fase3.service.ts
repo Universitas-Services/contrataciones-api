@@ -620,8 +620,6 @@ export class EvaluacionFase3Service {
         dto.justificacionActualizacionPresup,
         dto.justificacionActualizacionPresupuestoAuAu,
       ),
-      indVerificadoGarantia: dto.indVerificadoGarantia,
-      indVerificadoCrs: dto.indVerificadoCrs,
       observacionFormalidades: pick(dto.observacionFormalidades, dto.observacionFormalidadesAuAu),
       omisionFormalidades: pick(dto.omisionFormalidades, dto.omisionFormalidadesAuAu),
       subsanacionActo: pick(dto.subsanacionActo, dto.subsanacionActoAuAu),

@@ -43,16 +43,6 @@ export class DictamenParcialDto {
   plazoEjecucionOfertaParcialAuAu?: number;
 
   @ApiPropertyOptional()
-  @ValidateIf((o) => o.oferenteAdjudicadoProcedimientoAuAu === true)
-  @IsBoolean()
-  indVerificadoGarantiaAuAu?: boolean;
-
-  @ApiPropertyOptional()
-  @ValidateIf((o) => o.oferenteAdjudicadoProcedimientoAuAu === true)
-  @IsBoolean()
-  indVerificadoCrsAuAu?: boolean;
-
-  @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
   notificacionGenerada?: boolean;

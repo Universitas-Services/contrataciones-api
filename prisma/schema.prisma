@@ -770,6 +770,9 @@ model EvaluacionResultados {
   // ── Calificación LEGAL ──────────────────────────────────────────────
   oferenteCalificadoLegal      Boolean? @map("oferente_calificado_legal_au_au")
   justificacionCalificadoLegal String?  @map("justificacion_calificado_legal_au_au")
+  /// Sobre 2 del hub legal: verificación de garantía de mantenimiento y CRS
+  indVerificadoGarantia        Boolean? @map("ind_verificado_garantia_au_au")
+  indVerificadoCrs             Boolean? @map("ind_verificado_crs_au_au")
 
   // ── Calificación FINANCIERA ─────────────────────────────────────────
   indiceLiquidez                    Decimal? @map("indice_liquidez_au_au") @db.Decimal(10, 4)
@@ -947,10 +950,6 @@ model InformeRecomendacion {
   itemsSinOfertas       String?  @map("items_sin_ofertas_au_au")
   motivoItemsSinOfertas String?  @map("motivo_items_sin_ofertas_au_au")
 
-  /// Legacy: preferir leer desde DictamenAdjudicacion al generar DOCX
-  indVerificadoGarantia Boolean? @map("ind_verificado_garantia_au_au")
-  indVerificadoCrs      Boolean? @map("ind_verificado_crs_au_au")
-
   observacionFormalidades Boolean? @map("observacion_formalidades_au_au")
   omisionFormalidades     String?  @map("omision_formalidades_au_au")
   subsanacionActo         String?  @map("subsanacion_acto_au_au")
@@ -994,8 +993,6 @@ model DictamenAdjudicacion {
   plazoEjecucionOfertaParcial     Int?     @map("plazo_ejecucion_oferta_parcial_au_au")
 
   // ── Comunes (adjudicado) ───────────────────────────────────────────
-  indVerificadoGarantia Boolean? @map("ind_verificado_garantia_au_au")
-  indVerificadoCrs      Boolean? @map("ind_verificado_crs_au_au")
   notificacionGenerada  Boolean  @default(false) @map("notificacion_generada_au_au")
 
   createdAt DateTime  @default(now())
