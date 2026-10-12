@@ -4,10 +4,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { TipoDocumento } from '@prisma/client';
-import {
-  esPrimeraOpcion,
-  prelacionEfectiva,
-} from '../evaluacion-fase3/gestion-adjudicacion/prelacion.util';
 
 @ApiTags('📄 Generador de Documentos')
 @ApiBearerAuth('JWT-auth')
@@ -458,7 +454,26 @@ export class GeneradorDocumentosController {
     return { message: 'Contrato Formalizado generado exitosamente', data };
   }
 
-  @ApiOperation({ summary: 'Generar Notificaciones Masivas Fase 4' })
+  @ApiOperation({
+    summary: 'Destinatarios y tokens de las Notificaciones (adjudicado / no adjudicado)',
+    description:
+      'Una por oferta evaluada. Requiere la Gestión de Adjudicación completa y el Acta de Adjudicación generada.',
+  })
+  @Get('notificaciones/:expedienteId/datos')
+  async getDatosNotificaciones(@Param('expedienteId') expedienteId: string) {
+    const destinatarios =
+      await this.generadorDocumentosService.getDatosNotificaciones(expedienteId);
+    return {
+      message: 'Datos de las Notificaciones',
+      data: { destinatarios },
+    };
+  }
+
+  @ApiOperation({
+    summary: 'Generar Notificaciones (adjudicados y no adjudicados)',
+    description:
+      'Genera una notificación por cada oferta evaluada: adjudicado si su dictamen la adjudica, no adjudicado el resto (incluye descalificados).',
+  })
   @Post('generar/notificaciones-fase4/:expedienteId')
   async generarNotificacionesFase4(
     @Param('expedienteId') expedienteId: string,
@@ -510,15 +525,9 @@ export class GeneradorDocumentosController {
       where: { id: evaluacionId },
       include: { dictamenAdjudicacion: true },
     });
-    const efectiva = prelacionEfectiva(
-      evaluacion?.posicionPrelacion,
-      evaluacion?.posicionPrelacionAdjudicacion,
-    );
-    const adjudicadoPorDictamen =
-      evaluacion?.dictamenAdjudicacion?.tipoDictamen === 'TOTAL' ||
-      evaluacion?.dictamenAdjudicacion?.oferenteAdjudicadoProcedimiento === true;
+    // Adjudicado solo si su dictamen lo adjudica (TOTAL o PARCIAL); el resto recibe la de no adjudicado.
     const tipo =
-      adjudicadoPorDictamen || esPrimeraOpcion(efectiva)
+      evaluacion?.dictamenAdjudicacion?.oferenteAdjudicadoProcedimiento === true
         ? 'NOTIFICACION_ADJUDICADO'
         : 'NOTIFICACION_NO_ADJUDICADO';
     return this.generadorDocumentosService.getPreviewUrlByEvaluacion(evaluacionId, tipo);
@@ -536,15 +545,9 @@ export class GeneradorDocumentosController {
       where: { id: evaluacionId },
       include: { dictamenAdjudicacion: true },
     });
-    const efectiva = prelacionEfectiva(
-      evaluacion?.posicionPrelacion,
-      evaluacion?.posicionPrelacionAdjudicacion,
-    );
-    const adjudicadoPorDictamen =
-      evaluacion?.dictamenAdjudicacion?.tipoDictamen === 'TOTAL' ||
-      evaluacion?.dictamenAdjudicacion?.oferenteAdjudicadoProcedimiento === true;
+    // Adjudicado solo si su dictamen lo adjudica (TOTAL o PARCIAL); el resto recibe la de no adjudicado.
     const tipo =
-      adjudicadoPorDictamen || esPrimeraOpcion(efectiva)
+      evaluacion?.dictamenAdjudicacion?.oferenteAdjudicadoProcedimiento === true
         ? 'NOTIFICACION_ADJUDICADO'
         : 'NOTIFICACION_NO_ADJUDICADO';
 

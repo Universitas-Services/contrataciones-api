@@ -10,6 +10,7 @@ import type { UsuarioActual } from '../../common/types/usuario-actual.type';
 import { SetCaracterAdjudicacionDto } from './dto/set-caracter.dto';
 import { DictamenTotalDto } from './dto/dictamen-total.dto';
 import { DictamenParcialDto } from './dto/dictamen-parcial.dto';
+import { DictamenNoAdjudicadoDto } from './dto/dictamen-no-adjudicado.dto';
 import { esPrimeraOpcion, prelacionEfectiva } from './prelacion.util';
 
 @Injectable()
@@ -97,7 +98,8 @@ export class GestionAdjudicacionService {
 
     let dictamenesCompletos = false;
     if (caracter === 'TOTAL') {
-      dictamenesCompletos = primeras.length > 0 && primeras.every((e) => dictamenIds.has(e.id));
+      // Primera(s) Opción adjudicada(s) + causa de no adjudicación del resto de calificados
+      dictamenesCompletos = primeras.length > 0 && calificados.every((e) => dictamenIds.has(e.id));
     } else if (caracter === 'PARCIAL') {
       dictamenesCompletos =
         calificados.length > 0 && calificados.every((e) => dictamenIds.has(e.id));
@@ -138,6 +140,7 @@ export class GestionAdjudicacionService {
         ),
         esPrimeraOpcionEvaluacion: esPrimeraOpcion(e.posicionPrelacion),
         dictamen: e.dictamenAdjudicacion ?? null,
+        requiereCausaNoAdjudicado: caracter === 'TOTAL' && !esPrimeraOpcion(e.posicionPrelacion),
         puedeAdjudicar:
           caracter === 'PARCIAL'
             ? true
@@ -260,6 +263,56 @@ export class GestionAdjudicacionService {
     });
 
     return dictamen;
+  }
+
+  /**
+   * Carácter TOTAL: registra la causa de no adjudicación de un calificado que no es
+   * Primera Opción (motivación individual de su Notificación a no adjudicados).
+   */
+  async upsertDictamenNoAdjudicado(
+    expedienteId: string,
+    evaluacionId: string,
+    dto: DictamenNoAdjudicadoDto,
+    user: UsuarioActual,
+  ) {
+    const expediente = await this.cargarExpediente(expedienteId, user);
+    if (expediente.caracterAdjudicacion !== 'TOTAL') {
+      throw new BadRequestException(
+        'La causa de no adjudicación solo se registra aquí en carácter TOTAL (en PARCIAL va en el dictamen parcial).',
+      );
+    }
+
+    const evaluacion = await this.assertEvaluacionCalificada(expedienteId, evaluacionId);
+    if (esPrimeraOpcion(evaluacion.posicionPrelacion)) {
+      throw new BadRequestException(
+        'La Primera Opción se adjudica con el dictamen TOTAL; no lleva causa de no adjudicación.',
+      );
+    }
+
+    const causa = dto.causaNoAdjudicadoAuAu.trim();
+    if (!causa) throw new BadRequestException('Debe indicar la causa de no adjudicación.');
+
+    const data = {
+      tipoDictamen: 'TOTAL' as const,
+      oferenteAdjudicadoProcedimiento: false,
+      causaNoAdjudicado: causa,
+      partidasAdjudicadasTotal: null,
+      montoAdjudicadoTotal: null,
+      plazoEjecucionOfertaGanadora: null,
+      montoManoObraOfertado: null,
+      cantidadRenglones: null,
+      alcanceAdjudicacionParcial: null,
+      partidasAdjudicadasParcial: null,
+      montoAdjudicadoParcial: null,
+      plazoEjecucionOfertaParcial: null,
+      updatedBy: user.id,
+    };
+
+    return this.prisma.dictamenAdjudicacion.upsert({
+      where: { evaluacionId },
+      create: { expedienteId, evaluacionId, ...data, createdBy: user.id },
+      update: data,
+    });
   }
 
   async upsertDictamenParcial(

@@ -15,15 +15,17 @@ import { Prisma, TipoDocumento, EstadoMicromodulo } from '@prisma/client';
 import { MICROMODULO_KEYS, MICROMODULOS } from '../fase1/constants/micromodulos.constants';
 import { mapDatosPliegoCondiciones } from './mappers/pliego-condiciones.mapper';
 import { mapOferentesDesierto } from './mappers/informe-desierto.mapper';
+import type {
+  EstadoEvaluacion,
+  EstadoFinanciera,
+  EstadoLegal,
+  EstadoTecnica,
+} from '../evaluacion-fase3/hub/types/hub.types';
 import {
   ESTATUS_INFORME_ADJUDICACION,
   mapInformeAdjudicacion,
 } from './mappers/informe-adjudicacion.mapper';
 import { RECAUDOS_CATALOGO } from '../fase1/constants/recaudos-legales.constants';
-import {
-  esPrimeraOpcion,
-  prelacionEfectiva,
-} from '../evaluacion-fase3/gestion-adjudicacion/prelacion.util';
 
 @Injectable()
 export class GeneradorDocumentosService {
@@ -1327,7 +1329,7 @@ export class GeneradorDocumentosService {
     const dictamenes = expediente.dictamenesAdjudicacion;
     const hayAdjudicado =
       caracter === 'TOTAL'
-        ? dictamenes.some((d) => d.tipoDictamen === 'TOTAL')
+        ? dictamenes.some((d) => d.tipoDictamen === 'TOTAL' && d.oferenteAdjudicadoProcedimiento)
         : dictamenes.some((d) => d.tipoDictamen === 'PARCIAL' && d.oferenteAdjudicadoProcedimiento);
     if (!hayAdjudicado) {
       throw new BadRequestException(
@@ -1852,132 +1854,191 @@ export class GeneradorDocumentosService {
     );
   }
 
-  async generarNotificacionesFase4(expedienteId: string, userId: string) {
-    const expediente = await this.prisma.expedienteContratacion.findUnique({
-      where: { id: expedienteId },
-      include: {
-        ente: true,
-        cronograma: true,
-        comision: {
-          include: { miembros: true },
-        },
+  /**
+   * Motivación individual de la Notificación a no adjudicados:
+   * causa del dictamen (TOTAL o PARCIAL) o, si fue descalificado, la justificación
+   * del módulo del hub que lo descalificó.
+   */
+  private causaNoAdjudicado(
+    ev: {
+      oferenteCalificado: boolean | null;
+      motivoDescalificacion: string | null;
+      justificacionCalificadoLegal: string | null;
+      justificacionCalificadaFinanciera: string | null;
+      justificacionCalificadoTecnica: string | null;
+      hubLegal: unknown;
+      hubFinanciera: unknown;
+      hubTecnica: unknown;
+      hubEvaluacion: unknown;
+    },
+    dictamen:
+      | { oferenteAdjudicadoProcedimiento: boolean | null; causaNoAdjudicado: string | null }
+      | undefined,
+  ): string {
+    const causa = dictamen?.causaNoAdjudicado?.trim();
+    if (dictamen?.oferenteAdjudicadoProcedimiento === false && causa) return causa;
+    if (ev.oferenteCalificado !== false) return '___';
+
+    const legal = ev.hubLegal as EstadoLegal | null;
+    const fin = ev.hubFinanciera as EstadoFinanciera | null;
+    const tec = ev.hubTecnica as EstadoTecnica | null;
+    const evaluacion = ev.hubEvaluacion as EstadoEvaluacion | null;
+    const descalificado = (modulo: string, justificacion: string | null | undefined) =>
+      `Resultó descalificado en la ${modulo}: ${justificacion?.trim() || ev.motivoDescalificacion || '___'}`;
+
+    if (legal?.submitted && legal.oferenteCalificadoLegal === false) {
+      return descalificado(
+        'Calificación Legal',
+        legal.form?.justificacion || ev.justificacionCalificadoLegal,
+      );
+    }
+    if (fin?.submitted && fin.oferenteCalificadoFinanciera === false) {
+      return descalificado(
+        'Calificación Financiera',
+        fin.form?.justificacion || ev.justificacionCalificadaFinanciera,
+      );
+    }
+    if (tec?.submitted && tec.oferenteCalificadoTecnica === false) {
+      return descalificado(
+        'Calificación Técnica',
+        tec.form?.justificacion || ev.justificacionCalificadoTecnica,
+      );
+    }
+    if (
+      evaluacion?.submitted &&
+      (evaluacion.oferenteEvaluadoTecnico === false ||
+        evaluacion.oferenteEvaluadoEconomico === false)
+    ) {
+      return descalificado(
+        'Evaluación de la Oferta',
+        evaluacion.form?.tecnica?.justificacion || evaluacion.form?.economica?.justificacion,
+      );
+    }
+    return ev.motivoDescalificacion?.trim() || '___';
+  }
+
+  /**
+   * Destinatarios y tokens de las Notificaciones de Fase 3. Una por cada oferta evaluada:
+   * NOTIFICACION_ADJUDICADO si su dictamen la adjudica; NOTIFICACION_NO_ADJUDICADO el resto
+   * (calificados no adjudicados y descalificados).
+   * Gate: el de la Gestión de Adjudicación + Acta de Adjudicación generada y vigente.
+   */
+  async getDatosNotificaciones(expedienteId: string): Promise<
+    Array<{
+      evaluacionId: string;
+      tipoDocumento: 'NOTIFICACION_ADJUDICADO' | 'NOTIFICACION_NO_ADJUDICADO';
+      destinatario: string;
+      tokens: Record<string, unknown>;
+    }>
+  > {
+    const { expediente, adjudicacion } = await this.cargarGestionAdjudicacion(
+      expedienteId,
+      'las Notificaciones',
+    );
+
+    const actaDoc = await this.prisma.documentoGenerado.findFirst({
+      where: {
+        expedienteId,
+        tipoDocumento: 'ACTA_ADJUDICACION',
+        deletedAt: null,
+        estaDesactualizado: false,
       },
     });
+    if (!actaDoc) {
+      throw new BadRequestException(
+        'Debe generar (o regenerar) el Acta de Adjudicación antes de las Notificaciones.',
+      );
+    }
 
-    if (!expediente) throw new NotFoundException('Expediente no encontrado');
-
-    const secretaria = expediente.comision?.miembros?.find((m) => m.tipoMiembro === 'SECRETARIO');
-
-    const commonData = {
-      nom_ente_contratante: expediente.ente?.nombre || '___',
-      cod_nomenclatura_proceso_au_au: expediente.codigoNomenclatura || '___',
-      desc_objeto_contratacion_au_au: expediente.descripcionObjeto || '___',
-      loc_ciudad_ente: expediente.ente?.ciudad || '___',
-      fec_limite_notificacion_au_au: expediente.cronograma?.fechaLimiteNotificacion
-        ? formatDateToSpanishLong(expediente.cronograma.fechaLimiteNotificacion)
-        : '___',
-      nom_completo_miembro_secretaria: secretaria?.nombreCompletoMiembro || '___',
-      cedula_miembro_secretaria: secretaria?.cedulaMiembro || '___',
-      datos_designacion_comision: expediente.comision?.datosDesignacionComision || '___',
-      fec_limite_adjudicacion_au_au: expediente.cronograma?.fechaLimiteAdjudicacion
-        ? formatDateToSpanishLong(expediente.cronograma.fechaLimiteAdjudicacion)
-        : '___',
+    const base = this.datosBaseInformeDesierto(expediente);
+    const comunes = {
+      ...mapDatosPliegoCondiciones(expediente),
+      ...base,
+      cod_nomenclatura_proceso_au_au: base.cod_nomenclatura_proceso,
+      desc_objeto_contratacion_au_au: base.desc_objeto_contratacion,
+      fec_limite_notificacion_au_au: formatDateToSpanishLong(
+        expediente.cronograma.fechaLimiteNotificacion,
+      ),
+      fec_limite_adjudicacion_au_au: formatDateToSpanishLong(
+        expediente.cronograma.fechaLimiteAdjudicacion,
+      ),
+      ...adjudicacion,
     };
 
-    const evaluaciones = await this.prisma.evaluacionResultados.findMany({
-      where: { oferta: { expedienteId }, deletedAt: null },
-      include: { oferta: true, dictamenAdjudicacion: true },
+    const dictamenPorEvaluacion = new Map(
+      expediente.dictamenesAdjudicacion.map((d) => [d.evaluacionId, d]),
+    );
+    const proveedorIds = expediente.ofertas
+      .map((of) => of.proveedorId)
+      .filter((id): id is string => !!id);
+    const proveedores = await this.prisma.proveedor.findMany({
+      where: { id: { in: proveedorIds } },
+      select: { id: true, correo: true },
     });
+    const correoProveedor = new Map(proveedores.map((p) => [p.id, p.correo]));
 
-    const dictamenes = evaluaciones
-      .map((e) => e.dictamenAdjudicacion)
-      .filter((d): d is NonNullable<typeof d> => !!d && !d.deletedAt);
+    return expediente.ofertas.flatMap(
+      (of): Awaited<ReturnType<typeof this.getDatosNotificaciones>> => {
+        const ev = of.evaluacion;
+        if (!ev) return [];
+        const dictamen = dictamenPorEvaluacion.get(ev.id);
+        const nombre = ev.nombreProveedorEvaluado || of.nombreProveedorOferente || '___';
+        const rif = ev.rifProveedorEvaluado || of.rifProveedorOferente || '___';
+        const correo =
+          of.correoProveedorOferente ||
+          (of.proveedorId ? correoProveedor.get(of.proveedorId) : undefined) ||
+          '___';
 
-    let ganadoras = evaluaciones.filter((e) => {
-      const efectiva = prelacionEfectiva(e.posicionPrelacion, e.posicionPrelacionAdjudicacion);
-      return esPrimeraOpcion(efectiva);
-    });
-    let perdedoras = evaluaciones.filter((e) => {
-      if (!e.oferenteCalificado) return false;
-      const efectiva = prelacionEfectiva(e.posicionPrelacion, e.posicionPrelacionAdjudicacion);
-      return !!efectiva && !esPrimeraOpcion(efectiva);
-    });
+        if (dictamen?.oferenteAdjudicadoProcedimiento === true) {
+          return [
+            {
+              evaluacionId: ev.id,
+              tipoDocumento: 'NOTIFICACION_ADJUDICADO' as const,
+              destinatario: nombre,
+              tokens: {
+                ...comunes,
+                oferente_adjudicado_au_au: nombre,
+                rif_oferente_adjudicado_au_au: rif,
+                correo_oferente_adjudicado_au_au: correo,
+              },
+            },
+          ];
+        }
+        return [
+          {
+            evaluacionId: ev.id,
+            tipoDocumento: 'NOTIFICACION_NO_ADJUDICADO' as const,
+            destinatario: nombre,
+            tokens: {
+              ...comunes,
+              oferente_no_adjudicado_au_au: nombre,
+              rif_oferente_no_adjudicado_au_au: rif,
+              correo_oferente_no_adjudicado_au_au: correo,
+              causa_no_adjudicado_au_au: this.causaNoAdjudicado(ev, dictamen),
+            },
+          },
+        ];
+      },
+    );
+  }
 
-    // Si hay dictámenes Gestión: ganadores = adjudicados; no adjudicados = dictamen false o resto calificados
-    if (dictamenes.length > 0) {
-      const adjudicadoIds = new Set(
-        dictamenes
-          .filter((d) => d.tipoDictamen === 'TOTAL' || d.oferenteAdjudicadoProcedimiento === true)
-          .map((d) => d.evaluacionId),
-      );
-      const noAdjudicadoIds = new Set(
-        dictamenes
-          .filter((d) => d.oferenteAdjudicadoProcedimiento === false)
-          .map((d) => d.evaluacionId),
-      );
-      ganadoras = evaluaciones.filter((e) => adjudicadoIds.has(e.id));
-      perdedoras = evaluaciones.filter(
-        (e) => noAdjudicadoIds.has(e.id) || (e.oferenteCalificado && !adjudicadoIds.has(e.id)),
+  async generarNotificacionesFase4(expedienteId: string, userId: string) {
+    const destinatarios = await this.getDatosNotificaciones(expedienteId);
+    const documentosGenerados: Awaited<ReturnType<typeof this.generarDocumento>>[] = [];
+    for (const d of destinatarios) {
+      documentosGenerados.push(
+        await this.generarDocumento(
+          expedienteId,
+          d.tipoDocumento,
+          d.tipoDocumento === 'NOTIFICACION_ADJUDICADO'
+            ? 'notificacion-adjudicado-template.docx'
+            : 'notificacion-no-adjudicado-template.docx',
+          userId,
+          d.tokens,
+          d.evaluacionId,
+        ),
       );
     }
-
-    const documentosGenerados: any[] = [];
-    const nombrePrimera =
-      ganadoras
-        .map((g) => g.nombreProveedorEvaluado)
-        .filter(Boolean)
-        .join('; ') || '___';
-
-    // Generar Notificación Adjudicado (multi si parcial)
-    for (const ganadora of ganadoras) {
-      const dataAdjudicado = {
-        ...commonData,
-        oferente_primera_opción_au_au: ganadora.nombreProveedorEvaluado || '___',
-        rif_proveedor_evaluado_au_au: ganadora.rifProveedorEvaluado || '___',
-        correo_proveedor_evaluado_au_au: ganadora.oferta.proveedorId
-          ? (await this.prisma.proveedor.findUnique({ where: { id: ganadora.oferta.proveedorId } }))
-              ?.correo || '___'
-          : '___',
-      };
-
-      const res = await this.generarDocumento(
-        expedienteId,
-        'NOTIFICACION_ADJUDICADO',
-        'notificacion-adjudicado-template.docx',
-        userId,
-        dataAdjudicado,
-        ganadora.id,
-      );
-      documentosGenerados.push(res);
-    }
-
-    // Generar Notificaciones No Adjudicados
-    for (const perdedora of perdedoras) {
-      const dataNoAdjudicado = {
-        ...commonData,
-        oferente_no_adjudicado_au_au: perdedora.nombreProveedorEvaluado || '___',
-        oferente_primera_opción_au_au: nombrePrimera,
-        rif_proveedor_evaluado_au_au: perdedora.rifProveedorEvaluado || '___',
-        correo_proveedor_evaluado_au_au: perdedora.oferta.proveedorId
-          ? (
-              await this.prisma.proveedor.findUnique({
-                where: { id: perdedora.oferta.proveedorId },
-              })
-            )?.correo || '___'
-          : '___',
-      };
-
-      const res = await this.generarDocumento(
-        expedienteId,
-        'NOTIFICACION_NO_ADJUDICADO',
-        'notificacion-no-adjudicado-template.docx',
-        userId,
-        dataNoAdjudicado,
-        perdedora.id,
-      );
-      documentosGenerados.push(res);
-    }
-
     return documentosGenerados;
   }
 }

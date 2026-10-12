@@ -12,7 +12,7 @@
 | --- | ------------------------------------------- | ----------------------- | ------------------------ |
 | 1   | Informe de Recomendación (adjudicación)     | `INFORME_RECOMENDACION` | **Listo** (esta entrega) |
 | 2   | Acta de Adjudicación                        | `ACTA_ADJUDICACION`     | **Listo**                |
-| 3   | Notificaciones (adjudicado / no adjudicado) | `NOTIFICACION_*`        | Próximo                  |
+| 3   | Notificaciones (adjudicado / no adjudicado) | `NOTIFICACION_*`        | **Listo**                |
 
 > Si el expediente está **declarado desierto**, el mismo endpoint genera el Informe Desierto #1, #2 o #3 (ver `docs/FRONTEND_DOCUMENTOS_FASE2.md` §8).
 
@@ -122,4 +122,60 @@ Toast sugerido: `Acta de Adjudicación generada exitosamente.`
 2. Cuando gates.puedeGenerarActa = true → POST .../generar/acta-adjudicacion/{expedienteId}
 3. Preview / Download
 4. Si cambian dictámenes o el informe, regenerar primero el Informe y luego el Acta
+```
+
+---
+
+## 4. Notificaciones (adjudicado y no adjudicado)
+
+Las firma la **Secretaria de la Comisión**. Ambas transcriben el RESUELVE del Acta de Adjudicación.
+
+### 4.1 Quién recibe cuál
+
+Se genera **una notificación por cada oferta evaluada**:
+
+| Destinatario                                                                                 | Documento                     | Tipo en BD                   |
+| -------------------------------------------------------------------------------------------- | ----------------------------- | ---------------------------- |
+| Dictamen que lo adjudica (TOTAL, o PARCIAL con `oferenteAdjudicadoProcedimientoAuAu = true`) | Notificación de Adjudicación  | `NOTIFICACION_ADJUDICADO`    |
+| Calificado no adjudicado                                                                     | Notificación a No Adjudicados | `NOTIFICACION_NO_ADJUDICADO` |
+| Descalificado (legal, financiera, técnica o evaluación)                                      | Notificación a No Adjudicados | `NOTIFICACION_NO_ADJUDICADO` |
+
+### 4.2 Motivación individual (`causa_no_adjudicado_au_au`)
+
+| Caso                  | De dónde sale                                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------------------------------- |
+| PARCIAL no adjudicado | `causaNoAdjudicadoAuAu` del dictamen parcial                                                               |
+| TOTAL no adjudicado   | `causaNoAdjudicadoAuAu` del nuevo `PUT …/no-adjudicado` (ver `FRONTEND_GESTION_FASE3.md`)                  |
+| Descalificado         | Automática: _"Resultó descalificado en la Calificación Legal/Financiera/Técnica: {justificación del hub}"_ |
+
+Correo del destinatario: el de la oferta presentada; si no tiene, el del proveedor del catálogo.
+
+### 4.3 Requisitos para generar
+
+| Condición                                   | Si falta |
+| ------------------------------------------- | -------- |
+| Lo mismo que el Acta (§3.1)                 | **400**  |
+| **Acta de Adjudicación generada y vigente** | **400**  |
+
+Coincide con `gates.puedeGenerarNotificaciones`.
+
+### 4.4 Endpoints
+
+| Acción                                                           | Método | Ruta                                                                     |
+| ---------------------------------------------------------------- | ------ | ------------------------------------------------------------------------ |
+| Datos (QA) — **nuevo**: lista de destinatarios con tipo y tokens | `GET`  | `/generador-documentos/notificaciones/{expedienteId}/datos`              |
+| Generar todas                                                    | `POST` | `/generador-documentos/generar/notificaciones-fase4/{expedienteId}`      |
+| Preview de una                                                   | `GET`  | `/generador-documentos/preview/notificacion/evaluacion/{evaluacionId}`   |
+| Descargar una                                                    | `GET`  | `/generador-documentos/download/notificacion/evaluacion/{evaluacionId}`  |
+| Estado                                                           | `GET`  | `/generador-documentos/expedientes/{expedienteId}/estado-notificaciones` |
+
+Preview y descarga eligen solas el tipo: adjudicado si su dictamen lo adjudica; no adjudicado en cualquier otro caso.
+
+### 4.5 Flujo UI
+
+```
+1. (TOTAL) Registrar la causa de cada calificado que no es Primera Opción
+2. Generar Informe → Acta de Adjudicación
+3. Cuando gates.puedeGenerarNotificaciones = true → POST .../generar/notificaciones-fase4/{expedienteId}
+4. Listar por oferente y abrir preview / download con su evaluacionId
 ```

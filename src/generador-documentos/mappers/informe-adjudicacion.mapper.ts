@@ -244,10 +244,12 @@ export function mapInformeAdjudicacion(input: {
     };
   };
 
-  const dictamenTotal = esTotal
-    ? (dictamenes.find((d) => d.tipoDictamen === 'TOTAL' && d.evaluacionId === primera?.id) ??
-      dictamenes.find((d) => d.tipoDictamen === 'TOTAL'))
-    : undefined;
+  // En TOTAL también hay dictámenes de no adjudicados (causa): solo cuenta el adjudicado.
+  const totalesAdjudicados = esTotal
+    ? dictamenes.filter((d) => d.tipoDictamen === 'TOTAL' && d.oferenteAdjudicadoProcedimiento)
+    : [];
+  const dictamenTotal =
+    totalesAdjudicados.find((d) => d.evaluacionId === primera?.id) ?? totalesAdjudicados[0];
   const adjudicadoTotal = dictamenTotal ? evalPorId.get(dictamenTotal.evaluacionId) : undefined;
 
   const adjudicadosParcial = esTotal
