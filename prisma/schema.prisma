@@ -773,6 +773,8 @@ model EvaluacionResultados {
   /// Sobre 2 del hub legal: verificación de garantía de mantenimiento y CRS
   indVerificadoGarantia        Boolean? @map("ind_verificado_garantia_au_au")
   indVerificadoCrs             Boolean? @map("ind_verificado_crs_au_au")
+  obsVerificadoGarantia        String?  @map("obs_verificado_garantia_au_au")
+  obsVerificadoCrs             String?  @map("obs_verificado_crs_au_au")
 
   // ── Calificación FINANCIERA ─────────────────────────────────────────
   indiceLiquidez                    Decimal? @map("indice_liquidez_au_au") @db.Decimal(10, 4)

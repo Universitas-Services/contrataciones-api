@@ -326,7 +326,7 @@ Toast sugerido: `Informe de Recomendación generado exitosamente.`
 
 Las preguntas _“Se verificó que la empresa oferente consignó la garantía de mantenimiento de la oferta”_ y _“Se verificó que la empresa oferente presentó el compromiso de responsabilidad social”_ **se movieron de los dictámenes de Fase 3 al Sobre 2 de la Calificación Legal**, por oferente.
 
-`PATCH /evaluacion-fase3/{evaluacionId}/hub/legal` — dentro de `form` se agregan dos booleanos:
+`PATCH /evaluacion-fase3/{evaluacionId}/hub/legal` — dentro de `form` se agregan dos booleanos y sus observaciones opcionales:
 
 ```json
 {
@@ -335,18 +335,24 @@ Las preguntas _“Se verificó que la empresa oferente consignó la garantía de
     "items": { "...": { "consignado": "SI" } },
     "justificacion": "...",
     "indVerificadoGarantia": true,
-    "indVerificadoCrs": false
+    "indVerificadoCrs": false,
+    "obsVerificadoGarantia": "Fianza emitida por …",
+    "obsVerificadoCrs": null
   }
 }
 ```
 
-| Campo                   | Variable                        | Tipo            | Regla                                              |
-| ----------------------- | ------------------------------- | --------------- | -------------------------------------------------- |
-| `indVerificadoGarantia` | `ind_verificado_garantia_au_au` | boolean (Sí/No) | Obligatorio al **confirmar**; opcional en borrador |
-| `indVerificadoCrs`      | `ind_verificado_crs_au_au`      | boolean (Sí/No) | Obligatorio al **confirmar**; opcional en borrador |
+| Campo                   | Variable                        | Tipo            | Regla                                                                |
+| ----------------------- | ------------------------------- | --------------- | -------------------------------------------------------------------- |
+| `indVerificadoGarantia` | `ind_verificado_garantia_au_au` | boolean (Sí/No) | Obligatorio al **confirmar**; opcional en borrador                   |
+| `indVerificadoCrs`      | `ind_verificado_crs_au_au`      | boolean (Sí/No) | Obligatorio al **confirmar**; opcional en borrador                   |
+| `obsVerificadoGarantia` | `obs_verificado_garantia_au_au` | string          | Opcional (máx. 500 caracteres); se guarda en borrador y al confirmar |
+| `obsVerificadoCrs`      | `obs_verificado_crs_au_au`      | string          | Opcional (máx. 500 caracteres); se guarda en borrador y al confirmar |
 
 - No cambian si el oferente califica o no legalmente.
-- Se devuelven en `GET` del hub dentro de `legal.form`.
+- Se devuelven en `GET` del hub dentro de `legal.form` (las observaciones vacías vuelven como `null`).
+- Si una observación supera 500 caracteres, el `PATCH` se rechaza con el mensaje correspondiente (igual que las observaciones de los recaudos).
+- Las observaciones no se imprimen en ningún documento.
 - En el Informe de Recomendación salen como **SÍ / NO** (tabla “Verificación de requisitos preliminares”).
 - Ya **no** se envían en los dictámenes TOTAL/PARCIAL ni en el informe de Fase 3.
 
