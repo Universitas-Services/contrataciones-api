@@ -11,7 +11,7 @@
 | #   | Documento                                   | Tipo en BD              | Estado                   |
 | --- | ------------------------------------------- | ----------------------- | ------------------------ |
 | 1   | Informe de Recomendación (adjudicación)     | `INFORME_RECOMENDACION` | **Listo** (esta entrega) |
-| 2   | Acta de Adjudicación                        | `ACTA_ADJUDICACION`     | Próximo                  |
+| 2   | Acta de Adjudicación                        | `ACTA_ADJUDICACION`     | **Listo**                |
 | 3   | Notificaciones (adjudicado / no adjudicado) | `NOTIFICACION_*`        | Próximo                  |
 
 > Si el expediente está **declarado desierto**, el mismo endpoint genera el Informe Desierto #1, #2 o #3 (ver `docs/FRONTEND_DOCUMENTOS_FASE2.md` §8).
@@ -76,4 +76,50 @@ Nuevo campo **`montoManoObraOfertadoAuAu`** en `PUT …/dictamenes/:evaluacionId
 3. Guardar el formulario del informe
 4. Cuando gates.puedeGenerarInforme = true → POST .../generar/informe-recomendacion/{expedienteId}
 5. Preview / Download
+```
+
+---
+
+## 3. Acta de Adjudicación (Acto Administrativo)
+
+Lo firma la Máxima Autoridad (o su delegado). Su parte **RESUELVE** es la misma de la sección 10 del Informe de Recomendación: adjudicación TOTAL/PARCIAL, orden de prelación, renglones desiertos, CRS, garantías y numerales.
+
+### 3.1 Requisitos para generar
+
+| Condición                                                                                    | Si falta |
+| -------------------------------------------------------------------------------------------- | -------- |
+| Carácter, formulario del informe y dictamen(es) de adjudicación (igual que el Informe, §2.1) | **400**  |
+| **Informe de Recomendación generado y vigente** (no `DESACTUALIZADO`)                        | **400**  |
+
+Coincide con `gates.puedeGenerarActa` de `GET …/gestion-adjudicacion`.
+
+> El Acta ya **no** usa la adjudicación antigua (`POST /expedientes/:id/adjudicacion`). Sin dictámenes de la Gestión de Fase 3 responde 400.
+
+### 3.2 Endpoints
+
+| Acción                 | Método | Ruta                                                              |
+| ---------------------- | ------ | ----------------------------------------------------------------- |
+| Datos (QA) — **nuevo** | `GET`  | `/generador-documentos/acta-adjudicacion/{expedienteId}/datos`    |
+| Generar                | `POST` | `/generador-documentos/generar/acta-adjudicacion/{expedienteId}`  |
+| Preview                | `GET`  | `/generador-documentos/preview/acta-adjudicacion/{expedienteId}`  |
+| Descargar              | `GET`  | `/generador-documentos/download/acta-adjudicacion/{expedienteId}` |
+
+Toast sugerido: `Acta de Adjudicación generada exitosamente.`
+
+### 3.3 De dónde sale cada parte
+
+| Parte                                                         | Fuente                                                               |
+| ------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Quien suscribe (nombre, cédula, cargo, designación, leyes)    | Máxima Autoridad del expediente (o delegado, si firma como delegado) |
+| Considerandos (fechas del llamado, acto de apertura, informe) | Cronograma + dirección fiscal del ente                               |
+| RESUELVE                                                      | Igual que el Informe (dictámenes, prelación, informe, Fase 1)        |
+| Fecha de firma                                                | Cronograma: fecha límite de adjudicación                             |
+
+### 3.4 Flujo UI
+
+```
+1. Generar el Informe de Recomendación
+2. Cuando gates.puedeGenerarActa = true → POST .../generar/acta-adjudicacion/{expedienteId}
+3. Preview / Download
+4. Si cambian dictámenes o el informe, regenerar primero el Informe y luego el Acta
 ```

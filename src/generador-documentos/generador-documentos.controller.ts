@@ -360,7 +360,7 @@ export class GeneradorDocumentosController {
     summary: 'Obtener tokens mapeados del Informe de Recomendación',
     description:
       'Si el expediente está desierto con causal 1, devuelve tokens del Informe Desierto #1. ' +
-      'Causales 2 y 3 aún no disponibles. Sin desierto, tokens del informe de adjudicación.',
+      'Causales 2 y 3: Informe Desierto #2/#3. Sin desierto, tokens del informe de adjudicación.',
   })
   @Get('informe-recomendacion/:expedienteId/datos')
   async getDatosInformeRecomendacion(@Param('expedienteId') expedienteId: string) {
@@ -423,6 +423,20 @@ export class GeneradorDocumentosController {
   // ==========================
   // FASE 4 — Adjudicación, Contrato Formalizado y Notificaciones
   // ==========================
+
+  @ApiOperation({
+    summary: 'Obtener tokens mapeados del Acta de Adjudicación',
+    description:
+      'Requiere carácter, informe guardado, dictamen(es) de adjudicación e Informe de Recomendación generado.',
+  })
+  @Get('acta-adjudicacion/:expedienteId/datos')
+  async getDatosActaAdjudicacion(@Param('expedienteId') expedienteId: string) {
+    const tokens = await this.generadorDocumentosService.getDatosAdjudicacion(expedienteId);
+    return {
+      message: 'Datos del Acta de Adjudicación',
+      data: { tokens },
+    };
+  }
 
   @ApiOperation({ summary: 'Generar Acta de Adjudicación' })
   @Post('generar/acta-adjudicacion/:expedienteId')
