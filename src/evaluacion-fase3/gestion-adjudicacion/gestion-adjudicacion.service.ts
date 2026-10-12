@@ -194,6 +194,23 @@ export class GestionAdjudicacionService {
     return evaluacion;
   }
 
+  /**
+   * La Fianza Laboral se calcula sobre la mano de obra ofertada: si Fase 1 exige
+   * garantía laboral, el dictamen del adjudicado debe traer ese monto.
+   */
+  private async assertManoObraSiRequerida(expedienteId: string, monto: number | undefined) {
+    if (monto != null) return;
+    const fase = await this.prisma.fasePreparatoria.findUnique({
+      where: { expedienteId },
+      select: { requiereGarantiaLaboral: true },
+    });
+    if (fase?.requiereGarantiaLaboral) {
+      throw new BadRequestException(
+        'Debe indicar el monto de mano de obra ofertado (montoManoObraOfertadoAuAu): el pliego exige garantía laboral.',
+      );
+    }
+  }
+
   async upsertDictamenTotal(
     expedienteId: string,
     evaluacionId: string,
@@ -211,12 +228,14 @@ export class GestionAdjudicacionService {
         'En adjudicación TOTAL solo se dictamina a oferentes con Primera Opción (evaluación).',
       );
     }
+    await this.assertManoObraSiRequerida(expedienteId, dto.montoManoObraOfertadoAuAu);
 
     const data = {
       tipoDictamen: 'TOTAL' as const,
       partidasAdjudicadasTotal: dto.partidasAdjudicadasTotalAuAu,
       montoAdjudicadoTotal: dto.montoAdjudicadoTotalAuAu,
       plazoEjecucionOfertaGanadora: dto.plazoEjecucionOfertaGanadoraAuAu,
+      montoManoObraOfertado: dto.montoManoObraOfertadoAuAu ?? null,
       notificacionGenerada: dto.notificacionGenerada ?? false,
       // limpiar campos parciales
       oferenteAdjudicadoProcedimiento: true,
@@ -281,6 +300,9 @@ export class GestionAdjudicacionService {
     }
 
     const adjudicado = dto.oferenteAdjudicadoProcedimientoAuAu === true;
+    if (adjudicado) {
+      await this.assertManoObraSiRequerida(expedienteId, dto.montoManoObraOfertadoAuAu);
+    }
 
     const data = {
       tipoDictamen: 'PARCIAL' as const,
@@ -293,6 +315,7 @@ export class GestionAdjudicacionService {
       plazoEjecucionOfertaParcial: adjudicado
         ? (dto.plazoEjecucionOfertaParcialAuAu ?? null)
         : null,
+      montoManoObraOfertado: adjudicado ? (dto.montoManoObraOfertadoAuAu ?? null) : null,
       notificacionGenerada: dto.notificacionGenerada ?? false,
       partidasAdjudicadasTotal: null,
       montoAdjudicadoTotal: null,

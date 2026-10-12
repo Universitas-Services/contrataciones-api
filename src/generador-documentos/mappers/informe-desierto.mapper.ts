@@ -84,10 +84,22 @@ function resolverPuntuados(criterios: CriterioPuntuado[], form: FormPuntuado | u
   });
 }
 
+/** Textos de estatus [sí califica, no califica] por módulo. */
+export interface TextosEstatus {
+  legal: [string, string];
+  financiera: [string, string];
+}
+
+const ESTATUS_DESIERTO: TextosEstatus = {
+  legal: ['CALIFICA LEGALMENTE', 'NO CALIFICA LEGALMENTE'],
+  financiera: ['CALIFICA FINANCIERAMENTE', 'NO CALIFICA FINANCIERAMENTE'],
+};
+
 export function mapOferentesDesierto(
   ofertas: OfertaConEvaluacion[],
-  opciones: { incluirEvaluacion: boolean },
+  opciones: { incluirEvaluacion: boolean; estatus?: TextosEstatus },
 ): Record<string, unknown> {
+  const estatus = opciones.estatus ?? ESTATUS_DESIERTO;
   const oferentes_acto = ofertas.map((of, i) => ({
     numero: i + 1,
     nombre_proveedor_evaluado_au_au: of.nombreProveedorOferente || '___',
@@ -141,8 +153,8 @@ export function mapOferentesDesierto(
       ...respuestas,
       desc_otro_recaudo_sobre1_au_au: otrosSobre1,
       oferente_calificado_legal_au_au: legal.oferenteCalificadoLegal
-        ? 'CALIFICA LEGALMENTE'
-        : 'NO CALIFICA LEGALMENTE',
+        ? estatus.legal[0]
+        : estatus.legal[1],
       justificacion_calificado_legal_au_au:
         legal.form?.justificacion || ev.justificacionCalificadoLegal || '___',
     };
@@ -172,8 +184,8 @@ export function mapOferentesDesierto(
         ...identidad(ev),
         ...valores,
         oferente_calificado_financiera_au_au: fin.oferenteCalificadoFinanciera
-          ? 'CALIFICA FINANCIERAMENTE'
-          : 'NO CALIFICA FINANCIERAMENTE',
+          ? estatus.financiera[0]
+          : estatus.financiera[1],
         justificacion_calificado_financiera_au_au:
           fin.form?.justificacion || ev.justificacionCalificadaFinanciera || '___',
       };
