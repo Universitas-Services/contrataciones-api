@@ -773,6 +773,8 @@ model EvaluacionResultados {
   /// Sobre 2 del hub legal: verificación de garantía de mantenimiento y CRS
   indVerificadoGarantia        Boolean? @map("ind_verificado_garantia_au_au")
   indVerificadoCrs             Boolean? @map("ind_verificado_crs_au_au")
+  obsVerificadoGarantia        String?  @map("obs_verificado_garantia_au_au")
+  obsVerificadoCrs             String?  @map("obs_verificado_crs_au_au")
 
   // ── Calificación FINANCIERA ─────────────────────────────────────────
   indiceLiquidez                    Decimal? @map("indice_liquidez_au_au") @db.Decimal(10, 4)
@@ -993,6 +995,8 @@ model DictamenAdjudicacion {
   plazoEjecucionOfertaParcial     Int?     @map("plazo_ejecucion_oferta_parcial_au_au")
 
   // ── Comunes (adjudicado) ───────────────────────────────────────────
+  /// Monto de mano de obra ofertado (base de la Fianza Laboral)
+  montoManoObraOfertado Decimal? @map("monto_mano_obra_ofertado_au_au") @db.Decimal(15, 2)
   notificacionGenerada  Boolean  @default(false) @map("notificacion_generada_au_au")
 
   createdAt DateTime  @default(now())

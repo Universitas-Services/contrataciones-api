@@ -10,6 +10,7 @@ import { GestionAdjudicacionService } from './gestion-adjudicacion.service';
 import { SetCaracterAdjudicacionDto } from './dto/set-caracter.dto';
 import { DictamenTotalDto } from './dto/dictamen-total.dto';
 import { DictamenParcialDto } from './dto/dictamen-parcial.dto';
+import { DictamenNoAdjudicadoDto } from './dto/dictamen-no-adjudicado.dto';
 
 @ApiTags('📊 Fase 3 — Gestión Adjudicación')
 @ApiBearerAuth('JWT-auth')
@@ -79,5 +80,21 @@ export class GestionAdjudicacionController {
     @CurrentUser() user: UsuarioActual,
   ) {
     return this.gestion.upsertDictamenParcial(expedienteId, evaluacionId, dto, user);
+  }
+
+  @Put('dictamenes/:evaluacionId/no-adjudicado')
+  @Roles('ADMIN_ENTE', 'EJECUTOR')
+  @ApiOperation({
+    summary: 'Causa de no adjudicación (carácter TOTAL)',
+    description:
+      'Para cada calificado que NO es Primera Opción. Se imprime en la Notificación a no adjudicados.',
+  })
+  upsertNoAdjudicado(
+    @Param('expedienteId') expedienteId: string,
+    @Param('evaluacionId') evaluacionId: string,
+    @Body() dto: DictamenNoAdjudicadoDto,
+    @CurrentUser() user: UsuarioActual,
+  ) {
+    return this.gestion.upsertDictamenNoAdjudicado(expedienteId, evaluacionId, dto, user);
   }
 }

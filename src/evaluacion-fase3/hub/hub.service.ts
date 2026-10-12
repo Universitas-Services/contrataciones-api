@@ -91,7 +91,14 @@ export class HubService {
     return {
       submitted: false,
       oferenteCalificadoLegal: null,
-      form: { items: {}, justificacion: '', indVerificadoGarantia: null, indVerificadoCrs: null },
+      form: {
+        items: {},
+        justificacion: '',
+        indVerificadoGarantia: null,
+        indVerificadoCrs: null,
+        obsVerificadoGarantia: null,
+        obsVerificadoCrs: null,
+      },
     };
   }
 
@@ -289,6 +296,21 @@ export class HubService {
       }
     }
 
+    // Observaciones opcionales de las verificaciones de garantía y CRS (Sobre 2)
+    const texto = (v: unknown) => (typeof v === 'string' ? v.trim() || null : null);
+    const obsVerificadoGarantia = texto(form?.obsVerificadoGarantia);
+    const obsVerificadoCrs = texto(form?.obsVerificadoCrs);
+    if (obsVerificadoGarantia && obsVerificadoGarantia.length > MAX_OBSERVACION) {
+      errores.push(
+        `La observación de la verificación de garantía supera los ${MAX_OBSERVACION} caracteres.`,
+      );
+    }
+    if (obsVerificadoCrs && obsVerificadoCrs.length > MAX_OBSERVACION) {
+      errores.push(
+        `La observación de la verificación de CRS supera los ${MAX_OBSERVACION} caracteres.`,
+      );
+    }
+
     const nuevoEstado: EstadoLegal = {
       submitted: false,
       oferenteCalificadoLegal: null,
@@ -297,6 +319,8 @@ export class HubService {
         justificacion: form?.justificacion ?? '',
         indVerificadoGarantia: form?.indVerificadoGarantia ?? null,
         indVerificadoCrs: form?.indVerificadoCrs ?? null,
+        obsVerificadoGarantia,
+        obsVerificadoCrs,
       },
     };
 
@@ -350,6 +374,8 @@ export class HubService {
       justificacionCalificadoLegal: form?.justificacion ?? null,
       indVerificadoGarantia: form.indVerificadoGarantia ?? null,
       indVerificadoCrs: form.indVerificadoCrs ?? null,
+      obsVerificadoGarantia,
+      obsVerificadoCrs,
       ...(cumple ? {} : { oferenteCalificado: false, posicionPrelacion: null }),
     });
 

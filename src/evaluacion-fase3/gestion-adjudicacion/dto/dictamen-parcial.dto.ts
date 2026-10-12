@@ -42,6 +42,16 @@ export class DictamenParcialDto {
   @Type(() => Number)
   plazoEjecucionOfertaParcialAuAu?: number;
 
+  @ApiPropertyOptional({
+    description:
+      'Monto de mano de obra ofertado (Bs.). Obligatorio si es adjudicado y Fase 1 exige garantía laboral. monto_mano_obra_ofertado_au_au',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  montoManoObraOfertadoAuAu?: number;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()

@@ -15,27 +15,17 @@ import { Prisma, TipoDocumento, EstadoMicromodulo } from '@prisma/client';
 import { MICROMODULO_KEYS, MICROMODULOS } from '../fase1/constants/micromodulos.constants';
 import { mapDatosPliegoCondiciones } from './mappers/pliego-condiciones.mapper';
 import { mapOferentesDesierto } from './mappers/informe-desierto.mapper';
-import { RECAUDOS_CATALOGO } from '../fase1/constants/recaudos-legales.constants';
+import type {
+  EstadoEvaluacion,
+  EstadoFinanciera,
+  EstadoLegal,
+  EstadoTecnica,
+} from '../evaluacion-fase3/hub/types/hub.types';
 import {
-  esPrimeraOpcion,
-  prelacionEfectiva,
-} from '../evaluacion-fase3/gestion-adjudicacion/prelacion.util';
-
-function formatNormativaLegalForDoc(raw: string | null | undefined): string {
-  if (!raw || !raw.trim()) return 'Decreto de Ley de Contrataciones vigente';
-  const trimmed = raw.trim();
-  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.join(', ');
-      }
-    } catch {
-      // Ignore JSON parse error and fallback to raw trimmed string
-    }
-  }
-  return trimmed;
-}
+  ESTATUS_INFORME_ADJUDICACION,
+  mapInformeAdjudicacion,
+} from './mappers/informe-adjudicacion.mapper';
+import { RECAUDOS_CATALOGO } from '../fase1/constants/recaudos-legales.constants';
 
 @Injectable()
 export class GeneradorDocumentosService {
@@ -1292,75 +1282,24 @@ export class GeneradorDocumentosService {
   // =========================================================================
 
   /**
-   * Obtiene los rangos de evaluación técnica según el tipo de contratación.
-   * Marcadores: {rango_1_evaluacion_au_au} ... {rango_10_evaluacion_au_au}
+   * Carga común del Informe de Recomendación y del Acta de Adjudicación (Gestión Fase 3).
+   * Gate: Fase 1/cronograma/modalidad, carácter definido, informe guardado y
+   * dictamen(es) de adjudicación.
    */
-  private getRangosEvaluacion(tipoContratacion: string) {
-    const rangos: Record<string, string[]> = {
-      BIENES: [
-        'Hasta 10 días hábiles.',
-        'De 11 días hábiles a 15 días hábiles.',
-        'De 16 días hábiles a 20 días hábiles.',
-        'Mayor a 21 días o no presenta.',
-        'Presenta garantía de los Insumos.',
-        'No presenta.',
-        'Si corresponde con lo solicitado.',
-        'No corresponde con lo solicitado.',
-        'Ofertó del 50% al 100% de lo solicitado.',
-        'Ofertó del 1% al 49% de lo solicitado.',
-      ],
-      SERVICIOS: [
-        'Presenta Cronograma detallado, metodología acorde a los TDR, secuencia lógica de actividades y asignación de recursos por etapa.',
-        'Presenta Cronograma y metodología, pero la secuencia presenta holguras excesivas o no detalla los recursos a utilizar en cada etapa.',
-        'Presenta un Plan de Trabajo genérico no ajustado a la realidad del Ente, o con inconsistencias en los lapsos de ejecución.',
-        'No presenta Plan de Trabajo, o el mismo supera los lapsos máximos requeridos por el contratante.',
-        'El personal propuesto cumple o supera el 100% de la experiencia y nivel académico solicitados en las Especificaciones Técnicas.',
-        'El personal propuesto NO cumple con el perfil solicitado o no se consignaron los soportes curriculares (CV y Títulos).',
-        'Demuestra la disponibilidad operativa del 100% de los equipos y herramientas exigidos (mediante facturas de propiedad o cartas de compromiso de arrendamiento).',
-        'No demuestra la disponibilidad o presenta menos del 100% de los equipos mínimos requeridos.',
-        'Garantiza un tiempo de respuesta (Atención in situ) MENOR al tiempo estándar solicitado en el Pliego.',
-        'Garantiza un tiempo de respuesta (Atención in situ) IGUAL al tiempo máximo permitido en el Pliego.',
-      ],
-      OBRAS: [
-        'Presenta Cronograma (Gantt/PERT) detallado con Ruta Crítica definida, asignación lógica de recursos y cumple el plazo de ejecución solicitado.',
-        'Presenta Cronograma lógico y coherente con el plazo, pero NO define claramente la Ruta Crítica o la asignación de recursos.',
-        'Presenta un Cronograma genérico, con inconsistencias en la secuencia constructiva o sin holguras razonables.',
-        'No presenta Cronograma, o el plazo propuesto supera el máximo establecido en el Pliego.',
-        'El profesional propuesto cumple o supera los años de graduado y la experiencia específica en obras similares solicitada en el Pliego (soportado con CV y constancias).',
-        'El profesional propuesto NO cumple con la experiencia mínima exigida o no se consignaron los soportes curriculares.',
-        'Demuestra la disponibilidad operativa y ubicación del 100% de la maquinaria esencial solicitada (con títulos de propiedad o cartas de intención de arrendamiento vigentes).',
-        'No demuestra la disponibilidad o presenta menos del 100% de la maquinaria mínima requerida para el inicio de la obra.',
-        'Describe detalladamente los procedimientos constructivos, normas de seguridad y logística adaptados específicamente a las condiciones de la obra a ejecutar.',
-        'Presenta una metodología genérica o estándar, sin detallar procedimientos específicos para las partidas complejas de la obra.',
-      ],
-    };
-    return rangos[tipoContratacion] || rangos['SERVICIOS'];
-  }
-
-  /**
-   * Mapea datos para informe-recomendacion-template.docx.
-   * Incluye loop de oferentes, calificación, matriz de totalización y preguntas del informe.
-   */
-  async getDatosInformeRecomendacion(expedienteId: string) {
+  private async cargarGestionAdjudicacion(expedienteId: string, documento: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
       where: { id: expedienteId },
       include: {
         ente: true,
+        autoridad: true,
         comision: { include: { miembros: true } },
         modalidad: true,
         cronograma: true,
         fasePreparatoria: true,
+        presupuestoItems: { where: { deletedAt: null } },
         ofertas: {
           where: { deletedAt: null },
-          include: {
-            evaluacion: {
-              include: {
-                sobre1: true,
-                sobre2: true,
-                dictamenAdjudicacion: true,
-              },
-            },
-          },
+          include: { evaluacion: true },
           orderBy: { createdAt: 'asc' },
         },
         informeRecomendacion: true,
@@ -1369,283 +1308,71 @@ export class GeneradorDocumentosService {
     });
 
     if (!expediente) throw new NotFoundException(`Expediente ${expedienteId} no encontrado`);
+    const { fasePreparatoria: fase, cronograma, modalidad, informeRecomendacion } = expediente;
+    if (!fase || !cronograma || !modalidad) {
+      throw new BadRequestException(
+        `El expediente no tiene Fase 1, cronograma o modalidad completos para generar ${documento}.`,
+      );
+    }
 
-    const tipoContratacion = expediente.modalidad?.tipoContratacion || 'SERVICIOS';
-    const rangos = this.getRangosEvaluacion(tipoContratacion);
-    const informe = expediente.informeRecomendacion;
-    // Plazo desde dictámenes (Gestión); fallback informe legacy.
-    const dictamenRef =
-      expediente.dictamenesAdjudicacion.find((d) => d.tipoDictamen === 'TOTAL') ||
-      expediente.dictamenesAdjudicacion.find((d) => d.oferenteAdjudicadoProcedimiento === true) ||
-      null;
-    // Garantía/CRS se verifican en el hub legal (Sobre 2) del oferente adjudicado.
-    const evaluacionAdjudicada = dictamenRef
-      ? expediente.ofertas.find((of) => of.evaluacion?.id === dictamenRef.evaluacionId)?.evaluacion
-      : undefined;
-    const indGarantia = evaluacionAdjudicada?.indVerificadoGarantia;
-    const indCrs = evaluacionAdjudicada?.indVerificadoCrs;
-    const plazoGanadora =
-      dictamenRef?.plazoEjecucionOfertaGanadora ??
-      dictamenRef?.plazoEjecucionOfertaParcial ??
-      informe?.plazoEjecucionOfertaGanadora;
-    const cronograma = expediente.cronograma;
-    const fasePrep = expediente.fasePreparatoria;
-    const comision = expediente.comision;
-    const boolToSiNo = (v: boolean | null | undefined) =>
-      v === true ? 'Sí' : v === false ? 'No' : '___';
+    const caracter = expediente.caracterAdjudicacion;
+    if (caracter !== 'TOTAL' && caracter !== 'PARCIAL') {
+      throw new BadRequestException(
+        `Debe definir el carácter de la adjudicación (TOTAL o PARCIAL) antes de generar ${documento}.`,
+      );
+    }
+    if (!informeRecomendacion) {
+      throw new BadRequestException(
+        `Debe guardar el formulario del Informe de Recomendación antes de generar ${documento}.`,
+      );
+    }
+    const dictamenes = expediente.dictamenesAdjudicacion;
+    const hayAdjudicado =
+      caracter === 'TOTAL'
+        ? dictamenes.some((d) => d.tipoDictamen === 'TOTAL' && d.oferenteAdjudicadoProcedimiento)
+        : dictamenes.some((d) => d.tipoDictamen === 'PARCIAL' && d.oferenteAdjudicadoProcedimiento);
+    if (!hayAdjudicado) {
+      throw new BadRequestException(
+        caracter === 'TOTAL'
+          ? 'Debe registrar el dictamen de adjudicación TOTAL de la Primera Opción.'
+          : 'Debe registrar al menos un dictamen de adjudicación PARCIAL adjudicado.',
+      );
+    }
 
-    const getMiembro = (area: string) =>
-      comision?.miembros?.find((m) => m.areaRepresentacion === area) || null;
-
-    const mJuridica = getMiembro('AREA_JURIDICA');
-    const mEconomica = getMiembro('AREA_ECONOMICA_FINANCIERA');
-    const mTecnica = getMiembro('AREA_TECNICA');
-    const mSecretaria = getMiembro('SECRETARIO_A');
-
-    const formatearFecha = (fecha: Date | null | undefined) =>
-      fecha ? fecha.toLocaleDateString('es-VE') : '___';
-
-    // Criterios fijos por tipo (para encabezados de la tabla)
-    const criteriosPorTipo: Record<string, string[]> = {
-      BIENES: [
-        'Tiempo de entrega a partir de la recepción de la Orden de compra.',
-        'Garantía de los insumos.',
-        'Características de los insumos.',
-        'Disponibilidad de los insumos requeridos.',
-      ],
-      SERVICIOS: [
-        'Plan de trabajo y metodología propuesta.',
-        'Perfil del personal Técnico clave.',
-        'Disponibilidad de Equipos y Herramientas.',
-        'Tiempo de respuesta ante fallas.',
-      ],
-      OBRAS: [
-        'Cronograma de Ejecución y Plan de Trabajo.',
-        'Experiencia de Ingeniero Residente.',
-        'Maquinaria y Equipos disponibles (propios / alquilados).',
-        'Memoria Descriptiva / Metodología de Ejecución.',
-      ],
-    };
-    const criterios = criteriosPorTipo[tipoContratacion] || criteriosPorTipo['SERVICIOS'];
-
-    // Loop de oferentes para tabla de recepción
-    const adquirientes = expediente.ofertas.map((of, index) => ({
-      numero: index + 1,
-      nombre_proveedor_oferente_au_au: of.nombreProveedorOferente || '___',
-      rif_proveedor_oferente_au_au: of.rifProveedorOferente || '___',
-      nombre_rep_legal_oferente_au_au: of.nombreRepLegalOferente || '___',
-      cedula_rep_legal_oferente_au_au: of.cedulaRepLegalOferente || '___',
-      num_sobres_entregados_au_au: of.numeroSobresEntregados ?? '___',
-    }));
-
-    // Calificación por empresa
-    const calificaciones = expediente.ofertas.map((of) => {
-      const ev = of.evaluacion;
-      if (!ev)
-        return {
-          calificacion_empresa_au_au: `Empresa ${of.nombreProveedorOferente} — Sin evaluación registrada.`,
-        };
-      return {
-        calificacion_empresa_au_au:
-          ev.oferenteCalificado === true
-            ? `Empresa Calificada: ${of.nombreProveedorOferente} - Cumplió con todos los requisitos legales, financieros y técnicos.`
-            : ev.oferenteCalificado === false
-              ? `Empresa Descalificada: ${of.nombreProveedorOferente} - Justificación: ${ev.motivoDescalificacion || '___'}`
-              : `${of.nombreProveedorOferente} — Evaluación pendiente.`,
-      };
-    });
-
-    // Matriz de totalización ordenada por prelación efectiva (adjudicación ?? evaluación)
-    const prelacionOrden = [
-      'Primera Opción',
-      'Segunda Opción',
-      'Tercera Opción',
-      'Cuarta Opción',
-      'Quinta Opción',
-      'Sexta Opción',
-    ];
     const evaluaciones = expediente.ofertas
-      .filter((of) => of.evaluacion)
-      .sort((a, b) => {
-        const pa = prelacionEfectiva(
-          a.evaluacion!.posicionPrelacion,
-          a.evaluacion!.posicionPrelacionAdjudicacion,
-        );
-        const pb = prelacionEfectiva(
-          b.evaluacion!.posicionPrelacion,
-          b.evaluacion!.posicionPrelacionAdjudicacion,
-        );
-        const ia = prelacionOrden.indexOf(pa || '');
-        const ib = prelacionOrden.indexOf(pb || '');
-        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-      })
-      .map((of) => {
-        const ev = of.evaluacion!;
-        const efectiva = prelacionEfectiva(ev.posicionPrelacion, ev.posicionPrelacionAdjudicacion);
-        return {
-          nombre_proveedor_evaluado_au_au: ev.nombreProveedorEvaluado || '___',
-          total_tecnica_au_au: Number(ev.totalTecnica ?? 0),
-          total_economica_au_au: Number(ev.totalEconomica ?? 0),
-          total_van_au_au: Number(ev.totalVan ?? 0),
-          total_evaluacion_oferente_au_au: Number(ev.totalEvaluacion ?? 0),
-          posicion_prelacion_au_au: efectiva || '___',
-          monto_oferta_bs_au_au: Number(ev.sobre2?.montoOfertaBs ?? 0),
-          rif_proveedor_evaluado_au_au: ev.rifProveedorEvaluado || '___',
-        };
-      });
-
-    // Formateador de moneda simple para los montos de la tabla
-    const formatBs = (num: number) =>
-      num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-    const getOferenteEnPosicion = (index: number) =>
-      evaluaciones[index] || {
-        nombre_proveedor_evaluado_au_au: '___',
-        monto_oferta_bs_au_au: 0,
-        total_evaluacion_oferente_au_au: 0,
-        rif_proveedor_evaluado_au_au: '___',
-      };
-
-    const op1 = getOferenteEnPosicion(0);
-    const op2 = getOferenteEnPosicion(1);
-    const op3 = getOferenteEnPosicion(2);
-    const op4 = getOferenteEnPosicion(3);
-    const op5 = getOferenteEnPosicion(4);
-    const op6 = getOferenteEnPosicion(5);
-
-    // Texto condicional actualización de presupuesto
-    let textoActualizacionPresupuesto =
-      'No fue necesario actualizar el presupuesto base, ya que las ofertas recibidas se encuentran dentro de un rango razonable respecto a la estimación inicial.';
-    if (informe?.actualizacionPresupuesto) {
-      textoActualizacionPresupuesto = `Se procedió a actualizar el presupuesto base a Bs. ${formatBs(Number(informe.montoNuevoPresupuesto ?? 0))}, debido a ${informe.justificacionActualizacionPresup || '___'}, para asegurar una comparación justa y objetiva de las ofertas.`;
-    }
-
-    // Texto condicional formalidades
-    let textoFormalidades = 'No se observaron omisiones de formalidades durante el procedimiento.';
-    if (informe?.observacionFormalidades) {
-      textoFormalidades = `Se observó ${informe.omisionFormalidades || '___'}, y se decidió ${informe.subsanacionActo || '___'} mediante ${informe.datosActoSubsanacion || '___'} para garantizar la legalidad del proceso.`;
-    }
-
-    let textoItemsSinOfertas = 'No existen ítems del presupuesto sin ofertas.';
-    if (informe?.existeItemsSinOfertas) {
-      textoItemsSinOfertas = `Existen ítems sin ofertas: ${informe.itemsSinOfertas || '___'}. Motivo: ${informe.motivoItemsSinOfertas || '___'}.`;
-    }
+      .map((of) => of.evaluacion)
+      .filter((ev): ev is NonNullable<typeof ev> => !!ev);
 
     return {
-      nom_ente_contratante: expediente.ente?.nombre || '___',
-      cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
-      desc_objeto_contratacion: expediente.descripcionObjeto || '___',
-      tipo_objeto_contratacion: tipoContratacion,
-      loc_ciudad_ente: expediente.ente?.ciudad || '___',
+      expediente: { ...expediente, fasePreparatoria: fase, cronograma, modalidad },
+      adjudicacion: mapInformeAdjudicacion({
+        caracter,
+        fase,
+        informe: informeRecomendacion,
+        evaluaciones,
+        dictamenes,
+      }),
+    };
+  }
 
-      // Montos del presupuesto
-      monto_estimado_bs: formatBs(Number(expediente.modalidad?.montoEstimadoBs ?? 0)),
-      valor_ucau_base: formatBs(Number(expediente.modalidad?.valorUcauBase ?? 0)),
-      tasa_referencial_bcv: expediente.tasaReferencialBcv
-        ? Number(expediente.tasaReferencialBcv).toFixed(4)
-        : '___',
+  /**
+   * Tokens del Informe de Recomendación de adjudicación (informe-recomendacion-template.docx).
+   * Secciones 1-6 desde el hub de evaluación; 7-10 desde la Gestión de Adjudicación.
+   */
+  async getDatosInformeRecomendacion(expedienteId: string) {
+    const { expediente, adjudicacion } = await this.cargarGestionAdjudicacion(
+      expedienteId,
+      'el Informe de Recomendación',
+    );
 
-      // Cronograma y Fase Preparatoria
-      fec_limite_evaluacion_au_au: formatearFecha(cronograma?.fechaLimiteEvaluacion),
-      fec_acta_inicio_au_au: formatearFecha(
-        expediente.fechaActaInicio ?? fasePrep?.fechaActaInicio,
-      ),
-      pag_web_ente: '___', // Placeholder para web
-      fec_llamado_participar_au_au: formatearFecha(cronograma?.fechaLlamadoParticipar),
-      fec_inicio_disponibilidad_pliego_au_au: formatearFecha(
-        cronograma?.fechaInicioDisponibilidadPliego,
-      ),
-      fec_fin_disponibilidad_pliego_au_au: formatearFecha(cronograma?.fechaFinDisponibilidadPliego),
-      fec_acto_recep_aper_sobres_au_au: formatearFecha(
-        cronograma?.fechaActoRecepcionAperturaSobres,
-      ),
-      hora_acto_recep_aper_au_au: fasePrep?.horaActoRecepAper || '___',
-
-      // Criterios técnicos para encabezados de tabla
-      criterio_1_evaluacion_au_au: criterios[0] || '___',
-      criterio_2_evaluacion_au_au: criterios[1] || '___',
-      criterio_3_evaluacion_au_au: criterios[2] || '___',
-      criterio_4_evaluacion_au_au: criterios[3] || '___',
-
-      // Rangos de evaluación técnica
-      rango_1_evaluacion_au_au: rangos[0] || '___',
-      rango_2_evaluacion_au_au: rangos[1] || '___',
-      rango_3_evaluacion_au_au: rangos[2] || '___',
-      rango_4_evaluacion_au_au: rangos[3] || '___',
-      rango_5_evaluacion_au_au: rangos[4] || '___',
-      rango_6_evaluacion_au_au: rangos[5] || '___',
-      rango_7_evaluacion_au_au: rangos[6] || '___',
-      rango_8_evaluacion_au_au: rangos[7] || '___',
-      rango_9_evaluacion_au_au: rangos[8] || '___',
-      rango_10_evaluacion_au_au: rangos[9] || '___',
-
-      // Loop de oferentes (tabla de recepción)
-      adquirientes,
-
-      // Calificación de cada empresa
-      calificaciones,
-
-      // Matriz de totalización ordenada por prelación
-      evaluaciones,
-
-      // Montos por opción
-      monto_menor_oferta_au_au: op1.monto_oferta_bs_au_au
-        ? formatBs(op1.monto_oferta_bs_au_au)
-        : '___',
-      monto_segunda_menor_oferta_au_au: op2.monto_oferta_bs_au_au
-        ? formatBs(op2.monto_oferta_bs_au_au)
-        : '___',
-      monto_tercera_menor_oferta_au_au: op3.monto_oferta_bs_au_au
-        ? formatBs(op3.monto_oferta_bs_au_au)
-        : '___',
-      monto_cuarta_menor_oferta_au_au: op4.monto_oferta_bs_au_au
-        ? formatBs(op4.monto_oferta_bs_au_au)
-        : '___',
-      monto_quinta_menor_oferta_au_au: op5.monto_oferta_bs_au_au
-        ? formatBs(op5.monto_oferta_bs_au_au)
-        : '___',
-      monto_sexta_menor_oferta_au_au: op6.monto_oferta_bs_au_au
-        ? formatBs(op6.monto_oferta_bs_au_au)
-        : '___',
-
-      // Prelación - Ganadores
-      oferente_primera_opción_au_au: op1.nombre_proveedor_evaluado_au_au,
-      total1_evaluacion_oferente_au_au: op1.total_evaluacion_oferente_au_au,
-      oferente_segunda_opción_au_au: op2.nombre_proveedor_evaluado_au_au,
-      total2_evaluacion_oferente_au_au: op2.total_evaluacion_oferente_au_au,
-      oferente_tercera_opción_au_au: op3.nombre_proveedor_evaluado_au_au,
-      total3_evaluacion_oferente_au_au: op3.total_evaluacion_oferente_au_au,
-      oferente_cuarta_opción_au_au: op4.nombre_proveedor_evaluado_au_au,
-      total4_evaluacion_oferente_au_au: op4.total_evaluacion_oferente_au_au,
-      oferente_quinta_opción_au_au: op5.nombre_proveedor_evaluado_au_au,
-      total5_evaluacion_oferente_au_au: op5.total_evaluacion_oferente_au_au,
-      oferente_sexta_opción_au_au: op6.nombre_proveedor_evaluado_au_au,
-      total6_evaluacion_oferente_au_au: op6.total_evaluacion_oferente_au_au,
-
-      rif_proveedor_evaluado_au_au: op1.rif_proveedor_evaluado_au_au,
-
-      // Miembros de la Comisión
-      nom_completo_miembro_juridica: mJuridica?.nombreCompletoMiembro || '___',
-      cedula_miembro_jurico: mJuridica?.cedulaMiembro || '___',
-      cedula_miembro_juridico: mJuridica?.cedulaMiembro || '___', // Backup for typo in template
-      nom_completo_miembro_economica: mEconomica?.nombreCompletoMiembro || '___',
-      cedula_miembro_economica: mEconomica?.cedulaMiembro || '___',
-      nom_completo_miembro_tecnica: mTecnica?.nombreCompletoMiembro || '___',
-      cedula_miembro_tecnica: mTecnica?.cedulaMiembro || '___',
-      nom_completo_miembro_secretaria: mSecretaria?.nombreCompletoMiembro || '___',
-      cedula_miembro_secretaria: mSecretaria?.cedulaMiembro || '___',
-      datos_designacion_comision: comision?.datosDesignacionComision || '___',
-
-      // Informe de Recomendación
-      actualizacion_presupuesto_au_au: textoActualizacionPresupuesto,
-      existe_items_sin_ofertas_au_au: boolToSiNo(informe?.existeItemsSinOfertas),
-      items_sin_ofertas_au_au: informe?.itemsSinOfertas || '___',
-      motivo_items_sin_ofertas_au_au: informe?.motivoItemsSinOfertas || '___',
-      texto_items_sin_ofertas_au_au: textoItemsSinOfertas,
-      ind_verificado_garantia_au_au: boolToSiNo(indGarantia),
-      ind_verificado_crs_au_au: boolToSiNo(indCrs),
-      observacion_formalidades_au_au: textoFormalidades,
-      plazo_ejecucion_oferta_ganadora_au_au: plazoGanadora ?? '___',
+    return {
+      ...mapDatosPliegoCondiciones(expediente),
+      ...this.datosBaseInformeDesierto(expediente),
+      ...mapOferentesDesierto(expediente.ofertas, {
+        incluirEvaluacion: true,
+        estatus: ESTATUS_INFORME_ADJUDICACION,
+      }),
+      ...adjudicacion,
     };
   }
 
@@ -1707,7 +1434,7 @@ export class GeneradorDocumentosService {
         fasePreparatoria: true;
       };
     }>,
-    causalNum: 1 | 2 | 3,
+    causalNum?: 1 | 2 | 3,
   ) {
     const { ente, comision, modalidad, cronograma, fasePreparatoria } = expediente;
     const getMiembroPrincipal = (area: string) =>
@@ -1724,7 +1451,7 @@ export class GeneradorDocumentosService {
       num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     // En el narrativo: "numeral {causal_...}" → solo el número de la causal
-    const causalToken = String(causalNum);
+    const causalToken = causalNum ? String(causalNum) : '___';
 
     return {
       cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
@@ -1940,194 +1667,44 @@ export class GeneradorDocumentosService {
     };
   }
 
+  /**
+   * Tokens del Acta (Acto Administrativo) de Adjudicación — acta-adjudicacion-template.docx.
+   * El RESUELVE comparte numerales, opciones y garantías con el Informe de Recomendación.
+   * Gate: el de la Gestión de Adjudicación + Informe de Recomendación generado y vigente.
+   */
   async getDatosAdjudicacion(expedienteId: string) {
-    // Preferir dictámenes Gestión Fase 3; fallback a Adjudicacion legacy (Elaboración).
-    const dictamenes = await this.prisma.dictamenAdjudicacion.findMany({
+    const { expediente, adjudicacion } = await this.cargarGestionAdjudicacion(
+      expedienteId,
+      'el Acta de Adjudicación',
+    );
+
+    const informeDoc = await this.prisma.documentoGenerado.findFirst({
       where: {
         expedienteId,
+        tipoDocumento: 'INFORME_RECOMENDACION',
         deletedAt: null,
-        OR: [{ tipoDictamen: 'TOTAL' }, { oferenteAdjudicadoProcedimiento: true }],
-      },
-      include: {
-        evaluacion: true,
-        expediente: {
-          include: {
-            autoridad: true,
-            ente: true,
-            cronograma: true,
-            fasePreparatoria: true,
-            modalidad: true,
-          },
-        },
+        estaDesactualizado: false,
       },
     });
-
-    if (dictamenes.length > 0) {
-      const exp = dictamenes[0].expediente;
-      const firmas = await this.getFirmasExpediente(exp);
-      const crono = exp.cronograma;
-      const fasePrep = exp.fasePreparatoria;
-      const tipoContratacion = exp.modalidad?.tipoContratacion || 'SERVICIOS';
-      const criterios = this.criteriosEvaluacionPorTipo(tipoContratacion);
-
-      const adjudicados = dictamenes.map((d) => ({
-        nombre: d.evaluacion.nombreProveedorEvaluado || '___',
-        rif: d.evaluacion.rifProveedorEvaluado || '___',
-        monto: Number(d.montoAdjudicadoTotal ?? d.montoAdjudicadoParcial ?? 0),
-        partida: d.partidasAdjudicadasTotal || d.partidasAdjudicadasParcial || '___',
-      }));
-
-      const primario = adjudicados[0];
-      const montoTotal = adjudicados.reduce((s, a) => s + a.monto, 0);
-
-      return {
-        ...firmas,
-        nom_ente_contratante: exp.ente?.nombre || '___',
-        cod_nomenclatura_proceso: exp.codigoNomenclatura || '___',
-        cod_nomenclatura_proceso_au_au: exp.codigoNomenclatura || '___',
-        desc_objeto_contratacion: exp.descripcionObjeto || '___',
-        desc_objeto_contratacion_au_au: exp.descripcionObjeto || '___',
-        normativa_legal: formatNormativaLegalForDoc(fasePrep?.normativaLegal),
-        fec_llamado_participar_au_au: crono?.fechaLlamadoParticipar
-          ? formatDateToSpanishLong(crono.fechaLlamadoParticipar)
-          : '___',
-        fec_acto_recep_aper_sobres_au_au: crono?.fechaActoRecepcionAperturaSobres
-          ? formatDateToSpanishLong(crono.fechaActoRecepcionAperturaSobres)
-          : '___',
-        dir_fiscal_ente: exp.ente?.direccionFiscal || '___',
-        fec_limite_evaluacion_au_au: crono?.fechaLimiteEvaluacion
-          ? formatDateToSpanishLong(crono.fechaLimiteEvaluacion)
-          : '___',
-        fec_limite_adjudicacion_au_au: crono?.fechaLimiteAdjudicacion
-          ? formatDateToSpanishLong(crono.fechaLimiteAdjudicacion)
-          : '___',
-        loc_ciudad_ente: exp.ente?.ciudad || '___',
-        criterio_1_evaluacion_au_au: criterios[0] || '___',
-        criterio_2_evaluacion_au_au: criterios[1] || '___',
-        criterio_3_evaluacion_au_au: criterios[2] || '___',
-        criterio_4_evaluacion_au_au: criterios[3] || '___',
-        oferente_primera_opción_au_au: adjudicados.map((a) => a.nombre).join('; ') || '___',
-        rif_proveedor_evaluado_au_au: primario?.rif || '___',
-        monto_adjudicado_bs_au_au: formatCurrencyVE(montoTotal),
-        partida_presupuest_gasto_au_au: primario?.partida || '___',
-        monto_crs_bs_au_au: '___',
-        referencia_recomendacion_au_au: 'Informe de Recomendación — Gestión Fase 3',
-        caracter_adjudicacion_au_au: exp.caracterAdjudicacion || '___',
-        adjudicados,
-        adquirientes: adjudicados.map((a) => ({
-          codigo_partida_au_au: a.partida,
-          total_items_au_au: formatCurrencyVE(a.monto),
-        })),
-      };
-    }
-
-    const adjudicacion = await this.prisma.adjudicacion.findUnique({
-      where: { expedienteId },
-      include: {
-        expediente: {
-          include: {
-            autoridad: true,
-            ente: true,
-            cronograma: true,
-            fasePreparatoria: true,
-            modalidad: true,
-          },
-        },
-        ofertaGanadora: {
-          include: { evaluacion: true },
-        },
-      },
-    });
-
-    if (!adjudicacion) {
-      throw new NotFoundException(
-        'No hay dictámenes de adjudicación ni registro legacy de Adjudicación.',
+    if (!informeDoc) {
+      throw new BadRequestException(
+        'Debe generar (o regenerar) el Informe de Recomendación antes del Acta de Adjudicación.',
       );
     }
 
-    const firmas = await this.getFirmasExpediente(adjudicacion.expediente);
-    const exp = adjudicacion.expediente;
-    const crono = exp.cronograma;
-    const fasePrep = exp.fasePreparatoria;
-    const criterios = this.criteriosEvaluacionPorTipo(
-      exp.modalidad?.tipoContratacion || 'SERVICIOS',
-    );
-
+    const base = this.datosBaseInformeDesierto(expediente);
     return {
-      ...firmas,
-      nom_ente_contratante: exp.ente?.nombre || '___',
-      cod_nomenclatura_proceso: exp.codigoNomenclatura || '___',
-      cod_nomenclatura_proceso_au_au: exp.codigoNomenclatura || '___',
-      desc_objeto_contratacion: exp.descripcionObjeto || '___',
-      desc_objeto_contratacion_au_au: exp.descripcionObjeto || '___',
-      normativa_legal: formatNormativaLegalForDoc(fasePrep?.normativaLegal),
-
-      fec_llamado_participar_au_au: crono?.fechaLlamadoParticipar
-        ? formatDateToSpanishLong(crono.fechaLlamadoParticipar)
-        : '___',
-      fec_acto_recep_aper_sobres_au_au: crono?.fechaActoRecepcionAperturaSobres
-        ? formatDateToSpanishLong(crono.fechaActoRecepcionAperturaSobres)
-        : '___',
-      dir_fiscal_ente: exp.ente?.direccionFiscal || '___',
-      fec_limite_evaluacion_au_au: crono?.fechaLimiteEvaluacion
-        ? formatDateToSpanishLong(crono.fechaLimiteEvaluacion)
-        : '___',
-      fec_limite_adjudicacion_au_au: crono?.fechaLimiteAdjudicacion
-        ? formatDateToSpanishLong(crono.fechaLimiteAdjudicacion)
-        : '___',
-      loc_ciudad_ente: exp.ente?.ciudad || '___',
-
-      criterio_1_evaluacion_au_au: criterios[0] || '___',
-      criterio_2_evaluacion_au_au: criterios[1] || '___',
-      criterio_3_evaluacion_au_au: criterios[2] || '___',
-      criterio_4_evaluacion_au_au: criterios[3] || '___',
-
-      oferente_primera_opción_au_au:
-        adjudicacion.ofertaGanadora?.evaluacion?.nombreProveedorEvaluado ||
-        adjudicacion.ofertaGanadora?.nombreProveedorOferente ||
-        '___',
-      rif_proveedor_evaluado_au_au:
-        adjudicacion.ofertaGanadora?.evaluacion?.rifProveedorEvaluado ||
-        adjudicacion.ofertaGanadora?.rifProveedorOferente ||
-        '___',
-
-      monto_adjudicado_bs_au_au: formatCurrencyVE(Number(adjudicacion.montoAdjudicadoBs)),
-      partida_presupuest_gasto_au_au: adjudicacion.partidaPresupuestariaGasto || '___',
-      monto_crs_bs_au_au: formatCurrencyVE(Number(adjudicacion.montoCrsBs)),
-      referencia_recomendacion_au_au: adjudicacion.referenciaRecomendacion || '___',
-      caracter_adjudicacion_au_au: exp.caracterAdjudicacion || 'TOTAL',
-
-      adquirientes: [
-        {
-          codigo_partida_au_au: adjudicacion.partidaPresupuestariaGasto || '___',
-          total_items_au_au: formatCurrencyVE(Number(adjudicacion.montoAdjudicadoBs)),
-        },
-      ],
+      ...mapDatosPliegoCondiciones(expediente),
+      ...base,
+      ...(await this.getFirmasExpediente(expediente)),
+      cod_nomenclatura_proceso_au_au: base.cod_nomenclatura_proceso,
+      desc_objeto_contratacion_au_au: base.desc_objeto_contratacion,
+      dir_fiscal_ente: expediente.ente?.direccionFiscal || '___',
+      fec_limite_adjudicacion_au_au: formatDateToSpanishLong(
+        expediente.cronograma.fechaLimiteAdjudicacion,
+      ),
+      ...adjudicacion,
     };
-  }
-
-  private criteriosEvaluacionPorTipo(tipoContratacion: string): string[] {
-    const criteriosPorTipo: Record<string, string[]> = {
-      BIENES: [
-        'Tiempo de entrega a partir de la recepción de la Orden de compra.',
-        'Garantía de los insumos.',
-        'Características de los insumos.',
-        'Disponibilidad de los insumos requeridos.',
-      ],
-      SERVICIOS: [
-        'Plan de trabajo y metodología propuesta.',
-        'Perfil del personal Técnico clave.',
-        'Disponibilidad de Equipos y Herramientas.',
-        'Tiempo de respuesta ante fallas.',
-      ],
-      OBRAS: [
-        'Cronograma de Ejecución y Plan de Trabajo.',
-        'Experiencia de Ingeniero Residente.',
-        'Maquinaria y Equipos disponibles (propios / alquilados).',
-        'Memoria Descriptiva / Metodología de Ejecución.',
-      ],
-    };
-    return criteriosPorTipo[tipoContratacion] || criteriosPorTipo['SERVICIOS'];
   }
 
   async generarAdjudicacion(expedienteId: string, userId: string) {
@@ -2277,132 +1854,191 @@ export class GeneradorDocumentosService {
     );
   }
 
-  async generarNotificacionesFase4(expedienteId: string, userId: string) {
-    const expediente = await this.prisma.expedienteContratacion.findUnique({
-      where: { id: expedienteId },
-      include: {
-        ente: true,
-        cronograma: true,
-        comision: {
-          include: { miembros: true },
-        },
+  /**
+   * Motivación individual de la Notificación a no adjudicados:
+   * causa del dictamen (TOTAL o PARCIAL) o, si fue descalificado, la justificación
+   * del módulo del hub que lo descalificó.
+   */
+  private causaNoAdjudicado(
+    ev: {
+      oferenteCalificado: boolean | null;
+      motivoDescalificacion: string | null;
+      justificacionCalificadoLegal: string | null;
+      justificacionCalificadaFinanciera: string | null;
+      justificacionCalificadoTecnica: string | null;
+      hubLegal: unknown;
+      hubFinanciera: unknown;
+      hubTecnica: unknown;
+      hubEvaluacion: unknown;
+    },
+    dictamen:
+      | { oferenteAdjudicadoProcedimiento: boolean | null; causaNoAdjudicado: string | null }
+      | undefined,
+  ): string {
+    const causa = dictamen?.causaNoAdjudicado?.trim();
+    if (dictamen?.oferenteAdjudicadoProcedimiento === false && causa) return causa;
+    if (ev.oferenteCalificado !== false) return '___';
+
+    const legal = ev.hubLegal as EstadoLegal | null;
+    const fin = ev.hubFinanciera as EstadoFinanciera | null;
+    const tec = ev.hubTecnica as EstadoTecnica | null;
+    const evaluacion = ev.hubEvaluacion as EstadoEvaluacion | null;
+    const descalificado = (modulo: string, justificacion: string | null | undefined) =>
+      `Resultó descalificado en la ${modulo}: ${justificacion?.trim() || ev.motivoDescalificacion || '___'}`;
+
+    if (legal?.submitted && legal.oferenteCalificadoLegal === false) {
+      return descalificado(
+        'Calificación Legal',
+        legal.form?.justificacion || ev.justificacionCalificadoLegal,
+      );
+    }
+    if (fin?.submitted && fin.oferenteCalificadoFinanciera === false) {
+      return descalificado(
+        'Calificación Financiera',
+        fin.form?.justificacion || ev.justificacionCalificadaFinanciera,
+      );
+    }
+    if (tec?.submitted && tec.oferenteCalificadoTecnica === false) {
+      return descalificado(
+        'Calificación Técnica',
+        tec.form?.justificacion || ev.justificacionCalificadoTecnica,
+      );
+    }
+    if (
+      evaluacion?.submitted &&
+      (evaluacion.oferenteEvaluadoTecnico === false ||
+        evaluacion.oferenteEvaluadoEconomico === false)
+    ) {
+      return descalificado(
+        'Evaluación de la Oferta',
+        evaluacion.form?.tecnica?.justificacion || evaluacion.form?.economica?.justificacion,
+      );
+    }
+    return ev.motivoDescalificacion?.trim() || '___';
+  }
+
+  /**
+   * Destinatarios y tokens de las Notificaciones de Fase 3. Una por cada oferta evaluada:
+   * NOTIFICACION_ADJUDICADO si su dictamen la adjudica; NOTIFICACION_NO_ADJUDICADO el resto
+   * (calificados no adjudicados y descalificados).
+   * Gate: el de la Gestión de Adjudicación + Acta de Adjudicación generada y vigente.
+   */
+  async getDatosNotificaciones(expedienteId: string): Promise<
+    Array<{
+      evaluacionId: string;
+      tipoDocumento: 'NOTIFICACION_ADJUDICADO' | 'NOTIFICACION_NO_ADJUDICADO';
+      destinatario: string;
+      tokens: Record<string, unknown>;
+    }>
+  > {
+    const { expediente, adjudicacion } = await this.cargarGestionAdjudicacion(
+      expedienteId,
+      'las Notificaciones',
+    );
+
+    const actaDoc = await this.prisma.documentoGenerado.findFirst({
+      where: {
+        expedienteId,
+        tipoDocumento: 'ACTA_ADJUDICACION',
+        deletedAt: null,
+        estaDesactualizado: false,
       },
     });
+    if (!actaDoc) {
+      throw new BadRequestException(
+        'Debe generar (o regenerar) el Acta de Adjudicación antes de las Notificaciones.',
+      );
+    }
 
-    if (!expediente) throw new NotFoundException('Expediente no encontrado');
-
-    const secretaria = expediente.comision?.miembros?.find((m) => m.tipoMiembro === 'SECRETARIO');
-
-    const commonData = {
-      nom_ente_contratante: expediente.ente?.nombre || '___',
-      cod_nomenclatura_proceso_au_au: expediente.codigoNomenclatura || '___',
-      desc_objeto_contratacion_au_au: expediente.descripcionObjeto || '___',
-      loc_ciudad_ente: expediente.ente?.ciudad || '___',
-      fec_limite_notificacion_au_au: expediente.cronograma?.fechaLimiteNotificacion
-        ? formatDateToSpanishLong(expediente.cronograma.fechaLimiteNotificacion)
-        : '___',
-      nom_completo_miembro_secretaria: secretaria?.nombreCompletoMiembro || '___',
-      cedula_miembro_secretaria: secretaria?.cedulaMiembro || '___',
-      datos_designacion_comision: expediente.comision?.datosDesignacionComision || '___',
-      fec_limite_adjudicacion_au_au: expediente.cronograma?.fechaLimiteAdjudicacion
-        ? formatDateToSpanishLong(expediente.cronograma.fechaLimiteAdjudicacion)
-        : '___',
+    const base = this.datosBaseInformeDesierto(expediente);
+    const comunes = {
+      ...mapDatosPliegoCondiciones(expediente),
+      ...base,
+      cod_nomenclatura_proceso_au_au: base.cod_nomenclatura_proceso,
+      desc_objeto_contratacion_au_au: base.desc_objeto_contratacion,
+      fec_limite_notificacion_au_au: formatDateToSpanishLong(
+        expediente.cronograma.fechaLimiteNotificacion,
+      ),
+      fec_limite_adjudicacion_au_au: formatDateToSpanishLong(
+        expediente.cronograma.fechaLimiteAdjudicacion,
+      ),
+      ...adjudicacion,
     };
 
-    const evaluaciones = await this.prisma.evaluacionResultados.findMany({
-      where: { oferta: { expedienteId }, deletedAt: null },
-      include: { oferta: true, dictamenAdjudicacion: true },
+    const dictamenPorEvaluacion = new Map(
+      expediente.dictamenesAdjudicacion.map((d) => [d.evaluacionId, d]),
+    );
+    const proveedorIds = expediente.ofertas
+      .map((of) => of.proveedorId)
+      .filter((id): id is string => !!id);
+    const proveedores = await this.prisma.proveedor.findMany({
+      where: { id: { in: proveedorIds } },
+      select: { id: true, correo: true },
     });
+    const correoProveedor = new Map(proveedores.map((p) => [p.id, p.correo]));
 
-    const dictamenes = evaluaciones
-      .map((e) => e.dictamenAdjudicacion)
-      .filter((d): d is NonNullable<typeof d> => !!d && !d.deletedAt);
+    return expediente.ofertas.flatMap(
+      (of): Awaited<ReturnType<typeof this.getDatosNotificaciones>> => {
+        const ev = of.evaluacion;
+        if (!ev) return [];
+        const dictamen = dictamenPorEvaluacion.get(ev.id);
+        const nombre = ev.nombreProveedorEvaluado || of.nombreProveedorOferente || '___';
+        const rif = ev.rifProveedorEvaluado || of.rifProveedorOferente || '___';
+        const correo =
+          of.correoProveedorOferente ||
+          (of.proveedorId ? correoProveedor.get(of.proveedorId) : undefined) ||
+          '___';
 
-    let ganadoras = evaluaciones.filter((e) => {
-      const efectiva = prelacionEfectiva(e.posicionPrelacion, e.posicionPrelacionAdjudicacion);
-      return esPrimeraOpcion(efectiva);
-    });
-    let perdedoras = evaluaciones.filter((e) => {
-      if (!e.oferenteCalificado) return false;
-      const efectiva = prelacionEfectiva(e.posicionPrelacion, e.posicionPrelacionAdjudicacion);
-      return !!efectiva && !esPrimeraOpcion(efectiva);
-    });
+        if (dictamen?.oferenteAdjudicadoProcedimiento === true) {
+          return [
+            {
+              evaluacionId: ev.id,
+              tipoDocumento: 'NOTIFICACION_ADJUDICADO' as const,
+              destinatario: nombre,
+              tokens: {
+                ...comunes,
+                oferente_adjudicado_au_au: nombre,
+                rif_oferente_adjudicado_au_au: rif,
+                correo_oferente_adjudicado_au_au: correo,
+              },
+            },
+          ];
+        }
+        return [
+          {
+            evaluacionId: ev.id,
+            tipoDocumento: 'NOTIFICACION_NO_ADJUDICADO' as const,
+            destinatario: nombre,
+            tokens: {
+              ...comunes,
+              oferente_no_adjudicado_au_au: nombre,
+              rif_oferente_no_adjudicado_au_au: rif,
+              correo_oferente_no_adjudicado_au_au: correo,
+              causa_no_adjudicado_au_au: this.causaNoAdjudicado(ev, dictamen),
+            },
+          },
+        ];
+      },
+    );
+  }
 
-    // Si hay dictámenes Gestión: ganadores = adjudicados; no adjudicados = dictamen false o resto calificados
-    if (dictamenes.length > 0) {
-      const adjudicadoIds = new Set(
-        dictamenes
-          .filter((d) => d.tipoDictamen === 'TOTAL' || d.oferenteAdjudicadoProcedimiento === true)
-          .map((d) => d.evaluacionId),
-      );
-      const noAdjudicadoIds = new Set(
-        dictamenes
-          .filter((d) => d.oferenteAdjudicadoProcedimiento === false)
-          .map((d) => d.evaluacionId),
-      );
-      ganadoras = evaluaciones.filter((e) => adjudicadoIds.has(e.id));
-      perdedoras = evaluaciones.filter(
-        (e) => noAdjudicadoIds.has(e.id) || (e.oferenteCalificado && !adjudicadoIds.has(e.id)),
+  async generarNotificacionesFase4(expedienteId: string, userId: string) {
+    const destinatarios = await this.getDatosNotificaciones(expedienteId);
+    const documentosGenerados: Awaited<ReturnType<typeof this.generarDocumento>>[] = [];
+    for (const d of destinatarios) {
+      documentosGenerados.push(
+        await this.generarDocumento(
+          expedienteId,
+          d.tipoDocumento,
+          d.tipoDocumento === 'NOTIFICACION_ADJUDICADO'
+            ? 'notificacion-adjudicado-template.docx'
+            : 'notificacion-no-adjudicado-template.docx',
+          userId,
+          d.tokens,
+          d.evaluacionId,
+        ),
       );
     }
-
-    const documentosGenerados: any[] = [];
-    const nombrePrimera =
-      ganadoras
-        .map((g) => g.nombreProveedorEvaluado)
-        .filter(Boolean)
-        .join('; ') || '___';
-
-    // Generar Notificación Adjudicado (multi si parcial)
-    for (const ganadora of ganadoras) {
-      const dataAdjudicado = {
-        ...commonData,
-        oferente_primera_opción_au_au: ganadora.nombreProveedorEvaluado || '___',
-        rif_proveedor_evaluado_au_au: ganadora.rifProveedorEvaluado || '___',
-        correo_proveedor_evaluado_au_au: ganadora.oferta.proveedorId
-          ? (await this.prisma.proveedor.findUnique({ where: { id: ganadora.oferta.proveedorId } }))
-              ?.correo || '___'
-          : '___',
-      };
-
-      const res = await this.generarDocumento(
-        expedienteId,
-        'NOTIFICACION_ADJUDICADO',
-        'notificacion-adjudicado-template.docx',
-        userId,
-        dataAdjudicado,
-        ganadora.id,
-      );
-      documentosGenerados.push(res);
-    }
-
-    // Generar Notificaciones No Adjudicados
-    for (const perdedora of perdedoras) {
-      const dataNoAdjudicado = {
-        ...commonData,
-        oferente_no_adjudicado_au_au: perdedora.nombreProveedorEvaluado || '___',
-        oferente_primera_opción_au_au: nombrePrimera,
-        rif_proveedor_evaluado_au_au: perdedora.rifProveedorEvaluado || '___',
-        correo_proveedor_evaluado_au_au: perdedora.oferta.proveedorId
-          ? (
-              await this.prisma.proveedor.findUnique({
-                where: { id: perdedora.oferta.proveedorId },
-              })
-            )?.correo || '___'
-          : '___',
-      };
-
-      const res = await this.generarDocumento(
-        expedienteId,
-        'NOTIFICACION_NO_ADJUDICADO',
-        'notificacion-no-adjudicado-template.docx',
-        userId,
-        dataNoAdjudicado,
-        perdedora.id,
-      );
-      documentosGenerados.push(res);
-    }
-
     return documentosGenerados;
   }
 }

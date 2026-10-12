@@ -122,6 +122,10 @@ export interface FormLegal {
   indVerificadoGarantia?: boolean | null;
   /** Sobre 2: ¿se verificó el compromiso de responsabilidad social? (ind_verificado_crs_au_au) */
   indVerificadoCrs?: boolean | null;
+  /** Observación opcional de la verificación de garantía (obs_verificado_garantia_au_au) */
+  obsVerificadoGarantia?: string | null;
+  /** Observación opcional de la verificación de CRS (obs_verificado_crs_au_au) */
+  obsVerificadoCrs?: string | null;
 }
 
 export interface RespuestaFinanciera {

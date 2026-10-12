@@ -25,13 +25,20 @@ PUT  /evaluacion-fase3/expediente/:expedienteId/gestion-adjudicacion/caracter
 GET  /evaluacion-fase3/expediente/:expedienteId/dictamenes
 PUT  /evaluacion-fase3/expediente/:expedienteId/dictamenes/:evaluacionId/total
 PUT  /evaluacion-fase3/expediente/:expedienteId/dictamenes/:evaluacionId/parcial
+PUT  /evaluacion-fase3/expediente/:expedienteId/dictamenes/:evaluacionId/no-adjudicado
 ```
 
 Body carácter: `{ "caracterAdjudicacion": "TOTAL" | "PARCIAL" }` → **409** si ya hay dictámenes o informe.
 
-- **TOTAL:** dictamen solo a Primera Opción de evaluación.
+- **TOTAL:** dictamen de adjudicación solo a Primera Opción de evaluación.
+- **TOTAL — causa de no adjudicación (nuevo):** cada calificado que **no** es Primera Opción necesita su causa, que se imprime en su Notificación a no adjudicados.
+  - `PUT …/dictamenes/:evaluacionId/no-adjudicado` con body `{ "causaNoAdjudicadoAuAu": "texto" }` (obligatorio, no vacío).
+  - **400** si el carácter no es TOTAL o si el oferente es la Primera Opción.
+  - En `GET …/gestion-adjudicacion`, cada oferente trae `requiereCausaNoAdjudicado: true` cuando hay que pedirle la causa.
+  - `gates.dictamenesCompletos` en TOTAL ahora exige: dictamen de la Primera Opción **y** causa de todos los demás calificados (igual que PARCIAL).
 - **PARCIAL:** dictamen a cada calificado; si adjudicado → `posicionPrelacionAdjudicacion = "Primera Opción"` (no borra ranking Fase 2).
 - **Garantía de mantenimiento / CRS ya NO van en los dictámenes** (TOTAL ni PARCIAL). Se quitaron `indVerificadoGarantiaAuAu` e `indVerificadoCrsAuAu` del body: ahora se responden por oferente en el **hub de Calificación Legal (Sobre 2)** — ver `docs/FRONTEND_DOCUMENTOS_FASE2.md` §8.5.
+- **Nuevo campo `montoManoObraOfertadoAuAu`** (number, Bs.) en los dictámenes TOTAL y PARCIAL: monto de mano de obra ofertado por el adjudicado. Es la base de la Fianza Laboral del Informe de Recomendación. **Obligatorio** si Fase 1 tiene `requiereGarantiaLaboral = true` y el oferente se adjudica (TOTAL, o PARCIAL con `oferenteAdjudicadoProcedimientoAuAu = true`); si falta → **400**.
 
 ## 3. Informe
 

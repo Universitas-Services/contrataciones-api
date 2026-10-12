@@ -86,7 +86,7 @@ function centenasALetras(n: number): string {
 }
 
 /** Convierte un entero no negativo a palabras. */
-function enteroALetras(n: number): string {
+export function enteroALetras(n: number): string {
   if (n === 0) return 'CERO';
 
   const millones = Math.floor(n / 1_000_000);
