@@ -71,15 +71,16 @@ async function main() {
   await prisma.clausulaBibliotecaEnte.deleteMany();
   await prisma.documentoProveedor.deleteMany();
   await prisma.proveedor.deleteMany();
+  // Documentos generados antes que los expedientes: tb_pliego_generado no borra en cascada
+  await prisma.pliegoGenerado.deleteMany();
+  await prisma.manualGenerado.deleteMany();
+  await prisma.documentoGenerado.deleteMany();
   await prisma.expedienteContratacion.deleteMany();
   await prisma.unidadContratante.deleteMany();
   await prisma.unidadUsuaria.deleteMany();
   await prisma.miembroComision.deleteMany();
   await prisma.comisionContrataciones.deleteMany();
   await prisma.maximaAutoridad.deleteMany();
-  await prisma.pliegoGenerado.deleteMany();
-  await prisma.manualGenerado.deleteMany();
-  await prisma.documentoGenerado.deleteMany();
   try {
     await (prisma as any).mensajeTicket.deleteMany();
   } catch {
