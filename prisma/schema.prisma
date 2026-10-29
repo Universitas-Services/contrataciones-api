@@ -390,6 +390,10 @@ model ExpedienteContratacion {
   presupuestoItems                  PresupuestoItem[]
   informeRecomendacion              InformeRecomendacion?
   dictamenesAdjudicacion            DictamenAdjudicacion[]
+  /// Fase 4 de gestión: fecha en que el expediente se cerró por desierto (Art. 113.4)
+  selladoFase4At                    DateTime?               @map("sellado_fase4_at_au_au")
+  contratosFase4                    ContratoFase4[]
+  decaimientosFase4                 DecaimientoFase4[]
 
   @@index([enteId, estatusProceso])
   @@index([codigoNomenclatura])
@@ -801,7 +805,7 @@ model EvaluacionResultados {
 
   // ── Posición de prelación ──────────────────────────────────────────
   /// Ranking por puntaje (Fase 2) — calculado por el servidor (ranking denso).
-  posicionPrelacion String? @map("posicion_prelacion_au_au") @db.VarChar(50)
+  posicionPrelacion             String? @map("posicion_prelacion_au_au") @db.VarChar(50)
   /// Prelación efectiva tras dictamen PARCIAL adjudicado (Gestión Fase 3).
   posicionPrelacionAdjudicacion String? @map("posicion_prelacion_adjudicacion_au_au") @db.VarChar(50)
 
@@ -830,11 +834,14 @@ model EvaluacionResultados {
   createdBy String?
   updatedBy String?
 
-  oferta              OfertaPresentada     @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
-  sobre1              Sobre1?
-  sobre2              Sobre2?
-  documentosGenerados DocumentoGenerado[]
-  dictamenAdjudicacion DictamenAdjudicacion?
+  oferta                       OfertaPresentada      @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  sobre1                       Sobre1?
+  sobre2                       Sobre2?
+  documentosGenerados          DocumentoGenerado[]
+  contratoFase4                ContratoFase4?
+  decaimientosComoInfractor    DecaimientoFase4[]    @relation("DecaimientoInfractor")
+  decaimientosComoSubsiguiente DecaimientoFase4[]    @relation("DecaimientoSubsiguiente")
+  dictamenAdjudicacion         DictamenAdjudicacion?
 
   @@index([ofertaId])
   @@map("tb_evaluacion_resultados")
@@ -981,9 +988,9 @@ model DictamenAdjudicacion {
   tipoDictamen String @map("tipo_dictamen_au_au") @db.VarChar(20)
 
   // ── TOTAL ──────────────────────────────────────────────────────────
-  partidasAdjudicadasTotal       String?  @map("partidas_adjudicadas_total_au_au")
-  montoAdjudicadoTotal           Decimal? @map("monto_adjudicado_total_au_au") @db.Decimal(15, 2)
-  plazoEjecucionOfertaGanadora   Int?     @map("plazo_ejecucion_oferta_ganadora_au_au")
+  partidasAdjudicadasTotal     String?  @map("partidas_adjudicadas_total_au_au")
+  montoAdjudicadoTotal         Decimal? @map("monto_adjudicado_total_au_au") @db.Decimal(15, 2)
+  plazoEjecucionOfertaGanadora Int?     @map("plazo_ejecucion_oferta_ganadora_au_au")
 
   // ── PARCIAL ────────────────────────────────────────────────────────
   oferenteAdjudicadoProcedimiento Boolean? @map("oferente_adjudicado_procedimiento_au_au")
@@ -1130,11 +1137,18 @@ model DocumentoGenerado {
   evaluacionId String?
   evaluacion   EvaluacionResultados? @relation(fields: [evaluacionId], references: [id], onDelete: Cascade)
 
+  /// Ciclo de decaimiento que generó el documento (Fase 4 de gestión). Permite
+  /// que un mismo tipo se repita entre ciclos sin pisar el historial.
+  decaimientoId String?           @map("id_decaimiento")
+  decaimiento   DecaimientoFase4? @relation(fields: [decaimientoId], references: [id], onDelete: Cascade)
+  contratoFase4 ContratoFase4[]
+
   expediente      ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
   sesionesEdicion SessionEdicion[]
 
   @@index([expedienteId, tipoDocumento])
   @@index([evaluacionId])
+  @@index([decaimientoId])
 }
 
 model ManualGenerado {
@@ -1306,6 +1320,11 @@ enum TipoDocumento {
   NOTIFICACION_ADJUDICADO
   NOTIFICACION_NO_ADJUDICADO
   ACTIVIDADES_PREVIAS
+  CERTIFICADO_INCUMPLIMIENTO
+  RESOLUCION_DECAIMIENTO
+  NOTIFICACION_DECAIMIENTO
+  NOTIFICACION_ADJUDICACION_SUBSIGUIENTE
+  NOTIFICACION_FIN_PROCEDIMIENTO
 }
 
 enum TipoDocumentoProveedor {
@@ -1431,4 +1450,129 @@ model AlertaCronograma {
   @@index([cronogramaId, resuelta])
   @@index([diaNoLaborableId])
   @@map("tb_alerta_cronograma")
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  FASE 4 — FORMALIZACIÓN (Gestión de expedientes)
+//
+//  Vive aparte del flujo antiguo `Adjudicacion` + `ContratoFormalizado`, que
+//  sigue sirviendo a elaboración. Se apoya en `DictamenAdjudicacion` (Fase 3)
+//  y en `FasePreparatoria.modeloContratoData` (Fase 1).
+// ════════════════════════════════════════════════════════════════════════════
+
+enum EstadoContratoFase4 {
+  BORRADOR
+  GENERADO
+}
+
+enum EstadoDecaimiento {
+  EN_CURSO
+  CERRADO
+}
+
+enum DecisionDecaimiento {
+  SUBSIGUIENTE
+  DESIERTO
+}
+
+/// Contrato definitivo por oferente adjudicado. A diferencia de
+/// `ContratoFormalizado` (un contrato por expediente, formulario de secciones
+/// A–D), aquí hay uno por adjudicado y el cuerpo son cláusulas ordenadas, en el
+/// mismo formato que `modeloContratoData.clauses` de la Fase 1.
+model ContratoFase4 {
+  id           String @id @default(uuid())
+  expedienteId String @map("id_expediente")
+  evaluacionId String @unique @map("id_evaluacion")
+
+  /// Lista ordenada de cláusulas: { id, instanceId, order, titulo, cuerpoHtml,
+  /// kind, origen, codigo?, basamentoLegal?, variablesSugeridas? }
+  clauses Json @default("[]") @map("clausulas_contrato_au_au")
+
+  estado          EstadoContratoFase4 @default(BORRADOR) @map("estado_contrato_au_au")
+  montoContratoBs Decimal?            @map("monto_contrato_bs_au_au") @db.Decimal(15, 2)
+  generadoAt      DateTime?           @map("fec_generado_au_au")
+
+  documentoId String? @map("id_documento_generado")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  expediente ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  evaluacion EvaluacionResultados   @relation(fields: [evaluacionId], references: [id], onDelete: Cascade)
+  documento  DocumentoGenerado?     @relation(fields: [documentoId], references: [id])
+
+  @@index([expedienteId])
+  @@map("tb_contrato_definitivo_fase4_au_au")
+}
+
+/// Un ciclo de decaimiento de la adjudicación (Art. 110 y 113.4 LCP). El ciclo
+/// es en cascada: certificado → resolución → notificación al infractor →
+/// (siguiente opción | procedimiento desierto). Puede repetirse; los cerrados
+/// quedan como historial.
+model DecaimientoFase4 {
+  id           String @id @default(uuid())
+  expedienteId String @map("id_expediente")
+
+  numeroCiclo Int               @map("numero_ciclo_au_au")
+  estado      EstadoDecaimiento @default(EN_CURSO) @map("estado_decaimiento_au_au")
+
+  /// Adjudicado que incumplió
+  infractorEvaluacionId String @map("id_proveedor_incumplidor_au_au")
+
+  /// Copia del carácter al abrir el ciclo: TOTAL | PARCIAL
+  caracterSnapshot String @map("caracter_adjudicacion_au_au") @db.VarChar(20)
+
+  decision                 DecisionDecaimiento? @map("decision_decaimiento_au_au")
+  subsiguienteEvaluacionId String?              @map("id_evaluacion_subsiguiente_au_au")
+
+  // ── Paso 1: certificado de incumplimiento ──────────────────────────
+  causalDecaimiento                        String?   @map("causal_decaimiento_au_au") @db.VarChar(255)
+  fechaNotificacionAdjudicacionIncumplidor DateTime? @map("fecha_notificacion_adjudicacion_incumplidor_au_au")
+  fechaCertificacionIncumplimiento         DateTime? @map("fecha_certificacion_incumplimiento_au_au")
+  /// Calculada por el servidor: notificación + 5 días hábiles
+  fechaVencimientoGarantias                DateTime? @map("fecha_vencimiento_garantias_au_au")
+  /// Calculada por el servidor: notificación + 8 días hábiles
+  fechaVencimientoFirmaContrato            DateTime? @map("fecha_vencimiento_firma_contrato_au_au")
+
+  // ── Readjudicación ─────────────────────────────────────────────────
+  alcanceReadjudicacionParcial String?  @map("alcance_readjudicacion_parcial_au_au")
+  montoReadjudicadoParcialBs   Decimal? @map("monto_readjudicado_parcial_bs_au_au") @db.Decimal(15, 2)
+  /// Monto que asume el subsiguiente en carácter TOTAL (pregunta 1 del brief)
+  montoReadjudicadoBs          Decimal? @map("monto_readjudicado_bs_au_au") @db.Decimal(15, 2)
+  /// Plazo de ejecución del subsiguiente: es propio de su oferta (pregunta 2)
+  plazoEjecucionSubsiguiente   Int?     @map("plazo_ejecucion_subsiguiente_au_au")
+
+  // ── Desierto residual ──────────────────────────────────────────────
+  modalidadDegradadaSugerida    String? @map("modalidad_degradada_sugerida_au_au") @db.VarChar(100)
+  renglonesAfectadosDecaimiento String? @map("renglones_afectados_decaimiento_au_au")
+
+  // ── Paso 2: resolución ─────────────────────────────────────────────
+  numResolucionDecaimiento   String?   @map("num_resolucion_decaimiento_au_au") @db.VarChar(100)
+  fechaResolucionDecaimiento DateTime? @map("fecha_resolucion_decaimiento_au_au")
+
+  // ── Pasos 3 y 4: notificaciones (fecha del servidor) ───────────────
+  fecNotificacionDecaimiento    DateTime? @map("fec_notificacion_decaimiento_au_au")
+  fecNotificacionReadjudicacion DateTime? @map("fec_notificacion_readjudicacion_au_au")
+  fecNotificacionDesierto       DateTime? @map("fec_notificacion_desierto_au_au")
+
+  certificadoGeneradoAt DateTime? @map("fec_certificado_generado_au_au")
+  resolucionGeneradaAt  DateTime? @map("fec_resolucion_generada_au_au")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  expediente   ExpedienteContratacion @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  infractor    EvaluacionResultados   @relation("DecaimientoInfractor", fields: [infractorEvaluacionId], references: [id])
+  subsiguiente EvaluacionResultados?  @relation("DecaimientoSubsiguiente", fields: [subsiguienteEvaluacionId], references: [id])
+  documentos   DocumentoGenerado[]
+
+  @@unique([expedienteId, numeroCiclo])
+  @@index([expedienteId, estado])
+  @@map("tb_decaimiento_adjudicacion_fase4_au_au")
 }

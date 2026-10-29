@@ -18,6 +18,13 @@
 export type OrigenToken = 'EXPEDIENTE' | 'ADJUDICACION';
 
 export interface TokenContrato {
+  /**
+   * Identificador estable del dato. Es lo único que viaja en el HTML del
+   * editor (`data-token-id`) y lo único que el backend usa para resolverlo:
+   * la etiqueta puede cambiar de redacción sin romper las cláusulas ya
+   * guardadas.
+   */
+  id: string;
   /** Texto que va entre corchetes, tal como lo ve el usuario. */
   etiqueta: string;
   /** Descripción para el selector del frontend. */
@@ -30,54 +37,63 @@ export interface TokenContrato {
 export const TOKENS_CONTRATO: TokenContrato[] = [
   // ─── Disponibles desde el expediente (Fase 0 y 1) ────────────────────────
   {
+    id: 'objeto_contratacion_au_au',
     etiqueta: 'OBJETO DEL CONTRATO',
     descripcion: 'Descripción del objeto de la contratación',
     disponibleDesde: 'EXPEDIENTE',
     fuente: 'tb_expediente_contratacion.desc_objeto_contratacion_au_au',
   },
   {
+    id: 'nomenclatura_proceso_au_au',
     etiqueta: 'CODIGO DEL PROCEDIMIENTO',
     descripcion: 'Nomenclatura del procedimiento de contratación',
     disponibleDesde: 'EXPEDIENTE',
     fuente: 'tb_expediente_contratacion.cod_nomenclatura_proceso_au_au',
   },
   {
+    id: 'nombre_ente_contratante_au_au',
     etiqueta: 'NOMBRE DEL ENTE CONTRATANTE',
     descripcion: 'Nombre del órgano o ente contratante',
     disponibleDesde: 'EXPEDIENTE',
     fuente: 'EntePublico.nombre',
   },
   {
+    id: 'rif_ente_au_au',
     etiqueta: 'RIF DEL ENTE CONTRATANTE',
     descripcion: 'RIF del órgano o ente contratante',
     disponibleDesde: 'EXPEDIENTE',
     fuente: 'EntePublico.rif',
   },
   {
+    id: 'plazo_ejecucion_dias_au_au',
     etiqueta: 'PLAZO DE EJECUCION EN DIAS',
     descripcion: 'Plazo de ejecución del procedimiento, en días',
     disponibleDesde: 'EXPEDIENTE',
     fuente: 'tb_fase_preparatoria.plazo_ejecucion_procedimiento_au_au',
   },
   {
+    id: 'lugar_ejecucion_au_au',
     etiqueta: 'LUGAR DE EJECUCION',
     descripcion: 'Lugar y logística de ejecución',
     disponibleDesde: 'EXPEDIENTE',
     fuente: 'tb_fase_preparatoria.lugar_logistica_ejecucion_au_au',
   },
   {
+    id: 'porcentaje_fiel_cumplimiento_au_au',
     etiqueta: 'PORCENTAJE DE FIEL CUMPLIMIENTO',
     descripcion: 'Porcentaje de la garantía de fiel cumplimiento',
     disponibleDesde: 'EXPEDIENTE',
     fuente: 'tb_fase_preparatoria.porcentaje_fiel_cumplimiento_au_au',
   },
   {
+    id: 'porcentaje_anticipo_au_au',
     etiqueta: 'PORCENTAJE DE ANTICIPO',
     descripcion: 'Porcentaje de anticipo del contrato',
     disponibleDesde: 'EXPEDIENTE',
     fuente: 'tb_fase_preparatoria.porcentaje_anticipo_au_au',
   },
   {
+    id: 'porcentaje_responsabilidad_social_au_au',
     etiqueta: 'PORCENTAJE DE RESPONSABILIDAD SOCIAL',
     descripcion: 'Porcentaje del Compromiso de Responsabilidad Social',
     disponibleDesde: 'EXPEDIENTE',
@@ -86,70 +102,88 @@ export const TOKENS_CONTRATO: TokenContrato[] = [
 
   // ─── Sólo existen tras la adjudicación (Fase 3 y 4) ──────────────────────
   {
+    id: 'monto_contrato_numeros_au_au',
     etiqueta: 'MONTO CONTRATO EN NUMEROS',
     descripcion: 'Monto adjudicado, en cifras',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'tb_adjudicacion.montoAdjudicadoBs',
   },
   {
+    id: 'monto_contrato_letras_au_au',
     etiqueta: 'MONTO CONTRATO EN LETRAS',
     descripcion: 'Monto adjudicado escrito en palabras (se deriva de la cifra)',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'tb_adjudicacion.montoAdjudicadoBs (convertido a letras)',
   },
   {
+    id: 'partidas_presupuestarias_au_au',
     etiqueta: 'PARTIDA PRESUPUESTARIA',
     descripcion: 'Partida presupuestaria de gasto imputada',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'tb_adjudicacion.partida_presupuest_gasto_au_au',
   },
   {
+    id: 'monto_crs_numeros_au_au',
     etiqueta: 'MONTO CRS EN NUMEROS',
     descripcion: 'Monto del Compromiso de Responsabilidad Social, en cifras',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'tb_adjudicacion.monto_crs_bs_au_au',
   },
   {
+    id: 'monto_crs_letras_au_au',
     etiqueta: 'MONTO CRS EN LETRAS',
     descripcion: 'Monto del CRS escrito en palabras',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'tb_adjudicacion.monto_crs_bs_au_au (convertido a letras)',
   },
   {
+    id: 'fecha_adjudicacion_au_au',
     etiqueta: 'FECHA DE ADJUDICACION',
     descripcion: 'Fecha del acto de adjudicación',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'tb_adjudicacion.fechaActoAdjudicacion',
   },
   {
+    id: 'nombre_contratista_au_au',
     etiqueta: 'NOMBRE DEL CONTRATISTA',
     descripcion: 'Razón social del oferente adjudicado',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'tb_oferta_presentada.nombre_proveedor_oferente_au_au',
   },
   {
+    id: 'rif_contratista_au_au',
     etiqueta: 'RIF DEL CONTRATISTA',
     descripcion: 'RIF del oferente adjudicado',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'tb_oferta_presentada.rif_proveedor_oferente_au_au',
   },
   {
+    id: 'representante_contratista_au_au',
     etiqueta: 'REPRESENTANTE LEGAL DEL CONTRATISTA',
     descripcion: 'Nombre del representante legal del contratista',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'tb_oferta_presentada.nombre_rep_legal_oferente_au_au',
   },
   {
+    id: 'cedula_representante_au_au',
     etiqueta: 'CEDULA DEL REPRESENTANTE LEGAL',
     descripcion: 'Cédula del representante legal del contratista',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'tb_oferta_presentada.cedula_rep_legal_oferente_au_au',
   },
   {
+    id: 'registro_mercantil_au_au',
     etiqueta: 'REGISTRO MERCANTIL DEL CONTRATISTA',
     descripcion: 'Datos de registro mercantil del contratista',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'tb_oferta_presentada.datos_registro_mercantil_proveedor_oferente_au_au',
+  },
+  {
+    id: 'organo_adscripcion_au_au',
+    etiqueta: 'ORGANO DE ADSCRIPCION',
+    descripcion: 'Órgano de adscripción del ente contratante',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'EntePublico.organoAdscripcion',
   },
 ];
 
@@ -171,3 +205,9 @@ export function normalizarEtiqueta(texto: string): string {
 export const TOKENS_POR_CLAVE = new Map<string, TokenContrato>(
   TOKENS_CONTRATO.map((t) => [normalizarEtiqueta(t.etiqueta), t]),
 );
+
+/**
+ * Índice de tokens por id. Es el que usa el parser de píldoras del contrato,
+ * que localiza cada variable por `data-token-id` y nunca por su texto.
+ */
+export const TOKENS_POR_ID = new Map<string, TokenContrato>(TOKENS_CONTRATO.map((t) => [t.id, t]));
