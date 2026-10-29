@@ -1,11 +1,12 @@
 # Endpoints nuevos — referencia funcional
 
-Los 71 endpoints agregados al backend, con qué hace cada uno.
+Los 77 endpoints agregados al backend, con qué hace cada uno.
 
 - **Producción:** `https://contrataciones-api.onrender.com`
 - **Swagger:** `/api/docs`
 - **Autenticación:** todos exigen `Authorization: Bearer <JWT>`. Sin token responden **401**.
-- **Commits:** `96945e2` (Fase 1 y cuentas bancarias) y `5bf3649` (bibliotecas y documentos de ejemplo)
+- **Commits:** `96945e2` (Fase 1 y cuentas bancarias), `5bf3649` (bibliotecas y documentos de ejemplo)
+  y `b810c79` (hub de evaluación de Fase 2)
 
 ## Roles
 
@@ -355,7 +356,133 @@ Roles: **lectura para todos** (es el punto del módulo: los entes consultan, no 
 
 ---
 
-## 8. Endpoints existentes que cambiaron
+## 8. Fase 2 — Hub de evaluación del oferente
+
+Reemplaza el `sessionStorage` del frontend por persistencia real, y arma sus
+formularios leyendo **lo que la Fase 1 exigió en ese mismo expediente**, en vez
+de usar plantillas fijas.
+
+```
+GET    /evaluacion-fase3/{evaluacionId}/hub
+PATCH  /evaluacion-fase3/{evaluacionId}/hub/legal
+PATCH  /evaluacion-fase3/{evaluacionId}/hub/financiera
+PATCH  /evaluacion-fase3/{evaluacionId}/hub/tecnica
+PATCH  /evaluacion-fase3/{evaluacionId}/hub/evaluacion
+PATCH  /evaluacion-fase3/{evaluacionId}/hub/promocion
+```
+
+Es un subrecurso sobre el `evaluacionId` que ya devuelve
+`POST /evaluacion-fase3/iniciar`. Los `PATCH` antiguos de `sobre1`, `sobre2` y
+`calificacion` **no alimentan este hub** y quedan para el flujo legacy.
+
+### `GET .../hub`
+
+Devuelve en una sola llamada todo lo que el panel necesita: las plantillas
+congeladas, los formularios ya guardados, qué pestañas están desbloqueadas, el
+banner del oferente y el resultado de la evaluación.
+
+```json
+{
+  "evaluacionId": "uuid",
+  "modalidad": "ACTO_UNICO_APERTURA_UNICA",
+  "banner": { "nombreProveedor": "...", "rif": "...", "montoOfertaBs": 13200000 },
+  "resultadoFinal": "en_evaluacion",
+  "activeModulo": "financiera",
+  "unlocked": { "financiera": true, "tecnica": false, "evaluacion": false, "promocion": false },
+  "plantillaLegal": { "items": [...] },
+  "legal": { "submitted": true, "oferenteCalificadoLegal": true, "form": {...} },
+  "plantillaFinanciera": {...}, "financiera": {...},
+  "plantillaTecnica": {...},    "tecnica": {...},
+  "plantillaEvaluacion": {...}, "evaluacion": {...},
+  "plantillaPromocion": null,   "promocion": null
+}
+```
+
+`resultadoFinal`: `pendiente` → `en_evaluacion` → `descalificado` | `calificado`.
+
+**Snapshot inmutable.** Las plantillas se congelan al abrir la evaluación. Si el
+pliego de Fase 1 se edita después, la evaluación en curso **conserva** la
+plantilla con la que empezó.
+
+**Promoción condicional.** Si Actividades Previas no la activó,
+`plantillaPromocion` y `promocion` vienen en `null` y el frontend no muestra
+esa pestaña.
+
+### Los 5 PATCH
+
+Todos comparten el mismo cuerpo:
+
+```json
+{ "action": "draft" | "confirm", "form": { } }
+```
+
+`draft` guarda el formulario tal como esté, **sin** validar reglas y **sin**
+abrir la pestaña siguiente. `confirm` valida, calcula el dictamen en servidor,
+marca la pestaña como cerrada y aplica la compuerta.
+
+La respuesta de cualquier `PATCH` es **el mismo documento del `GET`** ya
+actualizado, para que el frontend reemplace su estado de una vez.
+
+| Ruta             | Qué evalúa                                                                   |
+| ---------------- | ---------------------------------------------------------------------------- |
+| `.../legal`      | Cotejo de recaudos. CUMPLE exige que **todos los eliminatorios** estén en SI |
+| `.../financiera` | Descapital (SI/NO) e índices contra sus bandas                               |
+| `.../tecnica`    | Criterios con rangos de cumplimiento                                         |
+| `.../evaluacion` | Los dos lados, técnico y económico, más la prelación                         |
+| `.../promocion`  | Bonos de VAN, preferencia local y bono por sujeto                            |
+
+### Cadena de desbloqueo
+
+```
+legal → financiera → técnica → evaluación → promoción (si está activa)
+```
+
+Confirmar con dictamen favorable abre la siguiente pestaña. **Un NO en un
+recaudo eliminatorio descalifica** y cierra todo lo que viene después. Intentar
+tocar una pestaña bloqueada o reconfirmar una ya cerrada devuelve **409**.
+
+El recaudo del VAN se coteja pero **no es eliminatorio**: la promoción económica
+es un bono, no un requisito de calificación.
+
+### Reglas de puntaje, calculadas en servidor
+
+El frontend puede previsualizar, pero **el valor que se persiste siempre es el
+del servidor**.
+
+**Financiera.** Descapital en SI vale 0 puntos; en NO vale el máximo. Los
+índices caen en una de tres bandas; el **endeudamiento es inverso** (premia el
+valor más bajo). Se admite coma o punto decimal. CUMPLE si el total alcanza la
+puntuación mínima del pliego.
+
+**Técnica y cada lado de la evaluación.** Con varios rangos (_Modo A_) se elige
+uno y el puntaje es el del rango. Con un solo rango (_Modo B_) el puntaje es
+libre entre 0 y ese máximo; **superarlo rechaza la confirmación con 422**, no se
+recorta al tope. Siempre hace falta el sustento.
+
+**Evaluación global.** CUMPLE sólo si ambos lados alcanzan su mínimo.
+`notaBase = totalTécnico + totalEconómico`. La posición de prelación se exige
+únicamente cuando ambos cumplen.
+
+**Promoción.** Suma bonos sobre la nota ya persistida. **Nunca descalifica** y el
+total final **puede superar 100**. La `notaBase` que envíe el cliente se
+**ignora**: el servidor usa la suya.
+
+### Códigos de error
+
+| HTTP | Cuándo                                                                                                                          |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 404  | La evaluación no existe                                                                                                         |
+| 403  | El expediente no pertenece al ente del usuario                                                                                  |
+| 409  | Pestaña bloqueada, ya confirmada, o promoción cuando no está activa                                                             |
+| 422  | Validación de negocio: falta justificación, recaudo sin responder, puntaje sobre el máximo, VAN fuera de rango, prelación vacía |
+
+Los `422` devuelven `errores` con la lista concreta en español, lista para un toast.
+
+Roles: lectura todos; escritura `ADMIN_ENTE`, `EJECUTOR`, `UNIVERSITAS`.
+
+---
+
+## 9. Endpoints existentes que cambiaron
 
 No son nuevos, pero su comportamiento sí cambió.
 
@@ -379,7 +506,7 @@ También **estaban abiertos sin autenticación**. Cambios:
 
 ---
 
-## 9. Resumen
+## 10. Resumen
 
 | Bloque                                      | Endpoints |
 | ------------------------------------------- | --------- |
@@ -390,6 +517,7 @@ También **estaban abiertos sin autenticación**. Cambios:
 | Bibliotecas de normativa y cláusulas        | 20        |
 | Datos entre corchetes                       | 4         |
 | Documentos de ejemplo                       | 6         |
-| **Total**                                   | **71**    |
+| Hub de evaluación de Fase 2                 | 6         |
+| **Total**                                   | **77**    |
 
 Ver también [FASE1_MICROMODULOS.md](FASE1_MICROMODULOS.md) para el diseño, las migraciones de base de datos y las decisiones técnicas.
