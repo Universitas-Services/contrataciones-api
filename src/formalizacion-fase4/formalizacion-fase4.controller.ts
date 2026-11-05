@@ -40,7 +40,7 @@ export class FormalizacionFase4Controller {
   // ── Estado ──────────────────────────────────────────────────────────
 
   @Get()
-  @Roles('ADMIN_ENTE', 'EJECUTOR', 'VISUALIZADOR')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'VISUALIZADOR', 'UNIVERSITAS', 'SUPERVISOR')
   @ApiOperation({
     summary: 'Estado completo de la Fase 4',
     description:
@@ -53,7 +53,7 @@ export class FormalizacionFase4Controller {
   // ── Contratos ───────────────────────────────────────────────────────
 
   @Get('contratos/:evaluacionId')
-  @Roles('ADMIN_ENTE', 'EJECUTOR', 'VISUALIZADOR')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'VISUALIZADOR', 'UNIVERSITAS', 'SUPERVISOR')
   @ApiOperation({
     summary: 'Precarga del contrato de un adjudicado',
     description:
@@ -203,7 +203,7 @@ export class FormalizacionFase4Controller {
   // ── Utilidades ──────────────────────────────────────────────────────
 
   @Get('calcular-vencimientos')
-  @Roles('ADMIN_ENTE', 'EJECUTOR', 'VISUALIZADOR')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'VISUALIZADOR', 'UNIVERSITAS', 'SUPERVISOR')
   @ApiOperation({
     summary: 'Vista previa de los vencimientos del certificado',
     description:

@@ -44,8 +44,12 @@ export class DecaimientoService {
   }
 
   /** Una fecha `YYYY-MM-DD` del formulario, sin que el huso la corra un día. */
-  private fecha(iso: string): Date {
-    return new Date(`${iso.slice(0, 10)}T00:00:00.000Z`);
+  private fecha(iso: string, campo = 'fecha'): Date {
+    const fecha = new Date(`${(iso ?? '').slice(0, 10)}T00:00:00.000Z`);
+    if (!iso || Number.isNaN(fecha.getTime())) {
+      throw new BadRequestException(`${campo} debe venir en formato YYYY-MM-DD.`);
+    }
+    return fecha;
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -187,6 +191,9 @@ export class DecaimientoService {
       } else if (dto.montoReadjudicadoBs == null) {
         faltantes.push('montoReadjudicadoBs');
       }
+      // El plazo es propio de la oferta del subsiguiente: sin él, su contrato
+      // saldría sin plazo de ejecución.
+      if (dto.plazoEjecucionSubsiguiente == null) faltantes.push('plazoEjecucionSubsiguiente');
       if (faltantes.length) {
         throw new BadRequestException(`Faltan datos de la readjudicación: ${faltantes.join(', ')}`);
       }
@@ -430,7 +437,15 @@ export class DecaimientoService {
     return this.fase4.getEstado(expedienteId, user);
   }
 
-  /** 4B — notifica a todos los participantes, cierra y sella el expediente. */
+  /**
+   * 4B — notificaciones de cierre y fin del ciclo.
+   *
+   * El sellado depende del carácter. En un desierto PARCIAL, el decaimiento
+   * alcanza sólo a los renglones del infractor: los demás adjudicados
+   * "mantienen incólume la validez" de los suyos, así que el expediente no se
+   * sella y sus contratos siguen disponibles. Sólo cuando no queda ningún
+   * adjudicado vigente el procedimiento se cierra entero.
+   */
   async cierreDesierto(expedienteId: string, user: UsuarioActual) {
     const expediente = await this.fase4.cargarExpediente(expedienteId, user);
     this.fase4.assertNoSellado(expediente);
@@ -447,6 +462,13 @@ export class DecaimientoService {
       where: { deletedAt: null, oferta: { expedienteId, deletedAt: null } },
       select: { id: true },
     });
+
+    // ¿Queda alguien adjudicado además del infractor que está decayendo?
+    const estadoPrevio = await this.fase4.getEstado(expedienteId, user);
+    const quedanAdjudicados = estadoPrevio.oferentes.some(
+      (o) => o.estatus === 'ADJUDICADO' && o.evaluacionId !== ciclo.infractorEvaluacionId,
+    );
+    const sellaElExpediente = !(ciclo.caracterSnapshot === 'PARCIAL' && quedanAdjudicados);
 
     const ahora = new Date();
 
@@ -466,10 +488,12 @@ export class DecaimientoService {
         data: { estado: 'CERRADO', fecNotificacionDesierto: ahora, updatedBy: user.id },
       });
 
-      await tx.expedienteContratacion.update({
-        where: { id: expedienteId },
-        data: { estatusProceso: 'DESIERTO', selladoFase4At: ahora, updatedBy: user.id },
-      });
+      if (sellaElExpediente) {
+        await tx.expedienteContratacion.update({
+          where: { id: expedienteId },
+          data: { estatusProceso: 'DESIERTO', selladoFase4At: ahora, updatedBy: user.id },
+        });
+      }
 
       await this.desactualizarContratoDe(tx, ciclo.infractorEvaluacionId, user.id);
     });
@@ -488,9 +512,38 @@ export class DecaimientoService {
       throw new BadRequestException('El expediente no está sellado.');
     }
 
-    await this.prisma.expedienteContratacion.update({
-      where: { id: expedienteId },
-      data: { selladoFase4At: null, estatusProceso: 'ADJUDICADO', updatedBy: user.id },
+    // Se deshace el cierre completo, no sólo el sello: el ciclo que lo provocó
+    // vuelve a quedar en curso con sus datos, para corregirlo o deshacerlo. Si
+    // sólo se quitara el sello, el infractor seguiría decaído y el expediente
+    // quedaría en un estado que no corresponde a ningún paso del flujo.
+    const ultimo = await this.prisma.decaimientoFase4.findFirst({
+      where: { expedienteId, deletedAt: null, decision: 'DESIERTO', estado: 'CERRADO' },
+      orderBy: { numeroCiclo: 'desc' },
+      select: { id: true },
+    });
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.expedienteContratacion.update({
+        where: { id: expedienteId },
+        data: { selladoFase4At: null, estatusProceso: 'ADJUDICADO', updatedBy: user.id },
+      });
+
+      if (ultimo) {
+        await tx.decaimientoFase4.update({
+          where: { id: ultimo.id },
+          data: { estado: 'EN_CURSO', fecNotificacionDesierto: null, updatedBy: user.id },
+        });
+
+        // Las notificaciones de fin de procedimiento dejan de valer.
+        await tx.documentoGenerado.updateMany({
+          where: {
+            decaimientoId: ultimo.id,
+            deletedAt: null,
+            tipoDocumento: 'NOTIFICACION_FIN_PROCEDIMIENTO',
+          },
+          data: { estaDesactualizado: true },
+        });
+      }
     });
 
     return this.fase4.getEstado(expedienteId, user);
@@ -505,12 +558,13 @@ export class DecaimientoService {
    * pantalla exactamente las fechas que después van al documento.
    */
   async calcularVencimientos(expedienteId: string, fechaIso: string, user: UsuarioActual) {
+    const fechaNotificacion = this.fecha(fechaIso, 'fechaNotificacion');
     const expediente = await this.fase4.cargarExpediente(expedienteId, user);
     const feriados = await this.feriadosDelEnte(expediente.enteId);
-    const vencimientos = calcularVencimientos(this.fecha(fechaIso), feriados);
+    const vencimientos = calcularVencimientos(fechaNotificacion, feriados);
 
     return {
-      fechaNotificacion: this.fecha(fechaIso),
+      fechaNotificacion,
       ...vencimientos,
       diasHabilesGarantias: 5,
       diasHabilesFirmaContrato: 8,

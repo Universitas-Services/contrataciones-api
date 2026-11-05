@@ -15,7 +15,7 @@
  *   ADJUDICACION → sólo existe tras adjudicar; en Fase 1 se muestra la etiqueta.
  */
 
-export type OrigenToken = 'EXPEDIENTE' | 'ADJUDICACION';
+export type OrigenToken = 'EXPEDIENTE' | 'ADJUDICACION' | 'CONTRATO';
 
 export interface TokenContrato {
   /**
@@ -32,6 +32,12 @@ export interface TokenContrato {
   disponibleDesde: OrigenToken;
   /** De dónde sale el dato, para la documentación del equipo. */
   fuente: string;
+  /**
+   * Otras redacciones del mismo dato que aparecen en cláusulas ya escritas.
+   * Resuelven al mismo token, de modo que un texto viejo no se quede con el
+   * corchete crudo por una palabra de diferencia.
+   */
+  alias?: string[];
 }
 
 export const TOKENS_CONTRATO: TokenContrato[] = [
@@ -67,6 +73,7 @@ export const TOKENS_CONTRATO: TokenContrato[] = [
   {
     id: 'plazo_ejecucion_dias_au_au',
     etiqueta: 'PLAZO DE EJECUCION EN DIAS',
+    alias: ['PLAZO EJECUCION DIAS'],
     descripcion: 'Plazo de ejecución del procedimiento, en días',
     disponibleDesde: 'EXPEDIENTE',
     fuente: 'tb_fase_preparatoria.plazo_ejecucion_procedimiento_au_au',
@@ -118,6 +125,7 @@ export const TOKENS_CONTRATO: TokenContrato[] = [
   {
     id: 'partidas_presupuestarias_au_au',
     etiqueta: 'PARTIDA PRESUPUESTARIA',
+    alias: ['PARTIDAS PRESUPUESTARIAS'],
     descripcion: 'Partida presupuestaria de gasto imputada',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'tb_adjudicacion.partida_presupuest_gasto_au_au',
@@ -185,6 +193,130 @@ export const TOKENS_CONTRATO: TokenContrato[] = [
     disponibleDesde: 'EXPEDIENTE',
     fuente: 'EntePublico.organoAdscripcion',
   },
+  // ─── Datos del contrato (cláusulas de la biblioteca) ─────────────────────
+  //
+  // Los llenaba el formulario de `ContratoFormalizado`, que este flujo no usa.
+  // Los que tienen fuente se resuelven solos; el resto queda como píldora sin
+  // resolver para que quien arma el contrato escriba el dato.
+  {
+    id: 'monto_garantia_fiel_cumplimiento_numeros_au_au',
+    etiqueta: 'MONTO GARANTIA FIEL CUMPLIMIENTO NUMEROS',
+    descripcion: 'Monto de la fianza de fiel cumplimiento, en cifras',
+    disponibleDesde: 'ADJUDICACION',
+    fuente: 'monto del contrato × 1,16 × porcentaje_fiel_cumplimiento_au_au',
+  },
+  {
+    id: 'monto_garantia_fiel_cumplimiento_letras_au_au',
+    etiqueta: 'MONTO GARANTIA FIEL CUMPLIMIENTO LETRAS',
+    descripcion: 'Monto de la fianza de fiel cumplimiento, en letras',
+    disponibleDesde: 'ADJUDICACION',
+    fuente: 'monto del contrato × 1,16 × porcentaje_fiel_cumplimiento_au_au',
+  },
+  {
+    id: 'ciudad_domicilio_especial_au_au',
+    etiqueta: 'CIUDAD DOMICILIO ESPECIAL',
+    descripcion: 'Ciudad que las partes eligen como domicilio especial',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'EntePublico.ciudad',
+  },
+  {
+    id: 'fecha_inicio_vigencia_au_au',
+    etiqueta: 'FECHA INICIO VIGENCIA',
+    descripcion: 'Fecha en que empieza a regir el contrato',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'fecha_fin_vigencia_au_au',
+    etiqueta: 'FECHA FIN VIGENCIA',
+    descripcion: 'Fecha en que termina la vigencia del contrato',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'evento_inicio_plazo_au_au',
+    etiqueta: 'EVENTO INICIO PLAZO',
+    descripcion: 'Hecho desde el cual se cuenta el plazo (acta de inicio, orden de compra…)',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'porcentaje_multa_diaria_au_au',
+    etiqueta: 'PORCENTAJE MULTA DIARIA',
+    descripcion: 'Porcentaje de la multa por cada día de retraso',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'base_calculo_multa_au_au',
+    etiqueta: 'BASE CALCULO MULTA',
+    descripcion: 'Monto sobre el cual se calcula la multa diaria',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'plazo_subsanacion_incumplimiento_au_au',
+    etiqueta: 'PLAZO SUBSANACION INCUMPLIMIENTO',
+    descripcion: 'Plazo para regularizar un incumplimiento',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'limitacion_porcentaje_rescision_au_au',
+    etiqueta: 'LIMITACION PORCENTAJE RESCISION',
+    descripcion: 'Porcentaje a partir del cual procede la rescisión',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'formula_escalatoria_au_au',
+    etiqueta: 'FORMULA ESCALATORIA O METODOLOGIA',
+    descripcion: 'Fórmula de ajuste de precios acordada',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'factores_evaluacion_cuantitativos_au_au',
+    etiqueta: 'FACTORES EVALUACION CUANTITATIVOS',
+    descripcion: 'Factores con que se evalúa el desempeño de la contratista',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'lapso_minimo_garantia_post_au_au',
+    etiqueta: 'LAPSO MINIMO GARANTIA POST',
+    descripcion: 'Lapso mínimo de garantía después de ejecutado el contrato',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'plazo_consignacion_factura_au_au',
+    etiqueta: 'PLAZO CONSIGNACION FACTURA',
+    descripcion: 'Plazo para consignar las facturas',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'plazo_calendario_desembolso_au_au',
+    etiqueta: 'PLAZO CALENDARIO DESEMBOLSO',
+    descripcion: 'Plazo del calendario de desembolsos',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'criterios_aceptacion_soporte_au_au',
+    etiqueta: 'CRITERIOS DE ACEPTACION SOPORTE',
+    descripcion: 'Criterios con que se acepta el soporte prestado',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
+  {
+    id: 'tipo_soporte_ejecucion_au_au',
+    etiqueta: 'TIPO SOPORTE EJECUCION',
+    descripcion: 'Tipo de soporte que acompaña la ejecución',
+    disponibleDesde: 'CONTRATO',
+    fuente: 'Lo escribe quien arma el contrato',
+  },
 ];
 
 /**
@@ -201,9 +333,16 @@ export function normalizarEtiqueta(texto: string): string {
     .trim();
 }
 
-/** Índice de tokens por etiqueta normalizada. */
+/**
+ * Índice por etiqueta normalizada, incluidos los alias. Es lo que permite que
+ * una cláusula escrita con otra redacción siga resolviendo al mismo dato.
+ */
 export const TOKENS_POR_CLAVE = new Map<string, TokenContrato>(
-  TOKENS_CONTRATO.map((t) => [normalizarEtiqueta(t.etiqueta), t]),
+  TOKENS_CONTRATO.flatMap((t) =>
+    [t.etiqueta, ...(t.alias ?? [])].map(
+      (texto) => [normalizarEtiqueta(texto), t] as [string, TokenContrato],
+    ),
+  ),
 );
 
 /**

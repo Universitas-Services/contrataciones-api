@@ -1,3 +1,8 @@
+import {
+  TOKENS_POR_CLAVE,
+  normalizarEtiqueta,
+} from '../biblioteca/constants/tokens-contrato.constants';
+
 /**
  * Píldoras de variables en el HTML de las cláusulas.
  *
@@ -10,6 +15,14 @@
  * La llave es SIEMPRE `data-token-id`, nunca el texto entre corchetes: la
  * etiqueta es lo que lee el usuario y puede cambiar de redacción sin que las
  * cláusulas ya guardadas dejen de resolver.
+ *
+ * Pero las cláusulas de la biblioteca están escritas con el corchete a secas:
+ *
+ *   El monto total es la cantidad de [MONTO CONTRATO EN LETRAS].
+ *
+ * Por eso, antes de resolver nada, los corchetes que el catálogo reconoce se
+ * convierten en píldoras. Lo que el catálogo no reconoce se deja intacto: si
+ * alguien escribió [sic] o [1], no es una variable.
  */
 
 /** Cómo se pinta una píldora al renderizar. */
@@ -31,6 +44,43 @@ export const LINEA_VACIA = '________';
  */
 const RE_PILDORA = /<span\b([^>]*\bdata-token-id\s*=\s*["']([^"']+)["'][^>]*)>([\s\S]*?)<\/span>/gi;
 
+/**
+ * Un corchete suelto, fuera de cualquier etiqueta HTML. El límite de 120
+ * caracteres y la prohibición de saltos de línea evitan tragarse medio párrafo
+ * cuando alguien deja un corchete sin cerrar.
+ */
+const RE_CORCHETE = /\[([^\]\n<>]{1,120})\]/g;
+
+/** Marcador temporal para apartar las píldoras ya existentes. */
+const MARCA = '\uE000';
+const RE_MARCA = /\uE000(\d+)\uE000/g;
+
+/**
+ * Convierte en píldora cada corchete que el catálogo reconozca, para que el
+ * resto del render trabaje siempre con la misma forma.
+ *
+ * Es idempotente: los corchetes que ya están dentro de una píldora se saltan,
+ * de modo que aplicarlo dos veces no anida spans.
+ */
+export function corchetesAPildoras(html: string): string {
+  const pildoras: string[] = [];
+
+  // Se apartan las píldoras existentes para no tocar su contenido. El marcador
+  // usa el área de uso privado de Unicode, que no aparece en texto real.
+  const sinPildoras = html.replace(RE_PILDORA, (completo) => {
+    pildoras.push(completo);
+    return `${MARCA}${pildoras.length - 1}${MARCA}`;
+  });
+
+  const convertido = sinPildoras.replace(RE_CORCHETE, (completo, etiqueta: string) => {
+    const token = TOKENS_POR_CLAVE.get(normalizarEtiqueta(etiqueta));
+    if (!token) return completo;
+    return `<span class="contract-pill" data-token-id="${token.id}">[${etiqueta}]</span>`;
+  });
+
+  return convertido.replace(RE_MARCA, (_m, indice: string) => pildoras[Number(indice)]);
+}
+
 /** Quita etiquetas HTML de un fragmento, para obtener su texto. */
 function soloTexto(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim();
@@ -39,7 +89,7 @@ function soloTexto(html: string): string {
 /** Los ids de todas las píldoras presentes en un HTML, sin repetir. */
 export function extraerTokenIds(html: string): string[] {
   const ids = new Set<string>();
-  for (const m of html.matchAll(RE_PILDORA)) ids.add(m[2]);
+  for (const m of corchetesAPildoras(html).matchAll(RE_PILDORA)) ids.add(m[2]);
   return [...ids];
 }
 
@@ -54,7 +104,7 @@ export function renderizarPildoras(
   valores: Record<string, string | null | undefined>,
   modo: ModoPildora,
 ): string {
-  return html.replace(
+  return corchetesAPildoras(html).replace(
     RE_PILDORA,
     (_completo, atributos: string, tokenId: string, interior: string) => {
       // El pliego de Fase 1 va siempre con la línea para llenar a mano.

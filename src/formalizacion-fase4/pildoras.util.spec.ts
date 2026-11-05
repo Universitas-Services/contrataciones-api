@@ -1,4 +1,10 @@
-import { LINEA_VACIA, aTextoPlano, extraerTokenIds, renderizarPildoras } from './pildoras.util';
+import {
+  corchetesAPildoras,
+  LINEA_VACIA,
+  aTextoPlano,
+  extraerTokenIds,
+  renderizarPildoras,
+} from './pildoras.util';
 
 const pildora = (id: string, texto: string) =>
   `<span class="contract-pill" data-token-id="${id}">${texto}</span>`;
@@ -77,5 +83,83 @@ describe('aTextoPlano', () => {
 
   it('devuelve las entidades a su carácter', () => {
     expect(aTextoPlano('<p>Robles &amp; Asociados</p>')).toBe('Robles & Asociados');
+  });
+});
+
+// ── Cláusulas reales de la biblioteca ────────────────────────────────────
+//
+// Las cláusulas de la semilla no traen píldoras: traen el corchete escrito a
+// mano. Estas pruebas usan el texto tal cual está en
+// `prisma/data/clausulas-genericas.data.ts`.
+
+const CLAUSULA_REAL =
+  'El monto total del presente contrato es la cantidad de [MONTO CONTRATO EN LETRAS] ' +
+  '(Bs. [MONTO CONTRATO EN NUMEROS]), los cuales serán imputados a la(s) siguientes ' +
+  'Partida(s) Presupuestaria(s) N° [PARTIDAS PRESUPUESTARIAS].';
+
+const CLAUSULA_PLAZO =
+  '“LA CONTRATISTA” se compromete a iniciar la ejecución en un plazo de: ' +
+  '[PLAZO EJECUCION DIAS] días. Este plazo se contará a partir de [EVENTO INICIO PLAZO].';
+
+describe('corchetes escritos a mano', () => {
+  it('los reconoce igual que a las píldoras', () => {
+    expect(extraerTokenIds(CLAUSULA_REAL).sort()).toEqual(
+      [
+        'monto_contrato_letras_au_au',
+        'monto_contrato_numeros_au_au',
+        'partidas_presupuestarias_au_au',
+      ].sort(),
+    );
+  });
+
+  it('resuelve una cláusula real sin dejar corchetes crudos', () => {
+    const salida = renderizarPildoras(
+      CLAUSULA_REAL,
+      {
+        ...VALORES,
+        partidas_presupuestarias_au_au: '4.02.01.01.00',
+      },
+      'VALOR',
+    );
+    expect(salida).toContain('Bs. 367.500,00');
+    expect(salida).toContain('4.02.01.01.00');
+    expect(salida).not.toContain('[');
+  });
+
+  it('resuelve las etiquetas que la cláusula escribe de otra forma', () => {
+    // La cláusula dice PARTIDAS PRESUPUESTARIAS y PLAZO EJECUCION DIAS; el
+    // catálogo los tiene como PARTIDA PRESUPUESTARIA y PLAZO DE EJECUCION EN
+    // DIAS. Los alias hacen que resuelvan igual.
+    expect(extraerTokenIds(CLAUSULA_PLAZO)).toContain('plazo_ejecucion_dias_au_au');
+    expect(extraerTokenIds(CLAUSULA_REAL)).toContain('partidas_presupuestarias_au_au');
+  });
+
+  it('en la precarga los convierte en pildora con su id', () => {
+    const salida = renderizarPildoras(CLAUSULA_REAL, VALORES, 'RESOLVER');
+    expect(salida).toContain('data-token-id="monto_contrato_letras_au_au"');
+    expect(salida).toContain('data-resolved="true"');
+  });
+
+  it('un dato sin valor queda como pildora para que el usuario lo escriba', () => {
+    // [EVENTO INICIO PLAZO] existe en el catálogo pero no tiene fuente.
+    const salida = renderizarPildoras(CLAUSULA_PLAZO, {}, 'RESOLVER');
+    expect(salida).toContain('data-token-id="evento_inicio_plazo_au_au"');
+    expect(salida).not.toContain('data-resolved');
+  });
+
+  it('en el pliego van como linea', () => {
+    const salida = renderizarPildoras(CLAUSULA_REAL, VALORES, 'LINEA');
+    expect(salida).not.toContain('367.500');
+    expect(salida.match(/________/g)?.length).toBe(3);
+  });
+
+  it('no toca los corchetes que no son variables', () => {
+    const texto = 'Lo previsto en el artículo 74 [sic] y el anexo [1].';
+    expect(renderizarPildoras(texto, {}, 'VALOR')).toBe(texto);
+  });
+
+  it('aplicarlo dos veces no anida pildoras', () => {
+    const una = corchetesAPildoras(CLAUSULA_REAL);
+    expect(corchetesAPildoras(una)).toBe(una);
   });
 });

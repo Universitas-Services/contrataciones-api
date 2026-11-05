@@ -117,6 +117,8 @@ async function sembrar(caracter: 'TOTAL' | 'PARCIAL', sufijo: string) {
   }
 
   // Dictamen: el primero adjudicado, los otros con causa de no adjudicación.
+  // En PARCIAL se adjudica también al segundo, que es el caso real: el
+  // decaimiento de uno no puede tumbar los renglones del otro.
   await prisma.dictamenAdjudicacion.create({
     data: {
       expedienteId: expediente.id,
@@ -138,14 +140,26 @@ async function sembrar(caracter: 'TOTAL' | 'PARCIAL', sufijo: string) {
     },
   });
 
-  for (const evaluacionId of evaluaciones.slice(1)) {
+  for (const [indice, evaluacionId] of evaluaciones.slice(1).entries()) {
+    const segundoAdjudicadoParcial = caracter === 'PARCIAL' && indice === 0;
+
     await prisma.dictamenAdjudicacion.create({
       data: {
         expedienteId: expediente.id,
         evaluacionId,
         tipoDictamen: caracter,
-        oferenteAdjudicadoProcedimiento: false,
-        causaNoAdjudicado: 'Precio superior al de la primera opción',
+        ...(segundoAdjudicadoParcial
+          ? {
+              oferenteAdjudicadoProcedimiento: true,
+              alcanceAdjudicacionParcial: 'Renglón 03',
+              partidasAdjudicadasParcial: '4.02.01.02.00',
+              montoAdjudicadoParcial: montos[1],
+              plazoEjecucionOfertaParcial: 60,
+            }
+          : {
+              oferenteAdjudicadoProcedimiento: false,
+              causaNoAdjudicado: 'Precio superior al de la primera opción',
+            }),
       },
     });
   }
@@ -247,6 +261,22 @@ async function main() {
         user,
       ),
     'no puede ser anterior',
+  );
+
+  await rechaza(
+    'el plazo del subsiguiente es obligatorio',
+    () =>
+      decaimiento.guardarCertificado(
+        total.expedienteId,
+        {
+          fechaNotificacionAdjudicacionIncumplidor: '2026-10-13',
+          fechaCertificacionIncumplimiento: '2026-10-23',
+          causalDecaimiento: 'NO FIRMÓ CONTRATO',
+          montoReadjudicadoBs: 300000,
+        } as never,
+        user,
+      ),
+    'plazoEjecucionSubsiguiente',
   );
 
   await rechaza(
@@ -376,6 +406,18 @@ async function main() {
     (contrato.tokens.monto_contrato_letras_au_au ?? '').length > 10,
   );
   ok('el objeto sale del expediente', !!contrato.tokens.objeto_contratacion_au_au);
+  ok(
+    'el subsiguiente hereda las partidas del infractor',
+    contrato.tokens.partidas_presupuestarias_au_au === '4.02.01.01.00',
+  );
+  ok(
+    'el subsiguiente usa el plazo que se pidió en el certificado',
+    contrato.tokens.plazo_ejecucion_dias_au_au === '75',
+  );
+  ok(
+    'la fianza de fiel cumplimiento se calcula sola',
+    contrato.tokens.monto_garantia_fiel_cumplimiento_numeros_au_au !== undefined,
+  );
 
   const generado = await fase4.generarContrato(
     total.expedienteId,
@@ -470,21 +512,86 @@ async function main() {
   );
 
   estado = await decaimiento.cierreDesierto(parcial.expedienteId, user);
-  ok('el expediente queda sellado', estado.sellado);
+
+  // El decaimiento alcanza sólo a los renglones del infractor: el segundo
+  // adjudicado conserva los suyos, así que el expediente NO se sella.
+  ok('el desierto parcial NO sella el expediente', !estado.sellado);
   ok('el ciclo desierto pasó al historial', estado.ciclosCerrados.length === 1);
-  ok('ya no se puede declarar otro decaimiento', !estado.gates.puedeDeclararDecaimiento);
+  ok(
+    'el infractor queda DECAIDO',
+    estado.oferentes.find((o) => o.evaluacionId === infractorParcial)?.estatus === 'DECAIDO',
+  );
+  ok(
+    'el otro adjudicado sigue vigente',
+    estado.oferentes.find((o) => o.evaluacionId === parcial.evaluaciones[1])?.estatus ===
+      'ADJUDICADO',
+  );
+  ok('su contrato sigue disponible', !estado.gates.contratosBloqueados);
   ok(
     'se notificó a los 3 participantes',
     estado.participantesCierre.every((p) => p.notificacionEmitidaAt),
   );
+  ok(
+    'cada notificación trae su documentoId',
+    estado.participantesCierre.every((p) => p.documentoId),
+  );
+
+  const expedienteParcial = await prisma.expedienteContratacion.findUnique({
+    where: { id: parcial.expedienteId },
+    select: { estatusProceso: true, declaratoriaDesierto: true },
+  });
+  ok(
+    'el estatus del proceso no cambia a DESIERTO',
+    expedienteParcial?.estatusProceso !== 'DESIERTO',
+  );
+  ok(
+    'no se toca la declaratoria de desierto de la Fase 2',
+    expedienteParcial?.declaratoriaDesierto === false,
+  );
+
+  // Con el expediente abierto, el adjudicado que queda sí puede contratar.
+  const contratoVivo = await fase4.getContrato(parcial.expedienteId, parcial.evaluaciones[1], user);
+  ok('el adjudicado que queda puede armar su contrato', contratoVivo.estado === 'BORRADOR');
+
+  // ══════════════════════════════════════════════════════════════════
+  console.log('\n▸ Desierto que sí cierra el procedimiento');
+  // ══════════════════════════════════════════════════════════════════
+  const ultimo = await sembrar('TOTAL', 'DESIERTO-TOTAL');
+
+  await decaimiento.declarar(
+    ultimo.expedienteId,
+    { infractorEvaluacionId: ultimo.evaluaciones[0] },
+    user,
+  );
+  await decaimiento.elegirDecision(ultimo.expedienteId, { decision: 'DESIERTO' }, user);
+  await decaimiento.guardarCertificado(
+    ultimo.expedienteId,
+    {
+      fechaNotificacionAdjudicacionIncumplidor: '2026-10-13',
+      fechaCertificacionIncumplimiento: '2026-10-23',
+      causalDecaimiento: 'RECHAZO EXPRESO',
+      modalidadDegradadaSugerida: 'Consulta de Precios (Art. 96 LCP)',
+    } as never,
+    user,
+  );
+  await decaimiento.guardarResolucion(
+    ultimo.expedienteId,
+    { numResolucionDecaimiento: 'RESOL-047-2026', fechaResolucionDecaimiento: '2026-10-23' },
+    user,
+  );
+  await decaimiento.notificarInfractor(ultimo.expedienteId, user);
+  estado = await decaimiento.cierreDesierto(ultimo.expedienteId, user);
+
+  ok('sin adjudicados vigentes, el expediente sí se sella', estado.sellado);
+  ok('ya no se puede declarar otro decaimiento', !estado.gates.puedeDeclararDecaimiento);
 
   const expedienteSellado = await prisma.expedienteContratacion.findUnique({
-    where: { id: parcial.expedienteId },
+    where: { id: ultimo.expedienteId },
     select: { estatusProceso: true, declaratoriaDesierto: true },
   });
   ok('el estatus del proceso pasa a DESIERTO', expedienteSellado?.estatusProceso === 'DESIERTO');
   ok(
-    'no se toca la declaratoria de desierto de la Fase 2',
+    'tampoco aquí se toca la declaratoria de la Fase 2',
     expedienteSellado?.declaratoriaDesierto === false,
   );
 
@@ -492,16 +599,17 @@ async function main() {
     'tras el sellado toda escritura responde con conflicto',
     () =>
       decaimiento.declarar(
-        parcial.expedienteId,
-        { infractorEvaluacionId: parcial.evaluaciones[1] },
+        ultimo.expedienteId,
+        { infractorEvaluacionId: ultimo.evaluaciones[1] },
         user,
       ),
     'Expediente sellado',
   );
 
   // -- Salida de emergencia ------------------------------------------
-  estado = await decaimiento.desellar(parcial.expedienteId, user);
+  estado = await decaimiento.desellar(ultimo.expedienteId, user);
   ok('el desellado devuelve el expediente a edición', !estado.sellado);
+  ok('el desellado reabre el ciclo que lo cerró', estado.cicloActivo?.numeroCiclo === 1);
 
   // ══════════════════════════════════════════════════════════════════
   console.log('\n▸ Vencimientos con feriados del ente');
@@ -515,6 +623,12 @@ async function main() {
     'la vista previa coincide con lo que guardó el certificado',
     vencimientos.fechaVencimientoGarantias.toISOString().slice(0, 10) === '2026-10-20' &&
       vencimientos.fechaVencimientoFirmaContrato.toISOString().slice(0, 10) === '2026-10-23',
+  );
+
+  await rechaza(
+    'calcular-vencimientos sin fecha responde 400, no 500',
+    () => decaimiento.calcularVencimientos(total.expedienteId, '' as never, user),
+    'YYYY-MM-DD',
   );
 
   await limpiar();

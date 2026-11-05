@@ -305,8 +305,12 @@ export class FormalizacionFase4Service {
         nombreProveedorEvaluado: true,
         rifProveedorEvaluado: true,
         documentosGenerados: {
-          where: { tipoDocumento: 'NOTIFICACION_FIN_PROCEDIMIENTO', deletedAt: null },
-          select: { createdAt: true },
+          where: {
+            tipoDocumento: 'NOTIFICACION_FIN_PROCEDIMIENTO',
+            deletedAt: null,
+            estaDesactualizado: false,
+          },
+          select: { id: true, createdAt: true },
           orderBy: { createdAt: 'desc' },
           take: 1,
         },
@@ -318,6 +322,7 @@ export class FormalizacionFase4Service {
       nombre: e.nombreProveedorEvaluado,
       rif: e.rifProveedorEvaluado,
       notificacionEmitidaAt: e.documentosGenerados[0]?.createdAt ?? null,
+      documentoId: e.documentosGenerados[0]?.id ?? null,
     }));
   }
 
@@ -327,8 +332,10 @@ export class FormalizacionFase4Service {
     oferentes: OferenteFase4[],
     caracter: CaracterAdjudicacion | null,
   ) {
+    // Un documento desactualizado por rehacer un paso ya no representa al
+    // ciclo: devolverlo haría que el frontend ofreciera descargar algo vencido.
     const docDe = (tipo: string) =>
-      ciclo.documentos.find((d) => d.tipoDocumento === tipo)?.id ?? null;
+      ciclo.documentos.find((d) => d.tipoDocumento === tipo && !d.estaDesactualizado)?.id ?? null;
 
     const infractorEnLista = oferentes.find((o) => o.evaluacionId === ciclo.infractorEvaluacionId);
 
@@ -442,17 +449,36 @@ export class FormalizacionFase4Service {
     await this.assertContratoEditable(expedienteId, evaluacionId, user);
 
     const { estado } = await this.contextoContrato(expedienteId, evaluacionId, user);
+
+    // Editar un contrato ya generado no lo devuelve a borrador: conserva
+    // `GENERADO` y su `generadoAt`, que es lo que el frontend mira, pero el
+    // .docx emitido deja de corresponder al texto y se marca desactualizado.
+    const existente = await this.prisma.contratoFase4.findFirst({
+      where: { evaluacionId, deletedAt: null },
+      select: { estado: true, documentoId: true },
+    });
+    const yaGenerado = existente?.estado === 'GENERADO';
+
     const datos = {
       clauses: dto.clauses as unknown as object,
-      estado: 'BORRADOR' as const,
+      estado: yaGenerado ? ('GENERADO' as const) : ('BORRADOR' as const),
       montoContratoBs: estado?.montoContratoBs ?? null,
       updatedBy: user.id,
     };
 
-    await this.prisma.contratoFase4.upsert({
-      where: { evaluacionId },
-      create: { expedienteId, evaluacionId, ...datos, createdBy: user.id },
-      update: datos,
+    await this.prisma.$transaction(async (tx) => {
+      await tx.contratoFase4.upsert({
+        where: { evaluacionId },
+        create: { expedienteId, evaluacionId, ...datos, createdBy: user.id },
+        update: datos,
+      });
+
+      if (yaGenerado && existente?.documentoId) {
+        await tx.documentoGenerado.update({
+          where: { id: existente.documentoId },
+          data: { estaDesactualizado: true },
+        });
+      }
     });
 
     return this.getContrato(expedienteId, evaluacionId, user);
@@ -545,14 +571,21 @@ export class FormalizacionFase4Service {
     evaluacionId: string,
     estado: OferenteFase4 | null,
   ): Promise<Record<string, string | null>> {
-    const [expediente, evaluacion, fase1] = await Promise.all([
+    const [expediente, evaluacion, fase1, readjudicacion] = await Promise.all([
       this.prisma.expedienteContratacion.findUnique({
         where: { id: expedienteId },
         select: {
           descripcionObjeto: true,
           codigoNomenclatura: true,
-          ente: { select: { nombre: true, rif: true, organoAdscripcion: true } },
+          ente: {
+            select: { nombre: true, rif: true, organoAdscripcion: true, ciudad: true },
+          },
           cronograma: { select: { fechaLimiteAdjudicacion: true } },
+          partidasPresupuestarias: {
+            where: { deletedAt: null },
+            select: { codigoPartida: true },
+            orderBy: { codigoPartida: 'asc' },
+          },
         },
       }),
       this.prisma.evaluacionResultados.findUnique({
@@ -579,17 +612,78 @@ export class FormalizacionFase4Service {
       }),
       this.prisma.fasePreparatoria.findUnique({
         where: { expedienteId },
-        select: { porcentajeFielCumplimiento: true, porcentajeGarantiaLaboral: true },
+        select: {
+          porcentajeFielCumplimiento: true,
+          porcentajeGarantiaLaboral: true,
+          porcentajeAnticipo: true,
+          porcentajeResponsabilidadSocial: true,
+          lugarLogisticaEjecucion: true,
+          plazoEjecucionProcedimiento: true,
+        },
+      }),
+      // Si este oferente asumió una readjudicación, su plazo y sus partidas no
+      // salen de su propio dictamen: salen del ciclo que se las traspasó.
+      this.prisma.decaimientoFase4.findFirst({
+        where: {
+          expedienteId,
+          deletedAt: null,
+          estado: 'CERRADO',
+          decision: 'SUBSIGUIENTE',
+          subsiguienteEvaluacionId: evaluacionId,
+        },
+        orderBy: { numeroCiclo: 'desc' },
+        select: {
+          plazoEjecucionSubsiguiente: true,
+          infractor: {
+            select: {
+              dictamenAdjudicacion: {
+                select: {
+                  partidasAdjudicadasTotal: true,
+                  partidasAdjudicadasParcial: true,
+                  plazoEjecucionOfertaGanadora: true,
+                  plazoEjecucionOfertaParcial: true,
+                },
+              },
+            },
+          },
+        },
       }),
     ]);
 
     const dictamen = evaluacion?.dictamenAdjudicacion;
+    const dictamenInfractor = readjudicacion?.infractor.dictamenAdjudicacion;
+
+    const codigos = [
+      ...new Set((expediente?.partidasPresupuestarias ?? []).map((p) => p.codigoPartida)),
+    ];
+    const partidasDelExpediente = codigos.length ? codigos.join(', ') : null;
+
+    // Las partidas son del ente, no del oferente: si el subsiguiente no tiene
+    // dictamen propio, hereda las del infractor y, en último término, las que
+    // el expediente tenga registradas.
+    const partidas =
+      dictamen?.partidasAdjudicadasTotal ??
+      dictamen?.partidasAdjudicadasParcial ??
+      dictamenInfractor?.partidasAdjudicadasTotal ??
+      dictamenInfractor?.partidasAdjudicadasParcial ??
+      partidasDelExpediente ??
+      null;
+
+    // El plazo sí es propio de cada oferta: primero el que se pidió en el
+    // certificado para el subsiguiente, luego el de su dictamen.
+    const plazo =
+      dictamen?.plazoEjecucionOfertaGanadora ??
+      dictamen?.plazoEjecucionOfertaParcial ??
+      readjudicacion?.plazoEjecucionSubsiguiente ??
+      fase1?.plazoEjecucionProcedimiento ??
+      null;
 
     return resolverTokens({
       ente: {
         nombre: expediente?.ente?.nombre ?? null,
         rif: expediente?.ente?.rif ?? null,
         organoAdscripcion: expediente?.ente?.organoAdscripcion ?? null,
+        ciudad: expediente?.ente?.ciudad ?? null,
       },
       expediente: {
         descripcionObjeto: expediente?.descripcionObjeto ?? null,
@@ -604,13 +698,14 @@ export class FormalizacionFase4Service {
           evaluacion?.oferta.datosRegistroMercantilProveedorOferente ?? null,
       },
       montoContratoBs: estado?.montoContratoBs ?? null,
-      partidasPresupuestarias:
-        dictamen?.partidasAdjudicadasTotal ?? dictamen?.partidasAdjudicadasParcial ?? null,
-      plazoEjecucionDias:
-        dictamen?.plazoEjecucionOfertaGanadora ?? dictamen?.plazoEjecucionOfertaParcial ?? null,
+      partidasPresupuestarias: partidas,
+      plazoEjecucionDias: plazo,
       fase1: {
         porcentajeFielCumplimiento: num(fase1?.porcentajeFielCumplimiento),
         porcentajeGarantiaLaboral: num(fase1?.porcentajeGarantiaLaboral),
+        porcentajeAnticipo: num(fase1?.porcentajeAnticipo),
+        porcentajeResponsabilidadSocial: num(fase1?.porcentajeResponsabilidadSocial),
+        lugarLogisticaEjecucion: fase1?.lugarLogisticaEjecucion ?? null,
       },
       fechaAdjudicacion: expediente?.cronograma?.fechaLimiteAdjudicacion ?? null,
     });
