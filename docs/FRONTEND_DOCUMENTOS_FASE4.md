@@ -13,7 +13,7 @@
 | Documento                                | Plantilla                                              | Estado    |
 | ---------------------------------------- | ------------------------------------------------------ | --------- |
 | `CONTRATO`                               | `contrato-fase4-template.docx`                         | **Listo** |
-| `CERTIFICADO_INCUMPLIMIENTO`             | `certificado-incumplimiento-template.docx`             | Pendiente |
+| `CERTIFICADO_INCUMPLIMIENTO`             | `certificado-incumplimiento-template.docx`             | **Listo** |
 | `RESOLUCION_DECAIMIENTO`                 | `resolucion-decaimiento-template.docx`                 | Pendiente |
 | `NOTIFICACION_DECAIMIENTO`               | `notificacion-decaimiento-template.docx`               | Pendiente |
 | `NOTIFICACION_ADJUDICACION_SUBSIGUIENTE` | `notificacion-adjudicacion-subsiguiente-template.docx` | Pendiente |
@@ -67,3 +67,22 @@ Base: `/formalizacion-fase4/expediente/{expedienteId}`
 - **Fecha del contrato:** la `fechaLimiteFirmaContrato` del cronograma. Quien asumió por decaimiento lleva la fecha en que se genera.
 - **Firma:** la Máxima Autoridad, o su delegado si el expediente firma como delegado.
 - El texto "CONTRATO MARCO" del encabezado va siempre.
+
+---
+
+## 3. Certificado de incumplimiento
+
+**No cambia nada en el frontend.** Al guardar el certificado (`PUT …/decaimientos/activo/certificado`) el Word se genera solo. Su `documentoId` viene en el estado del ciclo; con él funcionan `…/documentos/{documentoId}/preview` y `…/download`.
+
+Lo firma la Secretaria de la Comisión y va dirigido a la Máxima Autoridad (o su delegado).
+
+La sección "Recomendación" cambia según la decisión del ciclo y el carácter:
+
+| Decisión       | TOTAL                                                      | PARCIAL                                                                       |
+| -------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `SUBSIGUIENTE` | Adjudicación subsiguiente total, con `montoReadjudicadoBs` | Adjudicación subsiguiente parcial, con alcance y `montoReadjudicadoParcialBs` |
+| `DESIERTO`     | Declarar desierto + modalidad degradada                    | Desierto parcial con `renglonesAfectadosDecaimiento` + modalidad degradada    |
+
+Campos del certificado que salen en el Word: `fechaNotificacionAdjudicacionIncumplidor` y `fechaCertificacionIncumplimiento`. Los vencimientos los calcula el backend.
+
+> La `causalDecaimiento` se guarda pero no se imprime: el texto del certificado es fijo.

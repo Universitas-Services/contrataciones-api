@@ -1,7 +1,12 @@
 import { numeroALetras } from '../common/utils/numero-a-letras.util';
 import { type CondicionesBloques, expandirBloques } from './bloques-contrato';
 import { LINEA_VACIA, aTextoPlano, renderizarPildoras } from './pildoras.util';
-import { fechaLarga, formatearBs, montoFielCumplimiento } from './tokens-contrato.resolver';
+import {
+  fechaLarga,
+  formatearBs,
+  formatearMonto,
+  montoFielCumplimiento,
+} from './tokens-contrato.resolver';
 import type { ClausulaContrato } from './types/fase4.types';
 
 /**
@@ -23,6 +28,11 @@ export interface EntradaDocumentoCiclo {
     descripcionObjeto: string | null;
     ente: { nombre: string | null; rif: string | null } | null;
     fasePreparatoria: { porcentajeFielCumplimiento: unknown } | null;
+    cronograma?: { fechaLimiteAdjudicacion: Date | null } | null;
+    comision?: {
+      datosDesignacionComision: string | null;
+      miembros: MiembroComision[];
+    } | null;
   };
   ciclo: {
     numeroCiclo: number;
@@ -46,6 +56,15 @@ export interface EntradaDocumentoCiclo {
   };
   /** Quien recibe la notificación, cuando el documento va a un oferente. */
   destinatario: OferenteDocumento | null;
+  /** Autoridad o delegado. Lo que no aplica viene vacío. */
+  firmas?: Record<string, string>;
+}
+
+export interface MiembroComision {
+  areaRepresentacion: string | null;
+  tipoMiembro: string | null;
+  nombreCompletoMiembro: string | null;
+  cedulaMiembro: string | null;
 }
 
 function texto(valor: string | number | null | undefined): string {
@@ -64,14 +83,49 @@ function montoEnLetras(monto: number | null): string {
   return monto != null ? numeroALetras(monto) : LINEA_VACIA;
 }
 
-export function mapDatosCiclo({ expediente, ciclo, destinatario }: EntradaDocumentoCiclo) {
+/** Sin "Bs.": las plantillas lo escriben delante de la marca. */
+function montoSinMoneda(monto: number | null): string {
+  return monto != null ? formatearMonto(monto) : LINEA_VACIA;
+}
+
+export function mapDatosCiclo({
+  expediente,
+  ciclo,
+  destinatario,
+  firmas = {},
+}: EntradaDocumentoCiclo) {
   const esParcial = ciclo.caracterSnapshot === 'PARCIAL';
   const montoCrudo = esParcial ? ciclo.montoReadjudicadoParcialBs : ciclo.montoReadjudicadoBs;
   const monto = montoCrudo == null ? null : Number(montoCrudo);
   const porcentaje = expediente.fasePreparatoria?.porcentajeFielCumplimiento;
   const fianza = montoFielCumplimiento(monto, porcentaje == null ? null : Number(porcentaje));
+  const secretaria = expediente.comision?.miembros.find(
+    (m) => m.areaRepresentacion === 'SECRETARIO_A' && m.tipoMiembro === 'MIEMBRO_PRINCIPAL',
+  );
 
   return {
+    ...firmas,
+
+    // Marcas de las plantillas
+    nom_completo_miembro_secretaria: texto(secretaria?.nombreCompletoMiembro),
+    cedula_miembro_secretaria: texto(secretaria?.cedulaMiembro),
+    datos_designacion_comision: texto(expediente.comision?.datosDesignacionComision),
+    cod_nomenclatura_proceso_au_au: texto(expediente.codigoNomenclatura),
+    desc_objeto_contratacion_au_au: texto(expediente.descripcionObjeto),
+    fec_limite_adjudicacion_au_au: fecha(expediente.cronograma?.fechaLimiteAdjudicacion ?? null),
+    nombre_proveedor_incumplidor_au_au: texto(ciclo.infractor.nombreProveedorEvaluado),
+    rif_proveedor_incumplidor_au_au: texto(ciclo.infractor.rifProveedorEvaluado),
+    nombre_proveedor_subsiguiente_au_au: texto(ciclo.subsiguiente?.nombreProveedorEvaluado),
+    rif_proveedor_subsiguiente_au_au: texto(ciclo.subsiguiente?.rifProveedorEvaluado),
+    nombre_proveedor_subsiguiente_parcial_au_au: texto(ciclo.subsiguiente?.nombreProveedorEvaluado),
+    rif_proveedor_subsiguiente_parcial_au_au: texto(ciclo.subsiguiente?.rifProveedorEvaluado),
+    monto_adjudicado_subsiguiente_bs_au_au: montoSinMoneda(monto),
+    monto_readjudicado_parcial_bs_au_au: montoSinMoneda(monto),
+    existe_opcion_subsiguiente_au_au: ciclo.decision === 'SUBSIGUIENTE',
+    no_existe_opcion_subsiguiente_au_au: ciclo.decision === 'DESIERTO',
+    caracter_adjudicacion_total_au_au: !esParcial,
+    caracter_parcial_decaimiento_au_au: esParcial,
+
     // Bloques condicionales
     es_parcial: esParcial,
     es_total: !esParcial,

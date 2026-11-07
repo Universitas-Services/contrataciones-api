@@ -79,8 +79,25 @@ export class DocumentosFase4Service {
         descripcionObjeto: true,
         ente: { select: { nombre: true, rif: true } },
         fasePreparatoria: { select: { porcentajeFielCumplimiento: true } },
+        cronograma: { select: { fechaLimiteAdjudicacion: true } },
+        autoridad: true,
+        autoridadFirmaComoDelegado: true,
+        comision: {
+          select: {
+            datosDesignacionComision: true,
+            miembros: {
+              select: {
+                areaRepresentacion: true,
+                tipoMiembro: true,
+                nombreCompletoMiembro: true,
+                cedulaMiembro: true,
+              },
+            },
+          },
+        },
       },
     });
+    const firmas = expediente ? await this.generador.getFirmasExpediente(expediente) : {};
 
     for (const documento of pendientes) {
       const plantilla = PLANTILLAS_CICLO[documento.tipoDocumento as keyof typeof PLANTILLAS_CICLO];
@@ -99,6 +116,7 @@ export class DocumentosFase4Service {
             expediente,
             ciclo: documento.decaimiento,
             destinatario: documento.evaluacion,
+            firmas,
           }),
         );
         await this.prisma.documentoGenerado.update({
