@@ -48,7 +48,7 @@ Confirmado: 21 corchetes distintos en las cláusulas, 2 coincidían.
 
 | Token                                            | Fuente                                      |
 | ------------------------------------------------ | ------------------------------------------- |
-| `monto_garantia_fiel_cumplimiento_numeros_au_au` | monto × 1,16 × `porcentajeFielCumplimiento` |
+| `monto_garantia_fiel_cumplimiento_numeros_au_au` | monto × 0,16 × `porcentajeFielCumplimiento` |
 | `monto_garantia_fiel_cumplimiento_letras_au_au`  | lo mismo, en letras                         |
 | `ciudad_domicilio_especial_au_au`                | `EntePublico.ciudad`                        |
 

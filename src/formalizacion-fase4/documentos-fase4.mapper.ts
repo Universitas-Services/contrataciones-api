@@ -1,27 +1,46 @@
 import { numeroALetras } from '../common/utils/numero-a-letras.util';
+import { type CondicionesBloques, expandirBloques } from './bloques-contrato';
 import { LINEA_VACIA, aTextoPlano, renderizarPildoras } from './pildoras.util';
-import { fechaLarga, formatearBs, montoFielCumplimiento } from './tokens-contrato.resolver';
+import {
+  fechaLarga,
+  formatearBs,
+  formatearMonto,
+  montoFielCumplimiento,
+} from './tokens-contrato.resolver';
 import type { ClausulaContrato } from './types/fase4.types';
 
 /**
  * Datos que reciben las plantillas `.docx` de la Fase 4.
  *
- * Las plantillas todavía no existen: los nombres de variables y de bloques
- * condicionales se ajustan aquí cuando lleguen los textos legales (§7 del brief
- * y PDF 3). Un dato ausente se pinta como línea, igual que en las cláusulas.
+ * El contrato ya usa las marcas de su prototipo. Los documentos del ciclo aún no
+ * tienen plantilla: sus nombres se ajustan aquí cuando se integren. Un dato
+ * ausente se pinta como línea, igual que en las cláusulas.
  */
 
 export interface OferenteDocumento {
   nombreProveedorEvaluado: string | null;
   rifProveedorEvaluado: string | null;
+  nombreRepLegalEvaluado?: string | null;
 }
 
 export interface EntradaDocumentoCiclo {
   expediente: {
     codigoNomenclatura: string | null;
     descripcionObjeto: string | null;
-    ente: { nombre: string | null; rif: string | null } | null;
-    fasePreparatoria: { porcentajeFielCumplimiento: unknown } | null;
+    ente: { nombre: string | null; rif: string | null; ciudad?: string | null } | null;
+    fasePreparatoria: {
+      porcentajeFielCumplimiento: unknown;
+      requiereGarantiaLaboral?: boolean | null;
+      porcentajeGarantiaLaboral?: unknown;
+    } | null;
+    cronograma?: {
+      fechaLimiteAdjudicacion: Date | null;
+      fechaLimiteEvaluacion?: Date | null;
+    } | null;
+    comision?: {
+      datosDesignacionComision: string | null;
+      miembros: MiembroComision[];
+    } | null;
   };
   ciclo: {
     numeroCiclo: number;
@@ -40,11 +59,30 @@ export interface EntradaDocumentoCiclo {
     renglonesAfectadosDecaimiento: string | null;
     numResolucionDecaimiento: string | null;
     fechaResolucionDecaimiento: Date | null;
+    numOficioNotificacionDecaimiento?: string | null;
+    fechaOficioNotificacionDecaimiento?: Date | null;
+    numNotificacionAdjudicacionSubsiguiente?: string | null;
+    fechaNotificacionAdjudicacionSubsiguiente?: Date | null;
+    numNotificacionFinProceso?: string | null;
+    fechaNotificacionFinProceso?: Date | null;
     infractor: OferenteDocumento;
     subsiguiente: OferenteDocumento | null;
   };
   /** Quien recibe la notificación, cuando el documento va a un oferente. */
   destinatario: OferenteDocumento | null;
+  /** Renglones que tenía el infractor, en adjudicación parcial. */
+  alcanceInfractor?: string | null;
+  /** Partidas que deja libres el infractor y asume el subsiguiente. */
+  partidasLiberadas?: string | null;
+  /** Autoridad o delegado. Lo que no aplica viene vacío. */
+  firmas?: Record<string, string>;
+}
+
+export interface MiembroComision {
+  areaRepresentacion: string | null;
+  tipoMiembro: string | null;
+  nombreCompletoMiembro: string | null;
+  cedulaMiembro: string | null;
 }
 
 function texto(valor: string | number | null | undefined): string {
@@ -63,14 +101,92 @@ function montoEnLetras(monto: number | null): string {
   return monto != null ? numeroALetras(monto) : LINEA_VACIA;
 }
 
-export function mapDatosCiclo({ expediente, ciclo, destinatario }: EntradaDocumentoCiclo) {
+/** `12,5`: el signo % lo escribe la plantilla. */
+function porcentajeTexto(valor: unknown): string {
+  return valor == null ? LINEA_VACIA : `${Number(valor)}`.replace('.', ',');
+}
+
+/** Sin "Bs.": las plantillas lo escriben delante de la marca. */
+function montoSinMoneda(monto: number | null): string {
+  return monto != null ? formatearMonto(monto) : LINEA_VACIA;
+}
+
+export function mapDatosCiclo({
+  expediente,
+  ciclo,
+  destinatario,
+  alcanceInfractor = null,
+  partidasLiberadas = null,
+  firmas = {},
+}: EntradaDocumentoCiclo) {
   const esParcial = ciclo.caracterSnapshot === 'PARCIAL';
   const montoCrudo = esParcial ? ciclo.montoReadjudicadoParcialBs : ciclo.montoReadjudicadoBs;
   const monto = montoCrudo == null ? null : Number(montoCrudo);
   const porcentaje = expediente.fasePreparatoria?.porcentajeFielCumplimiento;
   const fianza = montoFielCumplimiento(monto, porcentaje == null ? null : Number(porcentaje));
+  const secretaria = expediente.comision?.miembros.find(
+    (m) => m.areaRepresentacion === 'SECRETARIO_A' && m.tipoMiembro === 'MIEMBRO_PRINCIPAL',
+  );
+  const cargoFirmante = firmas.cargo_oficial_autoridad || firmas.cargo_oficial_delegado;
 
   return {
+    ...firmas,
+
+    // Membrete
+    nom_ente_contratante_au_au: texto(expediente.ente?.nombre),
+    cargo_oficial_autoridad_au_au: texto(cargoFirmante?.toUpperCase()),
+
+    // Marcas de las plantillas
+    nom_completo_miembro_secretaria: texto(secretaria?.nombreCompletoMiembro),
+    cedula_miembro_secretaria: texto(secretaria?.cedulaMiembro),
+    datos_designacion_comision: texto(expediente.comision?.datosDesignacionComision),
+    cod_nomenclatura_proceso_au_au: texto(expediente.codigoNomenclatura),
+    desc_objeto_contratacion_au_au: texto(expediente.descripcionObjeto),
+    nom_ente_contratante: texto(expediente.ente?.nombre),
+    loc_ciudad_ente: texto(expediente.ente?.ciudad),
+    fec_limite_adjudicacion_au_au: fecha(expediente.cronograma?.fechaLimiteAdjudicacion ?? null),
+    fec_limite_evaluacion_au_au: fecha(expediente.cronograma?.fechaLimiteEvaluacion ?? null),
+    nombre_proveedor_incumplidor_au_au: texto(ciclo.infractor.nombreProveedorEvaluado),
+    rif_proveedor_incumplidor_au_au: texto(ciclo.infractor.rifProveedorEvaluado),
+    nombre_rep_legal_incumplidor_au_au: texto(ciclo.infractor.nombreRepLegalEvaluado),
+    nombre_rep_legal_subsiguiente_au_au: texto(ciclo.subsiguiente?.nombreRepLegalEvaluado),
+    num_notificacion_adjudicacion_subsiguiente_au_au: texto(
+      ciclo.numNotificacionAdjudicacionSubsiguiente,
+    ),
+    fecha_notificacion_adjudicacion_subsiguiente_au_au: fecha(
+      ciclo.fechaNotificacionAdjudicacionSubsiguiente ?? null,
+    ),
+    num_notificacion_fin_proceso_au_au: texto(ciclo.numNotificacionFinProceso),
+    fecha_notificacion_fin_proceso_au_au: fecha(ciclo.fechaNotificacionFinProceso ?? null),
+    // La lógica toma esta fecha del cronograma, no de un dato aparte.
+    fecha_informe_recomendacion_au_au: fecha(expediente.cronograma?.fechaLimiteEvaluacion ?? null),
+    partidas_adjudicadas_subsiguiente_au_au: texto(partidasLiberadas),
+    porcentaje_fiel_cumplimiento_au_au: porcentajeTexto(porcentaje),
+    porcentaje_garantia_laboral_au_au: porcentajeTexto(
+      expediente.fasePreparatoria?.porcentajeGarantiaLaboral,
+    ),
+    requiere_garantia_laboral_au_au: expediente.fasePreparatoria?.requiereGarantiaLaboral === true,
+    alcance_adjudicacion_parcial_au_au: texto(alcanceInfractor),
+    num_oficio_notificacion_decaimiento_au_au: texto(ciclo.numOficioNotificacionDecaimiento),
+    fecha_oficio_notificacion_decaimiento_au_au: fecha(
+      ciclo.fechaOficioNotificacionDecaimiento ?? null,
+    ),
+    nombre_proveedor_subsiguiente_au_au: texto(ciclo.subsiguiente?.nombreProveedorEvaluado),
+    rif_proveedor_subsiguiente_au_au: texto(ciclo.subsiguiente?.rifProveedorEvaluado),
+    nombre_proveedor_subsiguiente_parcial_au_au: texto(ciclo.subsiguiente?.nombreProveedorEvaluado),
+    rif_proveedor_subsiguiente_parcial_au_au: texto(ciclo.subsiguiente?.rifProveedorEvaluado),
+    monto_adjudicado_subsiguiente_bs_au_au: montoSinMoneda(monto),
+    monto_readjudicado_parcial_bs_au_au: montoSinMoneda(monto),
+    existe_opcion_subsiguiente_au_au: ciclo.decision === 'SUBSIGUIENTE',
+    no_existe_opcion_subsiguiente_au_au: ciclo.decision === 'DESIERTO',
+    // La Resolución nombra estos mismos bloques de otra forma, "oden" incluido.
+    existe_oden_prelacion_au_au: ciclo.decision === 'SUBSIGUIENTE',
+    existe_opcion_subsiguiente_cd: ciclo.decision === 'SUBSIGUIENTE',
+    no_existe_orden_prelacion_au_au: ciclo.decision === 'DESIERTO',
+    declaratoria_desierta_residual_au_au: ciclo.decision === 'DESIERTO',
+    caracter_adjudicacion_total_au_au: !esParcial,
+    caracter_parcial_decaimiento_au_au: esParcial,
+
     // Bloques condicionales
     es_parcial: esParcial,
     es_total: !esParcial,
@@ -108,7 +224,7 @@ export function mapDatosCiclo({ expediente, ciclo, destinatario }: EntradaDocume
     monto_readjudicado_numeros_au_au: montoEnNumeros(monto),
     monto_readjudicado_letras_au_au: montoEnLetras(monto),
     plazo_ejecucion_subsiguiente_au_au: texto(ciclo.plazoEjecucionSubsiguiente),
-    monto_fiel_cumplimiento_subsiguiente_bs_au_au: montoEnNumeros(fianza),
+    monto_fiel_cumplimiento_subsiguiente_bs_au_au: montoSinMoneda(fianza),
 
     // Desierto
     modalidad_degradada_sugerida_au_au: texto(ciclo.modalidadDegradadaSugerida),
@@ -116,22 +232,66 @@ export function mapDatosCiclo({ expediente, ciclo, destinatario }: EntradaDocume
   };
 }
 
-/** El contrato: variables resueltas y cláusulas en texto plano, en su orden. */
+const UNIDADES = [
+  '',
+  'PRIMERA',
+  'SEGUNDA',
+  'TERCERA',
+  'CUARTA',
+  'QUINTA',
+  'SEXTA',
+  'SÉPTIMA',
+  'OCTAVA',
+  'NOVENA',
+];
+const DECENAS = ['', 'DÉCIMA', 'VIGÉSIMA', 'TRIGÉSIMA', 'CUADRAGÉSIMA', 'QUINCUAGÉSIMA'];
+
+/** Número de cláusula en ordinal: 1 → PRIMERA, 22 → VIGÉSIMA SEGUNDA. */
+export function ordinalClausula(numero: number): string {
+  const decena = DECENAS[Math.floor(numero / 10)];
+  if (decena === undefined) return `${numero}`;
+  return [decena, UNIDADES[numero % 10]].filter(Boolean).join(' ');
+}
+
+/** Lo que el contrato necesita además de las variables de las cláusulas. */
+export interface DatosDocumentoContrato {
+  bloques: CondicionesBloques;
+  /** Autoridad o delegado que firma. Lo que no aplica viene vacío. */
+  firmas: Record<string, string>;
+  fechaFirma: string | null;
+}
+
+/** El contrato: marcas del prototipo y cláusulas en texto plano, en su orden. */
 export function mapDatosContrato(
   tokens: Record<string, string | null>,
   clausulas: ClausulaContrato[],
+  { bloques, firmas, fechaFirma }: DatosDocumentoContrato,
 ) {
-  const variables = Object.fromEntries(
-    Object.entries(tokens).map(([clave, valor]) => [clave, texto(valor)]),
-  );
-
   return {
-    ...variables,
-    clausulas: [...clausulas]
+    ...firmas,
+
+    desc_objeto_contratacion_au_au: texto(tokens.objeto_contratacion_au_au),
+    cod_nomenclatura_proceso_au_au: texto(tokens.nomenclatura_proceso_au_au),
+    nom_ente_contratante: texto(tokens.nombre_ente_contratante_au_au),
+    organo_adscripcion: texto(tokens.organo_adscripcion_au_au),
+    rif_ente: texto(tokens.rif_ente_au_au),
+    loc_ciudad_ente: texto(tokens.ciudad_domicilio_especial_au_au),
+    fec_limite_firma_contrato_au_au: texto(fechaFirma),
+
+    oferente_primera_opción_au_au: texto(tokens.nombre_contratista_au_au),
+    rif_proveedor_evaluado_au_au: texto(tokens.rif_contratista_au_au),
+    datos_registro_mercantil_proveedor_evaluado_au_au: texto(tokens.registro_mercantil_au_au),
+    nombre_rep_legal_evaluado_au_au: texto(tokens.representante_contratista_au_au),
+    cedula_rep_legal_evaluado_au_au: texto(tokens.cedula_representante_au_au),
+
+    clausulas_custom_au_au: [...clausulas]
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-      .map((clausula) => ({
-        titulo: clausula.titulo ?? '',
-        cuerpo: aTextoPlano(renderizarPildoras(clausula.cuerpoHtml ?? '', tokens, 'VALOR')),
+      .map((clausula, indice) => ({
+        num_clausula_custom_au_au: ordinalClausula(indice + 1),
+        titulo_clausula_custom_au_au: clausula.titulo ?? '',
+        cuerpo_clausula_custom_au_au: aTextoPlano(
+          renderizarPildoras(expandirBloques(clausula.cuerpoHtml ?? '', bloques), tokens, 'VALOR'),
+        ),
       })),
   };
 }

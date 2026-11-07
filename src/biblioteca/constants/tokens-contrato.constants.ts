@@ -203,14 +203,14 @@ export const TOKENS_CONTRATO: TokenContrato[] = [
     etiqueta: 'MONTO GARANTIA FIEL CUMPLIMIENTO NUMEROS',
     descripcion: 'Monto de la fianza de fiel cumplimiento, en cifras',
     disponibleDesde: 'ADJUDICACION',
-    fuente: 'monto del contrato × 1,16 × porcentaje_fiel_cumplimiento_au_au',
+    fuente: 'monto del contrato × 0,16 × porcentaje_fiel_cumplimiento_au_au',
   },
   {
     id: 'monto_garantia_fiel_cumplimiento_letras_au_au',
     etiqueta: 'MONTO GARANTIA FIEL CUMPLIMIENTO LETRAS',
     descripcion: 'Monto de la fianza de fiel cumplimiento, en letras',
     disponibleDesde: 'ADJUDICACION',
-    fuente: 'monto del contrato × 1,16 × porcentaje_fiel_cumplimiento_au_au',
+    fuente: 'monto del contrato × 0,16 × porcentaje_fiel_cumplimiento_au_au',
   },
   {
     id: 'ciudad_domicilio_especial_au_au',
@@ -316,6 +316,71 @@ export const TOKENS_CONTRATO: TokenContrato[] = [
     descripcion: 'Tipo de soporte que acompaña la ejecución',
     disponibleDesde: 'CONTRATO',
     fuente: 'Lo escribe quien arma el contrato',
+  },
+
+  // Datos que usan las cláusulas de Fase 1 y los bloques de la tarjeta de garantías.
+  {
+    id: 'nom_unidad_usuaria_au_au',
+    etiqueta: 'UNIDAD USUARIA',
+    descripcion: 'Unidad usuaria del expediente',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'UnidadUsuaria.nombreUnidadUsuaria',
+  },
+  {
+    id: 'modalidad_crs_au_au',
+    etiqueta: 'MODALIDAD CRS',
+    descripcion: 'Modalidad del compromiso de responsabilidad social',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'tb_fase_preparatoria.modalidad_crs_au_au',
+  },
+  {
+    id: 'unidad_resp_cumplimiento_crs_au_au',
+    etiqueta: 'UNIDAD RESPONSABLE CRS',
+    descripcion: 'Unidad responsable del seguimiento del CRS',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'tb_fase_preparatoria.unidad_resp_cumplimiento_crs_au_au',
+  },
+  {
+    id: 'porcentaje_garantia_laboral_au_au',
+    etiqueta: 'PORCENTAJE DE GARANTIA LABORAL',
+    descripcion: 'Porcentaje de la fianza laboral',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'tb_fase_preparatoria.porcentaje_garantia_laboral_au_au',
+  },
+  {
+    id: 'porcentaje_responsabilidad_civil_au_au',
+    etiqueta: 'PORCENTAJE DE RESPONSABILIDAD CIVIL',
+    descripcion: 'Porcentaje de la póliza de responsabilidad civil',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'tb_fase_preparatoria.porcentaje_responsabilidad_civil_au_au',
+  },
+  {
+    id: 'monto_responsabilidad_civil_bs_au_au',
+    etiqueta: 'MONTO RESPONSABILIDAD CIVIL NUMEROS',
+    descripcion: 'Monto de la póliza de responsabilidad civil, en cifras',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'tb_fase_preparatoria.monto_responsabilidad_civil_bs_au_au',
+  },
+  {
+    id: 'monto_responsabilidad_civil_letras_au_au',
+    etiqueta: 'MONTO RESPONSABILIDAD CIVIL LETRAS',
+    descripcion: 'Monto de la póliza de responsabilidad civil, en letras',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'tb_fase_preparatoria.monto_responsabilidad_civil_bs_au_au',
+  },
+  {
+    id: 'monto_fianza_laboral_numeros_au_au',
+    etiqueta: 'MONTO FIANZA LABORAL NUMEROS',
+    descripcion: 'Monto de la fianza laboral, en cifras',
+    disponibleDesde: 'ADJUDICACION',
+    fuente: 'mano de obra ofertada × porcentaje_garantia_laboral_au_au',
+  },
+  {
+    id: 'monto_fianza_laboral_letras_au_au',
+    etiqueta: 'MONTO FIANZA LABORAL LETRAS',
+    descripcion: 'Monto de la fianza laboral, en letras',
+    disponibleDesde: 'ADJUDICACION',
+    fuente: 'mano de obra ofertada × porcentaje_garantia_laboral_au_au',
   },
 ];
 

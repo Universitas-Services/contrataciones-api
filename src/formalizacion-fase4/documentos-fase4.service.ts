@@ -2,7 +2,9 @@ import { ConflictException, Injectable, Logger, NotFoundException } from '@nestj
 import type { TipoDocumento } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { GeneradorDocumentosService } from '../generador-documentos/generador-documentos.service';
+import { alcanceDe, partidasDeOferente } from './alcance-oferente.util';
 import { mapDatosCiclo, mapDatosContrato } from './documentos-fase4.mapper';
+import type { CondicionesBloques } from './bloques-contrato';
 import type { ClausulaContrato } from './types/fase4.types';
 
 /** Plantilla de cada documento del ciclo de decaimiento. */
@@ -19,7 +21,24 @@ const PLANTILLA_CONTRATO = 'contrato-fase4-template.docx';
 const TIPOS_CICLO = Object.keys(PLANTILLAS_CICLO) as (keyof typeof PLANTILLAS_CICLO)[];
 const TIPOS_FASE4: TipoDocumento[] = [...TIPOS_CICLO, 'CONTRATO'];
 
-const OFERENTE = { select: { nombreProveedorEvaluado: true, rifProveedorEvaluado: true } };
+const OFERENTE = {
+  select: {
+    nombreProveedorEvaluado: true,
+    rifProveedorEvaluado: true,
+    nombreRepLegalEvaluado: true,
+  },
+};
+const DICTAMEN_PARTIDAS = {
+  select: { partidasAdjudicadasTotal: true, partidasAdjudicadasParcial: true },
+};
+const INFRACTOR = {
+  select: {
+    ...OFERENTE.select,
+    dictamenAdjudicacion: {
+      select: { ...DICTAMEN_PARTIDAS.select, alcanceAdjudicacionParcial: true },
+    },
+  },
+};
 
 export interface ContratoPorEmitir {
   contratoId: string;
@@ -28,6 +47,8 @@ export interface ContratoPorEmitir {
   documentoAnteriorId: string | null;
   clauses: ClausulaContrato[];
   tokens: Record<string, string | null>;
+  bloques: CondicionesBloques;
+  fechaFirma: string | null;
   userId: string;
 }
 
@@ -61,7 +82,7 @@ export class DocumentosFase4Service {
       },
       include: {
         evaluacion: OFERENTE,
-        decaimiento: { include: { infractor: OFERENTE, subsiguiente: OFERENTE } },
+        decaimiento: { include: { infractor: INFRACTOR, subsiguiente: OFERENTE } },
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -74,10 +95,50 @@ export class DocumentosFase4Service {
       select: {
         codigoNomenclatura: true,
         descripcionObjeto: true,
-        ente: { select: { nombre: true, rif: true } },
-        fasePreparatoria: { select: { porcentajeFielCumplimiento: true } },
+        ente: { select: { nombre: true, rif: true, ciudad: true } },
+        fasePreparatoria: {
+          select: {
+            porcentajeFielCumplimiento: true,
+            requiereGarantiaLaboral: true,
+            porcentajeGarantiaLaboral: true,
+          },
+        },
+        partidasPresupuestarias: {
+          where: { deletedAt: null },
+          select: { codigoPartida: true },
+          orderBy: { codigoPartida: 'asc' },
+        },
+        cronograma: { select: { fechaLimiteAdjudicacion: true, fechaLimiteEvaluacion: true } },
+        autoridad: true,
+        autoridadFirmaComoDelegado: true,
+        comision: {
+          select: {
+            datosDesignacionComision: true,
+            miembros: {
+              select: {
+                areaRepresentacion: true,
+                tipoMiembro: true,
+                nombreCompletoMiembro: true,
+                cedulaMiembro: true,
+              },
+            },
+          },
+        },
       },
     });
+    const firmas = expediente ? await this.generador.getFirmasExpediente(expediente) : {};
+    const ciclosCerrados = await this.prisma.decaimientoFase4.findMany({
+      where: { expedienteId, estado: 'CERRADO', deletedAt: null },
+      select: {
+        decision: true,
+        subsiguienteEvaluacionId: true,
+        alcanceReadjudicacionParcial: true,
+        infractorEvaluacionId: true,
+        infractor: { select: { dictamenAdjudicacion: DICTAMEN_PARTIDAS } },
+      },
+    });
+    const codigos = (expediente?.partidasPresupuestarias ?? []).map((p) => p.codigoPartida);
+    const partidasDelExpediente = [...new Set(codigos)].join(', ') || null;
 
     for (const documento of pendientes) {
       const plantilla = PLANTILLAS_CICLO[documento.tipoDocumento as keyof typeof PLANTILLAS_CICLO];
@@ -96,6 +157,18 @@ export class DocumentosFase4Service {
             expediente,
             ciclo: documento.decaimiento,
             destinatario: documento.evaluacion,
+            alcanceInfractor: alcanceDe(
+              documento.decaimiento.infractorEvaluacionId,
+              documento.decaimiento.infractor.dictamenAdjudicacion,
+              ciclosCerrados,
+            ),
+            partidasLiberadas:
+              partidasDeOferente(
+                documento.decaimiento.infractorEvaluacionId,
+                documento.decaimiento.infractor.dictamenAdjudicacion,
+                ciclosCerrados,
+              ) ?? partidasDelExpediente,
+            firmas,
           }),
         );
         await this.prisma.documentoGenerado.update({
@@ -121,11 +194,21 @@ export class DocumentosFase4Service {
     if (!this.generador.plantillaExiste(PLANTILLA_CONTRATO)) return null;
 
     try {
+      const expediente = await this.prisma.expedienteContratacion.findUnique({
+        where: { id: contrato.expedienteId },
+        select: { autoridadFirmaComoDelegado: true, autoridad: true },
+      });
+      const firmas = await this.generador.getFirmasExpediente(expediente);
+
       const { fileUrl } = await this.generador.renderizarYSubir(
         contrato.expedienteId,
         'CONTRATO',
         PLANTILLA_CONTRATO,
-        mapDatosContrato(contrato.tokens, contrato.clauses),
+        mapDatosContrato(contrato.tokens, contrato.clauses, {
+          bloques: contrato.bloques,
+          firmas,
+          fechaFirma: contrato.fechaFirma,
+        }),
       );
 
       return await this.prisma.$transaction(async (tx) => {

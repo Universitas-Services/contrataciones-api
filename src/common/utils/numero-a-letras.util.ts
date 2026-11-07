@@ -130,3 +130,14 @@ export function numeroALetras(monto: number, moneda = 'BOLÍVARES', fraccion = '
 
   return negativo ? `MENOS ${texto}` : texto;
 }
+
+/**
+ * La cifra en palabras sin la moneda, para los textos que ya escriben
+ * "Bolívares" después: `cifraEnLetras(1250.5)` → "MIL DOSCIENTOS CINCUENTA CON 50/100".
+ */
+export function cifraEnLetras(monto: number): string {
+  const entero = Math.floor(Math.abs(monto));
+  const centimos = Math.round((Math.abs(monto) - entero) * 100);
+  const texto = enteroALetras(entero);
+  return centimos > 0 ? `${texto} CON ${String(centimos).padStart(2, '0')}/100` : texto;
+}

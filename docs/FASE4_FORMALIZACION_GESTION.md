@@ -236,7 +236,7 @@ el contenido vacío. Hay que pedirlos.
 
 Cálculos que sí hace el backend:
 
-- `monto_fiel_cumplimiento_subsiguiente_bs_au_au = monto adjudicado × 1,16 × (porcentajeFielCumplimiento / 100)`.
+- `monto_fiel_cumplimiento_subsiguiente_bs_au_au = monto adjudicado × 0,16 × (porcentajeFielCumplimiento / 100)`.
 - Garantía laboral sobre `DictamenAdjudicacion.montoManoObraOfertado`, con
   `requiereGarantiaLaboral` y `porcentajeGarantiaLaboral` de la Fase 1.
 - La modalidad degradada la elige el usuario; proponerla según el UCAU remanente

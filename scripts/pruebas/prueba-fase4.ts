@@ -169,6 +169,21 @@ async function sembrar(caracter: 'TOTAL' | 'PARCIAL', sufijo: string) {
   return { expedienteId: expediente.id, evaluaciones };
 }
 
+const OFICIO = {
+  numOficioNotificacionDecaimiento: 'OF-112-2026',
+  fechaOficioNotificacionDecaimiento: '2026-12-31',
+};
+
+const NOTIFICACION_SUBSIGUIENTE = {
+  numNotificacionAdjudicacionSubsiguiente: 'NOT-045-2026',
+  fechaNotificacionAdjudicacionSubsiguiente: '2026-12-31',
+};
+
+const AVISO_FIN = {
+  numNotificacionFinProceso: 'AVISO-012-2026',
+  fechaNotificacionFinProceso: '2026-12-31',
+};
+
 async function main() {
   assertBaseLocal();
 
@@ -341,7 +356,7 @@ async function main() {
 
   await rechaza(
     'no se notifica al infractor sin resolución',
-    () => decaimiento.notificarInfractor(total.expedienteId, user),
+    () => decaimiento.notificarInfractor(total.expedienteId, OFICIO, user),
     'Primero debe emitirse la resolución',
   );
 
@@ -355,12 +370,41 @@ async function main() {
 
   await rechaza(
     'no se notifica al subsiguiente antes que al infractor',
-    () => decaimiento.notificarSubsiguiente(total.expedienteId, user),
+    () => decaimiento.notificarSubsiguiente(total.expedienteId, NOTIFICACION_SUBSIGUIENTE, user),
     'Primero debe notificarse el decaimiento al infractor',
   );
 
   // -- Notificaciones ------------------------------------------------
-  estado = await decaimiento.notificarInfractor(total.expedienteId, user);
+  await rechaza(
+    'el oficio no puede ser anterior a la resolución',
+    () =>
+      decaimiento.notificarInfractor(
+        total.expedienteId,
+        { ...OFICIO, fechaOficioNotificacionDecaimiento: '2026-10-22' },
+        user,
+      ),
+    'no puede ser anterior a la de la resolución',
+  );
+
+  await decaimiento.notificarInfractor(
+    total.expedienteId,
+    { ...OFICIO, numOficioNotificacionDecaimiento: 'OF-MAL-ESCRITO' },
+    user,
+  );
+  estado = await decaimiento.notificarInfractor(total.expedienteId, OFICIO, user);
+  ok(
+    'reemitir el oficio corrige el número',
+    estado.cicloActivo?.notificacionInfractor.numOficioNotificacionDecaimiento === 'OF-112-2026',
+  );
+  const oficiosVigentes = await prisma.documentoGenerado.count({
+    where: {
+      expedienteId: total.expedienteId,
+      tipoDocumento: 'NOTIFICACION_DECAIMIENTO',
+      estaDesactualizado: false,
+      deletedAt: null,
+    },
+  });
+  ok('solo queda vigente un oficio', oficiosVigentes === 1, oficiosVigentes);
   ok(
     'queda la fecha de notificación al infractor',
     !!estado.cicloActivo?.notificacionInfractor.emitidaAt,
@@ -372,7 +416,41 @@ async function main() {
     'Primero debe notificarse la adjudicación a la siguiente opción',
   );
 
-  estado = await decaimiento.notificarSubsiguiente(total.expedienteId, user);
+  await rechaza(
+    'la notificación no puede ser anterior a la resolución',
+    () =>
+      decaimiento.notificarSubsiguiente(
+        total.expedienteId,
+        { ...NOTIFICACION_SUBSIGUIENTE, fechaNotificacionAdjudicacionSubsiguiente: '2026-10-22' },
+        user,
+      ),
+    'no puede ser anterior a la de la resolución',
+  );
+
+  await decaimiento.notificarSubsiguiente(
+    total.expedienteId,
+    { ...NOTIFICACION_SUBSIGUIENTE, numNotificacionAdjudicacionSubsiguiente: 'NOT-MAL-ESCRITA' },
+    user,
+  );
+  estado = await decaimiento.notificarSubsiguiente(
+    total.expedienteId,
+    NOTIFICACION_SUBSIGUIENTE,
+    user,
+  );
+  ok(
+    'reemitir la notificación corrige el número',
+    estado.cicloActivo?.notificacionSubsiguiente.numNotificacionAdjudicacionSubsiguiente ===
+      'NOT-045-2026',
+  );
+  const notificacionesVigentes = await prisma.documentoGenerado.count({
+    where: {
+      expedienteId: total.expedienteId,
+      tipoDocumento: 'NOTIFICACION_ADJUDICACION_SUBSIGUIENTE',
+      estaDesactualizado: false,
+      deletedAt: null,
+    },
+  });
+  ok('solo queda vigente una notificación', notificacionesVigentes === 1, notificacionesVigentes);
   ok(
     'queda la fecha de notificación al subsiguiente',
     !!estado.cicloActivo?.notificacionSubsiguiente.emitidaAt,
@@ -404,7 +482,7 @@ async function main() {
   );
   ok(
     'el monto en números viene formateado',
-    contrato.tokens.monto_contrato_numeros_au_au?.startsWith('Bs. '),
+    /^[\d.]+,\d{2}$/.test(contrato.tokens.monto_contrato_numeros_au_au ?? ''),
   );
   ok(
     'el monto en letras viene resuelto',
@@ -508,7 +586,7 @@ async function main() {
     { numResolucionDecaimiento: 'RESOL-046-2026', fechaResolucionDecaimiento: '2026-10-23' },
     user,
   );
-  await decaimiento.notificarInfractor(parcial.expedienteId, user);
+  await decaimiento.notificarInfractor(parcial.expedienteId, OFICIO, user);
 
   await rechaza(
     'un ciclo desierto no se cierra por la vía de la siguiente opción',
@@ -516,7 +594,7 @@ async function main() {
     'se cierra con las notificaciones de fin de procedimiento',
   );
 
-  estado = await decaimiento.cierreDesierto(parcial.expedienteId, user);
+  estado = await decaimiento.cierreDesierto(parcial.expedienteId, AVISO_FIN, user);
 
   // El decaimiento alcanza sólo a los renglones del infractor: el segundo
   // adjudicado conserva los suyos, así que el expediente NO se sella.
@@ -533,13 +611,22 @@ async function main() {
   );
   ok('su contrato sigue disponible', !estado.gates.contratosBloqueados);
   ok(
-    'se notificó a los 3 participantes',
+    'los 3 participantes ven el aviso emitido',
     estado.participantesCierre.every((p) => p.notificacionEmitidaAt),
   );
   ok(
-    'cada notificación trae su documentoId',
-    estado.participantesCierre.every((p) => p.documentoId),
+    'todos apuntan al mismo aviso',
+    new Set(estado.participantesCierre.map((p) => p.documentoId)).size === 1 &&
+      !!estado.participantesCierre[0].documentoId,
   );
+  const avisos = await prisma.documentoGenerado.count({
+    where: {
+      expedienteId: parcial.expedienteId,
+      tipoDocumento: 'NOTIFICACION_FIN_PROCEDIMIENTO',
+      deletedAt: null,
+    },
+  });
+  ok('el aviso es un solo documento', avisos === 1, avisos);
 
   const expedienteParcial = await prisma.expedienteContratacion.findUnique({
     where: { id: parcial.expedienteId },
@@ -588,8 +675,8 @@ async function main() {
     { numResolucionDecaimiento: 'RESOL-048-2026', fechaResolucionDecaimiento: '2026-10-23' },
     user,
   );
-  await decaimiento.notificarInfractor(readj.expedienteId, user);
-  await decaimiento.notificarSubsiguiente(readj.expedienteId, user);
+  await decaimiento.notificarInfractor(readj.expedienteId, OFICIO, user);
+  await decaimiento.notificarSubsiguiente(readj.expedienteId, NOTIFICACION_SUBSIGUIENTE, user);
   estado = await decaimiento.cerrarCiclo(readj.expedienteId, user);
 
   const contratoReadj = await fase4.getContrato(readj.expedienteId, asumeReadj, user);
@@ -650,6 +737,17 @@ async function main() {
     { infractorEvaluacionId: ultimo.evaluaciones[0] },
     user,
   );
+  await rechaza(
+    'en TOTAL no se declara desierto si queda reserva',
+    () => decaimiento.elegirDecision(ultimo.expedienteId, { decision: 'DESIERTO' }, user),
+    'Quedan oferentes en reserva',
+  );
+
+  // Se agota el orden de prelación: ya nadie puede asumir.
+  await prisma.evaluacionResultados.updateMany({
+    where: { id: { in: ultimo.evaluaciones.slice(1) } },
+    data: { oferenteCalificado: false },
+  });
   await decaimiento.elegirDecision(ultimo.expedienteId, { decision: 'DESIERTO' }, user);
   await decaimiento.guardarCertificado(
     ultimo.expedienteId,
@@ -666,8 +764,8 @@ async function main() {
     { numResolucionDecaimiento: 'RESOL-047-2026', fechaResolucionDecaimiento: '2026-10-23' },
     user,
   );
-  await decaimiento.notificarInfractor(ultimo.expedienteId, user);
-  estado = await decaimiento.cierreDesierto(ultimo.expedienteId, user);
+  await decaimiento.notificarInfractor(ultimo.expedienteId, OFICIO, user);
+  estado = await decaimiento.cierreDesierto(ultimo.expedienteId, AVISO_FIN, user);
 
   ok('sin adjudicados vigentes, el expediente sí se sella', estado.sellado);
   ok('ya no se puede declarar otro decaimiento', !estado.gates.puedeDeclararDecaimiento);

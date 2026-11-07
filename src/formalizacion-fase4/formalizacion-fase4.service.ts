@@ -7,9 +7,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
+import { alcanceDe, partidasDe } from './alcance-oferente.util';
 import { GuardarContratoDto } from './dto/contrato.dto';
 import { compararPrelacion } from './prelacion-fase4.util';
-import { resolverTokens, unirPartidas } from './tokens-contrato.resolver';
+import { type CondicionesBloques, expandirBloques } from './bloques-contrato';
+import { fechaLarga, resolverTokens, unirPartidas } from './tokens-contrato.resolver';
 import { DocumentosFase4Service } from './documentos-fase4.service';
 import { renderizarPildoras } from './pildoras.util';
 import type {
@@ -18,16 +20,6 @@ import type {
   EstatusOferenteFase4,
   OferenteFase4,
 } from './types/fase4.types';
-
-/** Las partidas de un dictamen, sea cual sea su carácter. */
-function partidasDe(
-  dictamen?: {
-    partidasAdjudicadasTotal: string | null;
-    partidasAdjudicadasParcial: string | null;
-  } | null,
-): string | null {
-  return dictamen?.partidasAdjudicadasTotal ?? dictamen?.partidasAdjudicadasParcial ?? null;
-}
 
 /** Número decimal o null, sin arrastrar el `Decimal` de Prisma a la respuesta. */
 function num(valor: unknown): number | null {
@@ -165,7 +157,7 @@ export class FormalizacionFase4Service {
             caracter,
             ciclosCerrados,
           ),
-          alcance: this.alcanceDe(e.id, e.dictamenAdjudicacion, ciclosCerrados),
+          alcance: alcanceDe(e.id, e.dictamenAdjudicacion, ciclosCerrados),
           contrato: e.contratoFase4
             ? {
                 estado: e.contratoFase4.estado,
@@ -263,25 +255,6 @@ export class FormalizacionFase4Service {
     return (base ?? 0) + readjudicado;
   }
 
-  private alcanceDe(
-    evaluacionId: string,
-    dictamen: { alcanceAdjudicacionParcial: string | null } | null,
-    ciclosCerrados: {
-      decision: string | null;
-      subsiguienteEvaluacionId: string | null;
-      alcanceReadjudicacionParcial: string | null;
-    }[],
-  ): string | null {
-    const partes = [dictamen?.alcanceAdjudicacionParcial];
-    for (const ciclo of ciclosCerrados) {
-      if (ciclo.decision === 'SUBSIGUIENTE' && ciclo.subsiguienteEvaluacionId === evaluacionId) {
-        partes.push(ciclo.alcanceReadjudicacionParcial);
-      }
-    }
-    const texto = partes.filter((p) => p && p.trim()).join('; ');
-    return texto || null;
-  }
-
   /**
    * §5.3 — en TOTAL el subsiguiente es uno solo y lo elige el backend; en
    * PARCIAL se ofrecen todos y el usuario escoge.
@@ -312,31 +285,30 @@ export class FormalizacionFase4Service {
 
   /** Todos los que entregaron sobres, también los descalificados. */
   private async participantesCierre(expedienteId: string) {
-    const evaluaciones = await this.prisma.evaluacionResultados.findMany({
-      where: { deletedAt: null, oferta: { expedienteId, deletedAt: null } },
-      select: {
-        id: true,
-        nombreProveedorEvaluado: true,
-        rifProveedorEvaluado: true,
-        documentosGenerados: {
-          where: {
-            tipoDocumento: 'NOTIFICACION_FIN_PROCEDIMIENTO',
-            deletedAt: null,
-            estaDesactualizado: false,
-          },
-          select: { id: true, createdAt: true },
-          orderBy: { createdAt: 'desc' },
-          take: 1,
+    const [evaluaciones, aviso] = await Promise.all([
+      this.prisma.evaluacionResultados.findMany({
+        where: { deletedAt: null, oferta: { expedienteId, deletedAt: null } },
+        select: { id: true, nombreProveedorEvaluado: true, rifProveedorEvaluado: true },
+      }),
+      // El aviso es público: todos los participantes comparten el mismo documento.
+      this.prisma.documentoGenerado.findFirst({
+        where: {
+          expedienteId,
+          tipoDocumento: 'NOTIFICACION_FIN_PROCEDIMIENTO',
+          deletedAt: null,
+          estaDesactualizado: false,
         },
-      },
-    });
+        select: { id: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
 
     return evaluaciones.map((e) => ({
       evaluacionId: e.id,
       nombre: e.nombreProveedorEvaluado,
       rif: e.rifProveedorEvaluado,
-      notificacionEmitidaAt: e.documentosGenerados[0]?.createdAt ?? null,
-      documentoId: e.documentosGenerados[0]?.id ?? null,
+      notificacionEmitidaAt: aviso?.createdAt ?? null,
+      documentoId: aviso?.id ?? null,
     }));
   }
 
@@ -401,11 +373,21 @@ export class FormalizacionFase4Service {
         : null,
       notificacionInfractor: {
         emitidaAt: ciclo.fecNotificacionDecaimiento,
+        numOficioNotificacionDecaimiento: ciclo.numOficioNotificacionDecaimiento,
+        fechaOficioNotificacionDecaimiento: ciclo.fechaOficioNotificacionDecaimiento,
         documentoId: docDe('NOTIFICACION_DECAIMIENTO'),
       },
       notificacionSubsiguiente: {
         emitidaAt: ciclo.fecNotificacionReadjudicacion,
+        numNotificacionAdjudicacionSubsiguiente: ciclo.numNotificacionAdjudicacionSubsiguiente,
+        fechaNotificacionAdjudicacionSubsiguiente: ciclo.fechaNotificacionAdjudicacionSubsiguiente,
         documentoId: docDe('NOTIFICACION_ADJUDICACION_SUBSIGUIENTE'),
+      },
+      avisoFinProcedimiento: {
+        emitidaAt: ciclo.fecNotificacionDesierto,
+        numNotificacionFinProceso: ciclo.numNotificacionFinProceso,
+        fechaNotificacionFinProceso: ciclo.fechaNotificacionFinProceso,
+        documentoId: docDe('NOTIFICACION_FIN_PROCEDIMIENTO'),
       },
     };
   }
@@ -432,6 +414,7 @@ export class FormalizacionFase4Service {
       : await this.clonarModeloFase1(expedienteId);
 
     const tokens = await this.tokensDe(expedienteId, evaluacionId, estado);
+    const bloques = await this.condicionesBloques(expedienteId);
 
     return {
       evaluacionId,
@@ -446,7 +429,7 @@ export class FormalizacionFase4Service {
       clauses: clauses.map((c) => ({
         ...c,
         cuerpoHtml: c.cuerpoHtml
-          ? renderizarPildoras(c.cuerpoHtml, tokens, 'RESOLVER')
+          ? renderizarPildoras(expandirBloques(c.cuerpoHtml, bloques), tokens, 'RESOLVER')
           : c.cuerpoHtml,
       })),
     };
@@ -540,6 +523,8 @@ export class FormalizacionFase4Service {
       documentoAnteriorId: contrato.documentoId,
       clauses: dto.clauses,
       tokens: await this.tokensDe(expedienteId, evaluacionId, estado),
+      bloques: await this.condicionesBloques(expedienteId),
+      fechaFirma: await this.fechaFirma(expedienteId, evaluacionId, datos.generadoAt),
       userId: user.id,
     });
 
@@ -574,6 +559,12 @@ export class FormalizacionFase4Service {
         documentoAnteriorId: null,
         clauses: contrato.clauses as unknown as ClausulaContrato[],
         tokens: await this.tokensDe(expedienteId, contrato.evaluacionId, estado),
+        bloques: await this.condicionesBloques(expedienteId),
+        fechaFirma: await this.fechaFirma(
+          expedienteId,
+          contrato.evaluacionId,
+          contrato.generadoAt ?? new Date(),
+        ),
         userId: user.id,
       });
 
@@ -627,6 +618,52 @@ export class FormalizacionFase4Service {
     return modelo?.clauses ?? [];
   }
 
+  /** Lo marcado en Fase 1 que decide qué bloques de garantías lleva el contrato. */
+  private async condicionesBloques(expedienteId: string): Promise<CondicionesBloques> {
+    const fase = await this.prisma.fasePreparatoria.findUnique({
+      where: { expedienteId },
+      select: {
+        retencionFielCumplimiento: true,
+        anticipoContrato: true,
+        requiereGarantiaLaboral: true,
+        retencionFianzaLaboral: true,
+        polizaResponsabilidadCivil: true,
+      },
+    });
+    return {
+      retencionFielCumplimiento: fase?.retencionFielCumplimiento === true,
+      anticipoContrato: fase?.anticipoContrato === true,
+      requiereGarantiaLaboral: fase?.requiereGarantiaLaboral === true,
+      retencionFianzaLaboral: fase?.retencionFianzaLaboral === true,
+      polizaResponsabilidadCivil: fase?.polizaResponsabilidadCivil === true,
+    };
+  }
+
+  /**
+   * Fecha que lleva el contrato: la del cronograma. Quien asumió por decaimiento
+   * firma fuera de ese calendario, así que el suyo lleva la fecha en que se genera.
+   */
+  private async fechaFirma(expedienteId: string, evaluacionId: string, generadoAt: Date) {
+    const readjudicaciones = await this.prisma.decaimientoFase4.count({
+      where: {
+        expedienteId,
+        deletedAt: null,
+        estado: 'CERRADO',
+        decision: 'SUBSIGUIENTE',
+        subsiguienteEvaluacionId: evaluacionId,
+      },
+    });
+    if (readjudicaciones > 0) return fechaLarga(generadoAt);
+
+    const cronograma = await this.prisma.cronogramaExpediente.findUnique({
+      where: { expedienteId },
+      select: { fechaLimiteFirmaContrato: true },
+    });
+    return cronograma?.fechaLimiteFirmaContrato
+      ? fechaLarga(cronograma.fechaLimiteFirmaContrato)
+      : null;
+  }
+
   /** Diccionario `data-token-id` → valor, ya formateado. */
   async tokensDe(
     expedienteId: string,
@@ -643,6 +680,7 @@ export class FormalizacionFase4Service {
             select: { nombre: true, rif: true, organoAdscripcion: true, ciudad: true },
           },
           cronograma: { select: { fechaLimiteAdjudicacion: true } },
+          unidadUsuaria: { select: { nombreUnidadUsuaria: true } },
           partidasPresupuestarias: {
             where: { deletedAt: null },
             select: { codigoPartida: true },
@@ -668,6 +706,7 @@ export class FormalizacionFase4Service {
               partidasAdjudicadasParcial: true,
               plazoEjecucionOfertaGanadora: true,
               plazoEjecucionOfertaParcial: true,
+              montoManoObraOfertado: true,
             },
           },
         },
@@ -681,6 +720,10 @@ export class FormalizacionFase4Service {
           porcentajeResponsabilidadSocial: true,
           lugarLogisticaEjecucion: true,
           plazoEjecucionProcedimiento: true,
+          porcentajeResponsabilidadCivil: true,
+          montoResponsabilidadCivilBs: true,
+          modalidadCrs: true,
+          unidadRespCumplimientoCrs: true,
         },
       }),
       // Todo lo que este oferente asumió en readjudicaciones, del ciclo más
@@ -768,7 +811,13 @@ export class FormalizacionFase4Service {
         porcentajeAnticipo: num(fase1?.porcentajeAnticipo),
         porcentajeResponsabilidadSocial: num(fase1?.porcentajeResponsabilidadSocial),
         lugarLogisticaEjecucion: fase1?.lugarLogisticaEjecucion ?? null,
+        porcentajeResponsabilidadCivil: num(fase1?.porcentajeResponsabilidadCivil),
+        montoResponsabilidadCivilBs: num(fase1?.montoResponsabilidadCivilBs),
+        modalidadCrs: fase1?.modalidadCrs ?? null,
+        unidadRespCumplimientoCrs: fase1?.unidadRespCumplimientoCrs ?? null,
       },
+      montoManoObraOfertado: num(dictamen?.montoManoObraOfertado),
+      nombreUnidadUsuaria: expediente?.unidadUsuaria?.nombreUnidadUsuaria ?? null,
       fechaAdjudicacion: expediente?.cronograma?.fechaLimiteAdjudicacion ?? null,
     });
   }

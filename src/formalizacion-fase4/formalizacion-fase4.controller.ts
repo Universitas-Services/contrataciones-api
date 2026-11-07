@@ -25,8 +25,11 @@ import { enviarDocumentoDocx } from '../generador-documentos/descarga.util';
 import { GuardarContratoDto } from './dto/contrato.dto';
 import {
   CertificadoIncumplimientoDto,
+  CierreDesiertoDto,
   DeclararDecaimientoDto,
   DecisionDecaimientoDto,
+  NotificacionInfractorDto,
+  NotificacionSubsiguienteDto,
   ResolucionDecaimientoDto,
 } from './dto/decaimiento.dto';
 
@@ -161,9 +164,10 @@ export class FormalizacionFase4Controller {
   @ApiOperation({ summary: 'Paso 3 — notificar el decaimiento al infractor' })
   notificarInfractor(
     @Param('expedienteId') expedienteId: string,
+    @Body() dto: NotificacionInfractorDto,
     @CurrentUser() user: UsuarioActual,
   ) {
-    return this.decaimiento.notificarInfractor(expedienteId, user);
+    return this.decaimiento.notificarInfractor(expedienteId, dto, user);
   }
 
   @Post('decaimientos/activo/notificacion-subsiguiente')
@@ -171,9 +175,10 @@ export class FormalizacionFase4Controller {
   @ApiOperation({ summary: 'Paso 4A — notificar la adjudicación a la siguiente opción' })
   notificarSubsiguiente(
     @Param('expedienteId') expedienteId: string,
+    @Body() dto: NotificacionSubsiguienteDto,
     @CurrentUser() user: UsuarioActual,
   ) {
-    return this.decaimiento.notificarSubsiguiente(expedienteId, user);
+    return this.decaimiento.notificarSubsiguiente(expedienteId, dto, user);
   }
 
   @Post('decaimientos/activo/cerrar')
@@ -186,12 +191,16 @@ export class FormalizacionFase4Controller {
   @Post('decaimientos/activo/cierre-desierto')
   @Roles('ADMIN_ENTE', 'EJECUTOR')
   @ApiOperation({
-    summary: 'Paso 4B — notificaciones de cierre en lote y sellado del expediente',
+    summary: 'Paso 4B — aviso de fin de procedimiento y sellado del expediente',
     description:
-      'Genera una notificación de fin de procedimiento por participante, cierra el ciclo y sella la Fase 4. Después, toda escritura responde 409.',
+      'Genera un único aviso público de fin de procedimiento, cierra el ciclo y sella la Fase 4 salvo que queden otros adjudicados. Después del sellado, toda escritura responde 409.',
   })
-  cierreDesierto(@Param('expedienteId') expedienteId: string, @CurrentUser() user: UsuarioActual) {
-    return this.decaimiento.cierreDesierto(expedienteId, user);
+  cierreDesierto(
+    @Param('expedienteId') expedienteId: string,
+    @Body() dto: CierreDesiertoDto,
+    @CurrentUser() user: UsuarioActual,
+  ) {
+    return this.decaimiento.cierreDesierto(expedienteId, dto, user);
   }
 
   @Delete('sellado')
