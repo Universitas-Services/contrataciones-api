@@ -169,6 +169,11 @@ async function sembrar(caracter: 'TOTAL' | 'PARCIAL', sufijo: string) {
   return { expedienteId: expediente.id, evaluaciones };
 }
 
+const OFICIO = {
+  numOficioNotificacionDecaimiento: 'OF-112-2026',
+  fechaOficioNotificacionDecaimiento: '2026-12-31',
+};
+
 async function main() {
   assertBaseLocal();
 
@@ -341,7 +346,7 @@ async function main() {
 
   await rechaza(
     'no se notifica al infractor sin resolución',
-    () => decaimiento.notificarInfractor(total.expedienteId, user),
+    () => decaimiento.notificarInfractor(total.expedienteId, OFICIO, user),
     'Primero debe emitirse la resolución',
   );
 
@@ -360,7 +365,36 @@ async function main() {
   );
 
   // -- Notificaciones ------------------------------------------------
-  estado = await decaimiento.notificarInfractor(total.expedienteId, user);
+  await rechaza(
+    'el oficio no puede ser anterior a la resolución',
+    () =>
+      decaimiento.notificarInfractor(
+        total.expedienteId,
+        { ...OFICIO, fechaOficioNotificacionDecaimiento: '2026-10-22' },
+        user,
+      ),
+    'no puede ser anterior a la de la resolución',
+  );
+
+  await decaimiento.notificarInfractor(
+    total.expedienteId,
+    { ...OFICIO, numOficioNotificacionDecaimiento: 'OF-MAL-ESCRITO' },
+    user,
+  );
+  estado = await decaimiento.notificarInfractor(total.expedienteId, OFICIO, user);
+  ok(
+    'reemitir el oficio corrige el número',
+    estado.cicloActivo?.notificacionInfractor.numOficioNotificacionDecaimiento === 'OF-112-2026',
+  );
+  const oficiosVigentes = await prisma.documentoGenerado.count({
+    where: {
+      expedienteId: total.expedienteId,
+      tipoDocumento: 'NOTIFICACION_DECAIMIENTO',
+      estaDesactualizado: false,
+      deletedAt: null,
+    },
+  });
+  ok('solo queda vigente un oficio', oficiosVigentes === 1, oficiosVigentes);
   ok(
     'queda la fecha de notificación al infractor',
     !!estado.cicloActivo?.notificacionInfractor.emitidaAt,
@@ -508,7 +542,7 @@ async function main() {
     { numResolucionDecaimiento: 'RESOL-046-2026', fechaResolucionDecaimiento: '2026-10-23' },
     user,
   );
-  await decaimiento.notificarInfractor(parcial.expedienteId, user);
+  await decaimiento.notificarInfractor(parcial.expedienteId, OFICIO, user);
 
   await rechaza(
     'un ciclo desierto no se cierra por la vía de la siguiente opción',
@@ -588,7 +622,7 @@ async function main() {
     { numResolucionDecaimiento: 'RESOL-048-2026', fechaResolucionDecaimiento: '2026-10-23' },
     user,
   );
-  await decaimiento.notificarInfractor(readj.expedienteId, user);
+  await decaimiento.notificarInfractor(readj.expedienteId, OFICIO, user);
   await decaimiento.notificarSubsiguiente(readj.expedienteId, user);
   estado = await decaimiento.cerrarCiclo(readj.expedienteId, user);
 
@@ -677,7 +711,7 @@ async function main() {
     { numResolucionDecaimiento: 'RESOL-047-2026', fechaResolucionDecaimiento: '2026-10-23' },
     user,
   );
-  await decaimiento.notificarInfractor(ultimo.expedienteId, user);
+  await decaimiento.notificarInfractor(ultimo.expedienteId, OFICIO, user);
   estado = await decaimiento.cierreDesierto(ultimo.expedienteId, user);
 
   ok('sin adjudicados vigentes, el expediente sí se sella', estado.sellado);

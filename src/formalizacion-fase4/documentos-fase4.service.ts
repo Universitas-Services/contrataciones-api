@@ -2,6 +2,7 @@ import { ConflictException, Injectable, Logger, NotFoundException } from '@nestj
 import type { TipoDocumento } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { GeneradorDocumentosService } from '../generador-documentos/generador-documentos.service';
+import { alcanceDe } from './alcance-oferente.util';
 import { mapDatosCiclo, mapDatosContrato } from './documentos-fase4.mapper';
 import type { CondicionesBloques } from './bloques-contrato';
 import type { ClausulaContrato } from './types/fase4.types';
@@ -20,7 +21,19 @@ const PLANTILLA_CONTRATO = 'contrato-fase4-template.docx';
 const TIPOS_CICLO = Object.keys(PLANTILLAS_CICLO) as (keyof typeof PLANTILLAS_CICLO)[];
 const TIPOS_FASE4: TipoDocumento[] = [...TIPOS_CICLO, 'CONTRATO'];
 
-const OFERENTE = { select: { nombreProveedorEvaluado: true, rifProveedorEvaluado: true } };
+const OFERENTE = {
+  select: {
+    nombreProveedorEvaluado: true,
+    rifProveedorEvaluado: true,
+    nombreRepLegalEvaluado: true,
+  },
+};
+const INFRACTOR = {
+  select: {
+    ...OFERENTE.select,
+    dictamenAdjudicacion: { select: { alcanceAdjudicacionParcial: true } },
+  },
+};
 
 export interface ContratoPorEmitir {
   contratoId: string;
@@ -64,7 +77,7 @@ export class DocumentosFase4Service {
       },
       include: {
         evaluacion: OFERENTE,
-        decaimiento: { include: { infractor: OFERENTE, subsiguiente: OFERENTE } },
+        decaimiento: { include: { infractor: INFRACTOR, subsiguiente: OFERENTE } },
       },
       orderBy: { createdAt: 'asc' },
     });
@@ -98,6 +111,14 @@ export class DocumentosFase4Service {
       },
     });
     const firmas = expediente ? await this.generador.getFirmasExpediente(expediente) : {};
+    const ciclosCerrados = await this.prisma.decaimientoFase4.findMany({
+      where: { expedienteId, estado: 'CERRADO', deletedAt: null },
+      select: {
+        decision: true,
+        subsiguienteEvaluacionId: true,
+        alcanceReadjudicacionParcial: true,
+      },
+    });
 
     for (const documento of pendientes) {
       const plantilla = PLANTILLAS_CICLO[documento.tipoDocumento as keyof typeof PLANTILLAS_CICLO];
@@ -116,6 +137,11 @@ export class DocumentosFase4Service {
             expediente,
             ciclo: documento.decaimiento,
             destinatario: documento.evaluacion,
+            alcanceInfractor: alcanceDe(
+              documento.decaimiento.infractorEvaluacionId,
+              documento.decaimiento.infractor.dictamenAdjudicacion,
+              ciclosCerrados,
+            ),
             firmas,
           }),
         );

@@ -1553,6 +1553,10 @@ model DecaimientoFase4 {
   numResolucionDecaimiento   String?   @map("num_resolucion_decaimiento_au_au") @db.VarChar(100)
   fechaResolucionDecaimiento DateTime? @map("fecha_resolucion_decaimiento_au_au")
 
+  // ── Paso 3: oficio al infractor ────────────────────────────────────
+  numOficioNotificacionDecaimiento   String?   @map("num_oficio_notificacion_decaimiento_au_au") @db.VarChar(100)
+  fechaOficioNotificacionDecaimiento DateTime? @map("fecha_oficio_notificacion_decaimiento_au_au")
+
   // ── Pasos 3 y 4: notificaciones (fecha del servidor) ───────────────
   fecNotificacionDecaimiento    DateTime? @map("fec_notificacion_decaimiento_au_au")
   fecNotificacionReadjudicacion DateTime? @map("fec_notificacion_readjudicacion_au_au")

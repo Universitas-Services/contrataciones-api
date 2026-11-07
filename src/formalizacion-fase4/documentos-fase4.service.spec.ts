@@ -50,6 +50,7 @@ function crear() {
       delete: jest.fn(),
     },
     expedienteContratacion: { findUnique: jest.fn().mockResolvedValue(EXPEDIENTE) },
+    decaimientoFase4: { findMany: jest.fn().mockResolvedValue([]) },
     $transaction: jest.fn((fn: (cliente: typeof tx) => unknown) => fn(tx)),
   };
   const generador = {

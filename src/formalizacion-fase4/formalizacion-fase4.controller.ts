@@ -27,6 +27,7 @@ import {
   CertificadoIncumplimientoDto,
   DeclararDecaimientoDto,
   DecisionDecaimientoDto,
+  NotificacionInfractorDto,
   ResolucionDecaimientoDto,
 } from './dto/decaimiento.dto';
 
@@ -161,9 +162,10 @@ export class FormalizacionFase4Controller {
   @ApiOperation({ summary: 'Paso 3 — notificar el decaimiento al infractor' })
   notificarInfractor(
     @Param('expedienteId') expedienteId: string,
+    @Body() dto: NotificacionInfractorDto,
     @CurrentUser() user: UsuarioActual,
   ) {
-    return this.decaimiento.notificarInfractor(expedienteId, user);
+    return this.decaimiento.notificarInfractor(expedienteId, dto, user);
   }
 
   @Post('decaimientos/activo/notificacion-subsiguiente')

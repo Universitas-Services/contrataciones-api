@@ -20,6 +20,7 @@ import type { ClausulaContrato } from './types/fase4.types';
 export interface OferenteDocumento {
   nombreProveedorEvaluado: string | null;
   rifProveedorEvaluado: string | null;
+  nombreRepLegalEvaluado?: string | null;
 }
 
 export interface EntradaDocumentoCiclo {
@@ -54,11 +55,15 @@ export interface EntradaDocumentoCiclo {
     renglonesAfectadosDecaimiento: string | null;
     numResolucionDecaimiento: string | null;
     fechaResolucionDecaimiento: Date | null;
+    numOficioNotificacionDecaimiento?: string | null;
+    fechaOficioNotificacionDecaimiento?: Date | null;
     infractor: OferenteDocumento;
     subsiguiente: OferenteDocumento | null;
   };
   /** Quien recibe la notificación, cuando el documento va a un oferente. */
   destinatario: OferenteDocumento | null;
+  /** Renglones que tenía el infractor, en adjudicación parcial. */
+  alcanceInfractor?: string | null;
   /** Autoridad o delegado. Lo que no aplica viene vacío. */
   firmas?: Record<string, string>;
 }
@@ -95,6 +100,7 @@ export function mapDatosCiclo({
   expediente,
   ciclo,
   destinatario,
+  alcanceInfractor = null,
   firmas = {},
 }: EntradaDocumentoCiclo) {
   const esParcial = ciclo.caracterSnapshot === 'PARCIAL';
@@ -121,6 +127,12 @@ export function mapDatosCiclo({
     fec_limite_evaluacion_au_au: fecha(expediente.cronograma?.fechaLimiteEvaluacion ?? null),
     nombre_proveedor_incumplidor_au_au: texto(ciclo.infractor.nombreProveedorEvaluado),
     rif_proveedor_incumplidor_au_au: texto(ciclo.infractor.rifProveedorEvaluado),
+    nombre_rep_legal_incumplidor_au_au: texto(ciclo.infractor.nombreRepLegalEvaluado),
+    alcance_adjudicacion_parcial_au_au: texto(alcanceInfractor),
+    num_oficio_notificacion_decaimiento_au_au: texto(ciclo.numOficioNotificacionDecaimiento),
+    fecha_oficio_notificacion_decaimiento_au_au: fecha(
+      ciclo.fechaOficioNotificacionDecaimiento ?? null,
+    ),
     nombre_proveedor_subsiguiente_au_au: texto(ciclo.subsiguiente?.nombreProveedorEvaluado),
     rif_proveedor_subsiguiente_au_au: texto(ciclo.subsiguiente?.rifProveedorEvaluado),
     nombre_proveedor_subsiguiente_parcial_au_au: texto(ciclo.subsiguiente?.nombreProveedorEvaluado),

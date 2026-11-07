@@ -13,6 +13,7 @@ import {
   CertificadoIncumplimientoDto,
   DeclararDecaimientoDto,
   DecisionDecaimientoDto,
+  NotificacionInfractorDto,
   ResolucionDecaimientoDto,
 } from './dto/decaimiento.dto';
 
@@ -248,6 +249,8 @@ export class DecaimientoService {
           resolucionGeneradaAt: null,
           numResolucionDecaimiento: null,
           fechaResolucionDecaimiento: null,
+          numOficioNotificacionDecaimiento: null,
+          fechaOficioNotificacionDecaimiento: null,
           fecNotificacionDecaimiento: null,
           fecNotificacionReadjudicacion: null,
           updatedBy: user.id,
@@ -331,6 +334,8 @@ export class DecaimientoService {
           fechaResolucionDecaimiento: this.fecha(dto.fechaResolucionDecaimiento),
           resolucionGeneradaAt: new Date(),
           // Rehacer la resolución invalida las notificaciones.
+          numOficioNotificacionDecaimiento: null,
+          fechaOficioNotificacionDecaimiento: null,
           fecNotificacionDecaimiento: null,
           fecNotificacionReadjudicacion: null,
           updatedBy: user.id,
@@ -357,10 +362,14 @@ export class DecaimientoService {
   }
 
   // ════════════════════════════════════════════════════════════════════
-  //  Pasos 3 y 4 — notificaciones de un clic (fecha del servidor)
+  //  Pasos 3 y 4 — notificaciones
   // ════════════════════════════════════════════════════════════════════
 
-  async notificarInfractor(expedienteId: string, user: UsuarioActual) {
+  async notificarInfractor(
+    expedienteId: string,
+    dto: NotificacionInfractorDto,
+    user: UsuarioActual,
+  ) {
     const expediente = await this.fase4.cargarExpediente(expedienteId, user);
     this.fase4.assertNoSellado(expediente);
 
@@ -369,11 +378,28 @@ export class DecaimientoService {
       throw new BadRequestException('Primero debe emitirse la resolución de decaimiento.');
     }
 
+    const fechaOficio = this.fecha(
+      dto.fechaOficioNotificacionDecaimiento,
+      'fechaOficioNotificacionDecaimiento',
+    );
+    if (ciclo.fechaResolucionDecaimiento && fechaOficio < ciclo.fechaResolucionDecaimiento) {
+      throw new BadRequestException(
+        'La fecha del oficio no puede ser anterior a la de la resolución.',
+      );
+    }
+
     await this.prisma.$transaction(async (tx) => {
       await tx.decaimientoFase4.update({
         where: { id: ciclo.id },
-        data: { fecNotificacionDecaimiento: new Date(), updatedBy: user.id },
+        data: {
+          numOficioNotificacionDecaimiento: dto.numOficioNotificacionDecaimiento,
+          fechaOficioNotificacionDecaimiento: fechaOficio,
+          fecNotificacionDecaimiento: new Date(),
+          updatedBy: user.id,
+        },
       });
+      // Reemitir corrige el oficio: el anterior deja de valer.
+      await this.invalidarDocumentos(tx, ciclo.id, ['NOTIFICACION_DECAIMIENTO']);
       await this.registrarDocumento(tx, {
         expedienteId,
         decaimientoId: ciclo.id,

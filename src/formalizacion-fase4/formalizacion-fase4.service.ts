@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
+import { alcanceDe } from './alcance-oferente.util';
 import { GuardarContratoDto } from './dto/contrato.dto';
 import { compararPrelacion } from './prelacion-fase4.util';
 import { type CondicionesBloques, expandirBloques } from './bloques-contrato';
@@ -166,7 +167,7 @@ export class FormalizacionFase4Service {
             caracter,
             ciclosCerrados,
           ),
-          alcance: this.alcanceDe(e.id, e.dictamenAdjudicacion, ciclosCerrados),
+          alcance: alcanceDe(e.id, e.dictamenAdjudicacion, ciclosCerrados),
           contrato: e.contratoFase4
             ? {
                 estado: e.contratoFase4.estado,
@@ -262,25 +263,6 @@ export class FormalizacionFase4Service {
 
     if (base == null && readjudicado === 0) return null;
     return (base ?? 0) + readjudicado;
-  }
-
-  private alcanceDe(
-    evaluacionId: string,
-    dictamen: { alcanceAdjudicacionParcial: string | null } | null,
-    ciclosCerrados: {
-      decision: string | null;
-      subsiguienteEvaluacionId: string | null;
-      alcanceReadjudicacionParcial: string | null;
-    }[],
-  ): string | null {
-    const partes = [dictamen?.alcanceAdjudicacionParcial];
-    for (const ciclo of ciclosCerrados) {
-      if (ciclo.decision === 'SUBSIGUIENTE' && ciclo.subsiguienteEvaluacionId === evaluacionId) {
-        partes.push(ciclo.alcanceReadjudicacionParcial);
-      }
-    }
-    const texto = partes.filter((p) => p && p.trim()).join('; ');
-    return texto || null;
   }
 
   /**
@@ -402,6 +384,8 @@ export class FormalizacionFase4Service {
         : null,
       notificacionInfractor: {
         emitidaAt: ciclo.fecNotificacionDecaimiento,
+        numOficioNotificacionDecaimiento: ciclo.numOficioNotificacionDecaimiento,
+        fechaOficioNotificacionDecaimiento: ciclo.fechaOficioNotificacionDecaimiento,
         documentoId: docDe('NOTIFICACION_DECAIMIENTO'),
       },
       notificacionSubsiguiente: {

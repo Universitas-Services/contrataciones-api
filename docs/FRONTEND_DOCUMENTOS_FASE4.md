@@ -15,7 +15,7 @@
 | `CONTRATO`                               | `contrato-fase4-template.docx`                         | **Listo** |
 | `CERTIFICADO_INCUMPLIMIENTO`             | `certificado-incumplimiento-template.docx`             | **Listo** |
 | `RESOLUCION_DECAIMIENTO`                 | `resolucion-decaimiento-template.docx`                 | **Listo** |
-| `NOTIFICACION_DECAIMIENTO`               | `notificacion-decaimiento-template.docx`               | Pendiente |
+| `NOTIFICACION_DECAIMIENTO`               | `notificacion-decaimiento-template.docx`               | **Listo** |
 | `NOTIFICACION_ADJUDICACION_SUBSIGUIENTE` | `notificacion-adjudicacion-subsiguiente-template.docx` | Pendiente |
 | `NOTIFICACION_FIN_PROCEDIMIENTO`         | `notificacion-fin-procedimiento-template.docx`         | Pendiente |
 
@@ -105,3 +105,34 @@ En adjudicación **TOTAL**, `PATCH …/decaimientos/activo/decision` con `DESIER
 **Qué hacer:** en TOTAL, mostrar la opción "Desierto" solo cuando `candidatosSubsiguientes` venga vacío.
 
 En **PARCIAL** no cambia nada: las dos opciones siguen disponibles, porque los candidatos incluyen a los demás adjudicados y solo el analista sabe si alguna oferta cubre los renglones liberados.
+
+---
+
+## 5. Oficio de notificación de decaimiento
+
+### Cambio obligatorio: el paso 3 ya no es un clic
+
+`POST …/decaimientos/activo/notificacion-infractor` ahora exige un body. Sin él responde **400**.
+
+```json
+{
+  "numOficioNotificacionDecaimiento": "OF-112-2026",
+  "fechaOficioNotificacionDecaimiento": "2026-10-28"
+}
+```
+
+**Qué hacer:** agregar al paso 3 un formulario con estos dos campos antes del botón de notificar.
+
+- **Validación:** la fecha no puede ser anterior a `fechaResolucionDecaimiento`. Si lo es, responde **400**.
+- **Respuesta:** `cicloActivo.notificacionInfractor` trae ahora `numOficioNotificacionDecaimiento` y `fechaOficioNotificacionDecaimiento`. Sirven para precargar el formulario.
+- **Corregir un oficio:** se repite el mismo POST con los datos correctos. El Word anterior queda desactualizado y `documentoId` apunta al nuevo.
+- **Rehacer el certificado o la resolución:** ambos campos vuelven a `null` y hay que emitir el oficio de nuevo.
+
+### Qué sale en el Word
+
+Lo firma la Máxima Autoridad o su delegado y va dirigido al representante legal del infractor.
+
+| Carácter  | Texto                                                                             |
+| --------- | --------------------------------------------------------------------------------- |
+| `TOTAL`   | "DECAIMIENTO DE LA ADJUDICACIÓN TOTAL otorgada a su representada…"                |
+| `PARCIAL` | "DECAIMIENTO DE LA ADJUDICACIÓN PARCIAL…", limitado a los renglones del infractor |

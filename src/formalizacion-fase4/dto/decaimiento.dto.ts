@@ -109,3 +109,14 @@ export class ResolucionDecaimientoDto {
   @IsISO8601()
   fechaResolucionDecaimiento!: string;
 }
+
+export class NotificacionInfractorDto {
+  @ApiProperty({ example: 'OF-112-2026' })
+  @IsString()
+  @IsNotEmpty()
+  numOficioNotificacionDecaimiento!: string;
+
+  @ApiProperty({ example: '2026-10-28' })
+  @IsISO8601()
+  fechaOficioNotificacionDecaimiento!: string;
+}

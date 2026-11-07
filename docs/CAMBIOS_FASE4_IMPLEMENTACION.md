@@ -100,7 +100,7 @@ formateado, para que el editor muestre los datos reales.
 | `PATCH`  | `/decaimientos/activo/decision`                  | Siguiente opción o desierto           |
 | `PUT`    | `/decaimientos/activo/certificado`               | 1 — certificado de incumplimiento     |
 | `PUT`    | `/decaimientos/activo/resolucion`                | 2 — resolución                        |
-| `POST`   | `/decaimientos/activo/notificacion-infractor`    | 3 — un clic                           |
+| `POST`   | `/decaimientos/activo/notificacion-infractor`    | 3 — número y fecha del oficio         |
 | `POST`   | `/decaimientos/activo/notificacion-subsiguiente` | 4A — un clic                          |
 | `POST`   | `/decaimientos/activo/cerrar`                    | 4A — cerrar el ciclo                  |
 | `POST`   | `/decaimientos/activo/cierre-desierto`           | 4B — notificaciones en lote y sellado |
