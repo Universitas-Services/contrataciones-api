@@ -2,7 +2,7 @@ import { ConflictException, Injectable, Logger, NotFoundException } from '@nestj
 import type { TipoDocumento } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { GeneradorDocumentosService } from '../generador-documentos/generador-documentos.service';
-import { alcanceDe } from './alcance-oferente.util';
+import { alcanceDe, partidasDeOferente } from './alcance-oferente.util';
 import { mapDatosCiclo, mapDatosContrato } from './documentos-fase4.mapper';
 import type { CondicionesBloques } from './bloques-contrato';
 import type { ClausulaContrato } from './types/fase4.types';
@@ -28,10 +28,15 @@ const OFERENTE = {
     nombreRepLegalEvaluado: true,
   },
 };
+const DICTAMEN_PARTIDAS = {
+  select: { partidasAdjudicadasTotal: true, partidasAdjudicadasParcial: true },
+};
 const INFRACTOR = {
   select: {
     ...OFERENTE.select,
-    dictamenAdjudicacion: { select: { alcanceAdjudicacionParcial: true } },
+    dictamenAdjudicacion: {
+      select: { ...DICTAMEN_PARTIDAS.select, alcanceAdjudicacionParcial: true },
+    },
   },
 };
 
@@ -91,7 +96,18 @@ export class DocumentosFase4Service {
         codigoNomenclatura: true,
         descripcionObjeto: true,
         ente: { select: { nombre: true, rif: true, ciudad: true } },
-        fasePreparatoria: { select: { porcentajeFielCumplimiento: true } },
+        fasePreparatoria: {
+          select: {
+            porcentajeFielCumplimiento: true,
+            requiereGarantiaLaboral: true,
+            porcentajeGarantiaLaboral: true,
+          },
+        },
+        partidasPresupuestarias: {
+          where: { deletedAt: null },
+          select: { codigoPartida: true },
+          orderBy: { codigoPartida: 'asc' },
+        },
         cronograma: { select: { fechaLimiteAdjudicacion: true, fechaLimiteEvaluacion: true } },
         autoridad: true,
         autoridadFirmaComoDelegado: true,
@@ -117,8 +133,12 @@ export class DocumentosFase4Service {
         decision: true,
         subsiguienteEvaluacionId: true,
         alcanceReadjudicacionParcial: true,
+        infractorEvaluacionId: true,
+        infractor: { select: { dictamenAdjudicacion: DICTAMEN_PARTIDAS } },
       },
     });
+    const codigos = (expediente?.partidasPresupuestarias ?? []).map((p) => p.codigoPartida);
+    const partidasDelExpediente = [...new Set(codigos)].join(', ') || null;
 
     for (const documento of pendientes) {
       const plantilla = PLANTILLAS_CICLO[documento.tipoDocumento as keyof typeof PLANTILLAS_CICLO];
@@ -142,6 +162,12 @@ export class DocumentosFase4Service {
               documento.decaimiento.infractor.dictamenAdjudicacion,
               ciclosCerrados,
             ),
+            partidasLiberadas:
+              partidasDeOferente(
+                documento.decaimiento.infractorEvaluacionId,
+                documento.decaimiento.infractor.dictamenAdjudicacion,
+                ciclosCerrados,
+              ) ?? partidasDelExpediente,
             firmas,
           }),
         );

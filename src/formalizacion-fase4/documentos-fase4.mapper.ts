@@ -28,7 +28,11 @@ export interface EntradaDocumentoCiclo {
     codigoNomenclatura: string | null;
     descripcionObjeto: string | null;
     ente: { nombre: string | null; rif: string | null; ciudad?: string | null } | null;
-    fasePreparatoria: { porcentajeFielCumplimiento: unknown } | null;
+    fasePreparatoria: {
+      porcentajeFielCumplimiento: unknown;
+      requiereGarantiaLaboral?: boolean | null;
+      porcentajeGarantiaLaboral?: unknown;
+    } | null;
     cronograma?: {
       fechaLimiteAdjudicacion: Date | null;
       fechaLimiteEvaluacion?: Date | null;
@@ -57,6 +61,10 @@ export interface EntradaDocumentoCiclo {
     fechaResolucionDecaimiento: Date | null;
     numOficioNotificacionDecaimiento?: string | null;
     fechaOficioNotificacionDecaimiento?: Date | null;
+    numNotificacionAdjudicacionSubsiguiente?: string | null;
+    fechaNotificacionAdjudicacionSubsiguiente?: Date | null;
+    numNotificacionFinProceso?: string | null;
+    fechaNotificacionFinProceso?: Date | null;
     infractor: OferenteDocumento;
     subsiguiente: OferenteDocumento | null;
   };
@@ -64,6 +72,8 @@ export interface EntradaDocumentoCiclo {
   destinatario: OferenteDocumento | null;
   /** Renglones que tenía el infractor, en adjudicación parcial. */
   alcanceInfractor?: string | null;
+  /** Partidas que deja libres el infractor y asume el subsiguiente. */
+  partidasLiberadas?: string | null;
   /** Autoridad o delegado. Lo que no aplica viene vacío. */
   firmas?: Record<string, string>;
 }
@@ -91,6 +101,11 @@ function montoEnLetras(monto: number | null): string {
   return monto != null ? numeroALetras(monto) : LINEA_VACIA;
 }
 
+/** `12,5`: el signo % lo escribe la plantilla. */
+function porcentajeTexto(valor: unknown): string {
+  return valor == null ? LINEA_VACIA : `${Number(valor)}`.replace('.', ',');
+}
+
 /** Sin "Bs.": las plantillas lo escriben delante de la marca. */
 function montoSinMoneda(monto: number | null): string {
   return monto != null ? formatearMonto(monto) : LINEA_VACIA;
@@ -101,6 +116,7 @@ export function mapDatosCiclo({
   ciclo,
   destinatario,
   alcanceInfractor = null,
+  partidasLiberadas = null,
   firmas = {},
 }: EntradaDocumentoCiclo) {
   const esParcial = ciclo.caracterSnapshot === 'PARCIAL';
@@ -128,6 +144,23 @@ export function mapDatosCiclo({
     nombre_proveedor_incumplidor_au_au: texto(ciclo.infractor.nombreProveedorEvaluado),
     rif_proveedor_incumplidor_au_au: texto(ciclo.infractor.rifProveedorEvaluado),
     nombre_rep_legal_incumplidor_au_au: texto(ciclo.infractor.nombreRepLegalEvaluado),
+    nombre_rep_legal_subsiguiente_au_au: texto(ciclo.subsiguiente?.nombreRepLegalEvaluado),
+    num_notificacion_adjudicacion_subsiguiente_au_au: texto(
+      ciclo.numNotificacionAdjudicacionSubsiguiente,
+    ),
+    fecha_notificacion_adjudicacion_subsiguiente_au_au: fecha(
+      ciclo.fechaNotificacionAdjudicacionSubsiguiente ?? null,
+    ),
+    num_notificacion_fin_proceso_au_au: texto(ciclo.numNotificacionFinProceso),
+    fecha_notificacion_fin_proceso_au_au: fecha(ciclo.fechaNotificacionFinProceso ?? null),
+    // La lógica toma esta fecha del cronograma, no de un dato aparte.
+    fecha_informe_recomendacion_au_au: fecha(expediente.cronograma?.fechaLimiteEvaluacion ?? null),
+    partidas_adjudicadas_subsiguiente_au_au: texto(partidasLiberadas),
+    porcentaje_fiel_cumplimiento_au_au: porcentajeTexto(porcentaje),
+    porcentaje_garantia_laboral_au_au: porcentajeTexto(
+      expediente.fasePreparatoria?.porcentajeGarantiaLaboral,
+    ),
+    requiere_garantia_laboral_au_au: expediente.fasePreparatoria?.requiereGarantiaLaboral === true,
     alcance_adjudicacion_parcial_au_au: texto(alcanceInfractor),
     num_oficio_notificacion_decaimiento_au_au: texto(ciclo.numOficioNotificacionDecaimiento),
     fecha_oficio_notificacion_decaimiento_au_au: fecha(
@@ -186,7 +219,7 @@ export function mapDatosCiclo({
     monto_readjudicado_numeros_au_au: montoEnNumeros(monto),
     monto_readjudicado_letras_au_au: montoEnLetras(monto),
     plazo_ejecucion_subsiguiente_au_au: texto(ciclo.plazoEjecucionSubsiguiente),
-    monto_fiel_cumplimiento_subsiguiente_bs_au_au: montoEnNumeros(fianza),
+    monto_fiel_cumplimiento_subsiguiente_bs_au_au: montoSinMoneda(fianza),
 
     // Desierto
     modalidad_degradada_sugerida_au_au: texto(ciclo.modalidadDegradadaSugerida),

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
-import { alcanceDe } from './alcance-oferente.util';
+import { alcanceDe, partidasDe } from './alcance-oferente.util';
 import { GuardarContratoDto } from './dto/contrato.dto';
 import { compararPrelacion } from './prelacion-fase4.util';
 import { type CondicionesBloques, expandirBloques } from './bloques-contrato';
@@ -20,16 +20,6 @@ import type {
   EstatusOferenteFase4,
   OferenteFase4,
 } from './types/fase4.types';
-
-/** Las partidas de un dictamen, sea cual sea su carácter. */
-function partidasDe(
-  dictamen?: {
-    partidasAdjudicadasTotal: string | null;
-    partidasAdjudicadasParcial: string | null;
-  } | null,
-): string | null {
-  return dictamen?.partidasAdjudicadasTotal ?? dictamen?.partidasAdjudicadasParcial ?? null;
-}
 
 /** Número decimal o null, sin arrastrar el `Decimal` de Prisma a la respuesta. */
 function num(valor: unknown): number | null {
@@ -295,31 +285,30 @@ export class FormalizacionFase4Service {
 
   /** Todos los que entregaron sobres, también los descalificados. */
   private async participantesCierre(expedienteId: string) {
-    const evaluaciones = await this.prisma.evaluacionResultados.findMany({
-      where: { deletedAt: null, oferta: { expedienteId, deletedAt: null } },
-      select: {
-        id: true,
-        nombreProveedorEvaluado: true,
-        rifProveedorEvaluado: true,
-        documentosGenerados: {
-          where: {
-            tipoDocumento: 'NOTIFICACION_FIN_PROCEDIMIENTO',
-            deletedAt: null,
-            estaDesactualizado: false,
-          },
-          select: { id: true, createdAt: true },
-          orderBy: { createdAt: 'desc' },
-          take: 1,
+    const [evaluaciones, aviso] = await Promise.all([
+      this.prisma.evaluacionResultados.findMany({
+        where: { deletedAt: null, oferta: { expedienteId, deletedAt: null } },
+        select: { id: true, nombreProveedorEvaluado: true, rifProveedorEvaluado: true },
+      }),
+      // El aviso es público: todos los participantes comparten el mismo documento.
+      this.prisma.documentoGenerado.findFirst({
+        where: {
+          expedienteId,
+          tipoDocumento: 'NOTIFICACION_FIN_PROCEDIMIENTO',
+          deletedAt: null,
+          estaDesactualizado: false,
         },
-      },
-    });
+        select: { id: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
 
     return evaluaciones.map((e) => ({
       evaluacionId: e.id,
       nombre: e.nombreProveedorEvaluado,
       rif: e.rifProveedorEvaluado,
-      notificacionEmitidaAt: e.documentosGenerados[0]?.createdAt ?? null,
-      documentoId: e.documentosGenerados[0]?.id ?? null,
+      notificacionEmitidaAt: aviso?.createdAt ?? null,
+      documentoId: aviso?.id ?? null,
     }));
   }
 
@@ -390,7 +379,15 @@ export class FormalizacionFase4Service {
       },
       notificacionSubsiguiente: {
         emitidaAt: ciclo.fecNotificacionReadjudicacion,
+        numNotificacionAdjudicacionSubsiguiente: ciclo.numNotificacionAdjudicacionSubsiguiente,
+        fechaNotificacionAdjudicacionSubsiguiente: ciclo.fechaNotificacionAdjudicacionSubsiguiente,
         documentoId: docDe('NOTIFICACION_ADJUDICACION_SUBSIGUIENTE'),
+      },
+      avisoFinProcedimiento: {
+        emitidaAt: ciclo.fecNotificacionDesierto,
+        numNotificacionFinProceso: ciclo.numNotificacionFinProceso,
+        fechaNotificacionFinProceso: ciclo.fechaNotificacionFinProceso,
+        documentoId: docDe('NOTIFICACION_FIN_PROCEDIMIENTO'),
       },
     };
   }

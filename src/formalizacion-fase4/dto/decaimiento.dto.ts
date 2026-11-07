@@ -120,3 +120,25 @@ export class NotificacionInfractorDto {
   @IsISO8601()
   fechaOficioNotificacionDecaimiento!: string;
 }
+
+export class NotificacionSubsiguienteDto {
+  @ApiProperty({ example: 'NOT-045-2026' })
+  @IsString()
+  @IsNotEmpty()
+  numNotificacionAdjudicacionSubsiguiente!: string;
+
+  @ApiProperty({ example: '2026-10-29' })
+  @IsISO8601()
+  fechaNotificacionAdjudicacionSubsiguiente!: string;
+}
+
+export class CierreDesiertoDto {
+  @ApiProperty({ example: 'AVISO-012-2026' })
+  @IsString()
+  @IsNotEmpty()
+  numNotificacionFinProceso!: string;
+
+  @ApiProperty({ example: '2026-10-29' })
+  @IsISO8601()
+  fechaNotificacionFinProceso!: string;
+}

@@ -11,9 +11,11 @@ import { DocumentosFase4Service } from './documentos-fase4.service';
 import { calcularVencimientos } from './dias-habiles.util';
 import {
   CertificadoIncumplimientoDto,
+  CierreDesiertoDto,
   DeclararDecaimientoDto,
   DecisionDecaimientoDto,
   NotificacionInfractorDto,
+  NotificacionSubsiguienteDto,
   ResolucionDecaimientoDto,
 } from './dto/decaimiento.dto';
 
@@ -51,6 +53,22 @@ export class DecaimientoService {
     const fecha = new Date(`${(iso ?? '').slice(0, 10)}T00:00:00.000Z`);
     if (!iso || Number.isNaN(fecha.getTime())) {
       throw new BadRequestException(`${campo} debe venir en formato YYYY-MM-DD.`);
+    }
+    return fecha;
+  }
+
+  /** Ningún acto de notificación puede ser anterior a la resolución que notifica. */
+  private fechaDesdeResolucion(
+    iso: string,
+    campo: string,
+    documento: string,
+    fechaResolucion: Date | null,
+  ): Date {
+    const fecha = this.fecha(iso, campo);
+    if (fechaResolucion && fecha < fechaResolucion) {
+      throw new BadRequestException(
+        `La fecha ${documento} no puede ser anterior a la de la resolución.`,
+      );
     }
     return fecha;
   }
@@ -251,6 +269,8 @@ export class DecaimientoService {
           fechaResolucionDecaimiento: null,
           numOficioNotificacionDecaimiento: null,
           fechaOficioNotificacionDecaimiento: null,
+          numNotificacionAdjudicacionSubsiguiente: null,
+          fechaNotificacionAdjudicacionSubsiguiente: null,
           fecNotificacionDecaimiento: null,
           fecNotificacionReadjudicacion: null,
           updatedBy: user.id,
@@ -336,6 +356,8 @@ export class DecaimientoService {
           // Rehacer la resolución invalida las notificaciones.
           numOficioNotificacionDecaimiento: null,
           fechaOficioNotificacionDecaimiento: null,
+          numNotificacionAdjudicacionSubsiguiente: null,
+          fechaNotificacionAdjudicacionSubsiguiente: null,
           fecNotificacionDecaimiento: null,
           fecNotificacionReadjudicacion: null,
           updatedBy: user.id,
@@ -378,15 +400,12 @@ export class DecaimientoService {
       throw new BadRequestException('Primero debe emitirse la resolución de decaimiento.');
     }
 
-    const fechaOficio = this.fecha(
+    const fechaOficio = this.fechaDesdeResolucion(
       dto.fechaOficioNotificacionDecaimiento,
       'fechaOficioNotificacionDecaimiento',
+      'del oficio',
+      ciclo.fechaResolucionDecaimiento,
     );
-    if (ciclo.fechaResolucionDecaimiento && fechaOficio < ciclo.fechaResolucionDecaimiento) {
-      throw new BadRequestException(
-        'La fecha del oficio no puede ser anterior a la de la resolución.',
-      );
-    }
 
     await this.prisma.$transaction(async (tx) => {
       await tx.decaimientoFase4.update({
@@ -415,7 +434,11 @@ export class DecaimientoService {
     return this.fase4.getEstado(expedienteId, user);
   }
 
-  async notificarSubsiguiente(expedienteId: string, user: UsuarioActual) {
+  async notificarSubsiguiente(
+    expedienteId: string,
+    dto: NotificacionSubsiguienteDto,
+    user: UsuarioActual,
+  ) {
     const expediente = await this.fase4.cargarExpediente(expedienteId, user);
     this.fase4.assertNoSellado(expediente);
 
@@ -432,11 +455,25 @@ export class DecaimientoService {
       throw new BadRequestException('El ciclo no tiene un oferente subsiguiente definido.');
     }
 
+    const fechaNotificacion = this.fechaDesdeResolucion(
+      dto.fechaNotificacionAdjudicacionSubsiguiente,
+      'fechaNotificacionAdjudicacionSubsiguiente',
+      'de la notificación',
+      ciclo.fechaResolucionDecaimiento,
+    );
+
     await this.prisma.$transaction(async (tx) => {
       await tx.decaimientoFase4.update({
         where: { id: ciclo.id },
-        data: { fecNotificacionReadjudicacion: new Date(), updatedBy: user.id },
+        data: {
+          numNotificacionAdjudicacionSubsiguiente: dto.numNotificacionAdjudicacionSubsiguiente,
+          fechaNotificacionAdjudicacionSubsiguiente: fechaNotificacion,
+          fecNotificacionReadjudicacion: new Date(),
+          updatedBy: user.id,
+        },
       });
+      // Reemitir corrige la notificación: la anterior deja de valer.
+      await this.invalidarDocumentos(tx, ciclo.id, ['NOTIFICACION_ADJUDICACION_SUBSIGUIENTE']);
       await this.registrarDocumento(tx, {
         expedienteId,
         decaimientoId: ciclo.id,
@@ -496,7 +533,7 @@ export class DecaimientoService {
    * sella y sus contratos siguen disponibles. Sólo cuando no queda ningún
    * adjudicado vigente el procedimiento se cierra entero.
    */
-  async cierreDesierto(expedienteId: string, user: UsuarioActual) {
+  async cierreDesierto(expedienteId: string, dto: CierreDesiertoDto, user: UsuarioActual) {
     const expediente = await this.fase4.cargarExpediente(expedienteId, user);
     this.fase4.assertNoSellado(expediente);
 
@@ -508,10 +545,12 @@ export class DecaimientoService {
       throw new BadRequestException('Primero debe notificarse el decaimiento al infractor.');
     }
 
-    const participantes = await this.prisma.evaluacionResultados.findMany({
-      where: { deletedAt: null, oferta: { expedienteId, deletedAt: null } },
-      select: { id: true },
-    });
+    const fechaAviso = this.fechaDesdeResolucion(
+      dto.fechaNotificacionFinProceso,
+      'fechaNotificacionFinProceso',
+      'del aviso',
+      ciclo.fechaResolucionDecaimiento,
+    );
 
     // ¿Queda alguien adjudicado además del infractor que está decayendo?
     const estadoPrevio = await this.fase4.getEstado(expedienteId, user);
@@ -523,19 +562,23 @@ export class DecaimientoService {
     const ahora = new Date();
 
     await this.prisma.$transaction(async (tx) => {
-      for (const participante of participantes) {
-        await this.registrarDocumento(tx, {
-          expedienteId,
-          decaimientoId: ciclo.id,
-          evaluacionId: participante.id,
-          tipoDocumento: 'NOTIFICACION_FIN_PROCEDIMIENTO',
-          createdBy: user.id,
-        });
-      }
+      // Es un aviso público: un solo documento para todos los participantes.
+      await this.registrarDocumento(tx, {
+        expedienteId,
+        decaimientoId: ciclo.id,
+        tipoDocumento: 'NOTIFICACION_FIN_PROCEDIMIENTO',
+        createdBy: user.id,
+      });
 
       await tx.decaimientoFase4.update({
         where: { id: ciclo.id },
-        data: { estado: 'CERRADO', fecNotificacionDesierto: ahora, updatedBy: user.id },
+        data: {
+          estado: 'CERRADO',
+          numNotificacionFinProceso: dto.numNotificacionFinProceso,
+          fechaNotificacionFinProceso: fechaAviso,
+          fecNotificacionDesierto: ahora,
+          updatedBy: user.id,
+        },
       });
 
       if (sellaElExpediente) {
@@ -584,7 +627,13 @@ export class DecaimientoService {
       if (ultimo) {
         await tx.decaimientoFase4.update({
           where: { id: ultimo.id },
-          data: { estado: 'EN_CURSO', fecNotificacionDesierto: null, updatedBy: user.id },
+          data: {
+            estado: 'EN_CURSO',
+            numNotificacionFinProceso: null,
+            fechaNotificacionFinProceso: null,
+            fecNotificacionDesierto: null,
+            updatedBy: user.id,
+          },
         });
 
         // Las notificaciones de fin de procedimiento dejan de valer.

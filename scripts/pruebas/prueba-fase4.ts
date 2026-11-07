@@ -174,6 +174,16 @@ const OFICIO = {
   fechaOficioNotificacionDecaimiento: '2026-12-31',
 };
 
+const NOTIFICACION_SUBSIGUIENTE = {
+  numNotificacionAdjudicacionSubsiguiente: 'NOT-045-2026',
+  fechaNotificacionAdjudicacionSubsiguiente: '2026-12-31',
+};
+
+const AVISO_FIN = {
+  numNotificacionFinProceso: 'AVISO-012-2026',
+  fechaNotificacionFinProceso: '2026-12-31',
+};
+
 async function main() {
   assertBaseLocal();
 
@@ -360,7 +370,7 @@ async function main() {
 
   await rechaza(
     'no se notifica al subsiguiente antes que al infractor',
-    () => decaimiento.notificarSubsiguiente(total.expedienteId, user),
+    () => decaimiento.notificarSubsiguiente(total.expedienteId, NOTIFICACION_SUBSIGUIENTE, user),
     'Primero debe notificarse el decaimiento al infractor',
   );
 
@@ -406,7 +416,41 @@ async function main() {
     'Primero debe notificarse la adjudicación a la siguiente opción',
   );
 
-  estado = await decaimiento.notificarSubsiguiente(total.expedienteId, user);
+  await rechaza(
+    'la notificación no puede ser anterior a la resolución',
+    () =>
+      decaimiento.notificarSubsiguiente(
+        total.expedienteId,
+        { ...NOTIFICACION_SUBSIGUIENTE, fechaNotificacionAdjudicacionSubsiguiente: '2026-10-22' },
+        user,
+      ),
+    'no puede ser anterior a la de la resolución',
+  );
+
+  await decaimiento.notificarSubsiguiente(
+    total.expedienteId,
+    { ...NOTIFICACION_SUBSIGUIENTE, numNotificacionAdjudicacionSubsiguiente: 'NOT-MAL-ESCRITA' },
+    user,
+  );
+  estado = await decaimiento.notificarSubsiguiente(
+    total.expedienteId,
+    NOTIFICACION_SUBSIGUIENTE,
+    user,
+  );
+  ok(
+    'reemitir la notificación corrige el número',
+    estado.cicloActivo?.notificacionSubsiguiente.numNotificacionAdjudicacionSubsiguiente ===
+      'NOT-045-2026',
+  );
+  const notificacionesVigentes = await prisma.documentoGenerado.count({
+    where: {
+      expedienteId: total.expedienteId,
+      tipoDocumento: 'NOTIFICACION_ADJUDICACION_SUBSIGUIENTE',
+      estaDesactualizado: false,
+      deletedAt: null,
+    },
+  });
+  ok('solo queda vigente una notificación', notificacionesVigentes === 1, notificacionesVigentes);
   ok(
     'queda la fecha de notificación al subsiguiente',
     !!estado.cicloActivo?.notificacionSubsiguiente.emitidaAt,
@@ -550,7 +594,7 @@ async function main() {
     'se cierra con las notificaciones de fin de procedimiento',
   );
 
-  estado = await decaimiento.cierreDesierto(parcial.expedienteId, user);
+  estado = await decaimiento.cierreDesierto(parcial.expedienteId, AVISO_FIN, user);
 
   // El decaimiento alcanza sólo a los renglones del infractor: el segundo
   // adjudicado conserva los suyos, así que el expediente NO se sella.
@@ -567,13 +611,22 @@ async function main() {
   );
   ok('su contrato sigue disponible', !estado.gates.contratosBloqueados);
   ok(
-    'se notificó a los 3 participantes',
+    'los 3 participantes ven el aviso emitido',
     estado.participantesCierre.every((p) => p.notificacionEmitidaAt),
   );
   ok(
-    'cada notificación trae su documentoId',
-    estado.participantesCierre.every((p) => p.documentoId),
+    'todos apuntan al mismo aviso',
+    new Set(estado.participantesCierre.map((p) => p.documentoId)).size === 1 &&
+      !!estado.participantesCierre[0].documentoId,
   );
+  const avisos = await prisma.documentoGenerado.count({
+    where: {
+      expedienteId: parcial.expedienteId,
+      tipoDocumento: 'NOTIFICACION_FIN_PROCEDIMIENTO',
+      deletedAt: null,
+    },
+  });
+  ok('el aviso es un solo documento', avisos === 1, avisos);
 
   const expedienteParcial = await prisma.expedienteContratacion.findUnique({
     where: { id: parcial.expedienteId },
@@ -623,7 +676,7 @@ async function main() {
     user,
   );
   await decaimiento.notificarInfractor(readj.expedienteId, OFICIO, user);
-  await decaimiento.notificarSubsiguiente(readj.expedienteId, user);
+  await decaimiento.notificarSubsiguiente(readj.expedienteId, NOTIFICACION_SUBSIGUIENTE, user);
   estado = await decaimiento.cerrarCiclo(readj.expedienteId, user);
 
   const contratoReadj = await fase4.getContrato(readj.expedienteId, asumeReadj, user);
@@ -712,7 +765,7 @@ async function main() {
     user,
   );
   await decaimiento.notificarInfractor(ultimo.expedienteId, OFICIO, user);
-  estado = await decaimiento.cierreDesierto(ultimo.expedienteId, user);
+  estado = await decaimiento.cierreDesierto(ultimo.expedienteId, AVISO_FIN, user);
 
   ok('sin adjudicados vigentes, el expediente sí se sella', estado.sellado);
   ok('ya no se puede declarar otro decaimiento', !estado.gates.puedeDeclararDecaimiento);

@@ -16,8 +16,8 @@
 | `CERTIFICADO_INCUMPLIMIENTO`             | `certificado-incumplimiento-template.docx`             | **Listo** |
 | `RESOLUCION_DECAIMIENTO`                 | `resolucion-decaimiento-template.docx`                 | **Listo** |
 | `NOTIFICACION_DECAIMIENTO`               | `notificacion-decaimiento-template.docx`               | **Listo** |
-| `NOTIFICACION_ADJUDICACION_SUBSIGUIENTE` | `notificacion-adjudicacion-subsiguiente-template.docx` | Pendiente |
-| `NOTIFICACION_FIN_PROCEDIMIENTO`         | `notificacion-fin-procedimiento-template.docx`         | Pendiente |
+| `NOTIFICACION_ADJUDICACION_SUBSIGUIENTE` | `notificacion-adjudicacion-subsiguiente-template.docx` | **Listo** |
+| `NOTIFICACION_FIN_PROCEDIMIENTO`         | `notificacion-fin-procedimiento-template.docx`         | **Listo** |
 
 ---
 
@@ -136,3 +136,53 @@ Lo firma la Máxima Autoridad o su delegado y va dirigido al representante legal
 | --------- | --------------------------------------------------------------------------------- |
 | `TOTAL`   | "DECAIMIENTO DE LA ADJUDICACIÓN TOTAL otorgada a su representada…"                |
 | `PARCIAL` | "DECAIMIENTO DE LA ADJUDICACIÓN PARCIAL…", limitado a los renglones del infractor |
+
+---
+
+## 6. Notificación de adjudicación subsiguiente
+
+### Cambio obligatorio: el paso 4A ya no es un clic
+
+`POST …/decaimientos/activo/notificacion-subsiguiente` ahora exige un body. Sin él responde **400**.
+
+```json
+{
+  "numNotificacionAdjudicacionSubsiguiente": "NOT-045-2026",
+  "fechaNotificacionAdjudicacionSubsiguiente": "2026-10-29"
+}
+```
+
+**Qué hacer:** agregar al paso 4A un formulario con estos dos campos. La lógica pide sugerir la fecha actual.
+
+- **Validación:** la fecha no puede ser anterior a `fechaResolucionDecaimiento`. Si lo es, responde **400**.
+- **Respuesta:** `notificacionSubsiguiente` trae ahora los dos campos. Sirven para precargar el formulario.
+- **Corregir la notificación:** se repite el mismo POST. El Word anterior queda desactualizado y `documentoId` apunta al nuevo.
+- **Rehacer el certificado o la resolución:** ambos campos vuelven a `null` y hay que notificar de nuevo.
+
+El Word lista objeto, monto, partidas, plazo y garantías. La Garantía Laboral solo sale si Fase 1 la exige.
+
+---
+
+## 7. Aviso de fin de procedimiento
+
+### Cambio obligatorio: el paso 4B necesita número y fecha
+
+`POST …/decaimientos/activo/cierre-desierto` ahora exige un body. Sin él responde **400**.
+
+```json
+{
+  "numNotificacionFinProceso": "AVISO-012-2026",
+  "fechaNotificacionFinProceso": "2026-10-29"
+}
+```
+
+**Qué hacer:** agregar al paso 4B un formulario con estos dos campos. La lógica pide sugerir la fecha actual.
+
+- **Validación:** la fecha no puede ser anterior a `fechaResolucionDecaimiento`. Si lo es, responde **400**.
+- **Un solo documento:** ya no se genera uno por participante, porque es un aviso público. `participantesCierre` conserva su forma y todas las filas traen el mismo `documentoId`.
+- **Respuesta:** cada ciclo trae `avisoFinProcedimiento` con `emitidaAt`, `numNotificacionFinProceso`, `fechaNotificacionFinProceso` y `documentoId`. Al cerrar, el ciclo pasa a `ciclosCerrados`.
+- **Deshacer el sellado:** el aviso queda desactualizado y sus dos campos vuelven a `null`.
+
+Lo firma el/la Secretario(a) de la Comisión. En PARCIAL muestra los renglones de `renglonesAfectadosDecaimiento`, los mismos de la Resolución.
+
+**Límite conocido:** en un desierto PARCIAL que no sella el expediente, el ciclo queda cerrado y el aviso no se puede corregir desde el sistema.

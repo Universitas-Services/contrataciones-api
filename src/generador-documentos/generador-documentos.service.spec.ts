@@ -85,6 +85,6 @@ describe('GeneradorDocumentosService.plantillaExiste', () => {
   it('distingue una plantilla disponible de una ausente', () => {
     const { servicio } = crear();
     expect(servicio.plantillaExiste(PLANTILLA)).toBe(true);
-    expect(servicio.plantillaExiste('notificacion-fin-procedimiento-template.docx')).toBe(false);
+    expect(servicio.plantillaExiste('plantilla-que-no-existe.docx')).toBe(false);
   });
 });
