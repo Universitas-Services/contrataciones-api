@@ -77,9 +77,9 @@ export class DocumentosFase4Service {
       select: {
         codigoNomenclatura: true,
         descripcionObjeto: true,
-        ente: { select: { nombre: true, rif: true } },
+        ente: { select: { nombre: true, rif: true, ciudad: true } },
         fasePreparatoria: { select: { porcentajeFielCumplimiento: true } },
-        cronograma: { select: { fechaLimiteAdjudicacion: true } },
+        cronograma: { select: { fechaLimiteAdjudicacion: true, fechaLimiteEvaluacion: true } },
         autoridad: true,
         autoridadFirmaComoDelegado: true,
         comision: {

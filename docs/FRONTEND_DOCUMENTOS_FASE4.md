@@ -14,7 +14,7 @@
 | ---------------------------------------- | ------------------------------------------------------ | --------- |
 | `CONTRATO`                               | `contrato-fase4-template.docx`                         | **Listo** |
 | `CERTIFICADO_INCUMPLIMIENTO`             | `certificado-incumplimiento-template.docx`             | **Listo** |
-| `RESOLUCION_DECAIMIENTO`                 | `resolucion-decaimiento-template.docx`                 | Pendiente |
+| `RESOLUCION_DECAIMIENTO`                 | `resolucion-decaimiento-template.docx`                 | **Listo** |
 | `NOTIFICACION_DECAIMIENTO`               | `notificacion-decaimiento-template.docx`               | Pendiente |
 | `NOTIFICACION_ADJUDICACION_SUBSIGUIENTE` | `notificacion-adjudicacion-subsiguiente-template.docx` | Pendiente |
 | `NOTIFICACION_FIN_PROCEDIMIENTO`         | `notificacion-fin-procedimiento-template.docx`         | Pendiente |
@@ -86,3 +86,22 @@ La sección "Recomendación" cambia según la decisión del ciclo y el carácter
 Campos del certificado que salen en el Word: `fechaNotificacionAdjudicacionIncumplidor` y `fechaCertificacionIncumplimiento`. Los vencimientos los calcula el backend.
 
 > La `causalDecaimiento` se guarda pero no se imprime: el texto del certificado es fijo.
+
+---
+
+## 4. Resolución de decaimiento
+
+Al guardar `PUT …/decaimientos/activo/resolucion` (`numResolucionDecaimiento`, `fechaResolucionDecaimiento`) el Word se genera solo. Lo firma la Máxima Autoridad o su delegado.
+
+| Decisión       | TOTAL                                           | PARCIAL                                                   |
+| -------------- | ----------------------------------------------- | --------------------------------------------------------- |
+| `SUBSIGUIENTE` | Decaimiento + adjudicación subsiguiente total   | Decaimiento + adjudicación subsiguiente parcial           |
+| `DESIERTO`     | Decaimiento + desierto + reinicio por modalidad | Decaimiento + desierto parcial de los renglones afectados |
+
+### Cambio de comportamiento: en TOTAL, DESIERTO solo sin reserva
+
+En adjudicación **TOTAL**, `PATCH …/decaimientos/activo/decision` con `DESIERTO` ahora responde **400** si `candidatosSubsiguientes` no está vacío, porque la Resolución afirma que no existen otras ofertas válidas.
+
+**Qué hacer:** en TOTAL, mostrar la opción "Desierto" solo cuando `candidatosSubsiguientes` venga vacío.
+
+En **PARCIAL** no cambia nada: las dos opciones siguen disponibles, porque los candidatos incluyen a los demás adjudicados y solo el analista sabe si alguna oferta cubre los renglones liberados.

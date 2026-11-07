@@ -26,9 +26,12 @@ export interface EntradaDocumentoCiclo {
   expediente: {
     codigoNomenclatura: string | null;
     descripcionObjeto: string | null;
-    ente: { nombre: string | null; rif: string | null } | null;
+    ente: { nombre: string | null; rif: string | null; ciudad?: string | null } | null;
     fasePreparatoria: { porcentajeFielCumplimiento: unknown } | null;
-    cronograma?: { fechaLimiteAdjudicacion: Date | null } | null;
+    cronograma?: {
+      fechaLimiteAdjudicacion: Date | null;
+      fechaLimiteEvaluacion?: Date | null;
+    } | null;
     comision?: {
       datosDesignacionComision: string | null;
       miembros: MiembroComision[];
@@ -112,7 +115,10 @@ export function mapDatosCiclo({
     datos_designacion_comision: texto(expediente.comision?.datosDesignacionComision),
     cod_nomenclatura_proceso_au_au: texto(expediente.codigoNomenclatura),
     desc_objeto_contratacion_au_au: texto(expediente.descripcionObjeto),
+    nom_ente_contratante: texto(expediente.ente?.nombre),
+    loc_ciudad_ente: texto(expediente.ente?.ciudad),
     fec_limite_adjudicacion_au_au: fecha(expediente.cronograma?.fechaLimiteAdjudicacion ?? null),
+    fec_limite_evaluacion_au_au: fecha(expediente.cronograma?.fechaLimiteEvaluacion ?? null),
     nombre_proveedor_incumplidor_au_au: texto(ciclo.infractor.nombreProveedorEvaluado),
     rif_proveedor_incumplidor_au_au: texto(ciclo.infractor.rifProveedorEvaluado),
     nombre_proveedor_subsiguiente_au_au: texto(ciclo.subsiguiente?.nombreProveedorEvaluado),
@@ -123,6 +129,11 @@ export function mapDatosCiclo({
     monto_readjudicado_parcial_bs_au_au: montoSinMoneda(monto),
     existe_opcion_subsiguiente_au_au: ciclo.decision === 'SUBSIGUIENTE',
     no_existe_opcion_subsiguiente_au_au: ciclo.decision === 'DESIERTO',
+    // La Resolución nombra estos mismos bloques de otra forma, "oden" incluido.
+    existe_oden_prelacion_au_au: ciclo.decision === 'SUBSIGUIENTE',
+    existe_opcion_subsiguiente_cd: ciclo.decision === 'SUBSIGUIENTE',
+    no_existe_orden_prelacion_au_au: ciclo.decision === 'DESIERTO',
+    declaratoria_desierta_residual_au_au: ciclo.decision === 'DESIERTO',
     caracter_adjudicacion_total_au_au: !esParcial,
     caracter_parcial_decaimiento_au_au: esParcial,
 

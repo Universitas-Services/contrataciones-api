@@ -650,6 +650,17 @@ async function main() {
     { infractorEvaluacionId: ultimo.evaluaciones[0] },
     user,
   );
+  await rechaza(
+    'en TOTAL no se declara desierto si queda reserva',
+    () => decaimiento.elegirDecision(ultimo.expedienteId, { decision: 'DESIERTO' }, user),
+    'Quedan oferentes en reserva',
+  );
+
+  // Se agota el orden de prelación: ya nadie puede asumir.
+  await prisma.evaluacionResultados.updateMany({
+    where: { id: { in: ultimo.evaluaciones.slice(1) } },
+    data: { oferenteCalificado: false },
+  });
   await decaimiento.elegirDecision(ultimo.expedienteId, { decision: 'DESIERTO' }, user);
   await decaimiento.guardarCertificado(
     ultimo.expedienteId,

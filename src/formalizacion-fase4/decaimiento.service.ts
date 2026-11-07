@@ -137,13 +137,23 @@ export class DecaimientoService {
       );
     }
 
-    if (dto.decision === 'SUBSIGUIENTE') {
-      const estado = await this.fase4.getEstado(expedienteId, user);
-      if (estado.candidatosSubsiguientes.length === 0) {
-        throw new BadRequestException(
-          'No quedan oferentes en reserva: el procedimiento solo puede declararse desierto.',
-        );
-      }
+    const { candidatosSubsiguientes } = await this.fase4.getEstado(expedienteId, user);
+    if (dto.decision === 'SUBSIGUIENTE' && candidatosSubsiguientes.length === 0) {
+      throw new BadRequestException(
+        'No quedan oferentes en reserva: el procedimiento solo puede declararse desierto.',
+      );
+    }
+    // En TOTAL la Resolución afirma que no existen otras ofertas válidas: con reserva sería
+    // falso. En PARCIAL no aplica: los candidatos incluyen a los demás adjudicados, y solo el
+    // analista sabe si alguna oferta cubre los renglones liberados.
+    if (
+      dto.decision === 'DESIERTO' &&
+      ciclo.caracterSnapshot === 'TOTAL' &&
+      candidatosSubsiguientes.length > 0
+    ) {
+      throw new BadRequestException(
+        'Quedan oferentes en reserva: no se puede declarar desierto mientras exista una opción subsiguiente.',
+      );
     }
 
     await this.prisma.decaimientoFase4.update({
