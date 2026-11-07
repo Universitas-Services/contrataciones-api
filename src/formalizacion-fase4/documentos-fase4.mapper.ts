@@ -1,4 +1,5 @@
 import { numeroALetras } from '../common/utils/numero-a-letras.util';
+import { type CondicionesBloques, expandirBloques } from './bloques-contrato';
 import { LINEA_VACIA, aTextoPlano, renderizarPildoras } from './pildoras.util';
 import { fechaLarga, formatearBs, montoFielCumplimiento } from './tokens-contrato.resolver';
 import type { ClausulaContrato } from './types/fase4.types';
@@ -6,9 +7,9 @@ import type { ClausulaContrato } from './types/fase4.types';
 /**
  * Datos que reciben las plantillas `.docx` de la Fase 4.
  *
- * Las plantillas todavía no existen: los nombres de variables y de bloques
- * condicionales se ajustan aquí cuando lleguen los textos legales (§7 del brief
- * y PDF 3). Un dato ausente se pinta como línea, igual que en las cláusulas.
+ * El contrato ya usa las marcas de su prototipo. Los documentos del ciclo aún no
+ * tienen plantilla: sus nombres se ajustan aquí cuando se integren. Un dato
+ * ausente se pinta como línea, igual que en las cláusulas.
  */
 
 export interface OferenteDocumento {
@@ -116,22 +117,66 @@ export function mapDatosCiclo({ expediente, ciclo, destinatario }: EntradaDocume
   };
 }
 
-/** El contrato: variables resueltas y cláusulas en texto plano, en su orden. */
+const UNIDADES = [
+  '',
+  'PRIMERA',
+  'SEGUNDA',
+  'TERCERA',
+  'CUARTA',
+  'QUINTA',
+  'SEXTA',
+  'SÉPTIMA',
+  'OCTAVA',
+  'NOVENA',
+];
+const DECENAS = ['', 'DÉCIMA', 'VIGÉSIMA', 'TRIGÉSIMA', 'CUADRAGÉSIMA', 'QUINCUAGÉSIMA'];
+
+/** Número de cláusula en ordinal: 1 → PRIMERA, 22 → VIGÉSIMA SEGUNDA. */
+export function ordinalClausula(numero: number): string {
+  const decena = DECENAS[Math.floor(numero / 10)];
+  if (decena === undefined) return `${numero}`;
+  return [decena, UNIDADES[numero % 10]].filter(Boolean).join(' ');
+}
+
+/** Lo que el contrato necesita además de las variables de las cláusulas. */
+export interface DatosDocumentoContrato {
+  bloques: CondicionesBloques;
+  /** Autoridad o delegado que firma. Lo que no aplica viene vacío. */
+  firmas: Record<string, string>;
+  fechaFirma: string | null;
+}
+
+/** El contrato: marcas del prototipo y cláusulas en texto plano, en su orden. */
 export function mapDatosContrato(
   tokens: Record<string, string | null>,
   clausulas: ClausulaContrato[],
+  { bloques, firmas, fechaFirma }: DatosDocumentoContrato,
 ) {
-  const variables = Object.fromEntries(
-    Object.entries(tokens).map(([clave, valor]) => [clave, texto(valor)]),
-  );
-
   return {
-    ...variables,
-    clausulas: [...clausulas]
+    ...firmas,
+
+    desc_objeto_contratacion_au_au: texto(tokens.objeto_contratacion_au_au),
+    cod_nomenclatura_proceso_au_au: texto(tokens.nomenclatura_proceso_au_au),
+    nom_ente_contratante: texto(tokens.nombre_ente_contratante_au_au),
+    organo_adscripcion: texto(tokens.organo_adscripcion_au_au),
+    rif_ente: texto(tokens.rif_ente_au_au),
+    loc_ciudad_ente: texto(tokens.ciudad_domicilio_especial_au_au),
+    fec_limite_firma_contrato_au_au: texto(fechaFirma),
+
+    oferente_primera_opción_au_au: texto(tokens.nombre_contratista_au_au),
+    rif_proveedor_evaluado_au_au: texto(tokens.rif_contratista_au_au),
+    datos_registro_mercantil_proveedor_evaluado_au_au: texto(tokens.registro_mercantil_au_au),
+    nombre_rep_legal_evaluado_au_au: texto(tokens.representante_contratista_au_au),
+    cedula_rep_legal_evaluado_au_au: texto(tokens.cedula_representante_au_au),
+
+    clausulas_custom_au_au: [...clausulas]
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-      .map((clausula) => ({
-        titulo: clausula.titulo ?? '',
-        cuerpo: aTextoPlano(renderizarPildoras(clausula.cuerpoHtml ?? '', tokens, 'VALOR')),
+      .map((clausula, indice) => ({
+        num_clausula_custom_au_au: ordinalClausula(indice + 1),
+        titulo_clausula_custom_au_au: clausula.titulo ?? '',
+        cuerpo_clausula_custom_au_au: aTextoPlano(
+          renderizarPildoras(expandirBloques(clausula.cuerpoHtml ?? '', bloques), tokens, 'VALOR'),
+        ),
       })),
   };
 }

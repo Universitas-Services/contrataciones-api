@@ -1,4 +1,4 @@
-import { numeroALetras } from '../common/utils/numero-a-letras.util';
+import { cifraEnLetras, numeroALetras } from '../common/utils/numero-a-letras.util';
 
 /**
  * Resuelve el diccionario `data-token-id` → valor para el contrato de un
@@ -38,7 +38,14 @@ export interface DatosToken {
     porcentajeAnticipo: number | null;
     porcentajeResponsabilidadSocial: number | null;
     lugarLogisticaEjecucion: string | null;
+    porcentajeResponsabilidadCivil?: number | null;
+    montoResponsabilidadCivilBs?: number | null;
+    modalidadCrs?: string | null;
+    unidadRespCumplimientoCrs?: string | null;
   };
+  /** Base de la fianza laboral (dictamen del adjudicado). */
+  montoManoObraOfertado?: number | null;
+  nombreUnidadUsuaria?: string | null;
   fechaAdjudicacion?: Date | null;
 }
 
@@ -65,12 +72,17 @@ export function unirPartidas(...listas: (string | null | undefined)[]): string |
   return unicas.length ? unicas.join(', ') : null;
 }
 
-/** `Bs. 367.500,00` — el formato que espera el documento. */
-export function formatearBs(monto: number): string {
-  return `Bs. ${monto.toLocaleString('es-VE', {
+/** `367.500,00` — las cláusulas ya escriben "Bs." antes de la variable. */
+export function formatearMonto(monto: number): string {
+  return monto.toLocaleString('es-VE', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })}`;
+  });
+}
+
+/** `Bs. 367.500,00` — el formato de los documentos del ciclo de decaimiento. */
+export function formatearBs(monto: number): string {
+  return `Bs. ${formatearMonto(monto)}`;
 }
 
 export function fechaLarga(fecha: Date): string {
@@ -89,6 +101,12 @@ export function resolverTokens(datos: DatosToken): Record<string, string | null>
     monto != null && datos.fase1?.porcentajeResponsabilidadSocial != null
       ? monto * (datos.fase1.porcentajeResponsabilidadSocial / 100)
       : null;
+  const fianzaLaboral =
+    datos.montoManoObraOfertado != null && datos.fase1?.porcentajeGarantiaLaboral != null
+      ? datos.montoManoObraOfertado * (datos.fase1.porcentajeGarantiaLaboral / 100)
+      : null;
+  const montoPoliza = datos.fase1?.montoResponsabilidadCivilBs ?? null;
+  const porcentaje = (valor: number | null | undefined) => (valor != null ? `${valor}%` : null);
 
   return {
     // ── Ente contratante ──────────────────────────────────────────────
@@ -109,7 +127,7 @@ export function resolverTokens(datos: DatosToken): Record<string, string | null>
     registro_mercantil_au_au: datos.oferta.datosRegistroMercantilProveedorOferente,
 
     // ── Contrato ──────────────────────────────────────────────────────
-    monto_contrato_numeros_au_au: monto != null ? formatearBs(monto) : null,
+    monto_contrato_numeros_au_au: monto != null ? formatearMonto(monto) : null,
     monto_contrato_letras_au_au: monto != null ? numeroALetras(monto) : null,
     partidas_presupuestarias_au_au: datos.partidasPresupuestarias,
     plazo_ejecucion_dias_au_au:
@@ -128,12 +146,24 @@ export function resolverTokens(datos: DatosToken): Record<string, string | null>
         : null,
     lugar_ejecucion_au_au: datos.fase1?.lugarLogisticaEjecucion ?? null,
 
-    monto_garantia_fiel_cumplimiento_numeros_au_au: fianza != null ? formatearBs(fianza) : null,
-    monto_garantia_fiel_cumplimiento_letras_au_au: fianza != null ? numeroALetras(fianza) : null,
+    // Las cláusulas escriben "… Bolívares (Bs. …)": letras sin moneda y cifra sin "Bs.".
+    monto_garantia_fiel_cumplimiento_numeros_au_au: fianza != null ? formatearMonto(fianza) : null,
+    monto_garantia_fiel_cumplimiento_letras_au_au: fianza != null ? cifraEnLetras(fianza) : null,
+    monto_fianza_laboral_numeros_au_au:
+      fianzaLaboral != null ? formatearMonto(fianzaLaboral) : null,
+    monto_fianza_laboral_letras_au_au: fianzaLaboral != null ? cifraEnLetras(fianzaLaboral) : null,
+    monto_responsabilidad_civil_bs_au_au: montoPoliza != null ? formatearMonto(montoPoliza) : null,
+    monto_responsabilidad_civil_letras_au_au:
+      montoPoliza != null ? cifraEnLetras(montoPoliza) : null,
+    porcentaje_garantia_laboral_au_au: porcentaje(datos.fase1?.porcentajeGarantiaLaboral),
+    porcentaje_responsabilidad_civil_au_au: porcentaje(datos.fase1?.porcentajeResponsabilidadCivil),
+    modalidad_crs_au_au: datos.fase1?.modalidadCrs ?? null,
+    unidad_resp_cumplimiento_crs_au_au: datos.fase1?.unidadRespCumplimientoCrs ?? null,
+    nom_unidad_usuaria_au_au: datos.nombreUnidadUsuaria ?? null,
 
     // El CRS no tiene monto propio en este flujo: sale del porcentaje de
     // responsabilidad social sobre el monto del contrato.
-    monto_crs_numeros_au_au: montoCrs != null ? formatearBs(montoCrs) : null,
+    monto_crs_numeros_au_au: montoCrs != null ? formatearMonto(montoCrs) : null,
     monto_crs_letras_au_au: montoCrs != null ? numeroALetras(montoCrs) : null,
 
     fecha_adjudicacion_au_au: datos.fechaAdjudicacion ? fechaLarga(datos.fechaAdjudicacion) : null,

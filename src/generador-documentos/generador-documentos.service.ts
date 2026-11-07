@@ -1675,7 +1675,7 @@ export class GeneradorDocumentosService {
   // FASE 4 — Adjudicación, Contrato Formalizado y Notificaciones
   // =========================================================================
 
-  private async getFirmasExpediente(expediente: any) {
+  async getFirmasExpediente(expediente: any) {
     const autoridad = expediente.autoridad;
     const esDelegado = expediente.autoridadFirmaComoDelegado;
 

@@ -1,5 +1,5 @@
 import { formatCurrencyVE } from '../../common/utils/date-formatter.util';
-import { enteroALetras } from '../../common/utils/numero-a-letras.util';
+import { cifraEnLetras } from '../../common/utils/numero-a-letras.util';
 import { ETIQUETAS_PRELACION } from '../../evaluacion-fase3/hub/prelacion.service';
 import type { EstadoPromocion } from '../../evaluacion-fase3/hub/types/hub.types';
 import type { TextosEstatus } from './informe-desierto.mapper';
@@ -97,12 +97,7 @@ const num = (v: Numerico): number => {
 };
 const bs = (v: number) => formatCurrencyVE(v);
 /** Cifra en palabras sin la palabra "bolívares" (la plantilla ya la escribe). */
-const letras = (v: number) => {
-  const entero = Math.floor(Math.abs(v));
-  const centimos = Math.round((Math.abs(v) - entero) * 100);
-  const texto = enteroALetras(entero);
-  return centimos > 0 ? `${texto} CON ${String(centimos).padStart(2, '0')}/100` : texto;
-};
+const letras = cifraEnLetras;
 
 const normalizar = (v: string | null | undefined) =>
   (v ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();

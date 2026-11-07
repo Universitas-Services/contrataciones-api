@@ -3,6 +3,7 @@ import type { TipoDocumento } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { GeneradorDocumentosService } from '../generador-documentos/generador-documentos.service';
 import { mapDatosCiclo, mapDatosContrato } from './documentos-fase4.mapper';
+import type { CondicionesBloques } from './bloques-contrato';
 import type { ClausulaContrato } from './types/fase4.types';
 
 /** Plantilla de cada documento del ciclo de decaimiento. */
@@ -28,6 +29,8 @@ export interface ContratoPorEmitir {
   documentoAnteriorId: string | null;
   clauses: ClausulaContrato[];
   tokens: Record<string, string | null>;
+  bloques: CondicionesBloques;
+  fechaFirma: string | null;
   userId: string;
 }
 
@@ -121,11 +124,21 @@ export class DocumentosFase4Service {
     if (!this.generador.plantillaExiste(PLANTILLA_CONTRATO)) return null;
 
     try {
+      const expediente = await this.prisma.expedienteContratacion.findUnique({
+        where: { id: contrato.expedienteId },
+        select: { autoridadFirmaComoDelegado: true, autoridad: true },
+      });
+      const firmas = await this.generador.getFirmasExpediente(expediente);
+
       const { fileUrl } = await this.generador.renderizarYSubir(
         contrato.expedienteId,
         'CONTRATO',
         PLANTILLA_CONTRATO,
-        mapDatosContrato(contrato.tokens, contrato.clauses),
+        mapDatosContrato(contrato.tokens, contrato.clauses, {
+          bloques: contrato.bloques,
+          firmas,
+          fechaFirma: contrato.fechaFirma,
+        }),
       );
 
       return await this.prisma.$transaction(async (tx) => {

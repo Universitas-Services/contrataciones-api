@@ -9,7 +9,8 @@ import { PrismaService } from '../database/prisma.service';
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
 import { GuardarContratoDto } from './dto/contrato.dto';
 import { compararPrelacion } from './prelacion-fase4.util';
-import { resolverTokens, unirPartidas } from './tokens-contrato.resolver';
+import { type CondicionesBloques, expandirBloques } from './bloques-contrato';
+import { fechaLarga, resolverTokens, unirPartidas } from './tokens-contrato.resolver';
 import { DocumentosFase4Service } from './documentos-fase4.service';
 import { renderizarPildoras } from './pildoras.util';
 import type {
@@ -432,6 +433,7 @@ export class FormalizacionFase4Service {
       : await this.clonarModeloFase1(expedienteId);
 
     const tokens = await this.tokensDe(expedienteId, evaluacionId, estado);
+    const bloques = await this.condicionesBloques(expedienteId);
 
     return {
       evaluacionId,
@@ -446,7 +448,7 @@ export class FormalizacionFase4Service {
       clauses: clauses.map((c) => ({
         ...c,
         cuerpoHtml: c.cuerpoHtml
-          ? renderizarPildoras(c.cuerpoHtml, tokens, 'RESOLVER')
+          ? renderizarPildoras(expandirBloques(c.cuerpoHtml, bloques), tokens, 'RESOLVER')
           : c.cuerpoHtml,
       })),
     };
@@ -540,6 +542,8 @@ export class FormalizacionFase4Service {
       documentoAnteriorId: contrato.documentoId,
       clauses: dto.clauses,
       tokens: await this.tokensDe(expedienteId, evaluacionId, estado),
+      bloques: await this.condicionesBloques(expedienteId),
+      fechaFirma: await this.fechaFirma(expedienteId, evaluacionId, datos.generadoAt),
       userId: user.id,
     });
 
@@ -574,6 +578,12 @@ export class FormalizacionFase4Service {
         documentoAnteriorId: null,
         clauses: contrato.clauses as unknown as ClausulaContrato[],
         tokens: await this.tokensDe(expedienteId, contrato.evaluacionId, estado),
+        bloques: await this.condicionesBloques(expedienteId),
+        fechaFirma: await this.fechaFirma(
+          expedienteId,
+          contrato.evaluacionId,
+          contrato.generadoAt ?? new Date(),
+        ),
         userId: user.id,
       });
 
@@ -627,6 +637,52 @@ export class FormalizacionFase4Service {
     return modelo?.clauses ?? [];
   }
 
+  /** Lo marcado en Fase 1 que decide qué bloques de garantías lleva el contrato. */
+  private async condicionesBloques(expedienteId: string): Promise<CondicionesBloques> {
+    const fase = await this.prisma.fasePreparatoria.findUnique({
+      where: { expedienteId },
+      select: {
+        retencionFielCumplimiento: true,
+        anticipoContrato: true,
+        requiereGarantiaLaboral: true,
+        retencionFianzaLaboral: true,
+        polizaResponsabilidadCivil: true,
+      },
+    });
+    return {
+      retencionFielCumplimiento: fase?.retencionFielCumplimiento === true,
+      anticipoContrato: fase?.anticipoContrato === true,
+      requiereGarantiaLaboral: fase?.requiereGarantiaLaboral === true,
+      retencionFianzaLaboral: fase?.retencionFianzaLaboral === true,
+      polizaResponsabilidadCivil: fase?.polizaResponsabilidadCivil === true,
+    };
+  }
+
+  /**
+   * Fecha que lleva el contrato: la del cronograma. Quien asumió por decaimiento
+   * firma fuera de ese calendario, así que el suyo lleva la fecha en que se genera.
+   */
+  private async fechaFirma(expedienteId: string, evaluacionId: string, generadoAt: Date) {
+    const readjudicaciones = await this.prisma.decaimientoFase4.count({
+      where: {
+        expedienteId,
+        deletedAt: null,
+        estado: 'CERRADO',
+        decision: 'SUBSIGUIENTE',
+        subsiguienteEvaluacionId: evaluacionId,
+      },
+    });
+    if (readjudicaciones > 0) return fechaLarga(generadoAt);
+
+    const cronograma = await this.prisma.cronogramaExpediente.findUnique({
+      where: { expedienteId },
+      select: { fechaLimiteFirmaContrato: true },
+    });
+    return cronograma?.fechaLimiteFirmaContrato
+      ? fechaLarga(cronograma.fechaLimiteFirmaContrato)
+      : null;
+  }
+
   /** Diccionario `data-token-id` → valor, ya formateado. */
   async tokensDe(
     expedienteId: string,
@@ -643,6 +699,7 @@ export class FormalizacionFase4Service {
             select: { nombre: true, rif: true, organoAdscripcion: true, ciudad: true },
           },
           cronograma: { select: { fechaLimiteAdjudicacion: true } },
+          unidadUsuaria: { select: { nombreUnidadUsuaria: true } },
           partidasPresupuestarias: {
             where: { deletedAt: null },
             select: { codigoPartida: true },
@@ -668,6 +725,7 @@ export class FormalizacionFase4Service {
               partidasAdjudicadasParcial: true,
               plazoEjecucionOfertaGanadora: true,
               plazoEjecucionOfertaParcial: true,
+              montoManoObraOfertado: true,
             },
           },
         },
@@ -681,6 +739,10 @@ export class FormalizacionFase4Service {
           porcentajeResponsabilidadSocial: true,
           lugarLogisticaEjecucion: true,
           plazoEjecucionProcedimiento: true,
+          porcentajeResponsabilidadCivil: true,
+          montoResponsabilidadCivilBs: true,
+          modalidadCrs: true,
+          unidadRespCumplimientoCrs: true,
         },
       }),
       // Todo lo que este oferente asumió en readjudicaciones, del ciclo más
@@ -768,7 +830,13 @@ export class FormalizacionFase4Service {
         porcentajeAnticipo: num(fase1?.porcentajeAnticipo),
         porcentajeResponsabilidadSocial: num(fase1?.porcentajeResponsabilidadSocial),
         lugarLogisticaEjecucion: fase1?.lugarLogisticaEjecucion ?? null,
+        porcentajeResponsabilidadCivil: num(fase1?.porcentajeResponsabilidadCivil),
+        montoResponsabilidadCivilBs: num(fase1?.montoResponsabilidadCivilBs),
+        modalidadCrs: fase1?.modalidadCrs ?? null,
+        unidadRespCumplimientoCrs: fase1?.unidadRespCumplimientoCrs ?? null,
       },
+      montoManoObraOfertado: num(dictamen?.montoManoObraOfertado),
+      nombreUnidadUsuaria: expediente?.unidadUsuaria?.nombreUnidadUsuaria ?? null,
       fechaAdjudicacion: expediente?.cronograma?.fechaLimiteAdjudicacion ?? null,
     });
   }

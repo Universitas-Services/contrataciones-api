@@ -56,6 +56,7 @@ function crear() {
     plantillaExiste: jest.fn().mockReturnValue(true),
     renderizarYSubir: jest.fn().mockResolvedValue({ fileUrl: 'https://archivo', fileName: 'a' }),
     mapDocToPreview: jest.fn().mockReturnValue({ previewUrl: 'https://vista' }),
+    getFirmasExpediente: jest.fn().mockResolvedValue({}),
   };
   const servicio = new DocumentosFase4Service(
     prisma as never,
@@ -72,12 +73,22 @@ const PENDIENTE = {
   decaimiento: CICLO,
 };
 
+const BLOQUES = {
+  retencionFielCumplimiento: false,
+  anticipoContrato: false,
+  requiereGarantiaLaboral: false,
+  retencionFianzaLaboral: false,
+  polizaResponsabilidadCivil: false,
+};
+
 const CONTRATO = {
   contratoId: 'contrato-1',
   expedienteId: 'exp-1',
   evaluacionId: 'eva-1',
   documentoAnteriorId: null,
   clauses: [],
+  bloques: BLOQUES,
+  fechaFirma: null,
   tokens: {},
   userId: 'user-1',
 };
@@ -233,25 +244,36 @@ describe('mapDatosContrato', () => {
   }
 
   it('llena una plantilla con las cláusulas en orden y en texto plano', () => {
-    const datos = mapDatosContrato({ monto_contrato_letras_au_au: 'MIL BOLÍVARES' }, [
-      { order: 2, titulo: 'SEGUNDA', cuerpoHtml: '<p>Por [MONTO CONTRATO EN LETRAS].</p>' },
-      { order: 1, titulo: 'PRIMERA', cuerpoHtml: '<p>En [CIUDAD DOMICILIO ESPECIAL].</p>' },
-    ]);
+    const datos = mapDatosContrato(
+      { monto_contrato_letras_au_au: 'MIL BOLÍVARES' },
+      [
+        { order: 2, titulo: 'MONTO', cuerpoHtml: '<p>Por [MONTO CONTRATO EN LETRAS].</p>' },
+        { order: 1, titulo: 'DOMICILIO', cuerpoHtml: '<p>En [CIUDAD DOMICILIO ESPECIAL].</p>' },
+      ],
+      { bloques: BLOQUES, firmas: {}, fechaFirma: null },
+    );
 
-    const doc = new Docxtemplater(plantilla('{#clausulas}{titulo}: {cuerpo} {/clausulas}'), {
-      delimiters: { start: '{', end: '}' },
-    });
+    const doc = new Docxtemplater(
+      plantilla(
+        '{#clausulas_custom_au_au}{num_clausula_custom_au_au} {titulo_clausula_custom_au_au}: {cuerpo_clausula_custom_au_au} {/clausulas_custom_au_au}',
+      ),
+      { delimiters: { start: '{', end: '}' } },
+    );
     doc.render(datos);
     const xml = doc.getZip().file('word/document.xml')?.asText() ?? '';
 
-    expect(xml).toContain(`PRIMERA: En ${LINEA_VACIA}.`);
-    expect(xml).toContain('SEGUNDA: Por MIL BOLÍVARES.');
+    expect(xml).toContain(`PRIMERA DOMICILIO: En ${LINEA_VACIA}.`);
+    expect(xml).toContain('SEGUNDA MONTO: Por MIL BOLÍVARES.');
     expect(xml.indexOf('PRIMERA')).toBeLessThan(xml.indexOf('SEGUNDA'));
     expect(xml).not.toContain('<span');
   });
 
   it('una variable sin valor sale como línea, nunca como null', () => {
-    const datos = mapDatosContrato({ rif_ente_au_au: null }, []);
-    expect(datos).toMatchObject({ rif_ente_au_au: LINEA_VACIA });
+    const datos = mapDatosContrato({ rif_ente_au_au: null }, [], {
+      bloques: BLOQUES,
+      firmas: {},
+      fechaFirma: null,
+    });
+    expect(datos).toMatchObject({ rif_ente: LINEA_VACIA });
   });
 });

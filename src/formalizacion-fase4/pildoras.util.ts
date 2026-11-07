@@ -1,5 +1,6 @@
 import {
   TOKENS_POR_CLAVE,
+  TOKENS_POR_ID,
   normalizarEtiqueta,
 } from '../biblioteca/constants/tokens-contrato.constants';
 
@@ -51,6 +52,27 @@ const RE_PILDORA = /<span\b([^>]*\bdata-token-id\s*=\s*["']([^"']+)["'][^>]*)>([
  */
 const RE_CORCHETE = /\[([^\]\n<>]{1,120})\]/g;
 
+/**
+ * Las cláusulas también traen marcas con llaves, herencia del modelo de Fase 1
+ * (`{desc_objeto_contratacion_au_au}`). Cada una apunta a su dato del catálogo.
+ */
+const LLAVES_A_TOKEN: Record<string, string> = {
+  desc_objeto_contratacion_au_au: 'objeto_contratacion_au_au',
+  cod_nomenclatura_proceso_au_au: 'nomenclatura_proceso_au_au',
+  nom_ente_contratante: 'nombre_ente_contratante_au_au',
+  nom_unidad_usuaria: 'nom_unidad_usuaria_au_au',
+  porcentaje_fiel_cumplimiento_au_au: 'porcentaje_fiel_cumplimiento_au_au',
+  porcentaje_responsabilidad_social_au_au: 'porcentaje_responsabilidad_social_au_au',
+  porcentaje_garantia_laboral_au_au: 'porcentaje_garantia_laboral_au_au',
+  porcentaje_responsabilidad_civil_au_au: 'porcentaje_responsabilidad_civil_au_au',
+  monto_responsabilidad_civil_bs_au_au: 'monto_responsabilidad_civil_bs_au_au',
+  modalidad_crs_au_au: 'modalidad_crs_au_au',
+  unidad_resp_cumplimiento_crs_au_au: 'unidad_resp_cumplimiento_crs_au_au',
+};
+
+/** Una marca con llaves y el `%` que algunas cláusulas escriben después. */
+const RE_LLAVE = /\{([a-z_]+)\}(%?)/g;
+
 /** Marcador temporal para apartar las píldoras ya existentes. */
 const MARCA = '\uE000';
 const RE_MARCA = /\uE000(\d+)\uE000/g;
@@ -78,7 +100,15 @@ export function corchetesAPildoras(html: string): string {
     return `<span class="contract-pill" data-token-id="${token.id}">[${etiqueta}]</span>`;
   });
 
-  return convertido.replace(RE_MARCA, (_m, indice: string) => pildoras[Number(indice)]);
+  const conLlaves = convertido.replace(RE_LLAVE, (completo, clave: string, signo: string) => {
+    const token = TOKENS_POR_ID.get(LLAVES_A_TOKEN[clave]);
+    if (!token) return completo;
+    // Los porcentajes ya traen su signo en el valor.
+    const resto = token.id.startsWith('porcentaje_') ? '' : signo;
+    return `<span class="contract-pill" data-token-id="${token.id}">[${token.etiqueta}]</span>${resto}`;
+  });
+
+  return conLlaves.replace(RE_MARCA, (_m, indice: string) => pildoras[Number(indice)]);
 }
 
 /** Quita etiquetas HTML de un fragmento, para obtener su texto. */

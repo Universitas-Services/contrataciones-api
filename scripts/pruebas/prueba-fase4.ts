@@ -404,7 +404,7 @@ async function main() {
   );
   ok(
     'el monto en números viene formateado',
-    contrato.tokens.monto_contrato_numeros_au_au?.startsWith('Bs. '),
+    /^[\d.]+,\d{2}$/.test(contrato.tokens.monto_contrato_numeros_au_au ?? ''),
   );
   ok(
     'el monto en letras viene resuelto',
