@@ -197,7 +197,7 @@ describe('mapDatosCiclo', () => {
 
     expect(datos.es_total).toBe(true);
     expect(datos.decision_subsiguiente).toBe(true);
-    expect(datos.monto_fiel_cumplimiento_subsiguiente_bs_au_au).toContain('116,00');
+    expect(datos.monto_fiel_cumplimiento_subsiguiente_bs_au_au).toBe('Bs. 16,00');
     expect(datos.fecha_certificacion_incumplimiento_au_au).toBe(LINEA_VACIA);
     expect(datos.nombre_destinatario_au_au).toBe(LINEA_VACIA);
   });

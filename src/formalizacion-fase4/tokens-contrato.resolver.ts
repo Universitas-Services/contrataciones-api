@@ -43,16 +43,16 @@ export interface DatosToken {
 }
 
 /**
- * La fianza de fiel cumplimiento se calcula sobre el monto con IVA:
+ * La fianza de fiel cumplimiento usa la misma regla que el Informe y el Acta de Fase 3:
  *
- *   monto × 1,16 × (porcentaje / 100)
+ *   monto × 0,16 × (porcentaje / 100)
  */
 export function montoFielCumplimiento(
   montoContratoBs: number | null,
   porcentaje: number | null,
 ): number | null {
   if (montoContratoBs == null || porcentaje == null) return null;
-  return montoContratoBs * 1.16 * (porcentaje / 100);
+  return montoContratoBs * 0.16 * (porcentaje / 100);
 }
 
 /**

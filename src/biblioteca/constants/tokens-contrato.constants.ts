@@ -203,14 +203,14 @@ export const TOKENS_CONTRATO: TokenContrato[] = [
     etiqueta: 'MONTO GARANTIA FIEL CUMPLIMIENTO NUMEROS',
     descripcion: 'Monto de la fianza de fiel cumplimiento, en cifras',
     disponibleDesde: 'ADJUDICACION',
-    fuente: 'monto del contrato × 1,16 × porcentaje_fiel_cumplimiento_au_au',
+    fuente: 'monto del contrato × 0,16 × porcentaje_fiel_cumplimiento_au_au',
   },
   {
     id: 'monto_garantia_fiel_cumplimiento_letras_au_au',
     etiqueta: 'MONTO GARANTIA FIEL CUMPLIMIENTO LETRAS',
     descripcion: 'Monto de la fianza de fiel cumplimiento, en letras',
     disponibleDesde: 'ADJUDICACION',
-    fuente: 'monto del contrato × 1,16 × porcentaje_fiel_cumplimiento_au_au',
+    fuente: 'monto del contrato × 0,16 × porcentaje_fiel_cumplimiento_au_au',
   },
   {
     id: 'ciudad_domicilio_especial_au_au',
