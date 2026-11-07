@@ -9,7 +9,8 @@ import { PrismaService } from '../database/prisma.service';
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
 import { GuardarContratoDto } from './dto/contrato.dto';
 import { compararPrelacion } from './prelacion-fase4.util';
-import { resolverTokens } from './tokens-contrato.resolver';
+import { resolverTokens, unirPartidas } from './tokens-contrato.resolver';
+import { DocumentosFase4Service } from './documentos-fase4.service';
 import { renderizarPildoras } from './pildoras.util';
 import type {
   CaracterAdjudicacion,
@@ -18,6 +19,16 @@ import type {
   OferenteFase4,
 } from './types/fase4.types';
 
+/** Las partidas de un dictamen, sea cual sea su carácter. */
+function partidasDe(
+  dictamen?: {
+    partidasAdjudicadasTotal: string | null;
+    partidasAdjudicadasParcial: string | null;
+  } | null,
+): string | null {
+  return dictamen?.partidasAdjudicadasTotal ?? dictamen?.partidasAdjudicadasParcial ?? null;
+}
+
 /** Número decimal o null, sin arrastrar el `Decimal` de Prisma a la respuesta. */
 function num(valor: unknown): number | null {
   return valor == null ? null : Number(valor);
@@ -25,7 +36,10 @@ function num(valor: unknown): number | null {
 
 @Injectable()
 export class FormalizacionFase4Service {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly documentos: DocumentosFase4Service,
+  ) {}
 
   // ════════════════════════════════════════════════════════════════════
   //  Carga y control de acceso
@@ -513,13 +527,61 @@ export class FormalizacionFase4Service {
       updatedBy: user.id,
     };
 
-    await this.prisma.contratoFase4.upsert({
+    const contrato = await this.prisma.contratoFase4.upsert({
       where: { evaluacionId },
       create: { expedienteId, evaluacionId, ...datos, createdBy: user.id },
       update: datos,
     });
 
+    await this.documentos.emitirContrato({
+      contratoId: contrato.id,
+      expedienteId,
+      evaluacionId,
+      documentoAnteriorId: contrato.documentoId,
+      clauses: dto.clauses,
+      tokens: await this.tokensDe(expedienteId, evaluacionId, estado),
+      userId: user.id,
+    });
+
     return this.getContrato(expedienteId, evaluacionId, user);
+  }
+
+  /**
+   * Reintenta lo que quedó sin archivo: documentos del ciclo y contratos
+   * generados. No exige que el expediente esté sin sellar, porque las
+   * notificaciones de cierre existen justamente en uno sellado.
+   */
+  async regenerarPendientes(expedienteId: string, user: UsuarioActual) {
+    await this.cargarExpediente(expedienteId, user);
+    const ciclo = await this.documentos.completarPendientes(expedienteId);
+
+    const contratos = await this.prisma.contratoFase4.findMany({
+      where: { expedienteId, estado: 'GENERADO', documentoId: null, deletedAt: null },
+    });
+    const { oferentes } = await this.getEstado(expedienteId, user);
+
+    let contratosGenerados = 0;
+    let contratosPendientes = 0;
+
+    for (const contrato of contratos) {
+      const estado = oferentes.find((o) => o.evaluacionId === contrato.evaluacionId) ?? null;
+      if (estado?.estatus !== 'ADJUDICADO') continue;
+
+      const documentoId = await this.documentos.emitirContrato({
+        contratoId: contrato.id,
+        expedienteId,
+        evaluacionId: contrato.evaluacionId,
+        documentoAnteriorId: null,
+        clauses: contrato.clauses as unknown as ClausulaContrato[],
+        tokens: await this.tokensDe(expedienteId, contrato.evaluacionId, estado),
+        userId: user.id,
+      });
+
+      if (documentoId) contratosGenerados += 1;
+      else contratosPendientes += 1;
+    }
+
+    return { ...ciclo, contratosGenerados, contratosPendientes };
   }
 
   /** TOTAL con ciclo abierto bloquea todo; PARCIAL solo al infractor. */
@@ -571,7 +633,7 @@ export class FormalizacionFase4Service {
     evaluacionId: string,
     estado: OferenteFase4 | null,
   ): Promise<Record<string, string | null>> {
-    const [expediente, evaluacion, fase1, readjudicacion] = await Promise.all([
+    const [expediente, evaluacion, fase1, readjudicaciones] = await Promise.all([
       this.prisma.expedienteContratacion.findUnique({
         where: { id: expedienteId },
         select: {
@@ -621,9 +683,9 @@ export class FormalizacionFase4Service {
           plazoEjecucionProcedimiento: true,
         },
       }),
-      // Si este oferente asumió una readjudicación, su plazo y sus partidas no
-      // salen de su propio dictamen: salen del ciclo que se las traspasó.
-      this.prisma.decaimientoFase4.findFirst({
+      // Todo lo que este oferente asumió en readjudicaciones, del ciclo más
+      // reciente al más antiguo. Es lo mismo que `montoContrato` suma al monto.
+      this.prisma.decaimientoFase4.findMany({
         where: {
           expedienteId,
           deletedAt: null,
@@ -651,23 +713,23 @@ export class FormalizacionFase4Service {
     ]);
 
     const dictamen = evaluacion?.dictamenAdjudicacion;
-    const dictamenInfractor = readjudicacion?.infractor.dictamenAdjudicacion;
+    const readjudicacion = readjudicaciones[0];
 
     const codigos = [
       ...new Set((expediente?.partidasPresupuestarias ?? []).map((p) => p.codigoPartida)),
     ];
     const partidasDelExpediente = codigos.length ? codigos.join(', ') : null;
 
-    // Las partidas son del ente, no del oferente: si el subsiguiente no tiene
-    // dictamen propio, hereda las del infractor y, en último término, las que
-    // el expediente tenga registradas.
+    // Las partidas son del ente, no del oferente: el contrato lleva las de su
+    // dictamen más las de cada infractor al que reemplazó, porque su monto
+    // también las incluye. Sin ninguna, se usan las del expediente.
     const partidas =
-      dictamen?.partidasAdjudicadasTotal ??
-      dictamen?.partidasAdjudicadasParcial ??
-      dictamenInfractor?.partidasAdjudicadasTotal ??
-      dictamenInfractor?.partidasAdjudicadasParcial ??
-      partidasDelExpediente ??
-      null;
+      unirPartidas(
+        partidasDe(dictamen),
+        ...[...readjudicaciones]
+          .reverse()
+          .map((ciclo) => partidasDe(ciclo.infractor.dictamenAdjudicacion)),
+      ) ?? partidasDelExpediente;
 
     // El plazo sí es propio de cada oferta: primero el que se pidió en el
     // certificado para el subsiguiente, luego el de su dictamen.

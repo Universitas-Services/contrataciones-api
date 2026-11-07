@@ -66,6 +66,21 @@ describe('renderizarPildoras — modo VALOR', () => {
     expect(salida).toContain(LINEA_VACIA);
     expect(salida).not.toContain('[MONTO');
   });
+
+  it('conserva lo que el usuario escribió en una píldora sin fuente', () => {
+    const cuerpo = pildora('ciudad_domicilio_especial_au_au', 'Barquisimeto');
+    expect(renderizarPildoras(cuerpo, {}, 'VALOR')).toBe('Barquisimeto');
+  });
+
+  it('el valor resuelto manda sobre lo escrito en la píldora', () => {
+    const cuerpo = pildora('monto_contrato_numeros_au_au', 'otro texto');
+    expect(renderizarPildoras(cuerpo, VALORES, 'VALOR')).toBe('Bs. 367.500,00');
+  });
+
+  it('una píldora que quedó con la línea sigue siendo línea', () => {
+    const cuerpo = pildora('ciudad_domicilio_especial_au_au', LINEA_VACIA);
+    expect(renderizarPildoras(cuerpo, {}, 'VALOR')).toBe(LINEA_VACIA);
+  });
 });
 
 describe('renderizarPildoras — modo LINEA', () => {

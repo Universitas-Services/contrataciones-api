@@ -14,6 +14,8 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaService } from '../../src/database/prisma.service';
 import { FormalizacionFase4Service } from '../../src/formalizacion-fase4/formalizacion-fase4.service';
 import { DecaimientoService } from '../../src/formalizacion-fase4/decaimiento.service';
+import { DocumentosFase4Service } from '../../src/formalizacion-fase4/documentos-fase4.service';
+import { GeneradorDocumentosService } from '../../src/generador-documentos/generador-documentos.service';
 import type { UsuarioActual } from '../../src/common/types/usuario-actual.type';
 
 const CODIGO_PRUEBA = 'PRUEBA-FASE4';
@@ -171,8 +173,11 @@ async function main() {
   assertBaseLocal();
 
   const prismaService = prisma as unknown as PrismaService;
-  const fase4 = new FormalizacionFase4Service(prismaService);
-  const decaimiento = new DecaimientoService(prismaService, fase4);
+  // Sin plantillas todavía: el generador nunca llega a usar correo ni almacenamiento.
+  const generador = new GeneradorDocumentosService(prismaService, {} as never, {} as never);
+  const documentos = new DocumentosFase4Service(prismaService, generador);
+  const fase4 = new FormalizacionFase4Service(prismaService, documentos);
+  const decaimiento = new DecaimientoService(prismaService, fase4, documentos);
   const user: UsuarioActual = { id: 'prueba-fase4', rol: 'UNIVERSITAS' } as UsuarioActual;
 
   await limpiar();
@@ -552,6 +557,88 @@ async function main() {
   // Con el expediente abierto, el adjudicado que queda sí puede contratar.
   const contratoVivo = await fase4.getContrato(parcial.expedienteId, parcial.evaluaciones[1], user);
   ok('el adjudicado que queda puede armar su contrato', contratoVivo.estado === 'BORRADOR');
+
+  // ══════════════════════════════════════════════════════════════════
+  console.log('\n▸ PARCIAL — un adjudicado asume también los renglones del infractor');
+  // ══════════════════════════════════════════════════════════════════
+  const readj = await sembrar('PARCIAL', 'READJ-PARCIAL');
+  const [infractorReadj, asumeReadj] = readj.evaluaciones;
+
+  estado = await fase4.getEstado(readj.expedienteId, user);
+  const montoBaseReadj = estado.oferentes.find((o) => o.evaluacionId === asumeReadj)
+    ?.montoContratoBs as number;
+
+  await decaimiento.declarar(readj.expedienteId, { infractorEvaluacionId: infractorReadj }, user);
+  await decaimiento.elegirDecision(readj.expedienteId, { decision: 'SUBSIGUIENTE' }, user);
+  await decaimiento.guardarCertificado(
+    readj.expedienteId,
+    {
+      fechaNotificacionAdjudicacionIncumplidor: '2026-10-13',
+      fechaCertificacionIncumplimiento: '2026-10-23',
+      causalDecaimiento: 'NO FIRMÓ CONTRATO',
+      subsiguienteEvaluacionId: asumeReadj,
+      alcanceReadjudicacionParcial: 'Renglones 01, 02',
+      montoReadjudicadoParcialBs: 100000,
+      plazoEjecucionSubsiguiente: 75,
+    } as never,
+    user,
+  );
+  await decaimiento.guardarResolucion(
+    readj.expedienteId,
+    { numResolucionDecaimiento: 'RESOL-048-2026', fechaResolucionDecaimiento: '2026-10-23' },
+    user,
+  );
+  await decaimiento.notificarInfractor(readj.expedienteId, user);
+  await decaimiento.notificarSubsiguiente(readj.expedienteId, user);
+  estado = await decaimiento.cerrarCiclo(readj.expedienteId, user);
+
+  const contratoReadj = await fase4.getContrato(readj.expedienteId, asumeReadj, user);
+  ok(
+    'el contrato lleva sus partidas y las del infractor',
+    contratoReadj.tokens.partidas_presupuestarias_au_au === '4.02.01.02.00, 4.02.01.01.00',
+    contratoReadj.tokens.partidas_presupuestarias_au_au,
+  );
+  ok(
+    'el monto suma su adjudicación y lo readjudicado',
+    contratoReadj.montoContratoBs === montoBaseReadj + 100000,
+    contratoReadj.montoContratoBs,
+  );
+  ok(
+    'el plazo sigue saliendo de su dictamen hasta definir la regla',
+    contratoReadj.tokens.plazo_ejecucion_dias_au_au === '60',
+  );
+
+  // ══════════════════════════════════════════════════════════════════
+  console.log('\n▸ Documentos sin plantilla: el flujo sigue y quedan pendientes');
+  // ══════════════════════════════════════════════════════════════════
+  const documentoCiclo = estado.ciclosCerrados[0].certificado?.documentoId as string;
+  ok('el paso registra su documento aunque no haya archivo', !!documentoCiclo);
+
+  const filaAntes = await prisma.documentoGenerado.findUnique({ where: { id: documentoCiclo } });
+  ok('el registro queda con la URL vacía', filaAntes?.urlArchivo === '');
+
+  await rechaza(
+    'la vista previa sin archivo responde conflicto',
+    () => documentos.preview(readj.expedienteId, documentoCiclo),
+    'aún no se ha generado',
+  );
+  await rechaza(
+    'la descarga sin archivo responde conflicto',
+    () => documentos.descarga(readj.expedienteId, documentoCiclo),
+    'aún no se ha generado',
+  );
+  await rechaza(
+    'un documento de otro expediente no se sirve',
+    () => documentos.preview(total.expedienteId, documentoCiclo),
+    'no encontrado',
+  );
+
+  const reintento = await fase4.regenerarPendientes(readj.expedienteId, user);
+  ok(
+    'regenerar informa los cuatro documentos que siguen pendientes',
+    reintento.generados === 0 && reintento.pendientes === 4,
+    reintento,
+  );
 
   // ══════════════════════════════════════════════════════════════════
   console.log('\n▸ Desierto que sí cierra el procedimiento');

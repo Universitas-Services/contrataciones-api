@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../database/prisma.service';
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
 import { FormalizacionFase4Service } from './formalizacion-fase4.service';
+import { DocumentosFase4Service } from './documentos-fase4.service';
 import { calcularVencimientos } from './dias-habiles.util';
 import {
   CertificadoIncumplimientoDto,
@@ -31,6 +32,7 @@ export class DecaimientoService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly fase4: FormalizacionFase4Service,
+    private readonly documentos: DocumentosFase4Service,
   ) {}
 
   private async cicloActivo(expedienteId: string) {
@@ -256,6 +258,9 @@ export class DecaimientoService {
       });
     });
 
+    // Fuera de la transacción: un fallo del archivo no revierte el paso legal.
+    await this.documentos.completarPendientes(expedienteId);
+
     return this.fase4.getEstado(expedienteId, user);
   }
 
@@ -335,6 +340,9 @@ export class DecaimientoService {
       });
     });
 
+    // Fuera de la transacción: un fallo del archivo no revierte el paso legal.
+    await this.documentos.completarPendientes(expedienteId);
+
     return this.fase4.getEstado(expedienteId, user);
   }
 
@@ -364,6 +372,9 @@ export class DecaimientoService {
         createdBy: user.id,
       });
     });
+
+    // Fuera de la transacción: un fallo del archivo no revierte el paso legal.
+    await this.documentos.completarPendientes(expedienteId);
 
     return this.fase4.getEstado(expedienteId, user);
   }
@@ -398,6 +409,9 @@ export class DecaimientoService {
         createdBy: user.id,
       });
     });
+
+    // Fuera de la transacción: un fallo del archivo no revierte el paso legal.
+    await this.documentos.completarPendientes(expedienteId);
 
     return this.fase4.getEstado(expedienteId, user);
   }
@@ -497,6 +511,9 @@ export class DecaimientoService {
 
       await this.desactualizarContratoDe(tx, ciclo.infractorEvaluacionId, user.id);
     });
+
+    // Fuera de la transacción: un fallo del archivo no revierte el paso legal.
+    await this.documentos.completarPendientes(expedienteId);
 
     return this.fase4.getEstado(expedienteId, user);
   }

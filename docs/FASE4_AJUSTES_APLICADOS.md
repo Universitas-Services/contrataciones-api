@@ -122,3 +122,72 @@ Escenarios que cubre ahora: TOTAL con siguiente opción, **PARCIAL con desierto 
 3. Si prefieres un **formulario previo** para los 14 datos que no tienen fuente, en vez de que se escriban en el generador (B2).
 
 Cuando quieras, revisa la rama de nuevo.
+
+---
+
+## 10. Segunda ronda — 6 de noviembre
+
+Esta sección actualiza lo anterior. **B3 queda completo en partidas** y **B4 queda listo en código**; faltan sus plantillas.
+
+| #   | Estado                                                                    |
+| --- | ------------------------------------------------------------------------- |
+| B3  | ✅ partidas completas · ⏳ falta definir la regla del plazo               |
+| B4  | ⏳ generación, preview y descarga listas; faltan las 6 plantillas `.docx` |
+
+### 10.1 B3 — Partidas de lo readjudicado
+
+En PARCIAL, el oferente que ya tenía dictamen propio solo mostraba sus partidas, aunque el monto y el alcance sí sumaban lo readjudicado. Ahora el contrato lleva **sus partidas más las de cada infractor al que reemplazó**, sin repetir. Ejemplo: `4.02.01.02.00, 4.02.01.01.00`.
+
+**Límite conocido:** si un subsiguiente sin dictamen propio decae y otro oferente lo reemplaza, se heredan las partidas del dictamen de ese infractor, que no tiene. En ese caso se usan las del expediente.
+
+### 10.2 B4 — Cómo funciona
+
+- Cada paso del ciclo se confirma primero y el archivo se genera después. Si falta la plantilla o falla la subida, **el paso legal no se revierte**: el registro queda sin archivo y se reintenta.
+- Los documentos de Fase 4 no se borran. Un contrato regenerado deja el anterior como desactualizado y sube la versión.
+- En el documento final, lo que el usuario escribió dentro de una píldora sin fuente **se conserva**. Antes se habría reemplazado por la línea en blanco.
+
+### 10.3 Endpoints nuevos
+
+Base: `/formalizacion-fase4/expediente/{expedienteId}`
+
+| Método | Ruta                                 | Roles                    | Respuesta                                                                       |
+| ------ | ------------------------------------ | ------------------------ | ------------------------------------------------------------------------------- |
+| GET    | `/documentos/{documentoId}/preview`  | Todos los de lectura     | `previewUrl`, `urlArchivo`, `estaDesactualizado`. **409** si aún no hay archivo |
+| GET    | `/documentos/{documentoId}/download` | Todos los de lectura     | El `.docx`. **409** si aún no hay archivo                                       |
+| POST   | `/documentos/regenerar-pendientes`   | `ADMIN_ENTE`, `EJECUTOR` | `generados`, `pendientes`, `contratosGenerados`, `contratosPendientes`          |
+
+**Cambio frente a lo pedido:** se usa `documentoId` en lugar de rutas por `evaluacionId` y por ciclo. El estado ya lo devuelve en el contrato, el certificado, la resolución, las notificaciones y `participantesCierre`, así que una sola ruta cubre todos los casos.
+
+Hasta que existan las plantillas, `documentoId` del contrato sigue en `null` y los documentos del ciclo responden 409 al pedir preview o descarga.
+
+### 10.4 Plantillas esperadas
+
+Van en `src/generador-documentos/templates/`. Al agregarlas, los pasos nuevos las usan solos y `regenerar-pendientes` completa lo que quedó atrás.
+
+| Documento                                | Archivo                                                |
+| ---------------------------------------- | ------------------------------------------------------ |
+| `CONTRATO`                               | `contrato-fase4-template.docx`                         |
+| `CERTIFICADO_INCUMPLIMIENTO`             | `certificado-incumplimiento-template.docx`             |
+| `RESOLUCION_DECAIMIENTO`                 | `resolucion-decaimiento-template.docx`                 |
+| `NOTIFICACION_DECAIMIENTO`               | `notificacion-decaimiento-template.docx`               |
+| `NOTIFICACION_ADJUDICACION_SUBSIGUIENTE` | `notificacion-adjudicacion-subsiguiente-template.docx` |
+| `NOTIFICACION_FIN_PROCEDIMIENTO`         | `notificacion-fin-procedimiento-template.docx`         |
+
+Los nombres de variables y bloques de `documentos-fase4.mapper.ts` son provisionales: se ajustan con el §7 del brief.
+
+### 10.5 Pendiente de frontend y documentación
+
+1. **Regla del plazo:** si un oferente con dictamen propio (60 días) asume renglones readjudicados (75 días), ¿qué debe decir `[PLAZO EJECUCION DIAS]`? Hoy sale el de su dictamen.
+2. **PDF 3 y `API_FASE4_GESTION.md`**, para crear las plantillas.
+3. **Criterio del CRS** y **formulario previo** (sección 9).
+
+### 10.6 Verificación
+
+| Qué                           | Resultado                                         |
+| ----------------------------- | ------------------------------------------------- |
+| `tsc --noEmit`                | Sin errores                                       |
+| Pruebas unitarias             | **71**, todas pasan                               |
+| Ciclo completo contra la base | **81 comprobaciones**, todas correctas            |
+| Arranque                      | Rutas nuevas registradas; sin token responden 401 |
+
+**Sin probar:** ningún Word real de Fase 4 ni el recorrido con la pantalla.

@@ -3,7 +3,9 @@ import { GeneradorDocumentosService } from './generador-documentos.service';
 import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { TipoDocumento } from '@prisma/client';
+import { enviarDocumentoDocx } from './descarga.util';
 
 @ApiTags('📄 Generador de Documentos')
 @ApiBearerAuth('JWT-auth')
@@ -623,52 +625,7 @@ export class GeneradorDocumentosController {
     return this.proxyCloudinaryDownload(result, res);
   }
 
-  private async proxyCloudinaryDownload(result: { url: string; fileName: string }, res: any) {
-    try {
-      let fileBuffer: Buffer;
-
-      // Desarrollo local: archivo en /uploads/...
-      if (result.url.startsWith('/uploads/')) {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const fs = require('fs');
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const path = require('path');
-        const relative = result.url.replace(/^\/uploads\//, '');
-        const fullPath = path.join(process.cwd(), 'uploads', relative);
-        if (!fs.existsSync(fullPath)) {
-          res.status(404).json({
-            statusCode: 404,
-            message: `Archivo local no encontrado: ${result.url}`,
-          });
-          return;
-        }
-        fileBuffer = fs.readFileSync(fullPath);
-      } else {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const axios = require('axios');
-        const response = await axios.get(result.url, {
-          responseType: 'arraybuffer',
-          maxContentLength: Infinity,
-          maxBodyLength: Infinity,
-        });
-        fileBuffer = Buffer.from(response.data);
-      }
-
-      res.setHeader(
-        'Content-Type',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      );
-      res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
-      res.setHeader('Content-Length', fileBuffer.length.toString());
-      res.setHeader('Cache-Control', 'no-cache');
-
-      res.end(fileBuffer);
-    } catch (error: any) {
-      res.status(500).json({
-        statusCode: 500,
-        message: 'Error al descargar el archivo',
-        error: error.message,
-      });
-    }
+  private proxyCloudinaryDownload(result: { url: string; fileName: string }, res: any) {
+    return enviarDocumentoDocx(result, res as Response);
   }
 }

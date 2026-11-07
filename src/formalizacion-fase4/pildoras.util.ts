@@ -113,7 +113,7 @@ export function renderizarPildoras(
       const valor = valores[tokenId];
       const texto = valor != null && `${valor}`.trim() !== '' ? `${valor}` : null;
 
-      if (modo === 'VALOR') return texto ?? LINEA_VACIA;
+      if (modo === 'VALOR') return texto ?? escritoAMano(interior) ?? LINEA_VACIA;
 
       // RESOLVER: conserva el nodo y sus atributos, cambia el texto interno.
       const attrs = limpiarResuelto(atributos);
@@ -122,6 +122,16 @@ export function renderizarPildoras(
         : `<span${attrs}>${escapar(soloTexto(interior) || LINEA_VACIA)}</span>`;
     },
   );
+}
+
+/**
+ * Los datos sin fuente los escribe el usuario dentro de la píldora. Si lo que
+ * hay sigue siendo la etiqueta entre corchetes o la línea, no escribió nada.
+ */
+function escritoAMano(interior: string): string | null {
+  const contenido = soloTexto(interior);
+  const sinEscribir = !contenido || contenido === LINEA_VACIA || /^\[[^\]]*\]$/.test(contenido);
+  return sinEscribir ? null : contenido;
 }
 
 /** Evita que `data-resolved` se duplique al precargar dos veces seguidas. */

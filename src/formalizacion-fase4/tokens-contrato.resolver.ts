@@ -55,6 +55,16 @@ export function montoFielCumplimiento(
   return montoContratoBs * 1.16 * (porcentaje / 100);
 }
 
+/**
+ * Une las partidas de varios dictámenes sin repetir, conservando el orden. Cada
+ * entrada puede traer varias partidas separadas por coma o punto y coma.
+ */
+export function unirPartidas(...listas: (string | null | undefined)[]): string | null {
+  const partidas = listas.flatMap((lista) => (lista ?? '').split(/[,;]/)).map((p) => p.trim());
+  const unicas = [...new Set(partidas.filter(Boolean))];
+  return unicas.length ? unicas.join(', ') : null;
+}
+
 /** `Bs. 367.500,00` — el formato que espera el documento. */
 export function formatearBs(monto: number): string {
   return `Bs. ${monto.toLocaleString('es-VE', {
@@ -63,7 +73,7 @@ export function formatearBs(monto: number): string {
   })}`;
 }
 
-function fechaLarga(fecha: Date): string {
+export function fechaLarga(fecha: Date): string {
   return fecha.toLocaleDateString('es-VE', {
     day: 'numeric',
     month: 'long',

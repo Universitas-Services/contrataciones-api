@@ -3,6 +3,8 @@ import { PrismaModule } from '../database/prisma.module';
 import { FormalizacionFase4Controller } from './formalizacion-fase4.controller';
 import { FormalizacionFase4Service } from './formalizacion-fase4.service';
 import { DecaimientoService } from './decaimiento.service';
+import { DocumentosFase4Service } from './documentos-fase4.service';
+import { GeneradorDocumentosModule } from '../generador-documentos/generador-documentos.module';
 
 /**
  * Fase 4 de gestión — Formalización.
@@ -13,9 +15,9 @@ import { DecaimientoService } from './decaimiento.service';
  * que siguen sirviendo al flujo de elaboración.
  */
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, GeneradorDocumentosModule],
   controllers: [FormalizacionFase4Controller],
-  providers: [FormalizacionFase4Service, DecaimientoService],
+  providers: [FormalizacionFase4Service, DecaimientoService, DocumentosFase4Service],
   exports: [FormalizacionFase4Service, DecaimientoService],
 })
 export class FormalizacionFase4Module {}

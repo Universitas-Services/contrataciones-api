@@ -8,8 +8,10 @@ import {
   Param,
   Body,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -18,6 +20,8 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
 import { FormalizacionFase4Service } from './formalizacion-fase4.service';
 import { DecaimientoService } from './decaimiento.service';
+import { DocumentosFase4Service } from './documentos-fase4.service';
+import { enviarDocumentoDocx } from '../generador-documentos/descarga.util';
 import { GuardarContratoDto } from './dto/contrato.dto';
 import {
   CertificadoIncumplimientoDto,
@@ -35,6 +39,7 @@ export class FormalizacionFase4Controller {
   constructor(
     private readonly fase4: FormalizacionFase4Service,
     private readonly decaimiento: DecaimientoService,
+    private readonly documentos: DocumentosFase4Service,
   ) {}
 
   // ── Estado ──────────────────────────────────────────────────────────
@@ -198,6 +203,55 @@ export class FormalizacionFase4Controller {
   })
   desellar(@Param('expedienteId') expedienteId: string, @CurrentUser() user: UsuarioActual) {
     return this.decaimiento.desellar(expedienteId, user);
+  }
+
+  // ── Documentos ──────────────────────────────────────────────────────
+
+  @Get('documentos/:documentoId/preview')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'VISUALIZADOR', 'UNIVERSITAS', 'SUPERVISOR')
+  @ApiOperation({
+    summary: 'Vista previa de un documento de la Fase 4',
+    description:
+      'Sirve para el contrato y para todos los documentos del ciclo: usa el `documentoId` que devuelve el estado. Responde 409 si el archivo aún no se ha generado.',
+  })
+  async previewDocumento(
+    @Param('expedienteId') expedienteId: string,
+    @Param('documentoId') documentoId: string,
+    @CurrentUser() user: UsuarioActual,
+  ) {
+    await this.fase4.cargarExpediente(expedienteId, user);
+    return this.documentos.preview(expedienteId, documentoId);
+  }
+
+  @Get('documentos/:documentoId/download')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'VISUALIZADOR', 'UNIVERSITAS', 'SUPERVISOR')
+  @ApiOperation({
+    summary: 'Descargar un documento de la Fase 4',
+    description: 'Responde 409 si el archivo aún no se ha generado.',
+  })
+  async descargarDocumento(
+    @Param('expedienteId') expedienteId: string,
+    @Param('documentoId') documentoId: string,
+    @CurrentUser() user: UsuarioActual,
+    @Res({ passthrough: false }) res: Response,
+  ) {
+    await this.fase4.cargarExpediente(expedienteId, user);
+    const archivo = await this.documentos.descarga(expedienteId, documentoId);
+    return enviarDocumentoDocx(archivo, res);
+  }
+
+  @Post('documentos/regenerar-pendientes')
+  @Roles('ADMIN_ENTE', 'EJECUTOR')
+  @ApiOperation({
+    summary: 'Generar los archivos que quedaron pendientes',
+    description:
+      'Reintenta los documentos del ciclo sin archivo y los contratos generados sin documento. Devuelve cuántos se generaron y cuántos siguen pendientes.',
+  })
+  regenerarPendientes(
+    @Param('expedienteId') expedienteId: string,
+    @CurrentUser() user: UsuarioActual,
+  ) {
+    return this.fase4.regenerarPendientes(expedienteId, user);
   }
 
   // ── Utilidades ──────────────────────────────────────────────────────
