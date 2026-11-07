@@ -43,7 +43,10 @@ export class TokensService {
   listarCatalogo() {
     return {
       data: TOKENS_CONTRATO.map((t) => ({
+        /** Lo que viaja en `data-token-id`: la llave estable del dato. */
+        id: t.id,
         etiqueta: t.etiqueta,
+        alias: t.alias ?? [],
         /** Lo que hay que insertar en el texto de la cláusula. */
         insertar: `[${t.etiqueta}]`,
         descripcion: t.descripcion,

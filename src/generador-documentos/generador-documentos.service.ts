@@ -541,7 +541,51 @@ export class GeneradorDocumentosService {
       });
     }
 
-    // 2. Cargar plantilla base
+    // 2 a 4. Plantilla, render y subida
+    const { fileUrl, fileName } = await this.renderizarYSubir(
+      expedienteId,
+      tipoDocumento,
+      templateName,
+      jsonData,
+    );
+
+    // 5. Guardar registro en Prisma
+    const newDoc = await this.prisma.documentoGenerado.create({
+      data: {
+        expedienteId,
+        tipoDocumento,
+        evaluacionId: evaluacionId || null,
+        urlArchivo: fileUrl,
+        versionDocumento: docAnterior ? docAnterior.versionDocumento + 1 : 1,
+        createdBy: userId,
+      },
+    });
+
+    return {
+      id: newDoc.id,
+      url: fileUrl,
+      fileName,
+      tipoDocumento: newDoc.tipoDocumento,
+      generatedAt: newDoc.createdAt,
+    };
+  }
+
+  /** Si la plantilla está disponible en el servidor. */
+  plantillaExiste(templateName: string): boolean {
+    return fs.existsSync(path.join(__dirname, 'templates', templateName));
+  }
+
+  /**
+   * Rellena una plantilla y sube el archivo, sin tocar la base. Quien lo llama
+   * decide qué hacer con el registro del documento.
+   */
+  async renderizarYSubir(
+    expedienteId: string,
+    tipoDocumento: TipoDocumento,
+    templateName: string,
+    jsonData: any,
+  ): Promise<{ fileUrl: string; fileName: string }> {
+    // Cargar plantilla base
     const templatePath = path.join(__dirname, 'templates', templateName);
     if (!fs.existsSync(templatePath)) {
       throw new BadRequestException(`Plantilla no encontrada: ${templatePath}`);
@@ -577,7 +621,7 @@ export class GeneradorDocumentosService {
       throw new BadRequestException(`Error en Docxtemplater inicializacion: ${e.message}`);
     }
 
-    // 3. Renderizar y generar buffer
+    // Renderizar y generar buffer
     try {
       doc.render(jsonData);
     } catch (e: any) {
@@ -594,7 +638,7 @@ export class GeneradorDocumentosService {
       throw new BadRequestException(`Error generando buffer ZIP: ${e.message}`);
     }
 
-    // 4. Subir a Cloudinary
+    // Subir a Cloudinary
     const fileName = `${tipoDocumento.toLowerCase()}-${expedienteId}-${Date.now()}.docx`;
     const filePath = `expedientes/${expedienteId}/${fileName}`;
 
@@ -605,25 +649,7 @@ export class GeneradorDocumentosService {
       throw new BadRequestException(`Error subiendo a Storage: ${e.message}`);
     }
 
-    // 5. Guardar registro en Prisma
-    const newDoc = await this.prisma.documentoGenerado.create({
-      data: {
-        expedienteId,
-        tipoDocumento,
-        evaluacionId: evaluacionId || null,
-        urlArchivo: fileUrl,
-        versionDocumento: docAnterior ? docAnterior.versionDocumento + 1 : 1,
-        createdBy: userId,
-      },
-    });
-
-    return {
-      id: newDoc.id,
-      url: fileUrl,
-      fileName,
-      tipoDocumento: newDoc.tipoDocumento,
-      generatedAt: newDoc.createdAt,
-    };
+    return { fileUrl, fileName };
   }
 
   // --- Endpoints Específicos para cada archivo ---
@@ -937,6 +963,11 @@ export class GeneradorDocumentosService {
       CONTRATO: 'Contrato Formalizado',
       LISTA_COTEJO: 'Lista de Cotejo',
       INFORME_RECOMENDACION: 'Informe de Recomendación',
+      CERTIFICADO_INCUMPLIMIENTO: 'Certificado de Incumplimiento',
+      RESOLUCION_DECAIMIENTO: 'Resolución de Decaimiento',
+      NOTIFICACION_DECAIMIENTO: 'Notificación de Decaimiento',
+      NOTIFICACION_ADJUDICACION_SUBSIGUIENTE: 'Notificación de Adjudicación Subsiguiente',
+      NOTIFICACION_FIN_PROCEDIMIENTO: 'Notificación de Fin de Procedimiento',
     };
     return dicc[tipo] || tipo;
   }
@@ -951,7 +982,7 @@ export class GeneradorDocumentosService {
     return this.mapDocToPreview(doc, tipoDocumento);
   }
 
-  private mapDocToPreview(doc: { urlArchivo: string }, tipoDocumento: TipoDocumento) {
+  mapDocToPreview(doc: { urlArchivo: string }, tipoDocumento: TipoDocumento) {
     const previewUrl = `https://docs.google.com/gview?url=${encodeURIComponent(doc.urlArchivo)}&embedded=true`;
     return {
       previewUrl,
