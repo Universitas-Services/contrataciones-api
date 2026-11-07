@@ -127,9 +127,14 @@ export function mapDatosCiclo({
   const secretaria = expediente.comision?.miembros.find(
     (m) => m.areaRepresentacion === 'SECRETARIO_A' && m.tipoMiembro === 'MIEMBRO_PRINCIPAL',
   );
+  const cargoFirmante = firmas.cargo_oficial_autoridad || firmas.cargo_oficial_delegado;
 
   return {
     ...firmas,
+
+    // Membrete
+    nom_ente_contratante_au_au: texto(expediente.ente?.nombre),
+    cargo_oficial_autoridad_au_au: texto(cargoFirmante?.toUpperCase()),
 
     // Marcas de las plantillas
     nom_completo_miembro_secretaria: texto(secretaria?.nombreCompletoMiembro),
