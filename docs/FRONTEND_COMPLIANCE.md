@@ -57,21 +57,21 @@ Un análisis normal tarda cerca de 1 minuto; un PDF escaneado, hasta 9. El dicta
 
 ## 4. Endpoints
 
-| Método  | Ruta                                  | Rol de escritura | Para qué                                         |
-| ------- | ------------------------------------- | :--------------: | ------------------------------------------------ |
-| `GET`   | `/catalogo`                           |                  | Modalidades, tipos y checklist                   |
-| `GET`   | `/expedientes?enteId=`                |                  | Lista con progreso y riesgo                      |
-| `POST`  | `/expedientes`                        |        ✔         | Crear                                            |
-| `GET`   | `/expedientes/:id`                    |                  | Detalle completo                                 |
-| `PATCH` | `/expedientes/:id`                    |        ✔         | Botones de nomenclatura, nombre, modalidad, tipo |
-| `GET`   | `/expedientes/:id/mensajes`           |                  | Historial del chat                               |
-| `POST`  | `/expedientes/:id/mensajes`           |        ✔         | Enviar un mensaje                                |
-| `POST`  | `/expedientes/:id/documentos`         |        ✔         | Subir un documento (multipart)                   |
-| `GET`   | `/documentos/:documentoId`            |                  | Estado de un documento                           |
-| `POST`  | `/documentos/:documentoId/reintentar` |        ✔         | Reanalizar un documento en `ERROR`               |
-| `POST`  | `/expedientes/:id/dictamenes`         |        ✔         | Pedir dictamen                                   |
-| `GET`   | `/dictamenes/:dictamenId`             |                  | Dictamen con su Markdown                         |
-| `GET`   | `/dictamenes/:dictamenId/pdf`         |                  | Descargar el PDF                                 |
+| Método  | Ruta                                        | Rol de escritura | Para qué                                         |
+| ------- | ------------------------------------------- | :--------------: | ------------------------------------------------ |
+| `GET`   | `/catalogo`                                 |                  | Modalidades, tipos y checklist                   |
+| `GET`   | `/expedientes?page=&limit=&search=&estado=` |                  | Lista paginada con progreso y riesgo             |
+| `POST`  | `/expedientes`                              |        ✔         | Crear                                            |
+| `GET`   | `/expedientes/:id`                          |                  | Detalle completo                                 |
+| `PATCH` | `/expedientes/:id`                          |        ✔         | Botones de nomenclatura, nombre, modalidad, tipo |
+| `GET`   | `/expedientes/:id/mensajes`                 |                  | Historial del chat                               |
+| `POST`  | `/expedientes/:id/mensajes`                 |        ✔         | Enviar un mensaje                                |
+| `POST`  | `/expedientes/:id/documentos`               |        ✔         | Subir un documento (multipart)                   |
+| `GET`   | `/documentos/:documentoId`                  |                  | Estado de un documento                           |
+| `POST`  | `/documentos/:documentoId/reintentar`       |        ✔         | Reanalizar un documento en `ERROR`               |
+| `POST`  | `/expedientes/:id/dictamenes`               |        ✔         | Pedir dictamen                                   |
+| `GET`   | `/dictamenes/:dictamenId`                   |                  | Dictamen con su Markdown                         |
+| `GET`   | `/dictamenes/:dictamenId/pdf`               |                  | Descargar el PDF                                 |
 
 ### 4.1 `GET /catalogo`
 
@@ -93,31 +93,45 @@ Un análisis normal tarda cerca de 1 minuto; un PDF escaneado, hasta 9. El dicta
 
 ### 4.2 `GET /expedientes`
 
-`UNIVERSITAS` y `SUPERVISOR` ven todos los entes; pueden filtrar con `?enteId=`. Los demás ven solo el suyo.
+**Paginado.** La respuesta es `{ metadata, data }`, como los demás listados del sistema.
+
+| Parámetro | Uso                                                             |
+| --------- | --------------------------------------------------------------- |
+| `page`    | Página, desde 1. Por defecto 1                                  |
+| `limit`   | Registros por página. Por defecto 10, máximo 100                |
+| `search`  | Busca en nomenclatura o nombre, sin distinguir mayúsculas       |
+| `estado`  | `CONFIGURANDO`, `ACTIVA` o `CERRADA`                            |
+| `enteId`  | Solo para `UNIVERSITAS` y `SUPERVISOR`, que ven todos los entes |
+
+Los demás roles ven solo su ente. Orden: los que tuvieron actividad más reciente primero.
 
 ```json
-[
-  {
-    "id": "uuid",
-    "ente": { "id": "uuid", "nombre": "Alcaldía de Iribarren" },
-    "nomenclatura": "CA-ALC-IRI-007-2026",
-    "nombre": "Compra de mobiliario escolar",
-    "modalidad": "CA_ACTO_UNICO_APERTURA_UNICA",
-    "tipoContratacion": "BIENES",
-    "estado": "ACTIVA",
-    "progreso": { "cubiertos": 9, "total": 12 },
-    "riesgo": {
-      "fuente": "DICTAMEN",
-      "rango": "Hallazgos Críticos",
-      "nulidadAbsoluta": true,
-      "semaforo": null
-    },
-    "createdAt": "…",
-    "updatedAt": "…"
-  }
-]
+{
+  "metadata": { "total": 37, "page": 1, "limit": 10, "totalPages": 4 },
+  "data": [
+    {
+      "id": "uuid",
+      "ente": { "id": "uuid", "nombre": "Alcaldía de Iribarren" },
+      "nomenclatura": "CA-ALC-IRI-007-2026",
+      "nombre": "Compra de mobiliario escolar",
+      "modalidad": "CA_ACTO_UNICO_APERTURA_UNICA",
+      "tipoContratacion": "BIENES",
+      "estado": "ACTIVA",
+      "progreso": { "cubiertos": 9, "total": 12 },
+      "riesgo": {
+        "fuente": "DICTAMEN",
+        "rango": "Hallazgos Críticos",
+        "nulidadAbsoluta": true,
+        "semaforo": null
+      },
+      "createdAt": "…",
+      "updatedAt": "…"
+    }
+  ]
+}
 ```
 
+- **Riesgo:** no se puede filtrar ni ordenar por él, porque se calcula al consultar.
 - **Progreso:** tipos con un documento analizado y del tipo correcto, sobre el total del checklist. `null` si aún no hay modalidad.
 - **Riesgo:** con dictamen, `fuente: "DICTAMEN"` con `rango` y `nulidadAbsoluta`. Antes del primer dictamen, `fuente: "DOCUMENTOS"` con el peor `semaforo` (`Verde`, `Amarillo` o `Rojo`). `null` si no hay nada analizado.
 

@@ -1,6 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { EstadoExpedienteCompliance } from '@prisma/client';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 const recortar = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() : value;
@@ -50,6 +62,33 @@ export class ListarExpedientesComplianceQuery {
   @IsOptional()
   @IsUUID()
   enteId?: string;
+
+  @ApiPropertyOptional({ description: 'Página, desde 1', default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @ApiPropertyOptional({ description: 'Registros por página (máximo 100)', default: 10 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number = 10;
+
+  @ApiPropertyOptional({ description: 'Busca en nomenclatura o nombre, sin distinguir mayúsculas' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  @Transform(recortar)
+  search?: string;
+
+  @ApiPropertyOptional({ enum: EstadoExpedienteCompliance })
+  @IsOptional()
+  @IsEnum(EstadoExpedienteCompliance)
+  estado?: EstadoExpedienteCompliance;
 }
 
 export class MensajeComplianceDto {

@@ -39,6 +39,7 @@ import {
 import type {
   CrearExpedienteComplianceDto,
   DatosExpedienteComplianceDto,
+  ListarExpedientesComplianceQuery,
 } from './dto/compliance.dto';
 import { markdownAPdf } from './markdown-pdf.util';
 
@@ -150,11 +151,30 @@ export class ComplianceService {
   //  Expedientes
   // ════════════════════════════════════════════════════════════════════
 
-  async listar(user: UsuarioActual, enteId?: string) {
-    const filtroEnte = ACCESO_GLOBAL.includes(user.rol) ? enteId : user.enteId;
-    const [expedientes, catalogo] = await Promise.all([
+  async listar(user: UsuarioActual, query: ListarExpedientesComplianceQuery = {}) {
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 10, 100);
+    const filtroEnte = ACCESO_GLOBAL.includes(user.rol) ? query.enteId : user.enteId;
+    const where: Prisma.ExpedienteComplianceWhereInput = {
+      deletedAt: null,
+      ...(filtroEnte ? { enteId: filtroEnte } : {}),
+      ...(query.estado ? { estado: query.estado } : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { nomenclatura: { contains: query.search, mode: 'insensitive' } },
+              { nombre: { contains: query.search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [total, expedientes, catalogo] = await Promise.all([
+      this.prisma.expedienteCompliance.count({ where }),
       this.prisma.expedienteCompliance.findMany({
-        where: { deletedAt: null, ...(filtroEnte ? { enteId: filtroEnte } : {}) },
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
         include: {
           ente: { select: { id: true, nombre: true } },
           documentos: {
@@ -174,12 +194,12 @@ export class ComplianceService {
             select: { puntaje: true },
           },
         },
-        orderBy: { updatedAt: 'desc' },
+        orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
       }),
       this.catalogoOpcional(),
     ]);
 
-    return expedientes.map((e) => ({
+    const data = expedientes.map((e) => ({
       id: e.id,
       ente: e.ente,
       nomenclatura: e.nomenclatura,
@@ -192,6 +212,11 @@ export class ComplianceService {
       createdAt: e.createdAt,
       updatedAt: e.updatedAt,
     }));
+
+    return {
+      metadata: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      data,
+    };
   }
 
   async crear(dto: CrearExpedienteComplianceDto, user: UsuarioActual) {

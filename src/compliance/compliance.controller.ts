@@ -48,9 +48,12 @@ export class ComplianceController {
   }
 
   @Get('expedientes')
-  @ApiOperation({ summary: 'Expedientes del ente, con progreso, riesgo y estado' })
+  @ApiOperation({
+    summary: 'Expedientes del ente, paginados, con progreso, riesgo y estado',
+    description: 'Filtros: search (nomenclatura o nombre), estado y, para roles globales, enteId.',
+  })
   listar(@Query() query: ListarExpedientesComplianceQuery, @CurrentUser() user: UsuarioActual) {
-    return this.compliance.listar(user, query.enteId);
+    return this.compliance.listar(user, query);
   }
 
   @Post('expedientes')

@@ -654,17 +654,69 @@ async function main() {
   // ══════════════════════════════════════════════════════════════════
   console.log('\n▸ Lista de expedientes');
   // ══════════════════════════════════════════════════════════════════
-  const lista = await servicio.listar(ejecutor);
-  const fila = lista.find((e) => e.id === id);
+  const lista = await servicio.listar(ejecutor, { limit: 100 });
+  const fila = lista.data.find((e) => e.id === id);
   ok(
     'aparece con progreso y riesgo',
     fila?.progreso?.cubiertos === 3 && fila?.riesgo?.rango === 'Hallazgos Críticos',
     fila,
   );
-  ok('otro ente no lo ve en su lista', !(await servicio.listar(otroEnte)).some((e) => e.id === id));
+  ok(
+    'otro ente no lo ve en su lista',
+    !(await servicio.listar(otroEnte, { limit: 100 })).data.some((e) => e.id === id),
+  );
   ok(
     'UNIVERSITAS lo ve filtrando por ente',
-    (await servicio.listar(universitas, ente.id)).some((e) => e.id === id),
+    (await servicio.listar(universitas, { enteId: ente.id, limit: 100 })).data.some(
+      (e) => e.id === id,
+    ),
+  );
+
+  // ══════════════════════════════════════════════════════════════════
+  console.log('\n▸ Paginación, búsqueda y filtro por estado');
+  // ══════════════════════════════════════════════════════════════════
+  const extras: string[] = [];
+  for (let i = 1; i <= 4; i++) {
+    const creado = await servicio.crear(
+      { nomenclatura: `PRUEBA-COMPLIANCE-PAG-${i}`, nombre: `Lote ${i}` },
+      ejecutor,
+    );
+    extras.push(creado.id);
+  }
+  const conMarca = { search: 'prueba-compliance', limit: 2 };
+  const pagina1 = await servicio.listar(ejecutor, { ...conMarca, page: 1 });
+  const pagina3 = await servicio.listar(ejecutor, { ...conMarca, page: 3 });
+  ok(
+    'metadata cuenta los 5 y calcula las páginas',
+    pagina1.metadata.total === 5 &&
+      pagina1.metadata.totalPages === 3 &&
+      pagina1.metadata.limit === 2,
+    pagina1.metadata,
+  );
+  ok(
+    'cada página trae como máximo el límite',
+    pagina1.data.length === 2 && pagina3.data.length === 1,
+  );
+  const recorridos = new Set<string>();
+  for (let page = 1; page <= 3; page++) {
+    (await servicio.listar(ejecutor, { ...conMarca, page })).data.forEach((e) =>
+      recorridos.add(e.id),
+    );
+  }
+  ok('las páginas no repiten ni pierden expedientes', recorridos.size === 5);
+  ok(
+    'la búsqueda no distingue mayúsculas y mira el nombre',
+    (await servicio.listar(ejecutor, { search: 'LOTE 3' })).data.map((e) => e.id).join() ===
+      extras[2],
+  );
+  const cerrados = await servicio.listar(ejecutor, {
+    search: 'prueba-compliance',
+    estado: 'CERRADA',
+  });
+  ok('filtra por estado', cerrados.metadata.total === 1 && cerrados.data[0]?.id === id);
+  ok(
+    'una página fuera de rango llega vacía',
+    (await servicio.listar(ejecutor, { ...conMarca, page: 9 })).data.length === 0,
   );
 
   await limpiar();
