@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { PrismaModule } from './database/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -34,12 +35,14 @@ import { CuentasBancariasModule } from './cuentas-bancarias/cuentas-bancarias.mo
 import { FormalizacionFase4Module } from './formalizacion-fase4/formalizacion-fase4.module';
 import { BibliotecaModule } from './biblioteca/biblioteca.module';
 import { DocumentosEjemploModule } from './documentos-ejemplo/documentos-ejemplo.module';
+import { ComplianceModule } from './compliance/compliance.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     CommonModule,
     StorageModule,
@@ -65,6 +68,7 @@ import { DocumentosEjemploModule } from './documentos-ejemplo/documentos-ejemplo
     BibliotecaModule,
     FormalizacionFase4Module,
     DocumentosEjemploModule,
+    ComplianceModule,
     PresupuestoItemModule,
     GeneradorDocumentosModule,
     OfertaPresentadaModule,

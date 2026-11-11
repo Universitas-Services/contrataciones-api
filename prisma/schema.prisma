@@ -52,6 +52,7 @@ model EntePublico {
   usuarios                    Usuario[]
   comisiones                  ComisionContrataciones[]
   expedientes                 ExpedienteContratacion[]
+  expedientesCompliance       ExpedienteCompliance[]
   maximasAutoridades          MaximaAutoridad[]
   ModalidadContratacion       ModalidadContratacion[]
   pliegos                     PliegoGenerado[]
@@ -1587,4 +1588,161 @@ model DecaimientoFase4 {
   @@unique([expedienteId, numeroCiclo])
   @@index([expedienteId, estado])
   @@map("tb_decaimiento_adjudicacion_fase4_au_au")
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  Compliance: auditoría de expedientes con el agente externo
+//  (docs/API_DICTAMEN_NEST.md). El agente no guarda nada: todo vive aquí.
+// ════════════════════════════════════════════════════════════════════
+
+enum EstadoExpedienteCompliance {
+  CONFIGURANDO
+  ACTIVA
+  CERRADA
+}
+
+enum EstadoDocumentoCompliance {
+  PENDIENTE
+  PROCESANDO
+  ANALIZADO
+  RECHAZADO
+  ERROR
+}
+
+enum EstadoDictamenCompliance {
+  PENDIENTE
+  PROCESANDO
+  LISTO
+  ERROR
+}
+
+enum RolMensajeCompliance {
+  USUARIO
+  AGENTE
+}
+
+model ExpedienteCompliance {
+  id                      String                     @id @default(uuid())
+  enteId                  String                     @map("id_ente")
+  nomenclatura            String?                    @db.VarChar(100)
+  nombre                  String?                    @db.VarChar(255)
+  /// Código del catálogo del agente (por ejemplo, CA_ACTO_UNICO_APERTURA_UNICA)
+  modalidad               String?                    @db.VarChar(60)
+  /// BIENES | OBRAS | SERVICIOS
+  tipoContratacion        String?                    @map("tipo_contratacion") @db.VarChar(20)
+  estado                  EstadoExpedienteCompliance @default(CONFIGURANDO)
+  /// Último tipo que pidió el agente con la acción pedir_documento
+  tipoDocumentoSolicitado String?                    @map("tipo_documento_solicitado") @db.VarChar(60)
+  cerradoAt               DateTime?                  @map("cerrado_at")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?
+  updatedBy String?
+
+  ente       EntePublico           @relation(fields: [enteId], references: [id])
+  documentos DocumentoCompliance[]
+  dictamenes DictamenCompliance[]
+  mensajes   MensajeCompliance[]
+
+  @@index([enteId, deletedAt])
+  @@map("tb_expediente_compliance")
+}
+
+model DocumentoCompliance {
+  id            String                    @id @default(uuid())
+  expedienteId  String                    @map("id_expediente_compliance")
+  tipoDocumento String                    @map("tipo_documento") @db.VarChar(60)
+  nombreArchivo String                    @map("nombre_archivo") @db.VarChar(255)
+  urlArchivo    String                    @map("url_archivo")
+  mimeType      String?                   @map("mime_type") @db.VarChar(120)
+  tamanoBytes   Int                       @map("tamano_bytes")
+  estado        EstadoDocumentoCompliance @default(PENDIENTE)
+  /// Al reemplazarlo deja de ser vigente: ya no va al dictamen ni al chat
+  vigente       Boolean                   @default(true)
+  reemplazadoAt DateTime?                 @map("reemplazado_at")
+
+  /// Respuesta del agente, guardada sin modificar
+  jsonAnalista    Json?     @map("json_analista")
+  /// Lleva códigos internos del cuestionario: no se muestra al usuario
+  informeMarkdown String?   @map("informe_markdown") @db.Text
+  estatusGlobal   String?   @map("estatus_global") @db.VarChar(20)
+  tipoCoincide    Boolean?  @map("tipo_coincide")
+  tipoDetectado   String?   @map("tipo_detectado") @db.VarChar(60)
+  metricas        Json?
+  error           String?   @db.Text
+  analizadoAt     DateTime? @map("analizado_at")
+
+  // ── Cola ──────────────────────────────────────────────────────────
+  intentos         Int       @default(0)
+  intentos429      Int       @default(0) @map("intentos_429")
+  fallosTemporales Int       @default(0) @map("fallos_temporales")
+  proximoIntentoAt DateTime  @default(now()) @map("proximo_intento_at")
+  primerIntentoAt  DateTime? @map("primer_intento_at")
+  tomadoHasta      DateTime? @map("tomado_hasta")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  expediente ExpedienteCompliance @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  mensajes   MensajeCompliance[]
+
+  @@index([expedienteId, vigente])
+  @@index([estado, proximoIntentoAt])
+  @@map("tb_documento_compliance")
+}
+
+model DictamenCompliance {
+  id           String                   @id @default(uuid())
+  expedienteId String                   @map("id_expediente_compliance")
+  estado       EstadoDictamenCompliance @default(PENDIENTE)
+  forzarFinal  Boolean                  @default(false) @map("forzar_final")
+
+  /// PARCIAL | FINAL
+  alcance    String?   @db.VarChar(20)
+  markdown   String?   @db.Text
+  puntaje    Json?
+  pendientes Json?
+  coherencia Json?
+  error      String?   @db.Text
+  listoAt    DateTime? @map("listo_at")
+
+  // ── Cola ──────────────────────────────────────────────────────────
+  intentos         Int       @default(0)
+  intentos429      Int       @default(0) @map("intentos_429")
+  fallosTemporales Int       @default(0) @map("fallos_temporales")
+  proximoIntentoAt DateTime  @default(now()) @map("proximo_intento_at")
+  primerIntentoAt  DateTime? @map("primer_intento_at")
+  tomadoHasta      DateTime? @map("tomado_hasta")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  expediente ExpedienteCompliance @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  mensajes   MensajeCompliance[]
+
+  @@index([expedienteId, createdAt])
+  @@index([estado, proximoIntentoAt])
+  @@map("tb_dictamen_compliance")
+}
+
+model MensajeCompliance {
+  id           String               @id @default(uuid())
+  expedienteId String               @map("id_expediente_compliance")
+  rol          RolMensajeCompliance
+  texto        String               @db.Text
+  usuarioId    String?              @map("id_usuario")
+  documentoId  String?              @map("id_documento_compliance")
+  dictamenId   String?              @map("id_dictamen_compliance")
+  createdAt    DateTime             @default(now())
+
+  expediente ExpedienteCompliance @relation(fields: [expedienteId], references: [id], onDelete: Cascade)
+  documento  DocumentoCompliance? @relation(fields: [documentoId], references: [id], onDelete: SetNull)
+  dictamen   DictamenCompliance?  @relation(fields: [dictamenId], references: [id], onDelete: SetNull)
+
+  @@index([expedienteId, createdAt])
+  @@map("tb_mensaje_compliance")
 }
