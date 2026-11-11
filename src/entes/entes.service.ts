@@ -617,15 +617,9 @@ export class EntesService {
       this.prisma.proveedor.count({
         where: { enteId, deletedAt: null },
       }),
-      // 3. Expedientes Compliance (con LISTA_COTEJO)
-      this.prisma.expedienteContratacion.count({
-        where: {
-          enteId,
-          deletedAt: null,
-          documentosGenerados: {
-            some: { tipoDocumento: 'LISTA_COTEJO', deletedAt: null },
-          },
-        },
+      // 3. Expedientes auditados en el módulo de compliance
+      this.prisma.expedienteCompliance.count({
+        where: { enteId, deletedAt: null },
       }),
     ]);
 
@@ -720,15 +714,9 @@ export class EntesService {
       this.prisma.proveedor.count({
         where: { enteId, deletedAt: null },
       }),
-      // Expedientes Compliance (con LISTA_COTEJO)
-      this.prisma.expedienteContratacion.count({
-        where: {
-          enteId,
-          deletedAt: null,
-          documentosGenerados: {
-            some: { tipoDocumento: 'LISTA_COTEJO', deletedAt: null },
-          },
-        },
+      // Expedientes auditados en el módulo de compliance
+      this.prisma.expedienteCompliance.count({
+        where: { enteId, deletedAt: null },
       }),
     ]);
 
