@@ -76,6 +76,9 @@ async function main() {
   await prisma.manualGenerado.deleteMany();
   await prisma.documentoGenerado.deleteMany();
   await prisma.expedienteContratacion.deleteMany();
+  // Compliance referencia al ente sin cascada: se borra antes que los entes.
+  // Mensajes, documentos y dictámenes caen en cascada con su expediente.
+  await prisma.expedienteCompliance.deleteMany();
   await prisma.unidadContratante.deleteMany();
   await prisma.unidadUsuaria.deleteMany();
   await prisma.miembroComision.deleteMany();
