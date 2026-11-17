@@ -566,13 +566,15 @@ export class HubService {
       return this.obtenerHub(evaluacionId, user);
     }
 
+    // Los snapshots congelados antes del ajuste de QA pueden traer un umbral:
+    // se ignora, porque la evaluación técnico-económica ya no descalifica por puntaje.
     const resTecnica = this.scoring.calcularPuntuado(
-      plantillas.evaluacion.tecnica,
+      { ...plantillas.evaluacion.tecnica, puntuacionMinima: 0 },
       nuevoEstado.form.tecnica,
       'evaluación técnica',
     );
     const resEconomica = this.scoring.calcularPuntuado(
-      plantillas.evaluacion.economica,
+      { ...plantillas.evaluacion.economica, puntuacionMinima: 0 },
       nuevoEstado.form.economica,
       'evaluación económica',
     );

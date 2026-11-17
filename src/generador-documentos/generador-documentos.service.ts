@@ -452,6 +452,16 @@ export class GeneradorDocumentosService {
     };
   }
 
+  /** Normativa global activa, en el orden de la documentación: va completa al pliego. */
+  private async normativasGenerales(): Promise<string[]> {
+    const normativas = await this.prisma.normativaGlobal.findMany({
+      where: { deletedAt: null, indActivo: true },
+      orderBy: [{ orden: { sort: 'asc', nulls: 'last' } }, { fecCreacion: 'asc' }],
+      select: { textoNormativaCompleto: true },
+    });
+    return normativas.map((n) => n.textoNormativaCompleto);
+  }
+
   /**
    * Obtiene la estructura JSON mapeada para el Pliego de Condiciones.
    * Gate: pliegoReady (micromódulos Fase 1 + especificaciones + presupuesto).
@@ -477,7 +487,7 @@ export class GeneradorDocumentosService {
 
     await this.assertPliegoReady(expedienteId, expediente.fasePreparatoria);
 
-    return mapDatosPliegoCondiciones(expediente);
+    return mapDatosPliegoCondiciones(expediente, await this.normativasGenerales());
   }
 
   /** Gate alineado a fase1.service: 8 micromódulos + especificaciones + >=1 ítem. */
@@ -1504,8 +1514,8 @@ export class GeneradorDocumentosService {
       fec_acta_inicio_au_au: formatDateToSpanishLong(
         expediente.fechaActaInicio ?? fasePreparatoria?.fechaActaInicio,
       ),
-      // EntePublico aún no tiene URL web; placeholder hasta que exista el campo
-      pag_web_ente: '___',
+      // Vacío si el ente no la indicó: la plantilla omite el tramo del ente.
+      pag_web_ente: ente?.paginaWeb?.trim() || '',
       fec_llamado_participar_au_au: formatDateToSpanishLong(cronograma?.fechaLlamadoParticipar),
       fec_inicio_disponibilidad_pliego_au_au: formatDateToSpanishLong(
         cronograma?.fechaInicioDisponibilidadPliego,

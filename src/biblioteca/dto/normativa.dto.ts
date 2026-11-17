@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
@@ -27,6 +27,16 @@ export class CreateNormativaGlobalDto extends CreateNormativaDto {
   @IsOptional()
   @IsBoolean()
   indActivo?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Posición en el pliego. Si se omite al crear, va al final.',
+    example: 16,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  orden?: number;
 }
 
 export class UpdateNormativaGlobalDto extends PartialType(CreateNormativaGlobalDto) {}

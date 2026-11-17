@@ -1,4 +1,5 @@
 import { formatDateToSpanishLong, formatCurrencyVE } from '../../common/utils/date-formatter.util';
+import { textosRecaudosConSustituto } from './recaudos-legales.textos';
 
 function stripHtml(html: string | null | undefined): string {
   if (!html) return '___';
@@ -14,20 +15,24 @@ function camelToSnake(key: string): string {
   return key.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
 }
 
-function formatNormativaLegalForDoc(raw: string | null | undefined): string {
-  if (!raw || !raw.trim()) return 'Decreto de Ley de Contrataciones vigente';
+/**
+ * Normativas adicionales del expediente, una por elemento. Se guardan como JSON
+ * serializado; un texto suelto de expedientes antiguos cuenta como una sola.
+ */
+export function normativasAdicionales(raw: unknown): string[] {
+  if (typeof raw !== 'string' || !raw.trim()) return [];
   const trimmed = raw.trim();
   if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
     try {
-      const parsed = JSON.parse(trimmed);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.join(', ');
+      const parsed: unknown = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map((n) => String(n ?? '').trim()).filter(Boolean);
       }
     } catch {
-      // fallback
+      // No es JSON: se trata como texto.
     }
   }
-  return trimmed;
+  return [trimmed];
 }
 
 function numOrDash(v: unknown): string {
@@ -65,7 +70,14 @@ function asMoney(v: unknown): number {
 /**
  * Mapea expediente + Fase1 JSONB al shape de pliego-condiciones-template.docx
  */
-export function mapDatosPliegoCondiciones(expediente: any): Record<string, any> {
+/**
+ * @param normativasGenerales Normativa global activa, en orden. Solo el pliego la
+ *   imprime; los informes que reutilizan este mapper no la necesitan.
+ */
+export function mapDatosPliegoCondiciones(
+  expediente: any,
+  normativasGenerales: string[] = [],
+): Record<string, any> {
   const e = expediente;
   const f = expediente.fasePreparatoria;
   const c = expediente.cronograma;
@@ -121,13 +133,6 @@ export function mapDatosPliegoCondiciones(expediente: any): Record<string, any> 
     ? `- Póliza de Responsabilidad Civil: De conformidad con lo previsto en el artículo 125 del Decreto con Rango, Valor y Fuerza de Ley de Contrataciones Públicas, el participante que resulte beneficiado con la adjudicación se obliga a constituir y mantener vigente durante todo el plazo de ejecución del contrato, una Póliza de Responsabilidad Civil que ampare los daños, pérdidas o perjuicios que pudieren ocasionarse a personas o a la propiedad de terceros, con ocasión de ${descObjeto}.
 Dicha cobertura deberá incluir, sin limitarse a, los daños derivados de los trabajos, el uso de maquinaria, las acciones del personal del contratista y, en caso de que aplique a la naturaleza del servicio, la Responsabilidad Civil Profesional por errores u omisiones.
 La póliza deberá ser emitida por una empresa de seguros de reconocida solvencia en la República, por un monto no menor a Bs. ${montoRc}, o al ${pctRc}% del Contrato. Este instrumento deberá ser consignado y aprobado por el contratante antes de la firma del Acta de Inicio.`
-    : '';
-
-  const monedaTexto = f.monedaDiferente
-    ? `Se admite oferta en moneda distinta: ${f.nomMonedaExtranjera || '___'}.`
-    : '';
-  const idiomaTexto = f.idiomaDiferente
-    ? `Se admite documentación en idioma distinto: ${f.nomIdiomaDiferente || '___'}.`
     : '';
 
   const formaPresentacion = (() => {
@@ -276,11 +281,6 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
     };
   });
 
-  const normativaRaw = f.normativaLegal;
-  const normativaLegal = formatNormativaLegalForDoc(
-    typeof normativaRaw === 'string' ? normativaRaw : undefined,
-  );
-
   const requiereGarantiaLaboral = Boolean(f.requiereGarantiaLaboral);
 
   return {
@@ -291,8 +291,10 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
     // alias legacy
     desc_objeto_contratacion: descObjeto,
     cod_nomenclatura_proceso: codNomenclatura,
-    normativa_legal_au_au: normativaLegal,
-    normativa_general: normativaLegal,
+    // Una viñeta por normativa: las generales siempre, las adicionales si hay.
+    normativa_general: normativasGenerales,
+    normativa_legal_au_au: normativasAdicionales(f.normativaLegal),
+    hay_normativa_adicional: normativasAdicionales(f.normativaLegal).length > 0,
     valor_ucau_base: formatCurrencyVE(Number(m.valorUcauBase)),
     denominacion_comision:
       e.comision?.denominacionComision || 'Comisión de Contrataciones Públicas',
@@ -300,7 +302,8 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
     loc_estado_ente: estadoEnte,
     correo_comision: e.comision?.correoElectronico || '___',
     telefono_comision: e.comision?.telefono || '___',
-    pag_web_ente: 'www.snd.gob.ve',
+    // Vacío si el ente no la indicó: la plantilla omite el tramo del ente.
+    pag_web_ente: e.ente?.paginaWeb?.trim() || '',
     loc_municipio_ente: e.ente?.municipio || '___',
     loc_ciudad_ente: ciudadEnte,
     monto_estimado_bs: formatCurrencyVE(Number(m.montoEstimadoBs)),
@@ -353,8 +356,11 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
     tipo_objeto_contratacion: esBienes ? 'Bienes' : esServicios ? 'Servicios' : 'Obras',
 
     // Aspectos / garantías
-    moneda_diferente_au_au: monedaTexto,
-    idioma_diferente_au_au: idiomaTexto,
+    // Bloques condicionales con los textos de la documentación.
+    moneda_diferente_au_au: Boolean(f.monedaDiferente),
+    nom_moneda_extranjera_au_au: f.nomMonedaExtranjera || '___',
+    idioma_diferente_au_au: Boolean(f.idiomaDiferente),
+    nom_idioma_diferente_au_au: f.nomIdiomaDiferente || '___',
     porcentaje_responsabilidad_social_au_au:
       f.porcentajeResponsabilidadSocial != null ? String(f.porcentajeResponsabilidadSocial) : '___',
     forma_responsabilidad_social_au_au: f.formaCumplimientoCrs || '___',
@@ -388,6 +394,7 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
 
     // Legal flags (boolean sections)
     ...modFlags,
+    ...textosRecaudosConSustituto(sustitutos),
     desc_otro_recaudo_sobre1_au_au: otrosSobre1,
     desc_otro_recaudo_sobre2_au_au: otrosSobre2,
     modelo_otro_recaudo_sobre1_au_au: modelosSobre1,
@@ -456,7 +463,6 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
     criterios_evaluacion_tecnica_antes_au_au: criteriosAntesEvalTec,
     matriz_criterio_evaluacion_tecnica_au_au: matrizEvalTec,
     total_puntuacion_criterio_evaluacion_tecnica_au_au: numOrDash(totalEvalTec),
-    puntuacion_minima_evaluacion_tecnica: numOrDash(evalTe.tecnica?.puntuacionMinima),
     criterios_evaluacion_economico_antes_au_au: criteriosAntesEvalEco,
     matriz_criterio_evaluacion_economico_au_au: matrizEvalEco,
     total_puntuacion_criterio_evaluacion_economico_au_au: numOrDash(totalEvalEco),

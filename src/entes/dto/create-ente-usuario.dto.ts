@@ -32,9 +32,10 @@ export class CreateEnteUsuarioDto {
   })
   @IsString({ message: 'La contraseña debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'La contraseña es obligatoria' })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
+  // Cualquier carácter que no sea letra ni número cuenta como especial (QA: # y . se rechazaban).
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/, {
     message:
-      'La contraseña debe tener mínimo 8 caracteres, al menos una mayúscula, un número y un carácter especial',
+      'La contraseña debe tener mínimo 8 caracteres, con mayúscula, minúscula, número y un carácter especial',
   })
   password: string;
 

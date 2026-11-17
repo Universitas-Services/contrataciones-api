@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, MaxLength } from 'class-validator';
 
 export class UpdateEnteDto {
   @ApiProperty({
@@ -82,6 +82,16 @@ export class UpdateEnteDto {
   @IsString()
   @IsOptional()
   ciudad?: string;
+
+  @ApiProperty({
+    description: 'Página web del Órgano o Ente Contratante. Se usa en el pliego y en los informes.',
+    example: 'www.alcaldia.gob.ve',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  paginaWeb?: string;
 
   @ApiProperty({
     description: 'Nombre de la Unidad Administrativa Financiera',

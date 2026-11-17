@@ -180,13 +180,14 @@ export class SnapshotService {
     const sumar = (lista: CriterioPuntuado[]) => lista.reduce((acc, c) => acc + c.ponderacion, 0);
 
     return {
+      // Sin umbral de corte (QA): la evaluación técnico-económica no descalifica por puntaje.
       tecnica: {
-        puntuacionMinima: this.num(tecnica.puntuacionMinima),
+        puntuacionMinima: 0,
         maxPuntos: sumar(critTecnica),
         criterios: critTecnica,
       },
       economica: {
-        puntuacionMinima: this.num(economica.puntuacionMinima),
+        puntuacionMinima: 0,
         maxPuntos: sumar(critEconomica),
         criterios: critEconomica,
       },

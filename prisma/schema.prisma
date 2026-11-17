@@ -44,6 +44,8 @@ model EntePublico {
   updatedBy                   String?
   datosConfirmados            Boolean                  @default(false)
   ciudad                      String?
+  /// Página web del órgano o ente; va al pliego y a los informes ({pag_web_ente}).
+  paginaWeb                   String?                  @map("pagina_web") @db.VarChar(255)
   universitas                 Universitas              @relation(fields: [universitasId], references: [id])
   supervisores                EnteSupervisor[]
   manuales                    ManualGenerado[]
@@ -446,7 +448,7 @@ model FasePreparatoria {
   numReferenciaSnc                      String?   @map("num_referencia_snc_au_au") @db.VarChar(100)
   modifRequerimientoSnc                 Boolean?  @map("modif_requerimiento_snc_au_au")
   numeroModifRequerimientoSnc           String?   @map("numero_modif_requerimiento_snc_au_au") @db.VarChar(100)
-  justificacionNecesidadContratacion    String?   @map("justificacion_necesidad_contratacion_au_au") @db.VarChar(255)
+  justificacionNecesidadContratacion    String?   @map("justificacion_necesidad_contratacion_au_au")
   proyectoAprobado                      Boolean?  @map("proyecto_aprobado_au_au")
   permitePymesCooperativas              Boolean?  @map("permite_pymes_cooperativas_au_au")
   justificacionPermitePymesCooperativas String?   @map("justificacion_permite_pymes_cooperativas_au_au") @db.VarChar(255)
@@ -563,6 +565,8 @@ model NormativaGlobal {
   id                     String      @id @default(uuid()) @map("id_normativa_global")
   adminUniversitasId     String      @map("id_admin_universitas")
   textoNormativaCompleto String      @map("texto_normativa_completo")
+  /// Posición en la documentación. Las que no tienen orden van al final.
+  orden                  Int?        @map("num_orden")
   indActivo              Boolean     @default(true) @map("ind_activo")
   fecCreacion            DateTime    @default(now()) @map("fec_creacion")
   updatedAt              DateTime    @updatedAt @map("updated_at")

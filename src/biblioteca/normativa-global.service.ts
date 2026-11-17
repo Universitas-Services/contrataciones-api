@@ -55,7 +55,8 @@ export class NormativaGlobalService {
         where,
         skip,
         take: limit,
-        orderBy: { fecCreacion: 'desc' },
+        // El orden de la documentación; las nuevas sin orden quedan al final.
+        orderBy: [{ orden: { sort: 'asc', nulls: 'last' } }, { fecCreacion: 'asc' }],
       }),
     ]);
 
@@ -73,9 +74,15 @@ export class NormativaGlobalService {
   async create(dto: CreateNormativaGlobalDto, user: UsuarioActual) {
     const adminUniversitasId = await this.resolverAdminUniversitas();
 
+    const ultima = await this.prisma.normativaGlobal.aggregate({
+      where: { deletedAt: null },
+      _max: { orden: true },
+    });
+
     return this.prisma.normativaGlobal.create({
       data: {
         textoNormativaCompleto: dto.textoNormativaCompleto,
+        orden: dto.orden ?? (ultima._max.orden ?? 0) + 1,
         indActivo: dto.indActivo ?? true,
         adminUniversitasId,
         updatedBy: user.id,

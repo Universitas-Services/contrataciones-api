@@ -726,9 +726,10 @@ async function main() {
   console.log('📚 Creando Biblioteca de Normativa...');
 
   await prisma.normativaGlobal.createMany({
-    data: TEXTOS_NORMATIVA_GLOBAL.map((texto) => ({
+    data: TEXTOS_NORMATIVA_GLOBAL.map((texto, indice) => ({
       adminUniversitasId: universitas.id,
       textoNormativaCompleto: texto,
+      orden: indice + 1,
       indActivo: true,
     })),
   });

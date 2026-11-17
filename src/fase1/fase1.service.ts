@@ -5,6 +5,11 @@ import { ExpedienteAccessService } from '../common/services/expediente-access.se
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
 import { MICROMODULOS, MICROMODULO_KEYS, MicromoduloKey } from './constants/micromodulos.constants';
 import { validarCompletar, ContextoValidacion } from './validators/completar.validators';
+import {
+  DOCUMENTOS_POR_MICROMODULO,
+  TIPOS_DOCUMENTO_FASE1,
+  huboCambios,
+} from './invalidacion-documentos.util';
 
 export type { UsuarioActual } from '../common/types/usuario-actual.type';
 
@@ -54,11 +59,23 @@ export class Fase1Service {
     });
   }
 
-  private async invalidarDocumentos(expedienteId: string) {
+  /**
+   * Marca desactualizados los documentos que dependen del módulo que cambió:
+   * de la Fase 1, solo los que leen sus datos; de fases posteriores, todos.
+   */
+  private async invalidarDocumentos(expedienteId: string, modulo: MicromoduloKey) {
     await this.prisma.documentoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
+      where: {
+        expedienteId,
+        deletedAt: null,
+        OR: [
+          { tipoDocumento: { in: DOCUMENTOS_POR_MICROMODULO[modulo] } },
+          { tipoDocumento: { notIn: TIPOS_DOCUMENTO_FASE1 } },
+        ],
+      },
       data: { estaDesactualizado: true },
     });
+    // Todos los módulos alimentan el pliego.
     await this.prisma.pliegoGenerado.updateMany({
       where: { expedienteId, deletedAt: null },
       data: { estaDesactualizado: true },
@@ -176,6 +193,7 @@ export class Fase1Service {
 
     const data = this.construirUpdate(config.key, body);
     const estadoActual = await this.estadoDe(expedienteId, config.estadoField);
+    const antes = await this.prisma.fasePreparatoria.findUniqueOrThrow({ where: { expedienteId } });
 
     const fase = await this.prisma.fasePreparatoria.update({
       where: { expedienteId },
@@ -192,9 +210,15 @@ export class Fase1Service {
       include: { especificaciones: true },
     });
 
-    if (estadoActual === EstadoMicromodulo.COMPLETADO) {
-      // Editar un módulo completado deja los documentos existentes desactualizados.
-      await this.invalidarDocumentos(expedienteId);
+    // Solo un cambio real deja desactualizados los documentos (QA: entrar a revisar
+    // un módulo y guardar sin cambios los marcaba todos).
+    if (
+      huboCambios(
+        this.extraerDatos(antes as Record<string, any>, config.key),
+        this.extraerDatos(fase as Record<string, any>, config.key),
+      )
+    ) {
+      await this.invalidarDocumentos(expedienteId, config.key);
     }
 
     return {
@@ -222,6 +246,8 @@ export class Fase1Service {
     await this.acceso.assertAcceso(expedienteId, user.enteId, user.rol);
     const config = this.getConfig(modulo);
     await this.getOrCreateFase(expedienteId, user.id);
+
+    const antes = await this.prisma.fasePreparatoria.findUniqueOrThrow({ where: { expedienteId } });
 
     // Si el cuerpo trae datos, se guardan antes de validar.
     if (body && Object.keys(body).length > 0) {
@@ -268,7 +294,9 @@ export class Fase1Service {
       include: { especificaciones: true },
     });
 
-    await this.invalidarDocumentos(expedienteId);
+    if (huboCambios(this.extraerDatos(antes as Record<string, any>, config.key), datos)) {
+      await this.invalidarDocumentos(expedienteId, config.key);
+    }
     await this.recalcularPhaseComplete(expedienteId);
 
     return {
@@ -278,7 +306,10 @@ export class Fase1Service {
     };
   }
 
-  /** Devuelve el módulo a BORRADOR para poder editarlo e invalida los documentos. */
+  /**
+   * Devuelve el módulo a BORRADOR para poder editarlo. No invalida nada por sí
+   * solo: los documentos se marcan desactualizados cuando se guarda un cambio real.
+   */
   async reabrir(expedienteId: string, modulo: string, user: UsuarioActual) {
     await this.acceso.assertAcceso(expedienteId, user.enteId, user.rol);
     const config = this.getConfig(modulo);
@@ -293,12 +324,10 @@ export class Fase1Service {
       },
     });
 
-    await this.invalidarDocumentos(expedienteId);
-
     return {
       modulo: config.key,
       estado: EstadoMicromodulo.BORRADOR,
-      message: `"${config.etiqueta}" fue reabierto. Los documentos generados quedaron desactualizados.`,
+      message: `"${config.etiqueta}" fue reabierto. Los documentos se marcarán desactualizados si guarda cambios.`,
     };
   }
 

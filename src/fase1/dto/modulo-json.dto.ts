@@ -226,7 +226,7 @@ export class EvaluacionTecnicaEconomicaDto {
     description:
       'Bolsa única compartida de 100 puntos entre los bloques técnico y económico. Al completar, la ' +
       'suma de las puntuaciones de ambos bloques debe ser exactamente 100, ningún rango puede superar ' +
-      'a su criterio padre, y cada `puntuacionMinima` no puede superar el total de su bloque.',
+      'a su criterio padre. No hay puntuación mínima: ninguna oferta se descarta por umbral.',
     type: 'object',
     additionalProperties: true,
     example: {
@@ -253,7 +253,6 @@ export class EvaluacionTecnicaEconomicaDto {
             ],
           },
         ],
-        puntuacionMinima: 25,
       },
       economica: {
         criterios: [
@@ -268,7 +267,6 @@ export class EvaluacionTecnicaEconomicaDto {
             ],
           },
         ],
-        puntuacionMinima: 30,
       },
     },
   })
