@@ -1,3 +1,4 @@
+import { pildorasAMarcas } from '../formalizacion-fase4/pildoras.util';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
@@ -103,14 +104,14 @@ export class ClausulasGenericasService {
   }
 
   async create(dto: CreateClausulaDto, user: UsuarioActual) {
-    this.assertTokensValidos(dto.cuerpo);
+    this.assertTokensValidos(dto.cuerpo && pildorasAMarcas(dto.cuerpo));
 
     const adminUniversitasId = await this.resolverAdminUniversitas();
 
     const clausula = await this.prisma.clausulaGenerica.create({
       data: {
         tituloClausulaGenerica: dto.titulo,
-        cuerpoClausulaGenerica: dto.cuerpo,
+        cuerpoClausulaGenerica: pildorasAMarcas(dto.cuerpo),
         adminUniversitasId,
         updatedBy: user.id,
       },
@@ -120,7 +121,7 @@ export class ClausulasGenericasService {
   }
 
   async update(id: string, dto: UpdateClausulaDto, user: UsuarioActual) {
-    this.assertTokensValidos(dto.cuerpo);
+    this.assertTokensValidos(dto.cuerpo && pildorasAMarcas(dto.cuerpo));
 
     await this.findOne(id);
 
@@ -128,7 +129,7 @@ export class ClausulasGenericasService {
       where: { id },
       data: {
         ...(dto.titulo !== undefined && { tituloClausulaGenerica: dto.titulo }),
-        ...(dto.cuerpo !== undefined && { cuerpoClausulaGenerica: dto.cuerpo }),
+        ...(dto.cuerpo !== undefined && { cuerpoClausulaGenerica: pildorasAMarcas(dto.cuerpo) }),
         updatedBy: user.id,
       },
     });

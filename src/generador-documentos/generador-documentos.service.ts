@@ -471,6 +471,7 @@ export class GeneradorDocumentosService {
       where: { id: expedienteId },
       include: {
         ente: true,
+        unidadUsuaria: { select: { nombreUnidadUsuaria: true } },
         fasePreparatoria: { include: { especificaciones: true } },
         cronograma: true,
         modalidad: true,

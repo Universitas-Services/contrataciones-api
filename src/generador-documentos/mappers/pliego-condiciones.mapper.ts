@@ -1,5 +1,8 @@
 import { formatDateToSpanishLong, formatCurrencyVE } from '../../common/utils/date-formatter.util';
 import { textosRecaudosConSustituto } from './recaudos-legales.textos';
+import { renderizarPildoras } from '../../formalizacion-fase4/pildoras.util';
+import { resolverTokensFase1 } from '../../formalizacion-fase4/tokens-contrato.resolver';
+import { ordinalClausula } from '../../formalizacion-fase4/documentos-fase4.mapper';
 
 function stripHtml(html: string | null | undefined): string {
   if (!html) return '___';
@@ -45,7 +48,22 @@ function numOrDash(v: unknown): string {
   ) {
     return String(v);
   }
+  // Decimal de Prisma (bonos, porcentajes): se imprime su valor, no la línea.
+  if (typeof v === 'object' && typeof (v as { toFixed?: unknown }).toFixed === 'function') {
+    return String(Number(v));
+  }
   return '___';
+}
+
+/**
+ * Número de la cláusula en ordinal y mayúscula: 1 → PRIMERA. Si el frontend
+ * ya guardó la palabra ("primera"), se respeta y se pasa a mayúscula.
+ */
+export function numeroClausula(orden: unknown, posicion: number): string {
+  const n = typeof orden === 'number' ? orden : Number(orden);
+  if (Number.isInteger(n) && n > 0) return ordinalClausula(n);
+  if (typeof orden === 'string' && orden.trim()) return orden.trim().toLocaleUpperCase('es');
+  return ordinalClausula(posicion + 1);
 }
 
 function asDate(v: unknown): Date | string | null | undefined {
@@ -271,13 +289,19 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
   // --- Cláusulas ---
   const modelo = asRecord(f.modeloContratoData);
   const clauses = Array.isArray(modelo.clauses) ? modelo.clauses : [];
+  // Las marcas {…} y las píldoras salen con el dato de Fase 1; lo que aún no
+  // existe (contratista, monto) queda como línea para llenar a mano.
+  const valoresFase1 = resolverTokensFase1(e);
   const clausulasCustom = clauses.map((clRaw: unknown, idx: number) => {
     const cl = asRecord(clRaw);
     const cuerpoHtml = typeof cl.cuerpoHtml === 'string' ? cl.cuerpoHtml : undefined;
+    const titulo = typeof cl.titulo === 'string' ? cl.titulo.trim() : '';
     return {
-      num_clausula_custom_au_au: numOrDash(cl.order ?? idx + 1),
-      titulo_clausula_custom_au_au: typeof cl.titulo === 'string' ? cl.titulo : '___',
-      cuerpo_clausula_custom_au_au: stripHtml(cuerpoHtml),
+      num_clausula_custom_au_au: numeroClausula(cl.order, idx),
+      titulo_clausula_custom_au_au: titulo ? titulo.toLocaleUpperCase('es') : '___',
+      cuerpo_clausula_custom_au_au: stripHtml(
+        cuerpoHtml ? renderizarPildoras(cuerpoHtml, valoresFase1, 'VALOR') : cuerpoHtml,
+      ),
     };
   });
 
@@ -480,6 +504,7 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
     // Presupuesto (loop {#} parcheado a items_presupuesto)
     items_presupuesto: items.map((item: any, index: number) => ({
       numero: index + 1,
+      numero_item_au_au: index + 1,
       descripcion_item_au_au: item.descripcionItem,
       codigo_partida_au_au: item.codigoPartida,
       unidad_medida_au_au: item.unidadMedida,

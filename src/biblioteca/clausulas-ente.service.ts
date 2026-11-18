@@ -1,3 +1,4 @@
+import { pildorasAMarcas } from '../formalizacion-fase4/pildoras.util';
 import {
   Injectable,
   NotFoundException,
@@ -113,7 +114,7 @@ export class ClausulasEnteService {
   }
 
   async create(enteId: string, dto: CreateClausulaDto, user: UsuarioActual) {
-    this.assertTokensValidos(dto.cuerpo);
+    this.assertTokensValidos(dto.cuerpo && pildorasAMarcas(dto.cuerpo));
 
     this.assertAccesoEnte(enteId, user);
 
@@ -121,7 +122,7 @@ export class ClausulasEnteService {
       data: {
         enteId,
         tituloClausulaBib: dto.titulo,
-        cuerpoClausulaBib: dto.cuerpo,
+        cuerpoClausulaBib: pildorasAMarcas(dto.cuerpo),
         createdBy: user.id,
         updatedBy: user.id,
       },
@@ -131,7 +132,7 @@ export class ClausulasEnteService {
   }
 
   async update(id: string, dto: UpdateClausulaDto, user: UsuarioActual) {
-    this.assertTokensValidos(dto.cuerpo);
+    this.assertTokensValidos(dto.cuerpo && pildorasAMarcas(dto.cuerpo));
 
     await this.obtener(id, user);
 
@@ -139,7 +140,7 @@ export class ClausulasEnteService {
       where: { id },
       data: {
         ...(dto.titulo !== undefined && { tituloClausulaBib: dto.titulo }),
-        ...(dto.cuerpo !== undefined && { cuerpoClausulaBib: dto.cuerpo }),
+        ...(dto.cuerpo !== undefined && { cuerpoClausulaBib: pildorasAMarcas(dto.cuerpo) }),
         updatedBy: user.id,
       },
     });

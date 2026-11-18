@@ -10,6 +10,8 @@ import {
   TIPOS_DOCUMENTO_FASE1,
   huboCambios,
 } from './invalidacion-documentos.util';
+import { renderizarPildoras } from '../formalizacion-fase4/pildoras.util';
+import { resolverTokensFase1 } from '../formalizacion-fase4/tokens-contrato.resolver';
 
 export type { UsuarioActual } from '../common/types/usuario-actual.type';
 
@@ -172,12 +174,72 @@ export class Fase1Service {
     const config = this.getConfig(modulo);
     const fase = await this.getOrCreateFase(expedienteId, user.id);
 
+    const datos = this.extraerDatos(fase as Record<string, any>, config.key);
     return {
       modulo: config.key,
       etiqueta: config.etiqueta,
       estado: (fase as Record<string, any>)[config.estadoField] as EstadoMicromodulo,
-      datos: this.extraerDatos(fase as Record<string, any>, config.key),
+      datos:
+        config.key === 'modelo-contrato' ? await this.resolverModelo(expedienteId, datos) : datos,
     };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Modelo de contrato: marcas con el dato del expediente
+  // ---------------------------------------------------------------------------
+
+  /** Valor de cada variable que ya existe en la Fase 1. */
+  private async valoresFase1(expedienteId: string) {
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      select: {
+        descripcionObjeto: true,
+        codigoNomenclatura: true,
+        ente: { select: { nombre: true, rif: true, organoAdscripcion: true, ciudad: true } },
+        unidadUsuaria: { select: { nombreUnidadUsuaria: true } },
+        fasePreparatoria: {
+          select: {
+            porcentajeFielCumplimiento: true,
+            porcentajeGarantiaLaboral: true,
+            porcentajeAnticipo: true,
+            porcentajeResponsabilidadSocial: true,
+            lugarLogisticaEjecucion: true,
+            plazoEjecucionProcedimiento: true,
+            porcentajeResponsabilidadCivil: true,
+            montoResponsabilidadCivilBs: true,
+            modalidadCrs: true,
+            unidadRespCumplimientoCrs: true,
+          },
+        },
+      },
+    });
+    return expediente ? resolverTokensFase1(expediente) : {};
+  }
+
+  /**
+   * Las cláusulas se leen con sus marcas convertidas en píldoras con valor. Lo
+   * guardado no cambia: el dato se recalcula en cada lectura, así que si el
+   * expediente cambia, la cláusula también.
+   */
+  private async resolverModelo(expedienteId: string, datos: Record<string, any>) {
+    const clausulas = Array.isArray(datos?.clauses) ? datos.clauses : null;
+    if (!clausulas?.length) return datos;
+    const valores = await this.valoresFase1(expedienteId);
+    return {
+      ...datos,
+      clauses: clausulas.map((c: Record<string, any>) =>
+        typeof c?.cuerpoHtml === 'string'
+          ? { ...c, cuerpoHtml: renderizarPildoras(c.cuerpoHtml, valores, 'RESOLVER') }
+          : c,
+      ),
+    };
+  }
+
+  /** Vista previa de una cláusula de la biblioteca antes de agregarla. */
+  async resolverClausula(expedienteId: string, cuerpoHtml: string, user: UsuarioActual) {
+    await this.acceso.assertAcceso(expedienteId, user.enteId, user.rol);
+    const valores = await this.valoresFase1(expedienteId);
+    return { cuerpoHtml: renderizarPildoras(cuerpoHtml, valores, 'RESOLVER') };
   }
 
   /** Guarda datos parciales sin validaciones estrictas y deja el módulo en BORRADOR. */

@@ -1,4 +1,4 @@
-import { IsObject } from 'class-validator';
+import { IsObject, IsString, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
@@ -58,6 +58,17 @@ export class ModeloContratoDto {
   })
   @IsObject()
   data: Record<string, any>;
+}
+
+/** Vista previa de una cláusula antes de agregarla al modelo. */
+export class ResolverClausulaDto {
+  @ApiProperty({
+    description: 'HTML de la cláusula con marcas {…}, [ETIQUETA] o píldoras',
+    example: '<p>El objeto del presente contrato es {desc_objeto_contratacion_au_au}.</p>',
+  })
+  @IsString()
+  @MaxLength(100000)
+  cuerpoHtml: string;
 }
 
 // ---------------------------------------------------------------------------
