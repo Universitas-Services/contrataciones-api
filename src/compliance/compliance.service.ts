@@ -30,6 +30,8 @@ import {
   progreso,
   riesgo,
   siguienteDocumento,
+  tieneResumen,
+  textoSiguiente,
   textoAnalizando,
   textoDictamenSolicitado,
   textoModalidadNoDisponible,
@@ -243,9 +245,10 @@ export class ComplianceService {
         data: { enteId, ...datos, createdBy: user.id, updatedBy: user.id },
       });
       await this.registrarMensajes(tx, expediente.id, [
-        { rol: 'AGENTE', texto: textoSaludo(nombreCompleto(usuario), ente.nombre) },
+        { rol: 'AGENTE', texto: textoSaludo(nombreCompleto(usuario)) },
       ]);
-      await this.actualizarEstado(tx, expediente.id);
+      const guia = await this.actualizarEstado(tx, expediente.id);
+      if (guia) await this.registrarMensajes(tx, expediente.id, [guia]);
       return expediente.id;
     });
     return this.detalle(id, user);
@@ -284,9 +287,7 @@ export class ComplianceService {
       progreso: progreso(checklist, vigentes),
       riesgo: riesgo(ultimoListo?.puntaje ?? null, vigentes),
       siguienteDocumento:
-        expediente.estado === 'ACTIVA'
-          ? siguienteDocumento(checklist, vigentes, expediente.tipoDocumentoSolicitado)
-          : null,
+        expediente.estado === 'ACTIVA' ? siguienteDocumento(checklist, vigentes) : null,
       checklist: (checklist ?? []).map((c) => ({
         tipoDocumento: c.tipo_documento,
         nombre: c.nombre,
@@ -318,7 +319,8 @@ export class ComplianceService {
         where: { id },
         data: { ...datos, updatedBy: user.id },
       });
-      await this.actualizarEstado(tx, id);
+      const guia = await this.actualizarEstado(tx, id);
+      if (guia) await this.registrarMensajes(tx, id, [guia]);
     });
     return this.detalle(id, user);
   }
@@ -389,8 +391,11 @@ export class ComplianceService {
       : new BadRequestException(aviso.texto);
   }
 
-  /** CONFIGURANDO pasa a ACTIVA cuando están nomenclatura, modalidad y tipo. */
-  private async actualizarEstado(tx: Tx, id: string) {
+  /**
+   * CONFIGURANDO pasa a ACTIVA cuando están nomenclatura, modalidad y tipo. Al activarse
+   * devuelve el mensaje que indica el primer documento a subir.
+   */
+  private async actualizarEstado(tx: Tx, id: string): Promise<MensajeNuevo | null> {
     const expediente = await tx.expedienteCompliance.findUniqueOrThrow({ where: { id } });
     if (
       expediente.estado === 'CONFIGURANDO' &&
@@ -399,7 +404,11 @@ export class ComplianceService {
       expediente.tipoContratacion
     ) {
       await tx.expedienteCompliance.update({ where: { id }, data: { estado: 'ACTIVA' } });
+      const checklist = this.checklistDe(await this.catalogoOpcional(), expediente.modalidad);
+      const guia = textoSiguiente(checklist, []);
+      return guia ? { rol: 'AGENTE', texto: guia } : null;
     }
+    return null;
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -542,7 +551,8 @@ export class ComplianceService {
               where: { id: expediente.id },
               data: { ...datos, updatedBy: user.id },
             });
-            await this.actualizarEstado(tx, expediente.id);
+            const guia = await this.actualizarEstado(tx, expediente.id);
+            if (guia) mensajes.push(guia);
           });
           aplicadas.push({ accion: 'fijar_expediente', ...datos });
         }
@@ -723,6 +733,22 @@ export class ComplianceService {
     return this.vistaDocumento(documento);
   }
 
+  async resumenPdf(documentoId: string, user: UsuarioActual) {
+    const { documento, expediente } = await this.cargarDocumento(documentoId, user);
+    if (documento.estado !== 'ANALIZADO') {
+      throw new ConflictException('El documento todavía no está analizado.');
+    }
+    if (!tieneResumen(documento.informeMarkdown)) {
+      throw new ConflictException(
+        'Este análisis es anterior al resumen descargable. Vuelva a subir el documento.',
+      );
+    }
+    const nomenclatura = expediente.nomenclatura ?? 'expediente';
+    const buffer = await markdownAPdf(documento.informeMarkdown, `Resumen ${nomenclatura}`);
+    const seguro = `${nomenclatura}-${documento.tipoDocumento}`.replace(/[^\w.-]+/g, '_');
+    return { buffer, fileName: `resumen-${seguro}.pdf` };
+  }
+
   async reintentarDocumento(documentoId: string, user: UsuarioActual) {
     const { documento, expediente } = await this.cargarDocumento(documentoId, user, true);
     this.assertNoCerrado(expediente);
@@ -762,6 +788,8 @@ export class ComplianceService {
       estatusGlobal: d.estatusGlobal,
       tipoCoincide: d.tipoCoincide,
       tipoDetectado: d.tipoDetectado,
+      /** Si se puede descargar el resumen del análisis en PDF. */
+      tieneResumen: d.estado === 'ANALIZADO' && tieneResumen(d.informeMarkdown),
       error: d.error,
       createdAt: d.createdAt,
       analizadoAt: d.analizadoAt,

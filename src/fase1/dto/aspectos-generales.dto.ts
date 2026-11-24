@@ -92,7 +92,7 @@ export class AspectosGeneralesDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(4000)
   formaCumplimientoCrs?: string;
 
   // --- Paso 4: Garantías y anticipos ---

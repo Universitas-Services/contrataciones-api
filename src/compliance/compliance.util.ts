@@ -62,17 +62,22 @@ export function progreso(checklist: ElementoChecklist[] | null, documentos: Docu
   };
 }
 
-/** El tipo pedido por el agente, si sigue pendiente; si no, el primero sin cubrir. */
+/** El primero del checklist sin cubrir: los documentos se piden en ese orden. */
 export function siguienteDocumento(
   checklist: ElementoChecklist[] | null,
   documentos: DocumentoResumen[],
-  solicitado: string | null,
 ): string | null {
   if (!checklist) return null;
   const cubiertos = tiposCubiertos(documentos);
-  const enChecklist = (tipo: string) => checklist.some((c) => c.tipo_documento === tipo);
-  if (solicitado && enChecklist(solicitado) && !cubiertos.has(solicitado)) return solicitado;
   return checklist.find((c) => !cubiertos.has(c.tipo_documento))?.tipo_documento ?? null;
+}
+
+/**
+ * Los resúmenes anteriores al 12/11 traen los códigos internos del cuestionario, que no
+ * deben llegar al usuario. Los actuales empiezan por este título.
+ */
+export function tieneResumen(informeMarkdown: string | null): informeMarkdown is string {
+  return /^\s*#\s*Resumen de revisi[oó]n/i.test(informeMarkdown ?? '');
 }
 
 const GRAVEDAD_SEMAFORO: Record<string, number> = { Verde: 0, Amarillo: 1, Rojo: 2 };
@@ -130,12 +135,24 @@ export function extension(nombreArchivo: string): string {
 
 // ── Textos que Nest agrega al chat ──────────────────────────────────
 
-export function textoSaludo(nombreUsuario: string, ente: string): string {
+export function textoSaludo(nombreUsuario: string): string {
   return (
-    `Hola, ${nombreUsuario}. Soy el Coordinador de Compliance de Contrataciones de ${ente}. ` +
+    `Hola, ${nombreUsuario}. Soy el Coordinador de Compliance de Contrataciones. ` +
     'Te acompaño a auditar un expediente documento por documento. ' +
-    'Para empezar, ¿cuál es el número del expediente y cómo se llama?'
+    'Para empezar, ¿cuál es la nomenclatura del expediente?'
   );
+}
+
+/** Guía el orden de carga. Sin pendientes, invita a pedir el dictamen final. */
+export function textoSiguiente(
+  checklist: ElementoChecklist[] | null,
+  documentos: DocumentoResumen[],
+): string | null {
+  if (!checklist?.length) return null;
+  const tipo = siguienteDocumento(checklist, documentos);
+  if (!tipo) return 'Ya están todos los documentos. Puedes solicitar el dictamen final.';
+  const nombre = checklist.find((c) => c.tipo_documento === tipo)!.nombre;
+  return `Ahora sube: ${nombre}.`;
 }
 
 export function textoSubido(nombreArchivo: string, nombreTipo: string, reemplaza?: string): string {

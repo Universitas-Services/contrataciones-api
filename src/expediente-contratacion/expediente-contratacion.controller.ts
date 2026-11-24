@@ -114,9 +114,22 @@ export class ExpedienteContratacionController {
   declararDesierto(
     @Param('id') id: string,
     @Body() dto: DeclaracionDesiertoDto,
-    @CurrentUser() user: { id: string; enteId: string },
+    @CurrentUser() user: { id: string; enteId: string; rol: RolUsuario },
   ) {
-    return this.expedienteService.declararDesierto(id, dto, user.id, user.enteId);
+    return this.expedienteService.declararDesierto(id, dto, user.id, user.enteId, user.rol);
+  }
+
+  @Patch(':id/revertir-desierto')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS')
+  @ApiOperation({ summary: 'Revertir la declaratoria de desierto de la Fase 2' })
+  @ApiResponse({ status: 200, description: 'Declaratoria revertida; vuelve al estatus anterior' })
+  @ApiResponse({ status: 400, description: 'El expediente no está declarado desierto' })
+  @ApiResponse({ status: 409, description: 'El expediente ya fue cerrado en la Fase 4' })
+  revertirDesierto(
+    @Param('id') id: string,
+    @CurrentUser() user: { id: string; enteId: string; rol: RolUsuario },
+  ) {
+    return this.expedienteService.revertirDesierto(id, user.id, user.enteId, user.rol);
   }
 
   @Post('generar-cronograma')

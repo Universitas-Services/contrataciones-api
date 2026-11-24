@@ -273,6 +273,8 @@ export function mapDatosContrato(
     desc_objeto_contratacion_au_au: texto(tokens.objeto_contratacion_au_au),
     cod_nomenclatura_proceso_au_au: texto(tokens.nomenclatura_proceso_au_au),
     nom_ente_contratante: texto(tokens.nombre_ente_contratante_au_au),
+    // Es opcional: sin órgano, la plantilla omite el tramo "ente adscrito a…".
+    tiene_organo_adscripcion: Boolean(tokens.organo_adscripcion_au_au?.trim()),
     organo_adscripcion: texto(tokens.organo_adscripcion_au_au),
     rif_ente: texto(tokens.rif_ente_au_au),
     loc_ciudad_ente: texto(tokens.ciudad_domicilio_especial_au_au),

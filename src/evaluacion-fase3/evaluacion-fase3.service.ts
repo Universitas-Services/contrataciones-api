@@ -11,6 +11,11 @@ import { UpdateSobre2Dto } from './dto/update-sobre2.dto';
 import { UpdateCalificacionDto } from './dto/update-calificacion.dto';
 import { CreateInformeDto } from './dto/create-informe.dto';
 import { ListarEvaluacionesQueryDto, EstatusEvaluacion } from './dto/listar-evaluaciones-query.dto';
+import {
+  DOCUMENTOS_DE_ADJUDICACION,
+  marcarDesactualizados,
+} from '../common/utils/documentos-dependientes.util';
+import { huboCambios } from '../fase1/invalidacion-documentos.util';
 
 @Injectable()
 export class EvaluacionFase3Service {
@@ -20,14 +25,7 @@ export class EvaluacionFase3Service {
   // UTILIDAD: Invalidar documentos relacionados al expediente
   // ============================================================
   private async invalidarDocumentos(expedienteId: string) {
-    await this.prisma.documentoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
-    await this.prisma.pliegoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
+    await marcarDesactualizados(this.prisma, expedienteId, DOCUMENTOS_DE_ADJUDICACION);
   }
 
   // ============================================================
@@ -690,7 +688,13 @@ export class EvaluacionFase3Service {
       });
     }
 
-    await this.invalidarDocumentos(expedienteId);
+    // Guardar el informe sin cambios no deja nada desactualizado.
+    const campos = Object.keys(data).filter((campo) => campo !== 'updatedBy');
+    const antes = existente as Record<string, unknown> | null;
+    const despues = informe as unknown as Record<string, unknown>;
+    if (!antes || campos.some((campo) => huboCambios(antes[campo], despues[campo]))) {
+      await this.invalidarDocumentos(expedienteId);
+    }
 
     return informe;
   }

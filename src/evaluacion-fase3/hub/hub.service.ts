@@ -28,9 +28,16 @@ import type {
   EstadoEvaluacion,
   EstadoPromocion,
 } from './types/hub.types';
+import {
+  DOCUMENTOS_DE_ADJUDICACION,
+  marcarDesactualizados,
+} from '../../common/utils/documentos-dependientes.util';
 
-const MAX_JUSTIFICACION = 1000;
-const MAX_OBSERVACION = 500;
+const MAX_JUSTIFICACION = 4000;
+const MAX_OBSERVACION = 4000;
+
+/** Se coteja, pero nunca descalifica: la promoción económica es un bono. */
+const RECAUDO_VAN = 'modDeclaracionAutocalculoVanAuAu';
 
 @Injectable()
 export class HubService {
@@ -344,18 +351,13 @@ export class HubService {
         errores.push(`Falta responder SI/NO en "${item.etiquetaCorta}".`);
       }
     }
-    // Sobre 2: verificaciones que alimentan el Informe de Recomendación. No deciden el dictamen.
-    if (typeof form?.indVerificadoGarantia !== 'boolean') {
-      errores.push('Debe indicar si se verificó la garantía de mantenimiento de la oferta.');
-    }
-    if (typeof form?.indVerificadoCrs !== 'boolean') {
-      errores.push('Debe indicar si se verificó el compromiso de responsabilidad social.');
-    }
     this.assertSinErrores(errores);
 
-    // Sólo los eliminatorios deciden el dictamen. El VAN se coteja pero no tumba.
+    // Solo los eliminatorios del Sobre 1 deciden el dictamen: el Sobre 2 y el VAN se
+    // cotejan pero no descalifican. Se comprueba aquí, y no solo al construir la
+    // plantilla, porque las plantillas ya congeladas los traen como eliminatorios.
     const cumple = plantillas.legal.items
-      .filter((i) => i.eliminatorio)
+      .filter((i) => i.eliminatorio && i.sobre === 1 && i.id !== RECAUDO_VAN)
       .every((i) => items[i.id]?.consignado === 'SI');
 
     nuevoEstado.submitted = true;
@@ -372,8 +374,8 @@ export class HubService {
       // Se refleja también en las columnas históricas del modelo.
       oferenteCalificadoLegal: cumple,
       justificacionCalificadoLegal: form?.justificacion ?? null,
-      indVerificadoGarantia: form.indVerificadoGarantia ?? null,
-      indVerificadoCrs: form.indVerificadoCrs ?? null,
+      indVerificadoGarantia: form?.indVerificadoGarantia ?? null,
+      indVerificadoCrs: form?.indVerificadoCrs ?? null,
       obsVerificadoGarantia,
       obsVerificadoCrs,
       ...(cumple ? {} : { oferenteCalificado: false, posicionPrelacion: null }),
@@ -383,6 +385,11 @@ export class HubService {
       await this.prelacion.recalcularPorExpediente(evaluacion.oferta.expedienteId);
     }
 
+    await marcarDesactualizados(
+      this.prisma,
+      evaluacion.oferta.expedienteId,
+      DOCUMENTOS_DE_ADJUDICACION,
+    );
     return this.obtenerHub(evaluacionId, user);
   }
 
@@ -448,6 +455,11 @@ export class HubService {
       await this.prelacion.recalcularPorExpediente(evaluacion.oferta.expedienteId);
     }
 
+    await marcarDesactualizados(
+      this.prisma,
+      evaluacion.oferta.expedienteId,
+      DOCUMENTOS_DE_ADJUDICACION,
+    );
     return this.obtenerHub(evaluacionId, user);
   }
 
@@ -518,6 +530,11 @@ export class HubService {
       await this.prelacion.recalcularPorExpediente(evaluacion.oferta.expedienteId);
     }
 
+    await marcarDesactualizados(
+      this.prisma,
+      evaluacion.oferta.expedienteId,
+      DOCUMENTOS_DE_ADJUDICACION,
+    );
     return this.obtenerHub(evaluacionId, user);
   }
 
@@ -579,12 +596,8 @@ export class HubService {
       'evaluación económica',
     );
 
-    const errores = [
-      ...this.validarJustificacion(nuevoEstado.form.tecnica.justificacion, accion),
-      ...this.validarJustificacion(nuevoEstado.form.economica.justificacion, accion),
-      ...resTecnica.errores,
-      ...resEconomica.errores,
-    ];
+    // La evaluación solo puntúa: no lleva justificación (QA, ronda 3).
+    const errores = [...resTecnica.errores, ...resEconomica.errores];
 
     const ambosCumplen = resTecnica.cumple && resEconomica.cumple;
     this.assertSinErrores(errores);
@@ -637,6 +650,11 @@ export class HubService {
       await this.prelacion.recalcularPorExpediente(evaluacion.oferta.expedienteId);
     }
 
+    await marcarDesactualizados(
+      this.prisma,
+      evaluacion.oferta.expedienteId,
+      DOCUMENTOS_DE_ADJUDICACION,
+    );
     return this.obtenerHub(evaluacionId, user);
   }
 
@@ -705,6 +723,11 @@ export class HubService {
 
     await this.prelacion.recalcularPorExpediente(evaluacion.oferta.expedienteId);
 
+    await marcarDesactualizados(
+      this.prisma,
+      evaluacion.oferta.expedienteId,
+      DOCUMENTOS_DE_ADJUDICACION,
+    );
     return this.obtenerHub(evaluacionId, user);
   }
 }

@@ -51,7 +51,7 @@ export class HubController {
   @ApiOperation({
     summary: 'Guardar o confirmar la calificación legal',
     description:
-      'Al confirmar, CUMPLE exige que todos los recaudos eliminatorios estén en SI. ' +
+      'Al confirmar, CUMPLE exige que todos los recaudos eliminatorios del Sobre 1 estén en SI. ' +
       'Un NO descalifica al oferente y cierra las pestañas siguientes.',
   })
   @ApiBody({ type: HubPatchDto })

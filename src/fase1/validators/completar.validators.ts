@@ -328,8 +328,8 @@ function validarCalificacionLegal(datos: Datos): string[] {
   personalizados.forEach((p, i) => {
     if (vacio(p?.descripcion)) {
       e.push(`El recaudo personalizado ${i + 1} debe tener descripción.`);
-    } else if (String(p.descripcion).length > 500) {
-      e.push(`La descripción del recaudo personalizado ${i + 1} supera los 500 caracteres.`);
+    } else if (String(p.descripcion).length > 4000) {
+      e.push(`La descripción del recaudo personalizado ${i + 1} supera los 4000 caracteres.`);
     }
     if (sinResponder(p?.tieneModelo)) {
       e.push(`Debe indicar si el recaudo personalizado ${i + 1} tiene modelo.`);

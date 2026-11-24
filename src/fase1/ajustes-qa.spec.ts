@@ -39,14 +39,14 @@ describe('QA 1 — contraseña con cualquier símbolo', () => {
   );
 });
 
-describe('QA 3 — justificaciones de hasta 2000 caracteres', () => {
-  it('acepta 2000 y rechaza 2001', async () => {
+describe('QA 3 — justificaciones de hasta 4000 caracteres', () => {
+  it('acepta 4000 y rechaza 4001', async () => {
     const largo = (n: number) => ({
       justificacionNecesidadContratacion: 'a'.repeat(n),
       justificacionVentajas: 'b'.repeat(n),
     });
-    expect(await erroresDe(ActividadesPreviasDto, largo(2000))).toEqual([]);
-    expect(await erroresDe(ActividadesPreviasDto, largo(2001))).toEqual([
+    expect(await erroresDe(ActividadesPreviasDto, largo(4000))).toEqual([]);
+    expect(await erroresDe(ActividadesPreviasDto, largo(4001))).toEqual([
       'justificacionNecesidadContratacion',
       'justificacionVentajas',
     ]);
@@ -176,8 +176,12 @@ describe('QA 8 — documentos desactualizados solo con cambios reales', () => {
     await servicio.guardarBorrador('exp-1', 'llamado', { costoPliegoBs: 2000 }, user);
 
     const filtro = prisma.documentoGenerado.updateMany.mock.calls[0][0].where;
-    expect(filtro.OR[0].tipoDocumento.in).toEqual(['LLAMADO_PARTICIPAR', 'PLIEGO_CONDICIONES']);
-    expect(filtro.OR[1].tipoDocumento.notIn).toContain('ACTIVIDADES_PREVIAS');
+    expect(filtro.tipoDocumento.in).toEqual(
+      expect.arrayContaining(['LLAMADO_PARTICIPAR', 'PLIEGO_CONDICIONES', 'ACTA_APERTURA']),
+    );
+    for (const ajeno of ['ACTIVIDADES_PREVIAS', 'ACTA_INICIO', 'LISTA_COTEJO']) {
+      expect(filtro.tipoDocumento.in).not.toContain(ajeno);
+    }
     expect(prisma.pliegoGenerado.updateMany).toHaveBeenCalled();
   });
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Injectable, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, Inject } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import PizZip from 'pizzip';
@@ -10,8 +10,16 @@ import { PrismaService } from '../database/prisma.service';
 import { IStorageService } from '../common/interfaces/storage-service.interface';
 import { EmailService } from '../email/email.service';
 
+/** Word no muestra WEBP ni SVG: Cloudinary entrega el logo como PNG. */
+export function logoComoPng(url: string): string {
+  return url.includes('res.cloudinary.com') && url.includes('/image/upload/')
+    ? url.replace('/image/upload/', '/image/upload/f_png/')
+    : url;
+}
+
 @Injectable()
 export class ManualesService {
+  private readonly logger = new Logger(ManualesService.name);
   private readonly MAX_MANUALES_POR_ENTE = 10;
 
   constructor(
@@ -41,6 +49,9 @@ export class ManualesService {
       throw new NotFoundException('Ente no encontrado');
     }
 
+    // Antes de tocar el manual vigente: si falta la estructura, no se genera nada.
+    this.validarDatosCompletos(ente);
+
     // 2. Marcar manual anterior como histórico (NO eliminar)
     const manualAnterior = await this.prisma.manualGenerado.findFirst({
       where: { enteId, esVersionVigente: true, deletedAt: null },
@@ -66,9 +77,6 @@ export class ManualesService {
         'v' + manualAnterior.versionDocumento,
       );
     }
-
-    // 3. Validar que el Ente tenga todos los campos requeridos
-    this.validarDatosCompletos(ente);
 
     // 3. Cargar plantilla base - usar __dirname para que funcione en dev (src/) y prod (dist/)
     const templatePath = path.join(__dirname, 'templates', 'manual-ente-base.docx');
@@ -127,6 +135,8 @@ export class ManualesService {
       logo_ente: ente.logoUrl || 'N/A', // Marcador para la imagen
       nom_unidad_admin_financiera:
         ente.nombreUnidadAdminFinanciera || 'Dirección de Administración',
+      // La plantilla usa también este nombre.
+      unidad_admin_financiera: ente.nombreUnidadAdminFinanciera || 'Dirección de Administración',
       nom_unidad_contratante,
       nom_unidad_tecnologia: ente.nombreUnidadTecnologia || 'Dirección de Tecnología',
 
@@ -146,13 +156,18 @@ export class ManualesService {
     let logoBuffer: Buffer;
     try {
       if (ente.logoUrl) {
-        const response = await axios.get(ente.logoUrl, { responseType: 'arraybuffer' });
+        const response = await axios.get(logoComoPng(ente.logoUrl), {
+          responseType: 'arraybuffer',
+        });
 
         logoBuffer = Buffer.from(response.data);
       } else {
         throw new Error('No logo URL');
       }
     } catch (e) {
+      this.logger.warn(
+        `El manual del ente ${enteId} sale sin su logo: ${e instanceof Error ? e.message : String(e)}`,
+      );
       // Fallback
       const placeholderPath = path.join(__dirname, 'templates', 'placeholder_logo.png');
       logoBuffer = fs.existsSync(placeholderPath)

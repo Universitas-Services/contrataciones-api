@@ -108,24 +108,28 @@ export function resolverTokensFase1(exp: ExpedienteTokensFase1): Record<string, 
 }
 
 /**
- * La fianza de fiel cumplimiento usa la misma regla que el Informe y el Acta de Fase 3:
+ * Fianza de fiel cumplimiento. Es la única fórmula: la usan el Informe, el Acta y las
+ * notificaciones de Fase 3, y los documentos de Fase 4.
  *
- *   monto × 0,16 × (porcentaje / 100)
+ *   (monto × 0,16 + monto) × (porcentaje / 100)
  */
 export function montoFielCumplimiento(
   montoContratoBs: number | null,
   porcentaje: number | null,
 ): number | null {
   if (montoContratoBs == null || porcentaje == null) return null;
-  return montoContratoBs * 0.16 * (porcentaje / 100);
+  return (montoContratoBs * 0.16 + montoContratoBs) * (porcentaje / 100);
 }
 
 /**
  * Une las partidas de varios dictámenes sin repetir, conservando el orden. Cada
- * entrada puede traer varias partidas separadas por coma o punto y coma.
+ * entrada puede traer varias partidas separadas por coma o punto y coma. Lo que se
+ * escribió detrás del código ("401-07-83-00 UNIDAD") no forma parte de la partida.
  */
 export function unirPartidas(...listas: (string | null | undefined)[]): string | null {
-  const partidas = listas.flatMap((lista) => (lista ?? '').split(/[,;]/)).map((p) => p.trim());
+  const partidas = listas
+    .flatMap((lista) => (lista ?? '').split(/[,;]/))
+    .map((p) => p.trim().replace(/^(\d[\d.-]*\d)\s+\D+$/, '$1'));
   const unicas = [...new Set(partidas.filter(Boolean))];
   return unicas.length ? unicas.join(', ') : null;
 }

@@ -1,3 +1,7 @@
+import {
+  montoFielCumplimiento,
+  unirPartidas,
+} from '../../formalizacion-fase4/tokens-contrato.resolver';
 import { formatCurrencyVE } from '../../common/utils/date-formatter.util';
 import { cifraEnLetras } from '../../common/utils/numero-a-letras.util';
 import { ETIQUETAS_PRELACION } from '../../evaluacion-fase3/hub/prelacion.service';
@@ -214,7 +218,7 @@ export function mapInformeAdjudicacion(input: {
   const pctFiel = num(fase.porcentajeFielCumplimiento);
   const pctLaboral = num(fase.porcentajeGarantiaLaboral);
   const garantias = (montoAdjudicado: number, manoObra: Numerico) => {
-    const fiel = montoAdjudicado * 0.16 * (pctFiel / 100);
+    const fiel = montoFielCumplimiento(montoAdjudicado, pctFiel) ?? 0;
     const laboral = num(manoObra) * (pctLaboral / 100);
     return {
       porcentaje_fiel_cumplimiento_au_au: String(pctFiel),
@@ -250,7 +254,7 @@ export function mapInformeAdjudicacion(input: {
             rif_oferente_adjudicado_au_au: ev?.rifProveedorEvaluado || '___',
             cantidad_renglones_parcial_au_au: d.cantidadRenglones ?? '___',
             alcance_adjudicacion_parcial_au_au: d.alcanceAdjudicacionParcial || '___',
-            partidas_adjudicadas_parcial_au_au: d.partidasAdjudicadasParcial || '___',
+            partidas_adjudicadas_parcial_au_au: unirPartidas(d.partidasAdjudicadasParcial) ?? '___',
             monto_adjudicado_parcial_au_au: bs(monto),
             plazo_ejecucion_oferta_parcial_au_au: d.plazoEjecucionOfertaParcial ?? '___',
             ...garantias(monto, d.montoManoObraOfertado),
@@ -295,7 +299,8 @@ export function mapInformeAdjudicacion(input: {
     // 10. Recomendación TOTAL (raíz = Primera Opción)
     recomendacion_adjudicacion_total_au_au: esTotal,
     ...(adjudicadoTotal ? identidad(adjudicadoTotal) : primera ? identidad(primera) : {}),
-    partidas_adjudicadas_total_au_au: dictamenTotal?.partidasAdjudicadasTotal || '___',
+    partidas_adjudicadas_total_au_au:
+      unirPartidas(dictamenTotal?.partidasAdjudicadasTotal) ?? '___',
     monto_adjudicado_total_au_au: dictamenTotal ? bs(montoTotal) : '___',
     plazo_ejecucion_oferta_ganadora_au_au: dictamenTotal?.plazoEjecucionOfertaGanadora ?? '___',
     opcion_varias_ofertas_au_au,

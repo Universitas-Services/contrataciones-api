@@ -4,6 +4,9 @@ import {
   riesgo,
   siguienteDocumento,
   textoAnalizado,
+  textoSaludo,
+  textoSiguiente,
+  tieneResumen,
   textoDictamenListo,
   textoTipoNoCoincide,
 } from './compliance.util';
@@ -41,18 +44,41 @@ describe('progreso y siguiente documento', () => {
       doc('OFERTAS', { vigente: false }),
     ];
     expect(progreso(CHECKLIST, documentos)).toEqual({ cubiertos: 1, total: 3 });
-    expect(siguienteDocumento(CHECKLIST, documentos, null)).toBe('ACTA_INICIO');
+    expect(siguienteDocumento(CHECKLIST, documentos)).toBe('ACTA_INICIO');
   });
 
-  it('respeta el tipo pedido por el agente mientras siga pendiente', () => {
-    expect(siguienteDocumento(CHECKLIST, [], 'OFERTAS')).toBe('OFERTAS');
-    expect(siguienteDocumento(CHECKLIST, [doc('OFERTAS')], 'OFERTAS')).toBe('ACTIVIDADES_PREVIAS');
-    expect(siguienteDocumento(CHECKLIST, [], 'NO_EXISTE')).toBe('ACTIVIDADES_PREVIAS');
+  it('guía la carga en el orden del checklist, aunque se suba otro antes', () => {
+    expect(siguienteDocumento(CHECKLIST, [])).toBe('ACTIVIDADES_PREVIAS');
+    expect(siguienteDocumento(CHECKLIST, [doc('OFERTAS')])).toBe('ACTIVIDADES_PREVIAS');
+    expect(textoSiguiente(CHECKLIST, [doc('ACTIVIDADES_PREVIAS')])).toBe(
+      'Ahora sube: Acta de Inicio.',
+    );
+    expect(
+      textoSiguiente(
+        CHECKLIST,
+        CHECKLIST.map((c) => doc(c.tipo_documento)),
+      ),
+    ).toContain('dictamen final');
+    expect(textoSiguiente(null, [])).toBeNull();
+  });
+
+  it('el saludo pide la nomenclatura', () => {
+    expect(textoSaludo('Ana Pérez')).toBe(
+      'Hola, Ana Pérez. Soy el Coordinador de Compliance de Contrataciones. ' +
+        'Te acompaño a auditar un expediente documento por documento. ' +
+        'Para empezar, ¿cuál es la nomenclatura del expediente?',
+    );
+  });
+
+  it('solo los resúmenes nuevos se pueden descargar', () => {
+    expect(tieneResumen('# Resumen de revisión: Acta de Inicio\n- …')).toBe(true);
+    expect(tieneResumen('# Informe del analista\nP-01')).toBe(false);
+    expect(tieneResumen(null)).toBe(false);
   });
 
   it('sin checklist no hay progreso', () => {
     expect(progreso(null, [])).toBeNull();
-    expect(siguienteDocumento(null, [], null)).toBeNull();
+    expect(siguienteDocumento(null, [])).toBeNull();
   });
 });
 

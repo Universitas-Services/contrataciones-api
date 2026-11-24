@@ -6,6 +6,11 @@ import { CreatePresupuestoItemDto } from './dto/create-presupuesto-item.dto';
 import { UpdatePresupuestoItemDto } from './dto/update-presupuesto-item.dto';
 import { QueryPresupuestoItemDto } from './dto/query-presupuesto-item.dto';
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
+import {
+  DOCUMENTOS_DEL_PRESUPUESTO,
+  marcarDesactualizados,
+} from '../common/utils/documentos-dependientes.util';
+import { huboCambios } from '../fase1/invalidacion-documentos.util';
 
 @Injectable()
 export class PresupuestoItemService {
@@ -17,14 +22,7 @@ export class PresupuestoItemService {
   ) {}
 
   private async invalidarDocumentos(expedienteId: string) {
-    await this.prisma.documentoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
-    await this.prisma.pliegoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
+    await marcarDesactualizados(this.prisma, expedienteId, DOCUMENTOS_DEL_PRESUPUESTO);
   }
 
   /**
@@ -187,7 +185,11 @@ export class PresupuestoItemService {
       },
     });
 
-    await this.despuesDeMutar(existing.expedienteId);
+    await this.sincronizarTotalPresupuesto(existing.expedienteId);
+    // Guardar un ítem sin cambios no deja nada desactualizado.
+    if (huboCambios({ ...existing, updatedAt: null }, { ...result, updatedAt: null })) {
+      await this.invalidarDocumentos(existing.expedienteId);
+    }
     return result;
   }
 

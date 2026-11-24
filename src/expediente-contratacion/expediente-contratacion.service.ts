@@ -1,6 +1,7 @@
 import {
   Injectable,
   BadRequestException,
+  ConflictException,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
@@ -20,9 +21,15 @@ import { GenerarCronogramaCPDto } from './dto/generar-cronograma-cp.dto';
 import { GenerarCronogramaCDDto } from './dto/generar-cronograma-cd.dto';
 import { GenerarCronogramaMEDto } from './dto/generar-cronograma-me.dto';
 import { UpdateCronogramaExpedienteDto } from './dto/update-cronograma.dto';
-import { RolUsuario, Prisma } from '@prisma/client';
+import { EstatusProceso, RolUsuario, Prisma } from '@prisma/client';
 import { BusinessDaysUtil } from '../common/utils/business-days.util';
 import { CronogramaEnteService } from '../cronograma-ente/cronograma-ente.service';
+import { calcularActoUnico, validarActoUnico } from './cronograma-acto-unico.util';
+import {
+  DOCUMENTOS_DEL_CRONOGRAMA,
+  marcarDesactualizados,
+} from '../common/utils/documentos-dependientes.util';
+import { huboCambios } from '../fase1/invalidacion-documentos.util';
 
 @Injectable()
 export class ExpedienteContratacionService {
@@ -248,8 +255,19 @@ export class ExpedienteContratacionService {
 
         // --- 3. CRONOGRAMA (Si envían fecha o si cambió el tipoContratacion y ya había cronograma) ---
         let resultCronograma = expediente.cronograma;
-        const triggerCronograma =
-          !!dto.fechaLlamadoParticipar || (!!dto.tipoContratacion && !!expediente.cronograma);
+        // Recalcular borra las fechas que el usuario movió a mano: solo si cambió de verdad
+        // la fecha del llamado o el tipo de contratación.
+        const llamadoActual = expediente.cronograma?.fechaLlamadoParticipar
+          ?.toISOString()
+          .split('T')[0];
+        const cambioLlamado =
+          !!dto.fechaLlamadoParticipar &&
+          dto.fechaLlamadoParticipar.split('T')[0] !== llamadoActual;
+        const cambioTipo =
+          !!dto.tipoContratacion &&
+          !!expediente.cronograma &&
+          dto.tipoContratacion !== expediente.modalidad?.tipoContratacion;
+        const triggerCronograma = cambioLlamado || cambioTipo;
 
         if (triggerCronograma && modalidadInfo) {
           const baseDate = dto.fechaLlamadoParticipar
@@ -302,15 +320,16 @@ export class ExpedienteContratacionService {
           }
         }
 
-        // Invalidar documentos generados
-        await tx.documentoGenerado.updateMany({
-          where: { expedienteId: id, deletedAt: null },
-          data: { estaDesactualizado: true },
-        });
-        await tx.pliegoGenerado.updateMany({
-          where: { expedienteId: id, deletedAt: null },
-          data: { estaDesactualizado: true },
-        });
+        // Solo un cambio real deja desactualizados los documentos. Los datos básicos y los
+        // actores salen en todos (membrete y firmas); el cronograma, solo en algunos.
+        if (
+          this.cambio(expediente, dataExpediente) ||
+          (expediente.modalidad && this.cambio(expediente.modalidad, dataModalidad))
+        ) {
+          await marcarDesactualizados(tx, id);
+        } else if (this.cambioCronograma(expediente.cronograma, resultCronograma)) {
+          await marcarDesactualizados(tx, id, DOCUMENTOS_DEL_CRONOGRAMA);
+        }
 
         return {
           message: 'Expediente actualizado exitosamente',
@@ -448,40 +467,117 @@ export class ExpedienteContratacionService {
   }
 
   // --- DECLARATORIA DE DESIERTO (Art. 113 LCP) ---
-  async declararDesierto(id: string, dto: DeclaracionDesiertoDto, userId: string, enteId: string) {
-    const expediente = await this.prisma.expedienteContratacion.findUnique({
-      where: { id },
-    });
+  async declararDesierto(
+    id: string,
+    dto: DeclaracionDesiertoDto,
+    userId: string,
+    enteId: string,
+    rol: RolUsuario,
+  ) {
+    const expediente = await this.cargarParaDesierto(id, enteId, rol);
 
-    if (!expediente) throw new NotFoundException('Expediente no encontrado');
-    if (expediente.enteId !== enteId)
-      throw new BadRequestException('No tiene permisos para modificar este expediente');
     if (expediente.estatusProceso === 'ANULADO')
       throw new BadRequestException('No se puede declarar desierto un expediente anulado');
     if (expediente.declaratoriaDesierto)
       throw new BadRequestException('El expediente ya fue declarado desierto');
 
-    try {
-      const result = await this.prisma.expedienteContratacion.update({
+    const result = await this.prisma.$transaction(async (tx) => {
+      const actualizado = await tx.expedienteContratacion.update({
         where: { id },
         data: {
           declaratoriaDesierto: true,
           causalDeclaratoriaDesierto: dto.causalDeclaratoriaDesierto,
           justificacionDeclaratoriaDesierto: dto.justificacionDeclaratoriaDesierto,
+          estatusPrevioDesierto: expediente.estatusProceso,
           estatusProceso: 'DESIERTO',
           updatedBy: userId,
         },
       });
+      await marcarDesactualizados(tx, id, ['INFORME_RECOMENDACION']);
+      return actualizado;
+    });
 
-      return {
-        message: 'Expediente declarado desierto exitosamente',
-        data: result,
-      };
-    } catch (e: unknown) {
-      throw new InternalServerErrorException(
-        'Error al declarar desierto: ' + (e instanceof Error ? e.message : String(e)),
+    return { message: 'Expediente declarado desierto exitosamente', data: result };
+  }
+
+  /** Deshace una declaratoria de desierto de la Fase 2 hecha por error. */
+  async revertirDesierto(id: string, userId: string, enteId: string, rol: RolUsuario) {
+    const expediente = await this.cargarParaDesierto(id, enteId, rol);
+
+    if (expediente.selladoFase4At) {
+      throw new ConflictException(
+        'El expediente fue cerrado en la Fase 4: la declaratoria no se puede revertir.',
       );
     }
+    if (!expediente.declaratoriaDesierto) {
+      throw new BadRequestException('El expediente no está declarado desierto.');
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const actualizado = await tx.expedienteContratacion.update({
+        where: { id },
+        data: {
+          declaratoriaDesierto: false,
+          causalDeclaratoriaDesierto: null,
+          justificacionDeclaratoriaDesierto: null,
+          estatusProceso: await this.estatusAntesDeDesierto(tx, expediente),
+          estatusPrevioDesierto: null,
+          updatedBy: userId,
+        },
+      });
+      await marcarDesactualizados(tx, id, ['INFORME_RECOMENDACION']);
+      return actualizado;
+    });
+
+    return { message: 'Declaratoria de desierto revertida exitosamente', data: result };
+  }
+
+  private async cargarParaDesierto(id: string, enteId: string, rol: RolUsuario) {
+    const expediente = await this.prisma.expedienteContratacion.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!expediente) throw new NotFoundException('Expediente no encontrado');
+    if (rol !== 'UNIVERSITAS' && expediente.enteId !== enteId)
+      throw new BadRequestException('No tiene permisos para modificar este expediente');
+    return expediente;
+  }
+
+  /** Las declaratorias anteriores a esta columna no guardaron su estatus: se deduce. */
+  private async estatusAntesDeDesierto(
+    tx: Prisma.TransactionClient,
+    expediente: { id: string; estatusPrevioDesierto: string | null },
+  ): Promise<EstatusProceso> {
+    const previo = expediente.estatusPrevioDesierto;
+    if (previo && previo !== 'DESIERTO' && previo in EstatusProceso) {
+      return previo as EstatusProceso;
+    }
+    const evaluaciones = await tx.evaluacionResultados.count({
+      where: { deletedAt: null, oferta: { expedienteId: expediente.id, deletedAt: null } },
+    });
+    if (evaluaciones > 0) return 'EN_EVALUACION';
+    const cronograma = await tx.cronogramaExpediente.count({
+      where: { expedienteId: expediente.id },
+    });
+    return cronograma > 0 ? 'EN_PREPARACION' : 'BORRADOR';
+  }
+
+  /** Si alguno de los campos a guardar es distinto del que ya estaba. */
+  private cambio(antes: object, data: object): boolean {
+    const previo = antes as Record<string, unknown>;
+    const nuevo = data as Record<string, unknown>;
+    // Los montos llegan como número y se guardan como Decimal.
+    const comparable = (v: unknown) =>
+      v instanceof Prisma.Decimal || typeof v === 'number' ? Number(v) : v;
+    return Object.keys(nuevo).some(
+      (campo) =>
+        campo !== 'updatedBy' && huboCambios(comparable(previo[campo]), comparable(nuevo[campo])),
+    );
+  }
+
+  private cambioCronograma(antes: object | null, despues: object | null | undefined): boolean {
+    const fechas = (c: object | null | undefined) =>
+      Object.fromEntries(Object.entries(c ?? {}).filter(([campo]) => campo.startsWith('fecha')));
+    return huboCambios(fechas(antes), fechas(despues));
   }
 
   // --- GENERACIÓN DE CRONOGRAMA AUTOMÁTICO (PASO 4) ---
@@ -489,92 +585,24 @@ export class ExpedienteContratacionService {
     const diasEnte = await this.cronogramaEnteService.getDiasNoLaborablesParaCalculo(enteId);
     const fechaLlamado = new Date(dto.fechaLlamadoParticipar + 'T00:00:00Z'); // Evitar timezone shifts
 
-    let diasFinPliego = 0;
-    const diasSolicitarAclaratoria = 3;
-    let diasActoRecepcion = 0;
-    let diasEvaluacion = 0;
-    let diasAdjudicacion = 0;
-
-    switch (dto.tipoContratacion) {
-      case 'BIENES':
-        diasFinPliego = 6;
-        diasActoRecepcion = 7;
-        diasEvaluacion = 5;
-        diasAdjudicacion = 9;
-        break;
-      case 'SERVICIOS':
-        diasFinPliego = 8;
-        diasActoRecepcion = 9;
-        diasEvaluacion = 7;
-        diasAdjudicacion = 12;
-        break;
-      case 'OBRAS':
-      case 'MIXTO':
-        diasFinPliego = 10;
-        diasActoRecepcion = 11;
-        diasEvaluacion = 10;
-        diasAdjudicacion = 16;
-        break;
-    }
-
-    // Cálculos a partir de fechaLlamado
-    const inicioDispPliego = fechaLlamado;
-    const finDispPliego = BusinessDaysUtil.addBusinessDays(fechaLlamado, diasFinPliego, diasEnte);
-    const limiteSolicitudAclaratorias = BusinessDaysUtil.addBusinessDays(
-      fechaLlamado,
-      diasSolicitarAclaratoria,
-      diasEnte,
-    );
-    const actoRecepcion = BusinessDaysUtil.addBusinessDays(
-      fechaLlamado,
-      diasActoRecepcion,
-      diasEnte,
-    );
-
-    // Cálculos regresivos desde el Acto de Recepción
-    const limiteRespuestaAclaratorias = BusinessDaysUtil.subtractBusinessDays(
-      actoRecepcion,
-      1,
-      diasEnte,
-    );
-    const limiteModificacionesPliego = BusinessDaysUtil.subtractBusinessDays(
-      actoRecepcion,
-      2,
-      diasEnte,
-    );
-
-    // Cálculos progresivos desde el Acto de Recepción
-    const limiteEvaluacion = BusinessDaysUtil.addBusinessDays(
-      actoRecepcion,
-      diasEvaluacion,
-      diasEnte,
-    );
-    const limiteAdjudicacion = BusinessDaysUtil.addBusinessDays(
-      actoRecepcion,
-      diasAdjudicacion,
-      diasEnte,
-    );
-
-    // Cálculos finales (Notificación, Garantías, Firma)
-    const limiteNotificacion = BusinessDaysUtil.addBusinessDays(limiteAdjudicacion, 2, diasEnte);
-    const limiteGarantias = BusinessDaysUtil.addBusinessDays(limiteNotificacion, 5, diasEnte);
-    const limiteFirmaContrato = BusinessDaysUtil.addBusinessDays(limiteNotificacion, 8, diasEnte);
+    const fechas = calcularActoUnico(dto.tipoContratacion, fechaLlamado, diasEnte);
+    const iso = (fecha: Date) => fecha.toISOString().split('T')[0];
 
     return {
       message: 'Cronograma calculado exitosamente basándose en la DLCP',
       data: {
-        fechaLlamadoParticipar: fechaLlamado.toISOString().split('T')[0],
-        fechaInicioDisponibilidadPliego: inicioDispPliego.toISOString().split('T')[0],
-        fechaFinDisponibilidadPliego: finDispPliego.toISOString().split('T')[0],
-        fechaSolicitudAclaratorias: limiteSolicitudAclaratorias.toISOString().split('T')[0],
-        fechaModificacionPliego: limiteModificacionesPliego.toISOString().split('T')[0],
-        fechaRespuestaAclaratorias: limiteRespuestaAclaratorias.toISOString().split('T')[0],
-        fechaActoRecepcionAperturaSobres: actoRecepcion.toISOString().split('T')[0],
-        fechaLimiteEvaluacion: limiteEvaluacion.toISOString().split('T')[0],
-        fechaLimiteAdjudicacion: limiteAdjudicacion.toISOString().split('T')[0],
-        fechaLimiteNotificacion: limiteNotificacion.toISOString().split('T')[0],
-        fechaLimiteGarantias: limiteGarantias.toISOString().split('T')[0],
-        fechaLimiteFirmaContrato: limiteFirmaContrato.toISOString().split('T')[0],
+        fechaLlamadoParticipar: iso(fechas.fechaLlamadoParticipar),
+        fechaInicioDisponibilidadPliego: iso(fechas.fechaInicioDisponibilidadPliego),
+        fechaFinDisponibilidadPliego: iso(fechas.fechaFinDisponibilidadPliego),
+        fechaSolicitudAclaratorias: iso(fechas.fechaSolicitudAclaratorias),
+        fechaModificacionPliego: iso(fechas.fechaModificacionPliego),
+        fechaRespuestaAclaratorias: iso(fechas.fechaRespuestaAclaratorias),
+        fechaActoRecepcionAperturaSobres: iso(fechas.fechaActoRecepcionAperturaSobres),
+        fechaLimiteEvaluacion: iso(fechas.fechaLimiteEvaluacion),
+        fechaLimiteAdjudicacion: iso(fechas.fechaLimiteAdjudicacion),
+        fechaLimiteNotificacion: iso(fechas.fechaLimiteNotificacion),
+        fechaLimiteGarantias: iso(fechas.fechaLimiteGarantias),
+        fechaLimiteFirmaContrato: iso(fechas.fechaLimiteFirmaContrato),
       },
     };
   }
@@ -607,6 +635,25 @@ export class ExpedienteContratacionService {
     const diffDias = BusinessDaysUtil.getBusinessDaysDifference(fechaLlamado, fechaActo, diasEnte);
 
     const tipo = expediente.modalidad?.tipoContratacion;
+    const dia = (fecha: string) => new Date(`${fecha.split('T')[0]}T00:00:00Z`);
+    if (tipo && expediente.modalidad?.modalidadSeleccion === 'LICITACION_PUBLICA') {
+      const errores = validarActoUnico(
+        tipo,
+        {
+          fechaLlamadoParticipar: dia(dto.fechaLlamadoParticipar),
+          fechaInicioDisponibilidadPliego: dia(dto.fechaInicioDisponibilidadPliego),
+          fechaFinDisponibilidadPliego: dia(dto.fechaFinDisponibilidadPliego),
+          fechaActoRecepcionAperturaSobres: dia(dto.fechaActoRecepcionAperturaSobres),
+          fechaLimiteEvaluacion: dia(dto.fechaLimiteEvaluacion),
+          fechaLimiteAdjudicacion: dia(dto.fechaLimiteAdjudicacion),
+          fechaLimiteNotificacion: dia(dto.fechaLimiteNotificacion),
+        },
+        diasEnte,
+      );
+      if (errores.length) {
+        throw new BadRequestException({ message: errores.join(' '), errores });
+      }
+    }
     if (tipo === 'BIENES' && diffDias < 7)
       throw new BadRequestException(
         'Para BIENES, el acto de recepción debe ser mínimo 7 días hábiles después del llamado.',
@@ -684,15 +731,9 @@ export class ExpedienteContratacionService {
           },
         });
 
-        // Invalidar documentos generados
-        await tx.documentoGenerado.updateMany({
-          where: { expedienteId: id, deletedAt: null },
-          data: { estaDesactualizado: true },
-        });
-        await tx.pliegoGenerado.updateMany({
-          where: { expedienteId: id, deletedAt: null },
-          data: { estaDesactualizado: true },
-        });
+        if (this.cambioCronograma(expediente.cronograma, cronogramaInfo)) {
+          await marcarDesactualizados(tx, id, DOCUMENTOS_DEL_CRONOGRAMA);
+        }
 
         return {
           message: 'Cronograma guardado exitosamente',

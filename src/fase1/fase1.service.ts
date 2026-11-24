@@ -7,11 +7,12 @@ import { MICROMODULOS, MICROMODULO_KEYS, MicromoduloKey } from './constants/micr
 import { validarCompletar, ContextoValidacion } from './validators/completar.validators';
 import {
   DOCUMENTOS_POR_MICROMODULO,
-  TIPOS_DOCUMENTO_FASE1,
   huboCambios,
+  modeloContratoComparable,
 } from './invalidacion-documentos.util';
 import { renderizarPildoras } from '../formalizacion-fase4/pildoras.util';
 import { resolverTokensFase1 } from '../formalizacion-fase4/tokens-contrato.resolver';
+import { marcarDesactualizados } from '../common/utils/documentos-dependientes.util';
 
 export type { UsuarioActual } from '../common/types/usuario-actual.type';
 
@@ -61,27 +62,15 @@ export class Fase1Service {
     });
   }
 
-  /**
-   * Marca desactualizados los documentos que dependen del módulo que cambió:
-   * de la Fase 1, solo los que leen sus datos; de fases posteriores, todos.
-   */
+  /** Marca desactualizados solo los documentos que leen los datos del módulo que cambió. */
   private async invalidarDocumentos(expedienteId: string, modulo: MicromoduloKey) {
-    await this.prisma.documentoGenerado.updateMany({
-      where: {
-        expedienteId,
-        deletedAt: null,
-        OR: [
-          { tipoDocumento: { in: DOCUMENTOS_POR_MICROMODULO[modulo] } },
-          { tipoDocumento: { notIn: TIPOS_DOCUMENTO_FASE1 } },
-        ],
-      },
-      data: { estaDesactualizado: true },
-    });
-    // Todos los módulos alimentan el pliego.
-    await this.prisma.pliegoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
+    await marcarDesactualizados(this.prisma, expedienteId, DOCUMENTOS_POR_MICROMODULO[modulo]);
+  }
+
+  private huboCambiosEnModulo(modulo: MicromoduloKey, antes: unknown, despues: unknown): boolean {
+    return modulo === 'modelo-contrato'
+      ? huboCambios(modeloContratoComparable(antes), modeloContratoComparable(despues))
+      : huboCambios(antes, despues);
   }
 
   /** Extrae del registro de fase únicamente los campos del micromódulo pedido. */
@@ -275,7 +264,8 @@ export class Fase1Service {
     // Solo un cambio real deja desactualizados los documentos (QA: entrar a revisar
     // un módulo y guardar sin cambios los marcaba todos).
     if (
-      huboCambios(
+      this.huboCambiosEnModulo(
+        config.key,
         this.extraerDatos(antes as Record<string, any>, config.key),
         this.extraerDatos(fase as Record<string, any>, config.key),
       )
@@ -356,7 +346,13 @@ export class Fase1Service {
       include: { especificaciones: true },
     });
 
-    if (huboCambios(this.extraerDatos(antes as Record<string, any>, config.key), datos)) {
+    if (
+      this.huboCambiosEnModulo(
+        config.key,
+        this.extraerDatos(antes as Record<string, any>, config.key),
+        datos,
+      )
+    ) {
       await this.invalidarDocumentos(expedienteId, config.key);
     }
     await this.recalcularPhaseComplete(expedienteId);

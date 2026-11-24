@@ -1,4 +1,4 @@
-import { formatDateToSpanishLong, formatCurrencyVE } from '../../common/utils/date-formatter.util';
+import { formatToDDMMYYYY, formatCurrencyVE } from '../../common/utils/date-formatter.util';
 import { textosRecaudosConSustituto } from './recaudos-legales.textos';
 import { renderizarPildoras } from '../../formalizacion-fase4/pildoras.util';
 import { resolverTokensFase1 } from '../../formalizacion-fase4/tokens-contrato.resolver';
@@ -121,7 +121,7 @@ export function mapDatosPliegoCondiciones(
   const estadoEnte = e.ente?.estado || '___';
 
   const fechaActoRecep = c.fechaActoRecepcionAperturaSobres
-    ? formatDateToSpanishLong(asDate(c.fechaActoRecepcionAperturaSobres))
+    ? formatToDDMMYYYY(asDate(c.fechaActoRecepcionAperturaSobres))
     : '___';
 
   // --- Promoción económica ---
@@ -152,43 +152,6 @@ export function mapDatosPliegoCondiciones(
 Dicha cobertura deberá incluir, sin limitarse a, los daños derivados de los trabajos, el uso de maquinaria, las acciones del personal del contratista y, en caso de que aplique a la naturaleza del servicio, la Responsabilidad Civil Profesional por errores u omisiones.
 La póliza deberá ser emitida por una empresa de seguros de reconocida solvencia en la República, por un monto no menor a Bs. ${montoRc}, o al ${pctRc}% del Contrato. Este instrumento deberá ser consignado y aprobado por el contratante antes de la firma del Acta de Inicio.`
     : '';
-
-  const formaPresentacion = (() => {
-    switch (tipo) {
-      case 'BIENES':
-        return [
-          'La oferta deberá incluir una descripción exhaustiva y detallada de las características de los Bienes / insumos ofertados.',
-          'Adicionalmente, los participantes deberán acompañar y consignar con la oferta los siguientes documentos:',
-          'Catálogos, Folletos y/o Fichas Técnicas descriptivas de cada ítem.',
-          'Consignar según Modelo N°17 los siguientes compromisos y certificaciones técnicas:',
-          'Compromiso de Tiempo de Entrega.',
-          'Certificación de Disponibilidad de Inventario (Stock).',
-          'Garantía de los Bienes o Insumos.',
-        ].join('\n');
-      case 'SERVICIOS':
-        return [
-          'La oferta deberá incluir una descripción exhaustiva y detallada de las características técnicas del servicio ofertado.',
-          'Consignar según Modelo N°17 los siguientes compromisos y certificaciones técnicas:',
-          'Compromiso de Tiempo de Ejecución.',
-          'Declaración de Disponibilidad de Maquinaria/Equipos.',
-          'Tiempo de Respuesta (SLA) ante fallas o emergencias.',
-        ].join('\n');
-      case 'OBRAS':
-        return [
-          'La oferta deberá incluir una descripción exhaustiva y detallada de las características técnicas del objeto ofertado.',
-          'Adicionalmente, los participantes deberán acompañar y consignar con la oferta los siguientes documentos:',
-          'Cronograma de Ejecución (Gantt).',
-          'Plan de Trabajo.',
-          'Consignar según Modelo N°17 los siguientes compromisos y certificaciones técnicas:',
-          'Compromiso de Tiempo de Ejecución (ajustado al Cronograma).',
-          'Declaración de Disponibilidad de Maquinaria/Equipos.',
-          'Consignar según Modelo N°18 el siguiente compromiso y certificación técnica:',
-          'Experiencia del personal técnico clave.',
-        ].join('\n');
-      default:
-        return '___';
-    }
-  })();
 
   // --- Calificación legal ---
   const legal = asRecord(f.calificacionLegalData);
@@ -344,39 +307,38 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
     fec_acto_recep_aper_sobres_au_au: fechaActoRecep,
     hora_acto_recep_aper_au_au: f.horaActoRecepAper || '___',
     fec_solicitud_aclaratorias_au_au: c.fechaSolicitudAclaratorias
-      ? formatDateToSpanishLong(asDate(c.fechaSolicitudAclaratorias))
+      ? formatToDDMMYYYY(asDate(c.fechaSolicitudAclaratorias))
       : '___',
     fec_respuesta_aclaratorias_au_au: c.fechaRespuestaAclaratorias
-      ? formatDateToSpanishLong(asDate(c.fechaRespuestaAclaratorias))
+      ? formatToDDMMYYYY(asDate(c.fechaRespuestaAclaratorias))
       : '___',
     fec_modific_pliego_au_au: c.fechaModificacionPliego
-      ? formatDateToSpanishLong(asDate(c.fechaModificacionPliego))
+      ? formatToDDMMYYYY(asDate(c.fechaModificacionPliego))
       : '___',
     fec_inicio_disponibilidad_pliego_au_au: c.fechaInicioDisponibilidadPliego
-      ? formatDateToSpanishLong(asDate(c.fechaInicioDisponibilidadPliego))
+      ? formatToDDMMYYYY(asDate(c.fechaInicioDisponibilidadPliego))
       : '___',
     fec_fin_disponibilidad_pliego_au_au: c.fechaFinDisponibilidadPliego
-      ? formatDateToSpanishLong(asDate(c.fechaFinDisponibilidadPliego))
+      ? formatToDDMMYYYY(asDate(c.fechaFinDisponibilidadPliego))
       : '___',
     fec_limite_evaluacion_au_au: c.fechaLimiteEvaluacion
-      ? formatDateToSpanishLong(asDate(c.fechaLimiteEvaluacion))
+      ? formatToDDMMYYYY(asDate(c.fechaLimiteEvaluacion))
       : '___',
     fec_limite_adjudicacion_au_au: c.fechaLimiteAdjudicacion
-      ? formatDateToSpanishLong(asDate(c.fechaLimiteAdjudicacion))
+      ? formatToDDMMYYYY(asDate(c.fechaLimiteAdjudicacion))
       : '___',
     fec_limite_notificacion_au_au: c.fechaLimiteNotificacion
-      ? formatDateToSpanishLong(asDate(c.fechaLimiteNotificacion))
+      ? formatToDDMMYYYY(asDate(c.fechaLimiteNotificacion))
       : '___',
     fec_limite_garantias_au_au: c.fechaLimiteGarantias
-      ? formatDateToSpanishLong(asDate(c.fechaLimiteGarantias))
+      ? formatToDDMMYYYY(asDate(c.fechaLimiteGarantias))
       : '___',
     fec_limite_firma_contrato_au_au: c.fechaLimiteFirmaContrato
-      ? formatDateToSpanishLong(asDate(c.fechaLimiteFirmaContrato))
+      ? formatToDDMMYYYY(asDate(c.fechaLimiteFirmaContrato))
       : '___',
 
     horario_retiro_pliego: f.horarioRetiroPliego || '___',
     direccion_retiro_pliego: f.direccionRetiroPliego || '___',
-    forma_presentacion_au_au: formaPresentacion,
     tipo_objeto_contratacion: esBienes ? 'Bienes' : esServicios ? 'Servicios' : 'Obras',
 
     // Aspectos / garantías

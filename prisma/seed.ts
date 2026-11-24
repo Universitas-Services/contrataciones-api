@@ -757,10 +757,11 @@ async function main() {
   console.log('📜 Creando Biblioteca de Cláusulas...');
 
   await prisma.clausulaGenerica.createMany({
-    data: CLAUSULAS_GENERICAS_SEED.map((c) => ({
+    data: CLAUSULAS_GENERICAS_SEED.map((c, i) => ({
       adminUniversitasId: universitas.id,
       tituloClausulaGenerica: c.titulo,
       cuerpoClausulaGenerica: c.cuerpo,
+      orden: i + 1,
     })),
   });
 

@@ -85,7 +85,8 @@ export class ClausulasGenericasService {
         where,
         skip,
         take: limit,
-        orderBy: { tituloClausulaGenerica: 'asc' },
+        // El orden de la documentación; las nuevas sin orden quedan al final.
+        orderBy: [{ orden: { sort: 'asc', nulls: 'last' } }, { createdAt: 'asc' }],
       }),
     ]);
 

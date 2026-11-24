@@ -8,6 +8,7 @@ import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import {
   formatDateToSpanishLong,
+  sumarMinutosAHora,
   formatToDDMMYYYY,
   formatCurrencyVE,
 } from '../common/utils/date-formatter.util';
@@ -226,25 +227,25 @@ export class GeneradorDocumentosService {
       objetivos_especificos_llamado_2_au_au: f.objetivosEspecificos2 || '___',
       objetivos_especificos_llamado_3_au_au: f.objetivosEspecificos3 || '___',
       fec_acto_recep_aper_sobres_au_au: c.fechaActoRecepcionAperturaSobres
-        ? formatDateToSpanishLong(c.fechaActoRecepcionAperturaSobres)
+        ? formatToDDMMYYYY(c.fechaActoRecepcionAperturaSobres)
         : '___',
       hora_acto_recep_aper_au_au: f.horaActoRecepAper || '___',
       dir_fiscal_ente: e.ente?.direccionFiscal || '___',
       fec_inicio_disponibilidad_pliego_au_au: c.fechaInicioDisponibilidadPliego
-        ? formatDateToSpanishLong(c.fechaInicioDisponibilidadPliego)
+        ? formatToDDMMYYYY(c.fechaInicioDisponibilidadPliego)
         : '___',
       fec_fin_disponibilidad_pliego_au_au: c.fechaFinDisponibilidadPliego
-        ? formatDateToSpanishLong(c.fechaFinDisponibilidadPliego)
+        ? formatToDDMMYYYY(c.fechaFinDisponibilidadPliego)
         : '___',
       correo_comision: e.comision?.correoElectronico || '___',
       telefono_comision: e.comision?.telefono || '___',
       pliego_costo_au_au: pliegoCostoTexto,
       pliego_gratuito_au_au: pliegoCostoTexto,
       fec_solicitud_aclaratorias_au_au: c.fechaSolicitudAclaratorias
-        ? formatDateToSpanishLong(c.fechaSolicitudAclaratorias)
+        ? formatToDDMMYYYY(c.fechaSolicitudAclaratorias)
         : '___',
       fec_respuesta_aclaratorias_au_au: c.fechaRespuestaAclaratorias
-        ? formatDateToSpanishLong(c.fechaRespuestaAclaratorias)
+        ? formatToDDMMYYYY(c.fechaRespuestaAclaratorias)
         : '___',
     };
   }
@@ -761,6 +762,7 @@ export class GeneradorDocumentosService {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
       where: { id: expedienteId },
       include: {
+        ente: { select: { nombre: true } },
         comision: { include: { miembros: true } },
         adquirientesPliego: {
           where: { deletedAt: null },
@@ -786,6 +788,8 @@ export class GeneradorDocumentosService {
       ) || null;
 
     return {
+      // Membrete
+      nom_ente_contratante: expediente.ente?.nombre || '___',
       cod_nomenclatura_proceso: expediente.codigoNomenclatura || '___',
       desc_objeto_contratacion: expediente.descripcionObjeto || '___',
       datos_designacion_comision: comision?.datosDesignacionComision || '___',
@@ -914,6 +918,8 @@ export class GeneradorDocumentosService {
 
     return {
       hora_acto_recep_aper_au_au: fasePreparatoria?.horaActoRecepAper || '___',
+      // La apertura comienza media hora después de la recepción.
+      hora_acto_apertura_au_au: sumarMinutosAHora(fasePreparatoria?.horaActoRecepAper, 30) ?? '___',
       fec_acto_recep_aper_sobres_au_au: formatDateToSpanishLong(
         cronograma?.fechaActoRecepcionAperturaSobres,
       ),
@@ -1090,6 +1096,11 @@ export class GeneradorDocumentosService {
         return this.generarActaRecepcionSobres(docAnterior.expedienteId, userId);
       case 'ACTA_APERTURA':
         return this.generarActaAperturaSobres(docAnterior.expedienteId, userId);
+      case 'LISTA_COTEJO':
+        return this.generarListaCotejo(docAnterior.expedienteId, userId);
+      case 'NOTIFICACION_ADJUDICADO':
+      case 'NOTIFICACION_NO_ADJUDICADO':
+        return this.generarNotificacionesFase4(docAnterior.expedienteId, userId);
       case 'INFORME_RECOMENDACION':
         return this.generarInformeRecomendacion(docAnterior.expedienteId, userId);
       case 'ACTA_ADJUDICACION':
@@ -1407,14 +1418,17 @@ export class GeneradorDocumentosService {
       'el Informe de Recomendación',
     );
 
+    const pliego = mapDatosPliegoCondiciones(expediente);
+
     return {
-      ...mapDatosPliegoCondiciones(expediente),
+      ...pliego,
       ...this.datosBaseInformeDesierto(expediente),
       ...mapOferentesDesierto(expediente.ofertas, {
         incluirEvaluacion: true,
         estatus: ESTATUS_INFORME_ADJUDICACION,
       }),
       ...adjudicacion,
+      ...this.matrizTotalizacion(pliego),
     };
   }
 
@@ -1580,12 +1594,19 @@ export class GeneradorDocumentosService {
 
     // Matrices y recaudos tal como se exigieron en el pliego (Fase 1)
     const pliego = mapDatosPliegoCondiciones(expediente);
-    const promocionActiva = Boolean(pliego.activa_promocion_economica_au_au);
 
     return {
       ...pliego,
       ...this.datosBaseInformeDesierto(expediente, causalNum),
       ...oferentes,
+      ...this.matrizTotalizacion(pliego),
+    };
+  }
+
+  /** Con promoción económica activa se imprime la matriz 2; sin ella, la 1. */
+  private matrizTotalizacion(pliego: { activa_promocion_economica_au_au?: unknown }) {
+    const promocionActiva = Boolean(pliego.activa_promocion_economica_au_au);
+    return {
       total_matriz_1_evaluacion_au_au: !promocionActiva,
       total_matriz_2_evaluacion_au_au: promocionActiva,
     };

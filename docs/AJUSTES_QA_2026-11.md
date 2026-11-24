@@ -162,15 +162,117 @@ Los documentos de fases posteriores siguen marcándose ante cualquier cambio rea
 
 ---
 
-## 4. Verificación
+## 4. Ronda 3 (24 de noviembre)
+
+Migración: `20261124_qa_ronda_3`. Nada se rompe si el frontend no cambia, salvo donde dice **Obligatorio**.
+
+### 4.1 Cronograma de Acto Único — **Obligatorio**
+
+`POST /expedientes/generar-cronograma` (días hábiles; los feriados del ente se saltan):
+
+| Fecha                     | Bienes | Servicios | Obras / Mixto | Se cuenta desde   |
+| ------------------------- | ------ | --------- | ------------- | ----------------- |
+| Inicio del pliego         | +1     | +1        | +1            | Llamado           |
+| Solicitud de aclaratorias | +2     | +2        | +2            | Inicio del pliego |
+| Fin del pliego            | +6     | +8        | +10           | Llamado           |
+| Acto de recepción         | +7     | +9        | +11           | Llamado           |
+| Respuesta / modificación  | −1/−2  | −1/−2     | −1/−2         | Acto              |
+| Evaluación                | +5     | +7        | +10           | Acto              |
+| Adjudicación              | +7     | +10       | +14           | Acto              |
+| Notificación              | +9     | +12       | +16           | Acto              |
+| Garantías / firma         | +5/+8  | +5/+8     | +5/+8         | Notificación      |
+
+`PUT /expedientes/:id/cronograma` valida las fechas movidas y responde 400 con `message` (texto completo) y `errores` (lista):
+
+- El acto no puede ser antes del mínimo ni correrse más de 15 días hábiles.
+- El fin del pliego es el día hábil anterior al acto. **Si el usuario mueve el acto, muévelo también** (y la respuesta y modificación).
+- Evaluación después del acto; adjudicación después de la evaluación; notificación uno o dos días hábiles después de la adjudicación.
+- La notificación no pasa de 9/12/16 días hábiles después del acto.
+
+Solo aplica al concurso abierto; las demás modalidades no cambian. `updateGeneral` ya no recalcula el cronograma si la fecha del llamado y el tipo no cambiaron, así que no borra las fechas movidas a mano.
+
+Agregar debajo del cronograma la nota que pidió QA («NOTA IMPORTANTE – CRONOGRAMA DEL PROCEDIMIENTO», texto en el documento de QA).
+
+### 4.2 Revertir la declaratoria de desierto
+
+`PATCH /expedientes/:id/revertir-desierto`, sin cuerpo. Roles: ADMIN_ENTE, UNIVERSITAS y EJECUTOR. Responde `{ message, data }` con el expediente en su estatus anterior. 400 si no está desierto; 409 si se cerró en Fase 4.
+
+### 4.3 Evaluación de oferentes
+
+- El Sobre 2 y el VAN se cotejan pero **no descalifican**. Vale también para evaluaciones ya empezadas. Muestra el aviso de descalificación solo cuando falte un recaudo eliminatorio del Sobre 1.
+- **Quita las preguntas 10 y 11** (verificación de garantía y CRS): ya no se exigen. El informe toma el dato del recaudo.
+- **Quita la justificación de la evaluación técnica y económica:** ya no es obligatoria. La de calificación legal, financiera y técnica sigue.
+- **Límite de 4000** en justificaciones, observaciones, sustentos y las cajas de texto de Fase 1. Sube `VALOR_OBTENIDO_MAX` (255), `OBS_MAX_LEN` (500) y `JUSTIFICACION` (1000).
+- Al guardar un borrador legal, el API ya devuelve `en_evaluacion`: la tabla debe recargar el dato.
+
+### 4.4 Documentos desactualizados
+
+Cada dato marca solo los documentos que lo imprimen, y solo si cambió:
+
+| Cambio                                   | Documentos que se marcan                                        |
+| ---------------------------------------- | --------------------------------------------------------------- |
+| Evaluación, dictamen o informe de Fase 3 | Informe, Acta de Adjudicación y Notificaciones                  |
+| Adquirentes                              | Registro de Adquirentes                                         |
+| Calificación legal (Fase 1)              | Pliego, Lista de Cotejo, Informe, Acta y Notificaciones         |
+| Cronograma                               | Los que imprimen alguna fecha                                   |
+| Presupuesto                              | Actividades Previas, Acta de Inicio, Llamado, Pliego e Informe… |
+| Datos básicos o actores del expediente   | Todos (salen en el membrete o en las firmas)                    |
+
+- Guardar el Modelo de Contrato sin editar ya no desactualiza el pliego (las píldoras resueltas contaban como cambio).
+- `regenerar` acepta Lista de Cotejo y Notificaciones. El orden es Informe → Acta → Notificaciones.
+- «Regenerar informe» debe llamar al endpoint directamente, sin pasar por la edición.
+
+### 4.5 Documentos
+
+- **Fianza de fiel cumplimiento:** `(monto × 0,16 + monto) × porcentaje`. Con 1.000.000 al 20 %: 232.000,00. Informe, Acta, Notificaciones, Contrato y Notificación subsiguiente.
+- Registro de Adquirentes: el membrete ya lleva el ente.
+- Acta de Apertura: `{hora_acto_apertura_au_au}`, media hora después de la recepción. Plantillas nuevas de Acta de Recepción, Acta de Apertura y Contrato.
+- Pliego y Llamado: todas las fechas en `DD/MM/AAAA`.
+- Informe: la matriz de totalización correcta según la promoción económica; antes desaparecían las dos.
+- Partidas adjudicadas sin repetir y sin la unidad pegada. **En la pantalla de adjudicación** (`AdjudicacionTotalForm` y `Parcial`) muestra los códigos únicos: hoy lista uno por cada ítem del presupuesto, y con códigos de ejemplo (`MOCK_CODIGOS_PARTIDA`) si no hay ninguno.
+
+### 4.6 Validaciones nuevas
+
+| Dónde                                                    | Respuesta                                                                      |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Adquirentes: fecha fuera de la disponibilidad del pliego | 400. Limita el calendario a esas fechas                                        |
+| Cédula repetida en el mismo formulario                   | 400                                                                            |
+| Manual sin estructura del ente                           | 400 con lo que falta. `GET /manuales/estado-requisitos` para bloquear el botón |
+
+- Una persona puede tener varios cargos en el ente (confirmado por QA), también en varias comisiones. La cédula solo no se repite dentro de una misma comisión ni entre la máxima autoridad y su delegado.
+- El órgano de adscripción es **opcional** en el API: quita el requerido del formulario. El contrato omite «ente adscrito a…» si falta.
+- Manual: el logo se convierte a PNG (Word no muestra WEBP ni SVG) y si no se puede descargar queda en el log.
+- Cláusulas genéricas: llegan en el orden de la documentación. Pide todas (`limit`) y no las reordenes por título.
+
+### 4.7 Solo frontend
+
+| Punto de QA                                          | Qué hacer                                                                                                             |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Feriado 01/01 no se pinta                            | El API lo guarda y lo devuelve con `esRecurrente: true`, `fecha: null` y `fechaRecurrente: "01-01"`                   |
+| Proveedor con 6,79 MB                                | El API no limita el tamaño; el almacenamiento admite 10 MB por archivo. Revisar el límite de Server Actions / Netlify |
+| Códigos de área                                      | Cargar todos los de celular y fijo                                                                                    |
+| Error genérico «Server Components»                   | Mostrar el `message` del API en vez de lanzar (hay 124 `throw new Error` en los servicios)                            |
+| RIF del oferente, «Pymes», ejemplo de contraseña     | Textos y maquetación                                                                                                  |
+| Pestañas visibles, responsive, repositorio en Fase 4 | Maquetación                                                                                                           |
+| Icono de Actividades Previas vuelve a «generar»      | El estado sale de `GET …/fase-preparatoria/progreso`; no guardarlo en memoria de la pantalla                          |
+| Cláusula agregada dos veces                          | Deshabilitar «Agregar» en las que ya están en el modelo                                                               |
+
+### 4.8 Para documentación
+
+- `[TIPO SOPORTE EJECUCION]`, `[CRITERIOS…]` y los plazos del contrato no se preguntan en ninguna fase: se llenan a mano en el editor.
+- Pliego, Informe, Notificación de adjudicado y Lista de Cotejo: esperamos las plantillas corregidas. El informe ya envía `{garantia_mantenimiento_oferta_au_au}` y `{declaracion_compromiso_resp_social_au_au}`.
+
+---
+
+## 5. Verificación
 
 | Qué                                   | Resultado                                                                                                  |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `tsc --noEmit`, ESLint y `nest build` | Sin errores                                                                                                |
-| Pruebas unitarias                     | **233**, todas pasan (44 nuevas)                                                                           |
+| Pruebas unitarias                     | **268**, todas pasan (79 nuevas)                                                                           |
 | Ciclo completo de Fase 4              | 89 comprobaciones correctas                                                                                |
 | API en local                          | Usuario con `#` y `.`, actores con EJECUTOR, cronograma con UNIVERSITAS, `paginaWeb` y orden de normativas |
 | Pliego generado en local              | Dos escenarios opuestos revisados: normativas, recaudos, moneda, idioma, página web y anexo                |
 | Anexo III                             | Sin modelos y con algunos: 0 páginas vacías (antes 20 y 14)                                                |
 | Modelo de Contrato en local           | El GET devuelve la cláusula con el objeto del expediente y lo guardado no cambia                           |
-| Ciclos completos                      | Fase 4: 89 comprobaciones; compliance: 69                                                                  |
+| Ciclos completos                      | Fase 4: 89 comprobaciones; compliance: 72                                                                  |
