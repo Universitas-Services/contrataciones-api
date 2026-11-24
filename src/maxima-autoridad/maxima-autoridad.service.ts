@@ -3,6 +3,7 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateMaximaAutoridadDto } from './dto/create-maxima-autoridad.dto';
 import { UpdateMaximaAutoridadDto } from './dto/update-maxima-autoridad.dto';
 import { ManualesService } from '../manuales/manuales.service';
+import { assertCedulasSinRepetir, cedulasNuevas } from '../common/utils/cedula-unica.util';
 
 @Injectable()
 export class MaximaAutoridadService {
@@ -30,6 +31,8 @@ export class MaximaAutoridadService {
   }
 
   async create(createDto: CreateMaximaAutoridadDto, enteId: string, userId: string) {
+    assertCedulasSinRepetir([createDto.cedulaAutoridad, createDto.cedulaDelegado]);
+
     return this.prisma.maximaAutoridad.create({
       data: {
         ...createDto,
@@ -71,6 +74,13 @@ export class MaximaAutoridadService {
   async update(id: string, updateDto: UpdateMaximaAutoridadDto, enteId: string, userId: string) {
     // Verificar existencia y pertenencia
     const autoridad = await this.findOne(id, enteId);
+
+    const cedulas = [
+      updateDto.cedulaAutoridad ?? autoridad.cedulaAutoridad,
+      updateDto.cedulaDelegado !== undefined ? updateDto.cedulaDelegado : autoridad.cedulaDelegado,
+    ];
+    const nuevas = cedulasNuevas([autoridad.cedulaAutoridad, autoridad.cedulaDelegado], cedulas);
+    if (nuevas.length) assertCedulasSinRepetir(cedulas);
 
     let requiereInvalidacion = false;
     const criticos = [

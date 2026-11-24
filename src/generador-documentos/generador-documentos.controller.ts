@@ -561,14 +561,13 @@ export class GeneradorDocumentosController {
   @Get('expedientes/:expedienteId/estado-notificaciones')
   async getEstadoNotificaciones(@Param('expedienteId') expedienteId: string) {
     const estado = await this.generadorDocumentosService.getStatusPorExpediente(expedienteId);
-    const notificacionesGeneradas = estado.some(
-      (e) =>
-        (e.tipo === 'NOTIFICACION_ADJUDICADO' || e.tipo === 'NOTIFICACION_NO_ADJUDICADO') &&
-        e.generado,
+    const notificaciones = estado.filter(
+      (e) => e.tipo === 'NOTIFICACION_ADJUDICADO' || e.tipo === 'NOTIFICACION_NO_ADJUDICADO',
     );
     return {
       message: 'Estado de notificaciones',
-      generadas: notificacionesGeneradas,
+      generadas: notificaciones.some((e) => e.generado),
+      estaDesactualizado: notificaciones.some((e) => e.estaDesactualizado),
     };
   }
 

@@ -5,7 +5,9 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -67,10 +69,12 @@ export class AspectosGeneralesDto {
   nomIdiomaDiferente?: string;
 
   // --- Paso 3: Compromiso de Responsabilidad Social ---
-  @ApiPropertyOptional({ example: 3, description: 'Porcentaje de CRS (0 a 100)' })
+  @ApiPropertyOptional({ example: 3, description: 'Porcentaje de CRS (0 a 3, Art. 31 LCP)' })
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
+  @Min(0, { message: 'El porcentaje de CRS no puede ser menor a 0' })
+  @Max(3, { message: 'El porcentaje de CRS no puede superar 3 (Art. 31 LCP)' })
   porcentajeResponsabilidadSocial?: number;
 
   @ApiPropertyOptional()
@@ -88,7 +92,7 @@ export class AspectosGeneralesDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(4000)
   formaCumplimientoCrs?: string;
 
   // --- Paso 4: Garantías y anticipos ---
@@ -102,6 +106,8 @@ export class AspectosGeneralesDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
+  @Min(20, { message: 'El porcentaje de fiel cumplimiento no puede ser menor a 20 (Art. 123 LCP)' })
+  @Max(100, { message: 'El porcentaje de fiel cumplimiento no puede superar 100' })
   porcentajeFielCumplimiento?: number;
 
   @ApiPropertyOptional()

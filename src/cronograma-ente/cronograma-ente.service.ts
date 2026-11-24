@@ -342,6 +342,10 @@ export class CronogramaEnteService {
   // === Utilidades para Cálculo de Cronograma ===
 
   async getDiasNoLaborablesParaCalculo(enteId: string): Promise<string[]> {
+    // UNIVERSITAS no pertenece a un ente: sin feriados propios, el cálculo usa
+    // solo los fines de semana en vez de fallar.
+    if (!enteId) return [];
+
     const festivos = await this.prisma.diaNoLaborableEnte.findMany({
       where: { enteId, deletedAt: null },
       select: { fecha: true, fechaRecurrente: true, esRecurrente: true },

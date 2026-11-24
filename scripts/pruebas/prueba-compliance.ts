@@ -108,7 +108,7 @@ function analisisOk(
     status: 200,
     datos: {
       json_analista: json,
-      informe_markdown: '# Informe (CAAUAI.14)',
+      informe_markdown: '# Resumen de revisión: Acta\n\nDetalle (CAAUAI.14)',
       estatus_global: estatus,
       tipo_coincide: coincide,
       tipo_detectado: detectado,
@@ -277,7 +277,7 @@ async function main() {
     'guarda el saludo fijo',
     mensajes.length === 1 &&
       mensajes[0].texto.startsWith('Hola, ') &&
-      mensajes[0].texto.includes(ente.nombre),
+      mensajes[0].texto.endsWith('¿cuál es la nomenclatura del expediente?'),
   );
   await rechaza('otro ente no lo ve', () => servicio.detalle(id, otroEnte), 'No tiene acceso');
   ok(
@@ -358,8 +358,8 @@ async function main() {
   });
   respuesta = await servicio.enviarMensaje(id, '¿Qué sigue?', ejecutor);
   ok(
-    'pedir_documento cambia el siguiente documento',
-    respuesta.expediente.siguienteDocumento === 'OFERTAS',
+    'pedir_documento no altera el orden guiado',
+    respuesta.expediente.siguienteDocumento === 'ACTA_INICIO',
   );
 
   // ══════════════════════════════════════════════════════════════════
@@ -519,6 +519,19 @@ async function main() {
   ok(
     'progreso 2 de 3: el contrato equivocado no cuenta',
     detalle.progreso?.cubiertos === 2 && detalle.progreso?.total === 3,
+  );
+  ok(
+    'tras cada análisis correcto Nest indica el siguiente',
+    textos.includes('Ahora sube: '),
+    textos,
+  );
+  const conResumen = detalle.checklist.flatMap((c) => c.documentos).find((d) => d.tieneResumen);
+  ok('la vista indica que hay resumen', !!conResumen);
+  const pdfResumen = await servicio.resumenPdf(conResumen!.id, ejecutor);
+  ok(
+    'el resumen sale en PDF',
+    pdfResumen.buffer.subarray(0, 4).toString() === '%PDF',
+    pdfResumen.fileName,
   );
   ok('riesgo antes del dictamen: peor semáforo', detalle.riesgo?.semaforo === 'Rojo');
   ok('ya no pide OFERTAS: pide el contrato', detalle.siguienteDocumento === 'CONTRATO');

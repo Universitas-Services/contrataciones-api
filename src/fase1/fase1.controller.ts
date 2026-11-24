@@ -15,6 +15,7 @@ import {
   CalificacionFinancieraDto,
   CalificacionTecnicaDto,
   EvaluacionTecnicaEconomicaDto,
+  ResolverClausulaDto,
 } from './dto/modulo-json.dto';
 
 const ROLES_LECTURA = [
@@ -220,6 +221,23 @@ export class Fase1Controller {
     @CurrentUser() user: UsuarioActual,
   ) {
     return this.fase1Service.completar(expedienteId, 'modelo-contrato', dto, user);
+  }
+
+  @Post('modelo-contrato/resolver')
+  @Roles(...ROLES_ESCRITURA)
+  @ApiOperation({
+    summary: 'Vista previa de una cláusula con los datos del expediente',
+    description:
+      'Convierte las marcas {…} y [ETIQUETA] en píldoras con su valor. No guarda nada. ' +
+      'Las variables que aún no existen en la Fase 1 (contratista, monto) quedan con su etiqueta.',
+  })
+  @ApiBody({ type: ResolverClausulaDto })
+  resolverClausula(
+    @Param('expedienteId') expedienteId: string,
+    @Body() dto: ResolverClausulaDto,
+    @CurrentUser() user: UsuarioActual,
+  ) {
+    return this.fase1Service.resolverClausula(expedienteId, dto.cuerpoHtml, user);
   }
 
   @Post('modelo-contrato/reabrir')

@@ -81,7 +81,7 @@ const CLAUSULAS = CLAUSULAS_GENERICAS_SEED.map((c, i) => ({
   cuerpoHtml: c.cuerpo,
 }));
 
-function renderizarPlantillaReal() {
+function renderizarPlantillaReal(tokens = TOKENS) {
   const plantilla = path.join(
     __dirname,
     '../generador-documentos/templates/contrato-fase4-template.docx',
@@ -91,7 +91,7 @@ function renderizarPlantillaReal() {
     linebreaks: true,
     delimiters: { start: '{', end: '}' },
   });
-  doc.render(mapDatosContrato(TOKENS, CLAUSULAS, DOCUMENTO));
+  doc.render(mapDatosContrato(tokens, CLAUSULAS, DOCUMENTO));
   return (doc.getZip().file('word/document.xml')?.asText() ?? '').replace(/<[^>]+>/g, '');
 }
 
@@ -175,6 +175,12 @@ describe('contrato con la plantilla real y las cláusulas de la semilla', () => 
     expect(texto).toContain('20 de octubre de 2026');
   });
 
+  it('sin órgano de adscripción omite el tramo', () => {
+    const sinOrgano = renderizarPlantillaReal({ ...TOKENS, organo_adscripcion_au_au: null });
+    expect(sinOrgano).toContain('Entre el GOBERNACIÓN, con RIF N° G-1');
+    expect(sinOrgano).not.toContain('adscrito');
+  });
+
   it('numera las cláusulas en ordinal', () => {
     expect(texto).toContain('CLÁUSULA PRIMERA: OBJETO DEL CONTRATO');
     expect(texto).toContain('CLÁUSULA VIGÉSIMA SEGUNDA:');
@@ -183,7 +189,7 @@ describe('contrato con la plantilla real y las cláusulas de la semilla', () => 
   it('los montos no repiten la moneda', () => {
     expect(texto).not.toContain('Bs. Bs.');
     expect(texto).not.toMatch(/BOLÍVARES Bolívares/);
-    expect(texto).toContain('DIECISEIS MIL Bolívares (Bs. 16.000,00)');
+    expect(texto).toContain('CIENTO DIECISEIS MIL Bolívares (Bs. 116.000,00)');
   });
 
   it('incluye los bloques de garantías con sus montos', () => {

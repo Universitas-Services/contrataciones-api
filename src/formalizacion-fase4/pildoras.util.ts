@@ -111,6 +111,25 @@ export function corchetesAPildoras(html: string): string {
   return conLlaves.replace(RE_MARCA, (_m, indice: string) => pildoras[Number(indice)]);
 }
 
+const TOKEN_A_LLAVE: Record<string, string> = Object.fromEntries(
+  Object.entries(LLAVES_A_TOKEN).map(([llave, id]) => [id, llave]),
+);
+
+/**
+ * Inverso de `corchetesAPildoras`: cada píldora vuelve a su marca. Se usa al
+ * guardar una cláusula en la biblioteca, para que no se lleve los datos del
+ * expediente donde se editó. Las que venían con llaves vuelven a llaves; las
+ * demás, a su etiqueta entre corchetes.
+ */
+export function pildorasAMarcas(html: string): string {
+  return html.replace(RE_PILDORA, (completo, _atributos: string, tokenId: string) => {
+    const llave = TOKEN_A_LLAVE[tokenId];
+    if (llave) return `{${llave}}`;
+    const token = TOKENS_POR_ID.get(tokenId);
+    return token ? `[${token.etiqueta}]` : completo;
+  });
+}
+
 /** Quita etiquetas HTML de un fragmento, para obtener su texto. */
 function soloTexto(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim();

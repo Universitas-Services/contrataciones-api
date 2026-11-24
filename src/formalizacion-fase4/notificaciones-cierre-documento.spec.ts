@@ -153,7 +153,7 @@ describe('notificación de adjudicación subsiguiente con la plantilla real', ()
     expect(texto).toContain('Bs. 1.000.000,00');
     expect(texto).toContain('4.02.01');
     expect(texto).toContain('75 días hábiles');
-    expect(texto).toContain('Garantía de Fiel Cumplimiento (10%): Bs. 16.000,00');
+    expect(texto).toContain('Garantía de Fiel Cumplimiento (10%): Bs. 116.000,00');
   });
 
   it('PARCIAL lleva los renglones readjudicados', () => {

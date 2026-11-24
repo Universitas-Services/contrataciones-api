@@ -1,4 +1,4 @@
-import { IsObject } from 'class-validator';
+import { IsObject, IsString, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
@@ -58,6 +58,17 @@ export class ModeloContratoDto {
   })
   @IsObject()
   data: Record<string, any>;
+}
+
+/** Vista previa de una cláusula antes de agregarla al modelo. */
+export class ResolverClausulaDto {
+  @ApiProperty({
+    description: 'HTML de la cláusula con marcas {…}, [ETIQUETA] o píldoras',
+    example: '<p>El objeto del presente contrato es {desc_objeto_contratacion_au_au}.</p>',
+  })
+  @IsString()
+  @MaxLength(100000)
+  cuerpoHtml: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -226,7 +237,7 @@ export class EvaluacionTecnicaEconomicaDto {
     description:
       'Bolsa única compartida de 100 puntos entre los bloques técnico y económico. Al completar, la ' +
       'suma de las puntuaciones de ambos bloques debe ser exactamente 100, ningún rango puede superar ' +
-      'a su criterio padre, y cada `puntuacionMinima` no puede superar el total de su bloque.',
+      'a su criterio padre. No hay puntuación mínima: ninguna oferta se descarta por umbral.',
     type: 'object',
     additionalProperties: true,
     example: {
@@ -253,7 +264,6 @@ export class EvaluacionTecnicaEconomicaDto {
             ],
           },
         ],
-        puntuacionMinima: 25,
       },
       economica: {
         criterios: [
@@ -268,7 +278,6 @@ export class EvaluacionTecnicaEconomicaDto {
             ],
           },
         ],
-        puntuacionMinima: 30,
       },
     },
   })

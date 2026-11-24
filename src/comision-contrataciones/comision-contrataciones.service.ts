@@ -5,6 +5,7 @@ import { UpdateComisionContratacionesDto } from './dto/update-comision-contratac
 import { TipoMiembro, AreaRepresentacion } from '@prisma/client';
 import { CreateMiembroComisionDto } from './dto/create-miembro-comision.dto';
 import { ManualesService } from '../manuales/manuales.service';
+import { assertCedulasSinRepetir, cedulasNuevas } from '../common/utils/cedula-unica.util';
 
 @Injectable()
 export class ComisionContratacionesService {
@@ -63,6 +64,7 @@ export class ComisionContratacionesService {
     const { miembros, ...comisionData } = createDto;
 
     this.validate8Miembros(miembros);
+    assertCedulasSinRepetir(miembros.map((m) => m.cedulaMiembro));
 
     return this.prisma.comisionContrataciones.create({
       data: {
@@ -141,6 +143,12 @@ export class ComisionContratacionesService {
     let actualizada;
     if (miembros) {
       this.validate8Miembros(miembros);
+      const cedulas = miembros.map((m) => m.cedulaMiembro);
+      const nuevas = cedulasNuevas(
+        comision.miembros.map((m) => m.cedulaMiembro),
+        cedulas,
+      );
+      if (nuevas.length) assertCedulasSinRepetir(cedulas);
 
       actualizada = await this.prisma.comisionContrataciones.update({
         where: { id },

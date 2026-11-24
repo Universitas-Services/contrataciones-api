@@ -137,6 +137,25 @@ export class ComplianceController {
     return this.compliance.documento(documentoId, user);
   }
 
+  @Get('documentos/:documentoId/resumen/pdf')
+  @ApiOperation({
+    summary: 'Descargar el resumen del análisis de un documento en PDF',
+    description: 'Disponible cuando el documento trae `tieneResumen: true`; si no, 409.',
+  })
+  async resumenPdf(
+    @Param('documentoId', uuid) documentoId: string,
+    @CurrentUser() user: UsuarioActual,
+    @Res() res: Response,
+  ) {
+    const { buffer, fileName } = await this.compliance.resumenPdf(documentoId, user);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Content-Length': buffer.length,
+    });
+    res.end(buffer);
+  }
+
   @Post('documentos/:documentoId/reintentar')
   @Roles(...ESCRITURA)
   @ApiOperation({ summary: 'Volver a analizar un documento en ERROR' })

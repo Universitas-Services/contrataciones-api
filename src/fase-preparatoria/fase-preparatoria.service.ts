@@ -1,3 +1,4 @@
+import { huboCambios } from '../fase1/invalidacion-documentos.util';
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { CreateFasePreparatoriaDto } from './dto/create-fase-preparatoria.dto';
 import { PrismaService } from '../database/prisma.service';
@@ -89,6 +90,8 @@ export class FasePreparatoriaService {
       normativaLegal: normativaLegalDb,
     };
 
+    const antes = await this.prisma.fasePreparatoria.findUnique({ where: { expedienteId } });
+
     // Upsert using expedienteId (which is @unique in schema)
     const result = await this.prisma.fasePreparatoria.upsert({
       where: { expedienteId },
@@ -104,15 +107,19 @@ export class FasePreparatoriaService {
       },
     });
 
-    // Invalidar documentos generados
-    await this.prisma.documentoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
-    await this.prisma.pliegoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
+    // Invalidar documentos generados, solo si algún dato guardado cambió de verdad
+    const campos = Object.keys(data) as (keyof typeof result)[];
+    const cambio = !antes || campos.some((campo) => huboCambios(antes[campo], result[campo]));
+    if (cambio) {
+      await this.prisma.documentoGenerado.updateMany({
+        where: { expedienteId, deletedAt: null },
+        data: { estaDesactualizado: true },
+      });
+      await this.prisma.pliegoGenerado.updateMany({
+        where: { expedienteId, deletedAt: null },
+        data: { estaDesactualizado: true },
+      });
+    }
 
     return this.formatFasePreparatoriaResponse(result);
   }

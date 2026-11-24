@@ -42,7 +42,7 @@ export class UnidadUsuariaController {
   }
 
   @Get()
-  @Roles('ADMIN_ENTE', 'UNIVERSITAS', 'SUPERVISOR', 'VISUALIZADOR')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS', 'SUPERVISOR', 'VISUALIZADOR')
   @ApiOperation({
     summary: 'Listar Unidades Usuarias',
     description: 'Obtiene el listado de unidades usuarias del Ente.',
@@ -54,7 +54,7 @@ export class UnidadUsuariaController {
   }
 
   @Get(':id')
-  @Roles('ADMIN_ENTE', 'UNIVERSITAS', 'SUPERVISOR', 'VISUALIZADOR')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS', 'SUPERVISOR', 'VISUALIZADOR')
   @ApiOperation({
     summary: 'Obtener Unidad Usuaria',
     description: 'Obtiene detalles de una unidad específica.',

@@ -122,7 +122,7 @@ function validarActividadesPrevias(datos: Datos, ctx: ContextoValidacion): strin
       'porcentajeGarantiaLaboral',
       'El porcentaje de garantía laboral',
       0,
-      100,
+      10,
     );
     requerirBooleano(e, datos, 'retencionFianzaLaboral', '¿Aplica retención de fianza laboral?');
   }
@@ -194,9 +194,7 @@ function validarAspectosGenerales(datos: Datos): string[] {
   // Paso 1 — Régimen legal
   requerir(e, datos, 'datosActoAutorizacionInicio', 'Los datos del acto de autorización de inicio');
   requerir(e, datos, 'autoridadAclaratorias', 'La autoridad que atiende aclaratorias');
-  const normativa = datos.normativaLegal;
-  const normativaVacia = vacio(normativa) || (Array.isArray(normativa) && normativa.length === 0);
-  if (normativaVacia) e.push('Debe indicar al menos una normativa legal.');
+  // Las normativas generales van completas al pliego; las adicionales son opcionales.
 
   // Paso 2 — Condiciones de oferta
   const dias = Number(datos.diasValidezOferta);
@@ -223,7 +221,7 @@ function validarAspectosGenerales(datos: Datos): string[] {
   }
 
   // Paso 3 — Compromiso de Responsabilidad Social
-  requerirEnRango(e, datos, 'porcentajeResponsabilidadSocial', 'El porcentaje de CRS', 0, 100);
+  requerirEnRango(e, datos, 'porcentajeResponsabilidadSocial', 'El porcentaje de CRS', 0, 3);
   requerir(e, datos, 'unidadRespCumplimientoCrs', 'La unidad responsable del CRS');
   requerir(e, datos, 'modalidadCrs', 'La modalidad del CRS');
   requerir(e, datos, 'formaCumplimientoCrs', 'La forma de cumplimiento del CRS');
@@ -242,7 +240,7 @@ function validarAspectosGenerales(datos: Datos): string[] {
     datos,
     'porcentajeFielCumplimiento',
     'El porcentaje de fiel cumplimiento',
-    0,
+    20,
     100,
   );
   requerirBooleano(
@@ -330,8 +328,8 @@ function validarCalificacionLegal(datos: Datos): string[] {
   personalizados.forEach((p, i) => {
     if (vacio(p?.descripcion)) {
       e.push(`El recaudo personalizado ${i + 1} debe tener descripción.`);
-    } else if (String(p.descripcion).length > 500) {
-      e.push(`La descripción del recaudo personalizado ${i + 1} supera los 500 caracteres.`);
+    } else if (String(p.descripcion).length > 4000) {
+      e.push(`La descripción del recaudo personalizado ${i + 1} supera los 4000 caracteres.`);
     }
     if (sinResponder(p?.tieneModelo)) {
       e.push(`Debe indicar si el recaudo personalizado ${i + 1} tiene modelo.`);
@@ -554,20 +552,7 @@ function validarEvaluacionTecnicaEconomica(datos: Datos): string[] {
     );
   }
 
-  const minimaTecnica = Number(datos?.tecnica?.puntuacionMinima);
-  if (!Number.isNaN(minimaTecnica) && minimaTecnica > tecnica.total) {
-    errores.push(
-      `La puntuación mínima técnica (${minimaTecnica}) no puede superar el total técnico (${tecnica.total}).`,
-    );
-  }
-
-  const minimaEconomica = Number(datos?.economica?.puntuacionMinima);
-  if (!Number.isNaN(minimaEconomica) && minimaEconomica > economica.total) {
-    errores.push(
-      `La puntuación mínima económica (${minimaEconomica}) no puede superar el total económico (${economica.total}).`,
-    );
-  }
-
+  // QA quitó el umbral de corte: ninguna oferta se descarta por puntuación mínima.
   return errores;
 }
 

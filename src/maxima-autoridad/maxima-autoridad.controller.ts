@@ -48,7 +48,7 @@ export class MaximaAutoridadController {
   }
 
   @Get()
-  @Roles('ADMIN_ENTE', 'UNIVERSITAS', 'SUPERVISOR', 'VISUALIZADOR')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS', 'SUPERVISOR', 'VISUALIZADOR')
   @ApiOperation({
     summary: 'Listar Autoridades',
     description: 'Obtiene el historial de autoridades del Ente del usuario.',
@@ -67,7 +67,7 @@ export class MaximaAutoridadController {
   }
 
   @Get(':id')
-  @Roles('ADMIN_ENTE', 'UNIVERSITAS', 'SUPERVISOR', 'VISUALIZADOR')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS', 'SUPERVISOR', 'VISUALIZADOR')
   @ApiOperation({
     summary: 'Obtener Autoridad Específica',
     description: 'Obtiene los detalles de una autoridad por su ID.',

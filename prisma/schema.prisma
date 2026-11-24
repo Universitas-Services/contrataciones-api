@@ -44,6 +44,8 @@ model EntePublico {
   updatedBy                   String?
   datosConfirmados            Boolean                  @default(false)
   ciudad                      String?
+  /// Página web del órgano o ente; va al pliego y a los informes ({pag_web_ente}).
+  paginaWeb                   String?                  @map("pagina_web") @db.VarChar(255)
   universitas                 Universitas              @relation(fields: [universitasId], references: [id])
   supervisores                EnteSupervisor[]
   manuales                    ManualGenerado[]
@@ -372,6 +374,8 @@ model ExpedienteContratacion {
   declaratoriaDesierto              Boolean                 @default(false) @map("declaratoria_desierto_au_au")
   causalDeclaratoriaDesierto        String?                 @map("causal_declaratoria_desierto_au_au") @db.VarChar(255)
   justificacionDeclaratoriaDesierto String?                 @map("justificacion_declaratoria_desierto_au_au")
+  /// Estatus anterior a la declaratoria de desierto, para poder revertirla
+  estatusPrevioDesierto             String?                 @map("estatus_previo_desierto") @db.VarChar(40)
   /// TOTAL | PARCIAL — carácter de adjudicación (Gestión Fase 3)
   caracterAdjudicacion              String?                 @map("caracter_adjudicacion_au_au") @db.VarChar(20)
   adjudicacion                      Adjudicacion?
@@ -414,9 +418,9 @@ model FasePreparatoria {
   autoridadAclaratorias              String?   @map("autoridad_aclaratorias") @db.VarChar(255)
   normativaLegal                     String?   @map("normativa_legal")
   diasVigenciaGarantiaExtension      Int?      @map("dias_vigencia_garantia_ext")
-  objetivosEspecificos1              String?   @map("objetivos_especificos_1") @db.VarChar(255)
-  objetivosEspecificos2              String?   @map("objetivos_especificos_2") @db.VarChar(255)
-  objetivosEspecificos3              String?   @map("objetivos_especificos_3") @db.VarChar(255)
+  objetivosEspecificos1              String?   @map("objetivos_especificos_1")
+  objetivosEspecificos2              String?   @map("objetivos_especificos_2")
+  objetivosEspecificos3              String?   @map("objetivos_especificos_3")
   direccionRetiroPliego              String?   @map("direccion_retiro_pliego") @db.VarChar(255)
   horarioRetiroPliego                String?   @map("horario_retiro_pliego") @db.VarChar(255)
   pliegoGratuito                     Boolean   @default(true) @map("pliego_gratuito")
@@ -429,7 +433,7 @@ model FasePreparatoria {
   telefonoComision                   String?   @map("telefono_comision") @db.VarChar(50)
   condicionPlurianual                Boolean?  @map("condicion_plurianual")
   viabilidadContratoMarco            Boolean?  @map("viabilidad_contrato_marco")
-  justificacion_contrato_marco_au_au String?   @map("justificacion_contrato_marco_au_au") @db.VarChar(100)
+  justificacion_contrato_marco_au_au String?   @map("justificacion_contrato_marco_au_au")
 
   // --- Estados por micromódulo (Fase 1) ---
   estadoActividadesPrevias         EstadoMicromodulo @default(PENDIENTE) @map("estado_actividades_previas_au_au")
@@ -446,18 +450,18 @@ model FasePreparatoria {
   numReferenciaSnc                      String?   @map("num_referencia_snc_au_au") @db.VarChar(100)
   modifRequerimientoSnc                 Boolean?  @map("modif_requerimiento_snc_au_au")
   numeroModifRequerimientoSnc           String?   @map("numero_modif_requerimiento_snc_au_au") @db.VarChar(100)
-  justificacionNecesidadContratacion    String?   @map("justificacion_necesidad_contratacion_au_au") @db.VarChar(255)
+  justificacionNecesidadContratacion    String?   @map("justificacion_necesidad_contratacion_au_au")
   proyectoAprobado                      Boolean?  @map("proyecto_aprobado_au_au")
   permitePymesCooperativas              Boolean?  @map("permite_pymes_cooperativas_au_au")
-  justificacionPermitePymesCooperativas String?   @map("justificacion_permite_pymes_cooperativas_au_au") @db.VarChar(255)
+  justificacionPermitePymesCooperativas String?   @map("justificacion_permite_pymes_cooperativas_au_au")
   fecEstudioMercado                     DateTime? @map("fec_estudio_mercado_au_au")
   numCertificacionPresupuestaria        String?   @map("num_certificacion_presupuestaria_au_au") @db.VarChar(100)
   plazoEjecucionProcedimiento           Int?      @map("plazo_ejecucion_procedimiento_au_au")
-  lugarLogisticaEjecucion               String?   @map("lugar_logistica_ejecucion_au_au") @db.VarChar(500)
+  lugarLogisticaEjecucion               String?   @map("lugar_logistica_ejecucion_au_au")
   requiereEspecializado                 Boolean?  @map("requiere_especializado_au_au")
-  detalleEspecializado                  String?   @map("detalle_especializado_au_au") @db.VarChar(500)
+  detalleEspecializado                  String?   @map("detalle_especializado_au_au")
   requiereMuestras                      Boolean?  @map("requiere_muestras_au_au")
-  detalleProcedimientoMuestras          String?   @map("detalle_procedimiento_muestras_au_au") @db.VarChar(500)
+  detalleProcedimientoMuestras          String?   @map("detalle_procedimiento_muestras_au_au")
   activaPromocionEconomica              Boolean?  @map("activa_promocion_economica_au_au")
   requiereVan                           Boolean?  @map("requiere_van_au_au")
   puntajeVan                            Int?      @map("puntaje_van_au_au")
@@ -477,7 +481,7 @@ model FasePreparatoria {
   porcentajeResponsabilidadSocial Decimal? @map("porcentaje_responsabilidad_social_au_au") @db.Decimal(5, 2)
   unidadRespCumplimientoCrs       String?  @map("unidad_resp_cumplimiento_crs_au_au") @db.VarChar(255)
   modalidadCrs                    String?  @map("modalidad_crs_au_au") @db.VarChar(255)
-  formaCumplimientoCrs            String?  @map("forma_cumplimiento_crs_au_au") @db.VarChar(500)
+  formaCumplimientoCrs            String?  @map("forma_cumplimiento_crs_au_au")
   porcentajeMantenimientoOferta   Decimal? @map("porcentaje_mantenimiento_oferta_au_au") @db.Decimal(5, 2)
   porcentajeFielCumplimiento      Decimal? @map("porcentaje_fiel_cumplimiento_au_au") @db.Decimal(5, 2)
   retencionFielCumplimiento       Boolean? @map("retencion_fiel_cumplimiento_au_au")
@@ -563,6 +567,8 @@ model NormativaGlobal {
   id                     String      @id @default(uuid()) @map("id_normativa_global")
   adminUniversitasId     String      @map("id_admin_universitas")
   textoNormativaCompleto String      @map("texto_normativa_completo")
+  /// Posición en la documentación. Las que no tienen orden van al final.
+  orden                  Int?        @map("num_orden")
   indActivo              Boolean     @default(true) @map("ind_activo")
   fecCreacion            DateTime    @default(now()) @map("fec_creacion")
   updatedAt              DateTime    @updatedAt @map("updated_at")
@@ -597,6 +603,8 @@ model ClausulaGenerica {
   adminUniversitasId     String      @map("id_admin_universitas")
   tituloClausulaGenerica String      @map("titulo_clausula_generica") @db.VarChar(255)
   cuerpoClausulaGenerica String      @map("cuerpo_clausula_generica")
+  /// Posición en la documentación. Las que no tienen orden van al final.
+  orden                  Int?        @map("num_orden")
   createdAt              DateTime    @default(now()) @map("created_at")
   updatedAt              DateTime    @updatedAt @map("updated_at")
   deletedAt              DateTime?   @map("deleted_at")

@@ -12,6 +12,13 @@ import { DictamenTotalDto } from './dto/dictamen-total.dto';
 import { DictamenParcialDto } from './dto/dictamen-parcial.dto';
 import { DictamenNoAdjudicadoDto } from './dto/dictamen-no-adjudicado.dto';
 import { esPrimeraOpcion, prelacionEfectiva } from './prelacion.util';
+import { Prisma } from '@prisma/client';
+import {
+  DOCUMENTOS_DE_ADJUDICACION,
+  marcarDesactualizados,
+} from '../../common/utils/documentos-dependientes.util';
+import { huboCambios } from '../../fase1/invalidacion-documentos.util';
+import { unirPartidas } from '../../formalizacion-fase4/tokens-contrato.resolver';
 
 @Injectable()
 export class GestionAdjudicacionService {
@@ -180,6 +187,26 @@ export class GestionAdjudicacionService {
     });
   }
 
+  /** Un dictamen nuevo o distinto deja desactualizados el Informe, el Acta y las Notificaciones. */
+  private async invalidarSiCambio(
+    expedienteId: string,
+    antes: Record<string, unknown> | undefined,
+    data: Record<string, unknown>,
+  ) {
+    const campos = Object.keys(data).filter(
+      (campo) => campo !== 'updatedBy' && campo !== 'notificacionGenerada',
+    );
+    // Los montos llegan como número y se guardan como Decimal.
+    const comparable = (v: unknown) =>
+      v instanceof Prisma.Decimal || typeof v === 'number' ? Number(v) : v;
+    if (
+      !antes ||
+      campos.some((campo) => huboCambios(comparable(antes[campo]), comparable(data[campo])))
+    ) {
+      await marcarDesactualizados(this.prisma, expedienteId, DOCUMENTOS_DE_ADJUDICACION);
+    }
+  }
+
   private async assertEvaluacionCalificada(expedienteId: string, evaluacionId: string) {
     const evaluacion = await this.prisma.evaluacionResultados.findFirst({
       where: {
@@ -235,7 +262,7 @@ export class GestionAdjudicacionService {
 
     const data = {
       tipoDictamen: 'TOTAL' as const,
-      partidasAdjudicadasTotal: dto.partidasAdjudicadasTotalAuAu,
+      partidasAdjudicadasTotal: unirPartidas(dto.partidasAdjudicadasTotalAuAu),
       montoAdjudicadoTotal: dto.montoAdjudicadoTotalAuAu,
       plazoEjecucionOfertaGanadora: dto.plazoEjecucionOfertaGanadoraAuAu,
       montoManoObraOfertado: dto.montoManoObraOfertadoAuAu ?? null,
@@ -262,6 +289,11 @@ export class GestionAdjudicacionService {
       update: data,
     });
 
+    await this.invalidarSiCambio(
+      expedienteId,
+      expediente.dictamenesAdjudicacion.find((d) => d.evaluacionId === evaluacionId),
+      data,
+    );
     return dictamen;
   }
 
@@ -308,11 +340,18 @@ export class GestionAdjudicacionService {
       updatedBy: user.id,
     };
 
-    return this.prisma.dictamenAdjudicacion.upsert({
+    const dictamen = await this.prisma.dictamenAdjudicacion.upsert({
       where: { evaluacionId },
       create: { expedienteId, evaluacionId, ...data, createdBy: user.id },
       update: data,
     });
+
+    await this.invalidarSiCambio(
+      expedienteId,
+      expediente.dictamenesAdjudicacion.find((d) => d.evaluacionId === evaluacionId),
+      data,
+    );
+    return dictamen;
   }
 
   async upsertDictamenParcial(
@@ -363,7 +402,9 @@ export class GestionAdjudicacionService {
       causaNoAdjudicado: adjudicado ? null : (dto.causaNoAdjudicadoAuAu ?? null),
       cantidadRenglones: adjudicado ? (dto.cantidadRenglonesAuAu ?? null) : null,
       alcanceAdjudicacionParcial: adjudicado ? (dto.alcanceAdjudicacionParcialAuAu ?? null) : null,
-      partidasAdjudicadasParcial: adjudicado ? (dto.partidasAdjudicadasParcialAuAu ?? null) : null,
+      partidasAdjudicadasParcial: adjudicado
+        ? unirPartidas(dto.partidasAdjudicadasParcialAuAu)
+        : null,
       montoAdjudicadoParcial: adjudicado ? (dto.montoAdjudicadoParcialAuAu ?? null) : null,
       plazoEjecucionOfertaParcial: adjudicado
         ? (dto.plazoEjecucionOfertaParcialAuAu ?? null)
@@ -399,6 +440,11 @@ export class GestionAdjudicacionService {
       return row;
     });
 
+    await this.invalidarSiCambio(
+      expedienteId,
+      expediente.dictamenesAdjudicacion.find((d) => d.evaluacionId === evaluacionId),
+      data,
+    );
     return dictamen;
   }
 }

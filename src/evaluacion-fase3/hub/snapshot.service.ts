@@ -61,9 +61,9 @@ export class SnapshotService {
         sobre: recaudo.sobre,
         pregunta: recaudo.pregunta,
         etiquetaCorta: recaudo.etiquetaCorta,
-        // El recaudo del VAN se coteja pero no tumba el dictamen legal: la
-        // promoción económica es un bono, no un requisito de calificación.
-        eliminatorio: recaudo.id !== 'modDeclaracionAutocalculoVanAuAu',
+        // El Sobre 2 se coteja pero no descalifica. Tampoco el VAN: la promoción
+        // económica es un bono, no un requisito de calificación.
+        eliminatorio: recaudo.sobre === 1 && recaudo.id !== 'modDeclaracionAutocalculoVanAuAu',
         personalizado: false,
       });
     }
@@ -77,7 +77,7 @@ export class SnapshotService {
         sobre: p?.sobre === 2 ? 2 : 1,
         pregunta: `¿Consignó ${descripcion.toLowerCase()}?`,
         etiquetaCorta: descripcion,
-        eliminatorio: true,
+        eliminatorio: p?.sobre !== 2,
         personalizado: true,
       });
     });
@@ -85,7 +85,7 @@ export class SnapshotService {
     // Ítem fijo del Sobre 2: siempre se coteja.
     items.push({
       ...ITEM_OFERTA_TECNICO_ECONOMICA,
-      eliminatorio: true,
+      eliminatorio: false,
       personalizado: false,
     });
 
@@ -180,13 +180,14 @@ export class SnapshotService {
     const sumar = (lista: CriterioPuntuado[]) => lista.reduce((acc, c) => acc + c.ponderacion, 0);
 
     return {
+      // Sin umbral de corte (QA): la evaluación técnico-económica no descalifica por puntaje.
       tecnica: {
-        puntuacionMinima: this.num(tecnica.puntuacionMinima),
+        puntuacionMinima: 0,
         maxPuntos: sumar(critTecnica),
         criterios: critTecnica,
       },
       economica: {
-        puntuacionMinima: this.num(economica.puntuacionMinima),
+        puntuacionMinima: 0,
         maxPuntos: sumar(critEconomica),
         criterios: critEconomica,
       },

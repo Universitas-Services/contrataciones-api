@@ -11,7 +11,7 @@ import type {
 } from './types/hub.types';
 
 /** Tope del campo de sustento, alineado con la columna de la base. */
-const MAX_VALOR_OBTENIDO = 255;
+const MAX_VALOR_OBTENIDO = 4000;
 
 export interface ResultadoModulo {
   /** Errores de negocio; si hay alguno, la confirmación se rechaza con 422. */

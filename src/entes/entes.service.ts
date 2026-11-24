@@ -479,6 +479,7 @@ export class EntesService {
       'estado',
       'municipio',
       'ciudad',
+      'paginaWeb',
       'nombreUnidadAdminFinanciera',
       'nombreUnidadContratante',
       'organoAdscripcion',

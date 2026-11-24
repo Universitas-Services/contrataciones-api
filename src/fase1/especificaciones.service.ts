@@ -3,6 +3,7 @@ import { PrismaService } from '../database/prisma.service';
 import { ExpedienteAccessService } from '../common/services/expediente-access.service';
 import type { IStorageService } from '../common/interfaces/storage-service.interface';
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
+import { marcarDesactualizados } from '../common/utils/documentos-dependientes.util';
 
 @Injectable()
 export class EspecificacionesService {
@@ -25,15 +26,9 @@ export class EspecificacionesService {
     });
   }
 
+  /** Las especificaciones solo se imprimen en el pliego. */
   private async invalidarDocumentos(expedienteId: string) {
-    await this.prisma.documentoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
-    await this.prisma.pliegoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
+    await marcarDesactualizados(this.prisma, expedienteId, ['PLIEGO_CONDICIONES']);
   }
 
   async obtener(expedienteId: string, user: UsuarioActual) {

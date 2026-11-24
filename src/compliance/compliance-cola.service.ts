@@ -13,6 +13,7 @@ import {
   textoErrorAnalisis,
   textoErrorDictamen,
   textoRechazado,
+  textoSiguiente,
   textoTipoNoCoincide,
 } from './compliance.util';
 import { Decision, decidir } from './reintentos.util';
@@ -235,6 +236,17 @@ export class ComplianceColaService {
                 ),
             { documentoId: id },
           );
+          if (coincide) {
+            const documentos = await tx.documentoCompliance.findMany({
+              where: { expedienteId: expediente.id, vigente: true },
+              orderBy: { createdAt: 'asc' },
+            });
+            const checklist =
+              catalogo?.modalidades.find((m) => m.valor === expediente.modalidad)?.checklist ??
+              null;
+            const guia = textoSiguiente(checklist, documentos);
+            if (guia) await this.mensaje(tx, expediente.id, guia, {});
+          }
         }
       });
       return;

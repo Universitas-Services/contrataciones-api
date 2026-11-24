@@ -16,19 +16,19 @@ export class LlamadoDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(4000)
   objetivosEspecificos1?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(4000)
   objetivosEspecificos2?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(4000)
   objetivosEspecificos3?: string;
 
   @ApiPropertyOptional()

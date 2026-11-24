@@ -49,25 +49,87 @@ export interface DatosToken {
   fechaAdjudicacion?: Date | null;
 }
 
+/** Lo que el Modelo de Contrato de Fase 1 conoce del expediente. */
+export interface ExpedienteTokensFase1 {
+  descripcionObjeto?: string | null;
+  codigoNomenclatura?: string | null;
+  ente?: {
+    nombre?: string | null;
+    rif?: string | null;
+    organoAdscripcion?: string | null;
+    ciudad?: string | null;
+  } | null;
+  unidadUsuaria?: { nombreUnidadUsuaria?: string | null } | null;
+  fasePreparatoria?: Record<string, unknown> | null;
+}
+
 /**
- * La fianza de fiel cumplimiento usa la misma regla que el Informe y el Acta de Fase 3:
+ * Las variables que ya existen en la Fase 1. El contratista, el monto y lo que
+ * se calcula con él llegan en la Fase 4: aquí quedan en `null`.
+ */
+export function resolverTokensFase1(exp: ExpedienteTokensFase1): Record<string, string | null> {
+  const f = exp.fasePreparatoria ?? {};
+  const num = (v: unknown) => (v == null || v === '' ? null : Number(v));
+  const texto = (v: unknown) => (typeof v === 'string' && v.trim() ? v : null);
+  return resolverTokens({
+    ente: {
+      nombre: exp.ente?.nombre ?? null,
+      rif: exp.ente?.rif ?? null,
+      organoAdscripcion: exp.ente?.organoAdscripcion ?? null,
+      ciudad: exp.ente?.ciudad ?? null,
+    },
+    expediente: {
+      descripcionObjeto: exp.descripcionObjeto ?? null,
+      codigoNomenclatura: exp.codigoNomenclatura ?? null,
+    },
+    oferta: {
+      nombreProveedorOferente: null,
+      rifProveedorOferente: null,
+      nombreRepLegalOferente: null,
+      cedulaRepLegalOferente: null,
+      datosRegistroMercantilProveedorOferente: null,
+    },
+    montoContratoBs: null,
+    partidasPresupuestarias: null,
+    plazoEjecucionDias: num(f.plazoEjecucionProcedimiento),
+    fase1: {
+      porcentajeFielCumplimiento: num(f.porcentajeFielCumplimiento),
+      porcentajeGarantiaLaboral: num(f.porcentajeGarantiaLaboral),
+      porcentajeAnticipo: num(f.porcentajeAnticipo),
+      porcentajeResponsabilidadSocial: num(f.porcentajeResponsabilidadSocial),
+      lugarLogisticaEjecucion: texto(f.lugarLogisticaEjecucion),
+      porcentajeResponsabilidadCivil: num(f.porcentajeResponsabilidadCivil),
+      montoResponsabilidadCivilBs: num(f.montoResponsabilidadCivilBs),
+      modalidadCrs: texto(f.modalidadCrs),
+      unidadRespCumplimientoCrs: texto(f.unidadRespCumplimientoCrs),
+    },
+    nombreUnidadUsuaria: exp.unidadUsuaria?.nombreUnidadUsuaria ?? null,
+  });
+}
+
+/**
+ * Fianza de fiel cumplimiento. Es la única fórmula: la usan el Informe, el Acta y las
+ * notificaciones de Fase 3, y los documentos de Fase 4.
  *
- *   monto × 0,16 × (porcentaje / 100)
+ *   (monto × 0,16 + monto) × (porcentaje / 100)
  */
 export function montoFielCumplimiento(
   montoContratoBs: number | null,
   porcentaje: number | null,
 ): number | null {
   if (montoContratoBs == null || porcentaje == null) return null;
-  return montoContratoBs * 0.16 * (porcentaje / 100);
+  return (montoContratoBs * 0.16 + montoContratoBs) * (porcentaje / 100);
 }
 
 /**
  * Une las partidas de varios dictámenes sin repetir, conservando el orden. Cada
- * entrada puede traer varias partidas separadas por coma o punto y coma.
+ * entrada puede traer varias partidas separadas por coma o punto y coma. Lo que se
+ * escribió detrás del código ("401-07-83-00 UNIDAD") no forma parte de la partida.
  */
 export function unirPartidas(...listas: (string | null | undefined)[]): string | null {
-  const partidas = listas.flatMap((lista) => (lista ?? '').split(/[,;]/)).map((p) => p.trim());
+  const partidas = listas
+    .flatMap((lista) => (lista ?? '').split(/[,;]/))
+    .map((p) => p.trim().replace(/^(\d[\d.-]*\d)\s+\D+$/, '$1'));
   const unicas = [...new Set(partidas.filter(Boolean))];
   return unicas.length ? unicas.join(', ') : null;
 }

@@ -35,6 +35,25 @@ export class AdquirentePliegoService {
     });
   }
 
+  /** El pliego solo se puede adquirir mientras está disponible según el cronograma. */
+  private async assertFechaEnDisponibilidad(expedienteId: string, fecha: Date) {
+    const cronograma = await this.prisma.cronogramaExpediente.findFirst({
+      where: { expedienteId },
+      select: { fechaInicioDisponibilidadPliego: true, fechaFinDisponibilidadPliego: true },
+    });
+    const inicio = cronograma?.fechaInicioDisponibilidadPliego;
+    const fin = cronograma?.fechaFinDisponibilidadPliego;
+    if (!inicio || !fin) return;
+
+    const dia = (f: Date) => f.toISOString().split('T')[0];
+    if (dia(fecha) < dia(inicio) || dia(fecha) > dia(fin)) {
+      const legible = (f: Date) => dia(f).split('-').reverse().join('/');
+      throw new BadRequestException(
+        `La fecha de adquisición debe estar entre el ${legible(inicio)} y el ${legible(fin)}, el plazo de disponibilidad del pliego.`,
+      );
+    }
+  }
+
   /**
    * Crear un registro de adquiriente pliego.
    */
@@ -60,6 +79,8 @@ export class AdquirentePliegoService {
         throw new NotFoundException('Proveedor no encontrado o no pertenece a este ente');
       }
     }
+
+    await this.assertFechaEnDisponibilidad(dto.expedienteId, new Date(dto.fechaAdquisicion));
 
     const result = await this.prisma.adquirentePliego.create({
       data: {
@@ -170,6 +191,13 @@ export class AdquirentePliegoService {
         throw new NotFoundException('Proveedor no encontrado');
       }
       updateData.proveedorId = dto.proveedorId;
+    }
+
+    if (dto.fechaAdquisicion) {
+      await this.assertFechaEnDisponibilidad(
+        dto.expedienteId ?? existente.expedienteId,
+        new Date(dto.fechaAdquisicion),
+      );
     }
 
     const result = await this.prisma.adquirentePliego.update({

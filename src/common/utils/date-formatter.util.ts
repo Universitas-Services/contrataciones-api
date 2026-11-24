@@ -96,3 +96,30 @@ export function formatCurrencyVE(amount: number | string | null | undefined): st
     maximumFractionDigits: 2,
   }).format(parsedAmount);
 }
+
+/**
+ * Suma minutos a una hora escrita por el usuario ("10:00 a.m.", "9:30 AM", "14:00")
+ * y conserva su formato. Devuelve `null` si no se reconoce una hora.
+ */
+export function sumarMinutosAHora(hora: string | null | undefined, minutos: number): string | null {
+  const m = /^\s*(\d{1,2}):(\d{2})(:\d{2})?(?:(\s*)([ap])(\.?\s*)m(\.?))?(.*)$/is.exec(hora ?? '');
+  if (!m) return null;
+
+  const [, hh, mm, ss = '', espacio = '', meridiano, medio = '', punto = '', resto = ''] = m;
+  let horas = Number(hh);
+  if (horas > 23 || Number(mm) > 59) return null;
+  if (meridiano && horas <= 12) {
+    horas = (horas % 12) + (meridiano.toLowerCase() === 'p' ? 12 : 0);
+  }
+
+  const total = (horas * 60 + Number(mm) + minutos) % (24 * 60);
+  const horaNueva = Math.floor(total / 60);
+  const visible = meridiano ? horaNueva % 12 || 12 : horaNueva;
+  const texto = `${String(visible).padStart(hh.length, '0')}:${String(total % 60).padStart(2, '0')}${ss}`;
+  if (!meridiano) return texto + resto;
+
+  const mayuscula = meridiano === meridiano.toUpperCase();
+  const letra = horaNueva >= 12 ? 'p' : 'a';
+  const sufijo = mayuscula ? `${letra.toUpperCase()}${medio}M` : `${letra}${medio}m`;
+  return `${texto}${espacio}${sufijo}${punto}${resto}`;
+}

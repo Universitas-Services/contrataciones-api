@@ -45,7 +45,7 @@ export class ComisionContratacionesController {
   }
 
   @Get()
-  @Roles('ADMIN_ENTE', 'UNIVERSITAS', 'SUPERVISOR', 'VISUALIZADOR')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS', 'SUPERVISOR', 'VISUALIZADOR')
   @ApiOperation({
     summary: 'Listar Comisiones',
     description: 'Obtiene el listado de comisiones y sus miembros.',
@@ -57,7 +57,7 @@ export class ComisionContratacionesController {
   }
 
   @Get(':id')
-  @Roles('ADMIN_ENTE', 'UNIVERSITAS', 'SUPERVISOR', 'VISUALIZADOR')
+  @Roles('ADMIN_ENTE', 'EJECUTOR', 'UNIVERSITAS', 'SUPERVISOR', 'VISUALIZADOR')
   @ApiOperation({
     summary: 'Obtener Comisión',
     description: 'Obtiene detalles de una comisión específica.',

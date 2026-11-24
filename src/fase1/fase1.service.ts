@@ -5,6 +5,14 @@ import { ExpedienteAccessService } from '../common/services/expediente-access.se
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
 import { MICROMODULOS, MICROMODULO_KEYS, MicromoduloKey } from './constants/micromodulos.constants';
 import { validarCompletar, ContextoValidacion } from './validators/completar.validators';
+import {
+  DOCUMENTOS_POR_MICROMODULO,
+  huboCambios,
+  modeloContratoComparable,
+} from './invalidacion-documentos.util';
+import { renderizarPildoras } from '../formalizacion-fase4/pildoras.util';
+import { resolverTokensFase1 } from '../formalizacion-fase4/tokens-contrato.resolver';
+import { marcarDesactualizados } from '../common/utils/documentos-dependientes.util';
 
 export type { UsuarioActual } from '../common/types/usuario-actual.type';
 
@@ -54,15 +62,15 @@ export class Fase1Service {
     });
   }
 
-  private async invalidarDocumentos(expedienteId: string) {
-    await this.prisma.documentoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
-    await this.prisma.pliegoGenerado.updateMany({
-      where: { expedienteId, deletedAt: null },
-      data: { estaDesactualizado: true },
-    });
+  /** Marca desactualizados solo los documentos que leen los datos del módulo que cambió. */
+  private async invalidarDocumentos(expedienteId: string, modulo: MicromoduloKey) {
+    await marcarDesactualizados(this.prisma, expedienteId, DOCUMENTOS_POR_MICROMODULO[modulo]);
+  }
+
+  private huboCambiosEnModulo(modulo: MicromoduloKey, antes: unknown, despues: unknown): boolean {
+    return modulo === 'modelo-contrato'
+      ? huboCambios(modeloContratoComparable(antes), modeloContratoComparable(despues))
+      : huboCambios(antes, despues);
   }
 
   /** Extrae del registro de fase únicamente los campos del micromódulo pedido. */
@@ -155,12 +163,72 @@ export class Fase1Service {
     const config = this.getConfig(modulo);
     const fase = await this.getOrCreateFase(expedienteId, user.id);
 
+    const datos = this.extraerDatos(fase as Record<string, any>, config.key);
     return {
       modulo: config.key,
       etiqueta: config.etiqueta,
       estado: (fase as Record<string, any>)[config.estadoField] as EstadoMicromodulo,
-      datos: this.extraerDatos(fase as Record<string, any>, config.key),
+      datos:
+        config.key === 'modelo-contrato' ? await this.resolverModelo(expedienteId, datos) : datos,
     };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Modelo de contrato: marcas con el dato del expediente
+  // ---------------------------------------------------------------------------
+
+  /** Valor de cada variable que ya existe en la Fase 1. */
+  private async valoresFase1(expedienteId: string) {
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      select: {
+        descripcionObjeto: true,
+        codigoNomenclatura: true,
+        ente: { select: { nombre: true, rif: true, organoAdscripcion: true, ciudad: true } },
+        unidadUsuaria: { select: { nombreUnidadUsuaria: true } },
+        fasePreparatoria: {
+          select: {
+            porcentajeFielCumplimiento: true,
+            porcentajeGarantiaLaboral: true,
+            porcentajeAnticipo: true,
+            porcentajeResponsabilidadSocial: true,
+            lugarLogisticaEjecucion: true,
+            plazoEjecucionProcedimiento: true,
+            porcentajeResponsabilidadCivil: true,
+            montoResponsabilidadCivilBs: true,
+            modalidadCrs: true,
+            unidadRespCumplimientoCrs: true,
+          },
+        },
+      },
+    });
+    return expediente ? resolverTokensFase1(expediente) : {};
+  }
+
+  /**
+   * Las cláusulas se leen con sus marcas convertidas en píldoras con valor. Lo
+   * guardado no cambia: el dato se recalcula en cada lectura, así que si el
+   * expediente cambia, la cláusula también.
+   */
+  private async resolverModelo(expedienteId: string, datos: Record<string, any>) {
+    const clausulas = Array.isArray(datos?.clauses) ? datos.clauses : null;
+    if (!clausulas?.length) return datos;
+    const valores = await this.valoresFase1(expedienteId);
+    return {
+      ...datos,
+      clauses: clausulas.map((c: Record<string, any>) =>
+        typeof c?.cuerpoHtml === 'string'
+          ? { ...c, cuerpoHtml: renderizarPildoras(c.cuerpoHtml, valores, 'RESOLVER') }
+          : c,
+      ),
+    };
+  }
+
+  /** Vista previa de una cláusula de la biblioteca antes de agregarla. */
+  async resolverClausula(expedienteId: string, cuerpoHtml: string, user: UsuarioActual) {
+    await this.acceso.assertAcceso(expedienteId, user.enteId, user.rol);
+    const valores = await this.valoresFase1(expedienteId);
+    return { cuerpoHtml: renderizarPildoras(cuerpoHtml, valores, 'RESOLVER') };
   }
 
   /** Guarda datos parciales sin validaciones estrictas y deja el módulo en BORRADOR. */
@@ -176,6 +244,7 @@ export class Fase1Service {
 
     const data = this.construirUpdate(config.key, body);
     const estadoActual = await this.estadoDe(expedienteId, config.estadoField);
+    const antes = await this.prisma.fasePreparatoria.findUniqueOrThrow({ where: { expedienteId } });
 
     const fase = await this.prisma.fasePreparatoria.update({
       where: { expedienteId },
@@ -192,9 +261,16 @@ export class Fase1Service {
       include: { especificaciones: true },
     });
 
-    if (estadoActual === EstadoMicromodulo.COMPLETADO) {
-      // Editar un módulo completado deja los documentos existentes desactualizados.
-      await this.invalidarDocumentos(expedienteId);
+    // Solo un cambio real deja desactualizados los documentos (QA: entrar a revisar
+    // un módulo y guardar sin cambios los marcaba todos).
+    if (
+      this.huboCambiosEnModulo(
+        config.key,
+        this.extraerDatos(antes as Record<string, any>, config.key),
+        this.extraerDatos(fase as Record<string, any>, config.key),
+      )
+    ) {
+      await this.invalidarDocumentos(expedienteId, config.key);
     }
 
     return {
@@ -222,6 +298,8 @@ export class Fase1Service {
     await this.acceso.assertAcceso(expedienteId, user.enteId, user.rol);
     const config = this.getConfig(modulo);
     await this.getOrCreateFase(expedienteId, user.id);
+
+    const antes = await this.prisma.fasePreparatoria.findUniqueOrThrow({ where: { expedienteId } });
 
     // Si el cuerpo trae datos, se guardan antes de validar.
     if (body && Object.keys(body).length > 0) {
@@ -268,7 +346,15 @@ export class Fase1Service {
       include: { especificaciones: true },
     });
 
-    await this.invalidarDocumentos(expedienteId);
+    if (
+      this.huboCambiosEnModulo(
+        config.key,
+        this.extraerDatos(antes as Record<string, any>, config.key),
+        datos,
+      )
+    ) {
+      await this.invalidarDocumentos(expedienteId, config.key);
+    }
     await this.recalcularPhaseComplete(expedienteId);
 
     return {
@@ -278,7 +364,10 @@ export class Fase1Service {
     };
   }
 
-  /** Devuelve el módulo a BORRADOR para poder editarlo e invalida los documentos. */
+  /**
+   * Devuelve el módulo a BORRADOR para poder editarlo. No invalida nada por sí
+   * solo: los documentos se marcan desactualizados cuando se guarda un cambio real.
+   */
   async reabrir(expedienteId: string, modulo: string, user: UsuarioActual) {
     await this.acceso.assertAcceso(expedienteId, user.enteId, user.rol);
     const config = this.getConfig(modulo);
@@ -293,12 +382,10 @@ export class Fase1Service {
       },
     });
 
-    await this.invalidarDocumentos(expedienteId);
-
     return {
       modulo: config.key,
       estado: EstadoMicromodulo.BORRADOR,
-      message: `"${config.etiqueta}" fue reabierto. Los documentos generados quedaron desactualizados.`,
+      message: `"${config.etiqueta}" fue reabierto. Los documentos se marcarán desactualizados si guarda cambios.`,
     };
   }
 

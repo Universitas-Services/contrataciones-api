@@ -45,7 +45,7 @@ Pasa a `ACTIVA` solo, cuando están nomenclatura, modalidad y tipo (el nombre es
 ## 3. Flujo de la pantalla
 
 1. **Lista:** `GET /expedientes`. Botón «Nuevo» → `POST /expedientes`.
-2. **Abrir:** `GET /expedientes/:id` y `GET /expedientes/:id/mensajes`. El primer mensaje ya es el saludo del Coordinador.
+2. **Abrir:** `GET /expedientes/:id` y `GET /expedientes/:id/mensajes`. El primer mensaje ya es el saludo del Coordinador: pide la nomenclatura del expediente.
 3. **Registrar:** el usuario conversa (`POST /expedientes/:id/mensajes`). Mientras falten modalidad o tipo, puedes mostrar botones con `GET /catalogo` que llamen a `PATCH /expedientes/:id`.
 4. **Subir:** con el expediente en `ACTIVA`, muestra el botón para `siguienteDocumento`. `POST /expedientes/:id/documentos` responde al instante.
 5. **Esperar el análisis:** consulta `GET /documentos/:documentoId` cada 5 s hasta que salga de `PENDIENTE`/`PROCESANDO`. Luego recarga mensajes y detalle: el resultado llega como mensaje del Coordinador.
@@ -203,9 +203,10 @@ Responde el mismo objeto que `GET /expedientes/:id`.
 }
 ```
 
-- **`siguienteDocumento`:** el tipo para el botón de subir. Si el Coordinador pidió uno por el chat, sale ese; si no, el primero del checklist sin cubrir. `null` si no está `ACTIVA` o ya está todo.
+- **`siguienteDocumento`:** el tipo para el botón de subir: el primero del checklist sin cubrir. `null` si no está `ACTIVA` o ya está todo. El Coordinador guía en ese orden: al activarse el expediente y tras cada análisis correcto, el backend agrega al chat «Ahora sube: {tipo}.» Envía siempre el `tipoDocumento`; subir otro distinto no da error.
+- **`tieneResumen`** (en cada documento): si es `true`, muestra «Descargar resumen» → `GET /compliance/documentos/:documentoId/resumen/pdf` (PDF). Si es `false`, 409: los análisis anteriores al 12/11 no lo traen.
 - **`checklist[].documentos`:** solo los vigentes. Los reemplazados van en `documentosReemplazados`.
-- **No muestres** al usuario el informe técnico de cada documento: el backend no lo envía. Muestra el semáforo, el chat y el dictamen.
+- **No muestres** al usuario el informe técnico de cada documento: el backend no lo envía. Muestra el semáforo, el chat, el resumen en PDF y el dictamen.
 
 ### 4.5 `PATCH /expedientes/:id`
 

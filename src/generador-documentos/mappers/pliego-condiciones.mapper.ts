@@ -1,4 +1,8 @@
-import { formatDateToSpanishLong, formatCurrencyVE } from '../../common/utils/date-formatter.util';
+import { formatToDDMMYYYY, formatCurrencyVE } from '../../common/utils/date-formatter.util';
+import { textosRecaudosConSustituto } from './recaudos-legales.textos';
+import { renderizarPildoras } from '../../formalizacion-fase4/pildoras.util';
+import { resolverTokensFase1 } from '../../formalizacion-fase4/tokens-contrato.resolver';
+import { ordinalClausula } from '../../formalizacion-fase4/documentos-fase4.mapper';
 
 function stripHtml(html: string | null | undefined): string {
   if (!html) return '___';
@@ -14,20 +18,24 @@ function camelToSnake(key: string): string {
   return key.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
 }
 
-function formatNormativaLegalForDoc(raw: string | null | undefined): string {
-  if (!raw || !raw.trim()) return 'Decreto de Ley de Contrataciones vigente';
+/**
+ * Normativas adicionales del expediente, una por elemento. Se guardan como JSON
+ * serializado; un texto suelto de expedientes antiguos cuenta como una sola.
+ */
+export function normativasAdicionales(raw: unknown): string[] {
+  if (typeof raw !== 'string' || !raw.trim()) return [];
   const trimmed = raw.trim();
   if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
     try {
-      const parsed = JSON.parse(trimmed);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.join(', ');
+      const parsed: unknown = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map((n) => String(n ?? '').trim()).filter(Boolean);
       }
     } catch {
-      // fallback
+      // No es JSON: se trata como texto.
     }
   }
-  return trimmed;
+  return [trimmed];
 }
 
 function numOrDash(v: unknown): string {
@@ -40,7 +48,22 @@ function numOrDash(v: unknown): string {
   ) {
     return String(v);
   }
+  // Decimal de Prisma (bonos, porcentajes): se imprime su valor, no la línea.
+  if (typeof v === 'object' && typeof (v as { toFixed?: unknown }).toFixed === 'function') {
+    return String(Number(v));
+  }
   return '___';
+}
+
+/**
+ * Número de la cláusula en ordinal y mayúscula: 1 → PRIMERA. Si el frontend
+ * ya guardó la palabra ("primera"), se respeta y se pasa a mayúscula.
+ */
+export function numeroClausula(orden: unknown, posicion: number): string {
+  const n = typeof orden === 'number' ? orden : Number(orden);
+  if (Number.isInteger(n) && n > 0) return ordinalClausula(n);
+  if (typeof orden === 'string' && orden.trim()) return orden.trim().toLocaleUpperCase('es');
+  return ordinalClausula(posicion + 1);
 }
 
 function asDate(v: unknown): Date | string | null | undefined {
@@ -65,7 +88,14 @@ function asMoney(v: unknown): number {
 /**
  * Mapea expediente + Fase1 JSONB al shape de pliego-condiciones-template.docx
  */
-export function mapDatosPliegoCondiciones(expediente: any): Record<string, any> {
+/**
+ * @param normativasGenerales Normativa global activa, en orden. Solo el pliego la
+ *   imprime; los informes que reutilizan este mapper no la necesitan.
+ */
+export function mapDatosPliegoCondiciones(
+  expediente: any,
+  normativasGenerales: string[] = [],
+): Record<string, any> {
   const e = expediente;
   const f = expediente.fasePreparatoria;
   const c = expediente.cronograma;
@@ -91,7 +121,7 @@ export function mapDatosPliegoCondiciones(expediente: any): Record<string, any> 
   const estadoEnte = e.ente?.estado || '___';
 
   const fechaActoRecep = c.fechaActoRecepcionAperturaSobres
-    ? formatDateToSpanishLong(asDate(c.fechaActoRecepcionAperturaSobres))
+    ? formatToDDMMYYYY(asDate(c.fechaActoRecepcionAperturaSobres))
     : '___';
 
   // --- Promoción económica ---
@@ -122,50 +152,6 @@ export function mapDatosPliegoCondiciones(expediente: any): Record<string, any> 
 Dicha cobertura deberá incluir, sin limitarse a, los daños derivados de los trabajos, el uso de maquinaria, las acciones del personal del contratista y, en caso de que aplique a la naturaleza del servicio, la Responsabilidad Civil Profesional por errores u omisiones.
 La póliza deberá ser emitida por una empresa de seguros de reconocida solvencia en la República, por un monto no menor a Bs. ${montoRc}, o al ${pctRc}% del Contrato. Este instrumento deberá ser consignado y aprobado por el contratante antes de la firma del Acta de Inicio.`
     : '';
-
-  const monedaTexto = f.monedaDiferente
-    ? `Se admite oferta en moneda distinta: ${f.nomMonedaExtranjera || '___'}.`
-    : '';
-  const idiomaTexto = f.idiomaDiferente
-    ? `Se admite documentación en idioma distinto: ${f.nomIdiomaDiferente || '___'}.`
-    : '';
-
-  const formaPresentacion = (() => {
-    switch (tipo) {
-      case 'BIENES':
-        return [
-          'La oferta deberá incluir una descripción exhaustiva y detallada de las características de los Bienes / insumos ofertados.',
-          'Adicionalmente, los participantes deberán acompañar y consignar con la oferta los siguientes documentos:',
-          'Catálogos, Folletos y/o Fichas Técnicas descriptivas de cada ítem.',
-          'Consignar según Modelo N°17 los siguientes compromisos y certificaciones técnicas:',
-          'Compromiso de Tiempo de Entrega.',
-          'Certificación de Disponibilidad de Inventario (Stock).',
-          'Garantía de los Bienes o Insumos.',
-        ].join('\n');
-      case 'SERVICIOS':
-        return [
-          'La oferta deberá incluir una descripción exhaustiva y detallada de las características técnicas del servicio ofertado.',
-          'Consignar según Modelo N°17 los siguientes compromisos y certificaciones técnicas:',
-          'Compromiso de Tiempo de Ejecución.',
-          'Declaración de Disponibilidad de Maquinaria/Equipos.',
-          'Tiempo de Respuesta (SLA) ante fallas o emergencias.',
-        ].join('\n');
-      case 'OBRAS':
-        return [
-          'La oferta deberá incluir una descripción exhaustiva y detallada de las características técnicas del objeto ofertado.',
-          'Adicionalmente, los participantes deberán acompañar y consignar con la oferta los siguientes documentos:',
-          'Cronograma de Ejecución (Gantt).',
-          'Plan de Trabajo.',
-          'Consignar según Modelo N°17 los siguientes compromisos y certificaciones técnicas:',
-          'Compromiso de Tiempo de Ejecución (ajustado al Cronograma).',
-          'Declaración de Disponibilidad de Maquinaria/Equipos.',
-          'Consignar según Modelo N°18 el siguiente compromiso y certificación técnica:',
-          'Experiencia del personal técnico clave.',
-        ].join('\n');
-      default:
-        return '___';
-    }
-  })();
 
   // --- Calificación legal ---
   const legal = asRecord(f.calificacionLegalData);
@@ -266,20 +252,21 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
   // --- Cláusulas ---
   const modelo = asRecord(f.modeloContratoData);
   const clauses = Array.isArray(modelo.clauses) ? modelo.clauses : [];
+  // Las marcas {…} y las píldoras salen con el dato de Fase 1; lo que aún no
+  // existe (contratista, monto) queda como línea para llenar a mano.
+  const valoresFase1 = resolverTokensFase1(e);
   const clausulasCustom = clauses.map((clRaw: unknown, idx: number) => {
     const cl = asRecord(clRaw);
     const cuerpoHtml = typeof cl.cuerpoHtml === 'string' ? cl.cuerpoHtml : undefined;
+    const titulo = typeof cl.titulo === 'string' ? cl.titulo.trim() : '';
     return {
-      num_clausula_custom_au_au: numOrDash(cl.order ?? idx + 1),
-      titulo_clausula_custom_au_au: typeof cl.titulo === 'string' ? cl.titulo : '___',
-      cuerpo_clausula_custom_au_au: stripHtml(cuerpoHtml),
+      num_clausula_custom_au_au: numeroClausula(cl.order, idx),
+      titulo_clausula_custom_au_au: titulo ? titulo.toLocaleUpperCase('es') : '___',
+      cuerpo_clausula_custom_au_au: stripHtml(
+        cuerpoHtml ? renderizarPildoras(cuerpoHtml, valoresFase1, 'VALOR') : cuerpoHtml,
+      ),
     };
   });
-
-  const normativaRaw = f.normativaLegal;
-  const normativaLegal = formatNormativaLegalForDoc(
-    typeof normativaRaw === 'string' ? normativaRaw : undefined,
-  );
 
   const requiereGarantiaLaboral = Boolean(f.requiereGarantiaLaboral);
 
@@ -291,8 +278,10 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
     // alias legacy
     desc_objeto_contratacion: descObjeto,
     cod_nomenclatura_proceso: codNomenclatura,
-    normativa_legal_au_au: normativaLegal,
-    normativa_general: normativaLegal,
+    // Una viñeta por normativa: las generales siempre, las adicionales si hay.
+    normativa_general: normativasGenerales,
+    normativa_legal_au_au: normativasAdicionales(f.normativaLegal),
+    hay_normativa_adicional: normativasAdicionales(f.normativaLegal).length > 0,
     valor_ucau_base: formatCurrencyVE(Number(m.valorUcauBase)),
     denominacion_comision:
       e.comision?.denominacionComision || 'Comisión de Contrataciones Públicas',
@@ -300,7 +289,8 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
     loc_estado_ente: estadoEnte,
     correo_comision: e.comision?.correoElectronico || '___',
     telefono_comision: e.comision?.telefono || '___',
-    pag_web_ente: 'www.snd.gob.ve',
+    // Vacío si el ente no la indicó: la plantilla omite el tramo del ente.
+    pag_web_ente: e.ente?.paginaWeb?.trim() || '',
     loc_municipio_ente: e.ente?.municipio || '___',
     loc_ciudad_ente: ciudadEnte,
     monto_estimado_bs: formatCurrencyVE(Number(m.montoEstimadoBs)),
@@ -317,44 +307,46 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
     fec_acto_recep_aper_sobres_au_au: fechaActoRecep,
     hora_acto_recep_aper_au_au: f.horaActoRecepAper || '___',
     fec_solicitud_aclaratorias_au_au: c.fechaSolicitudAclaratorias
-      ? formatDateToSpanishLong(asDate(c.fechaSolicitudAclaratorias))
+      ? formatToDDMMYYYY(asDate(c.fechaSolicitudAclaratorias))
       : '___',
     fec_respuesta_aclaratorias_au_au: c.fechaRespuestaAclaratorias
-      ? formatDateToSpanishLong(asDate(c.fechaRespuestaAclaratorias))
+      ? formatToDDMMYYYY(asDate(c.fechaRespuestaAclaratorias))
       : '___',
     fec_modific_pliego_au_au: c.fechaModificacionPliego
-      ? formatDateToSpanishLong(asDate(c.fechaModificacionPliego))
+      ? formatToDDMMYYYY(asDate(c.fechaModificacionPliego))
       : '___',
     fec_inicio_disponibilidad_pliego_au_au: c.fechaInicioDisponibilidadPliego
-      ? formatDateToSpanishLong(asDate(c.fechaInicioDisponibilidadPliego))
+      ? formatToDDMMYYYY(asDate(c.fechaInicioDisponibilidadPliego))
       : '___',
     fec_fin_disponibilidad_pliego_au_au: c.fechaFinDisponibilidadPliego
-      ? formatDateToSpanishLong(asDate(c.fechaFinDisponibilidadPliego))
+      ? formatToDDMMYYYY(asDate(c.fechaFinDisponibilidadPliego))
       : '___',
     fec_limite_evaluacion_au_au: c.fechaLimiteEvaluacion
-      ? formatDateToSpanishLong(asDate(c.fechaLimiteEvaluacion))
+      ? formatToDDMMYYYY(asDate(c.fechaLimiteEvaluacion))
       : '___',
     fec_limite_adjudicacion_au_au: c.fechaLimiteAdjudicacion
-      ? formatDateToSpanishLong(asDate(c.fechaLimiteAdjudicacion))
+      ? formatToDDMMYYYY(asDate(c.fechaLimiteAdjudicacion))
       : '___',
     fec_limite_notificacion_au_au: c.fechaLimiteNotificacion
-      ? formatDateToSpanishLong(asDate(c.fechaLimiteNotificacion))
+      ? formatToDDMMYYYY(asDate(c.fechaLimiteNotificacion))
       : '___',
     fec_limite_garantias_au_au: c.fechaLimiteGarantias
-      ? formatDateToSpanishLong(asDate(c.fechaLimiteGarantias))
+      ? formatToDDMMYYYY(asDate(c.fechaLimiteGarantias))
       : '___',
     fec_limite_firma_contrato_au_au: c.fechaLimiteFirmaContrato
-      ? formatDateToSpanishLong(asDate(c.fechaLimiteFirmaContrato))
+      ? formatToDDMMYYYY(asDate(c.fechaLimiteFirmaContrato))
       : '___',
 
     horario_retiro_pliego: f.horarioRetiroPliego || '___',
     direccion_retiro_pliego: f.direccionRetiroPliego || '___',
-    forma_presentacion_au_au: formaPresentacion,
     tipo_objeto_contratacion: esBienes ? 'Bienes' : esServicios ? 'Servicios' : 'Obras',
 
     // Aspectos / garantías
-    moneda_diferente_au_au: monedaTexto,
-    idioma_diferente_au_au: idiomaTexto,
+    // Bloques condicionales con los textos de la documentación.
+    moneda_diferente_au_au: Boolean(f.monedaDiferente),
+    nom_moneda_extranjera_au_au: f.nomMonedaExtranjera || '___',
+    idioma_diferente_au_au: Boolean(f.idiomaDiferente),
+    nom_idioma_diferente_au_au: f.nomIdiomaDiferente || '___',
     porcentaje_responsabilidad_social_au_au:
       f.porcentajeResponsabilidadSocial != null ? String(f.porcentajeResponsabilidadSocial) : '___',
     forma_responsabilidad_social_au_au: f.formaCumplimientoCrs || '___',
@@ -388,6 +380,7 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
 
     // Legal flags (boolean sections)
     ...modFlags,
+    ...textosRecaudosConSustituto(sustitutos),
     desc_otro_recaudo_sobre1_au_au: otrosSobre1,
     desc_otro_recaudo_sobre2_au_au: otrosSobre2,
     modelo_otro_recaudo_sobre1_au_au: modelosSobre1,
@@ -456,7 +449,6 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
     criterios_evaluacion_tecnica_antes_au_au: criteriosAntesEvalTec,
     matriz_criterio_evaluacion_tecnica_au_au: matrizEvalTec,
     total_puntuacion_criterio_evaluacion_tecnica_au_au: numOrDash(totalEvalTec),
-    puntuacion_minima_evaluacion_tecnica: numOrDash(evalTe.tecnica?.puntuacionMinima),
     criterios_evaluacion_economico_antes_au_au: criteriosAntesEvalEco,
     matriz_criterio_evaluacion_economico_au_au: matrizEvalEco,
     total_puntuacion_criterio_evaluacion_economico_au_au: numOrDash(totalEvalEco),
@@ -474,6 +466,7 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
     // Presupuesto (loop {#} parcheado a items_presupuesto)
     items_presupuesto: items.map((item: any, index: number) => ({
       numero: index + 1,
+      numero_item_au_au: index + 1,
       descripcion_item_au_au: item.descripcionItem,
       codigo_partida_au_au: item.codigoPartida,
       unidad_medida_au_au: item.unidadMedida,

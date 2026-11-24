@@ -5,7 +5,9 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -37,13 +39,13 @@ export class ActividadesPreviasDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(4000)
   justificacionNecesidadContratacion?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(4000)
   justificacionVentajas?: string;
 
   @ApiPropertyOptional()
@@ -64,7 +66,7 @@ export class ActividadesPreviasDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(4000)
   justificacionPermitePymesCooperativas?: string;
 
   @ApiPropertyOptional()
@@ -75,7 +77,7 @@ export class ActividadesPreviasDto {
   @ApiPropertyOptional({ description: 'Justificación del contrato marco' })
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(4000)
   justificacionContratoMarco?: string;
 
   @ApiPropertyOptional({ example: '2026-03-15' })
@@ -98,7 +100,7 @@ export class ActividadesPreviasDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(4000)
   lugarLogisticaEjecucion?: string;
 
   @ApiPropertyOptional()
@@ -109,7 +111,7 @@ export class ActividadesPreviasDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(4000)
   detalleEspecializado?: string;
 
   @ApiPropertyOptional()
@@ -120,7 +122,7 @@ export class ActividadesPreviasDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(4000)
   detalleProcedimientoMuestras?: string;
 
   @ApiPropertyOptional()
@@ -172,6 +174,8 @@ export class ActividadesPreviasDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
+  @Min(0, { message: 'El porcentaje de garantía laboral no puede ser menor a 0' })
+  @Max(10, { message: 'El porcentaje de garantía laboral no puede superar 10 (Art. 124 LCP)' })
   porcentajeGarantiaLaboral?: number;
 
   @ApiPropertyOptional()

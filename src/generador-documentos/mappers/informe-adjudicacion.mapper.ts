@@ -1,8 +1,13 @@
+import {
+  montoFielCumplimiento,
+  unirPartidas,
+} from '../../formalizacion-fase4/tokens-contrato.resolver';
 import { formatCurrencyVE } from '../../common/utils/date-formatter.util';
 import { cifraEnLetras } from '../../common/utils/numero-a-letras.util';
 import { ETIQUETAS_PRELACION } from '../../evaluacion-fase3/hub/prelacion.service';
 import type { EstadoPromocion } from '../../evaluacion-fase3/hub/types/hub.types';
 import type { TextosEstatus } from './informe-desierto.mapper';
+import { textosRecaudosConSustituto } from './recaudos-legales.textos';
 
 /**
  * Secciones propias del Informe de Recomendación de adjudicación (Fase 3):
@@ -105,18 +110,6 @@ const esPosicion = (v: string | null | undefined, etiqueta: string) =>
   normalizar(v) === normalizar(etiqueta);
 
 // ── Textos de la lógica de automatización ────────────────────────────────
-
-const TEXTO_RIF = '- Copia del Registro de Información Fiscal (R.I.F.).';
-const TEXTO_RIF_SUSTITUTO =
-  '- Copia del Registro de Información Fiscal (R.I.F.) o declaración jurada de Registro de Información Fiscal (R.I.F.) (Ver Modelo en Anexo III) en caso de que el proponente acredite que el documento se encuentra en proceso de actualización o trámite ante el SENIAT.';
-const TEXTO_RNC =
-  '- Certificado de Inscripción en el Registro Nacional de Contratistas, con el respectivo reporte de calificación o Planilla Resumen.';
-const TEXTO_RNC_SUSTITUTO =
-  "- Certificado de Inscripción en el Registro Nacional de Contratistas, con el respectivo reporte de calificación o Planilla Resumen o Declaración Jurada de Registro en Trámite (R.N.C.) (Ver Modelo en Anexo III); no obstante, el adjudicado quedará obligado a consignar el certificado en status 'Calificado' vigente como condición indispensable para la formalización del contrato, de conformidad con el Artículo 48 de la LCP.";
-const TEXTO_DESEMPENO =
-  '-Informe de Evaluación de desempeño en Contrataciones de los últimos dos (2) años, para determinar el Nivel General de Evaluación del Contratista en los últimos veinticuatro (24) meses según el Servicio Nacional de Contratista (SNC), en caso de haber contratado con el Estado.';
-const TEXTO_DESEMPENO_SUSTITUTO =
-  '-Informe de Evaluación de desempeño en Contrataciones: Su ausencia en la oferta constituye una omisión no sustancial, siempre que se consigne la Declaración Jurada de Evaluación de Desempeño (Ver Anexo III). Asimismo, en aquellos casos donde el oferente no posea historial previo de contratación con el sector público, deberá adjuntar al menos dos (02) referencias comerciales de empresas privadas como medio alternativo para validar su capacidad técnica, de conformidad con lo previsto en los Artículos 51 de la LCP y 61 de su Reglamento';
 
 const ANALISIS_TOTAL =
   'De conformidad con lo establecido en el Artículo 95 de la LCP y el Artículo 21 de las Normas de Control Interno de la SUNAI, esta Comisión asienta que se procedió a realizar un análisis comparativo de la oferta económica frente al Presupuesto Base actualizado, determinándose que los precios unitarios presentados guardan una relación de razonabilidad técnica con los valores del mercado. Asimismo, se verificó la estructura de costos de la empresa, constatando que los márgenes de utilidad y costos operativos se ajustan a lo indicado en el Pliego de condiciones, garantizando la eficiencia del gasto público.';
@@ -225,7 +218,7 @@ export function mapInformeAdjudicacion(input: {
   const pctFiel = num(fase.porcentajeFielCumplimiento);
   const pctLaboral = num(fase.porcentajeGarantiaLaboral);
   const garantias = (montoAdjudicado: number, manoObra: Numerico) => {
-    const fiel = montoAdjudicado * 0.16 * (pctFiel / 100);
+    const fiel = montoFielCumplimiento(montoAdjudicado, pctFiel) ?? 0;
     const laboral = num(manoObra) * (pctLaboral / 100);
     return {
       porcentaje_fiel_cumplimiento_au_au: String(pctFiel),
@@ -261,7 +254,7 @@ export function mapInformeAdjudicacion(input: {
             rif_oferente_adjudicado_au_au: ev?.rifProveedorEvaluado || '___',
             cantidad_renglones_parcial_au_au: d.cantidadRenglones ?? '___',
             alcance_adjudicacion_parcial_au_au: d.alcanceAdjudicacionParcial || '___',
-            partidas_adjudicadas_parcial_au_au: d.partidasAdjudicadasParcial || '___',
+            partidas_adjudicadas_parcial_au_au: unirPartidas(d.partidasAdjudicadasParcial) ?? '___',
             monto_adjudicado_parcial_au_au: bs(monto),
             plazo_ejecucion_oferta_parcial_au_au: d.plazoEjecucionOfertaParcial ?? '___',
             ...garantias(monto, d.montoManoObraOfertado),
@@ -282,15 +275,7 @@ export function mapInformeAdjudicacion(input: {
 
   return {
     // Recaudos con sustituto
-    texto_mod_copia_rif_vigente_au_au: sust.sustitutoDjRifVigenteAuAu
-      ? TEXTO_RIF_SUSTITUTO
-      : TEXTO_RIF,
-    texto_mod_certificado_rnc_au_au: sust.sustitutoDjCertificadoRncAuAu
-      ? TEXTO_RNC_SUSTITUTO
-      : TEXTO_RNC,
-    texto_mod_evaluacion_desempeno_au_au: sust.sustitutoDjEvalDesempenoAuAu
-      ? TEXTO_DESEMPENO_SUSTITUTO
-      : TEXTO_DESEMPENO,
+    ...textosRecaudosConSustituto(sust),
 
     // 7 y 8
     analisis_resultados_consolidados_au_au: esTotal ? ANALISIS_TOTAL : ANALISIS_PARCIAL,
@@ -314,7 +299,8 @@ export function mapInformeAdjudicacion(input: {
     // 10. Recomendación TOTAL (raíz = Primera Opción)
     recomendacion_adjudicacion_total_au_au: esTotal,
     ...(adjudicadoTotal ? identidad(adjudicadoTotal) : primera ? identidad(primera) : {}),
-    partidas_adjudicadas_total_au_au: dictamenTotal?.partidasAdjudicadasTotal || '___',
+    partidas_adjudicadas_total_au_au:
+      unirPartidas(dictamenTotal?.partidasAdjudicadasTotal) ?? '___',
     monto_adjudicado_total_au_au: dictamenTotal ? bs(montoTotal) : '___',
     plazo_ejecucion_oferta_ganadora_au_au: dictamenTotal?.plazoEjecucionOfertaGanadora ?? '___',
     opcion_varias_ofertas_au_au,

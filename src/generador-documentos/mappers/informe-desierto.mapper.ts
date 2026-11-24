@@ -123,12 +123,24 @@ export function mapOferentesDesierto(
   // ── Calificación legal ────────────────────────────────────────────────
   const conLegal = evaluadas.filter((ev) => json<EstadoLegal>(ev.hubLegal)?.submitted);
 
-  const requisitos_preliminares = conLegal.map((ev, i) => ({
-    numero: i + 1,
-    ...identidad(ev),
-    ind_verificado_garantia_au_au: siNo(ev.indVerificadoGarantia),
-    ind_verificado_crs_au_au: siNo(ev.indVerificadoCrs),
-  }));
+  const requisitos_preliminares = conLegal.map((ev, i) => {
+    // El recaudo consignado es el dato vigente; las columnas viejas solo respaldan
+    // los expedientes donde el recaudo no se exigió en el pliego.
+    const items = json<EstadoLegal>(ev.hubLegal)?.form?.items;
+    const consignado = (id: string, previo: boolean | null | undefined) =>
+      siNo(items?.[id]?.consignado ? items[id].consignado === 'SI' : previo);
+    const garantia = consignado('modGarantiaMantenimientoOfertaAuAu', ev.indVerificadoGarantia);
+    const crs = consignado('modDeclaracionCompromisoRespSocialAuAu', ev.indVerificadoCrs);
+    return {
+      numero: i + 1,
+      ...identidad(ev),
+      garantia_mantenimiento_oferta_au_au: garantia,
+      declaracion_compromiso_resp_social_au_au: crs,
+      // Marcas anteriores, hasta que documentación entregue la plantilla nueva.
+      ind_verificado_garantia_au_au: garantia,
+      ind_verificado_crs_au_au: crs,
+    };
+  });
 
   const calificacion_legal_au_au = conLegal.map((ev) => {
     const snap = json<PlantillasSnapshot>(ev.plantillasSnapshot)!;
