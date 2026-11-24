@@ -277,7 +277,7 @@ async function main() {
     'guarda el saludo fijo',
     mensajes.length === 1 &&
       mensajes[0].texto.startsWith('Hola, ') &&
-      mensajes[0].texto.endsWith('¿cuál es la nomenclatura del expediente?'),
+      mensajes[0].texto.endsWith('¿cuál es el número del expediente?'),
   );
   await rechaza('otro ente no lo ve', () => servicio.detalle(id, otroEnte), 'No tiene acceso');
   ok(
@@ -506,6 +506,19 @@ async function main() {
       'Terminé de analizar acta.pdf (Acta de Inicio). Semáforo: Rojo. 5 hallazgo(s) en 20 puntos revisados.',
     ),
   );
+  const posActa = mensajes.findIndex((m) => m.texto.startsWith('Terminé de analizar acta.pdf'));
+  ok(
+    'el chat lleva el resumen completo del acta',
+    mensajes[posActa].texto.endsWith('# Resumen de revisión: Acta\n\nDetalle (CAAUAI.14)'),
+  );
+  ok(
+    '«Ahora sube» va después del resultado',
+    mensajes[posActa + 1].texto.startsWith('Ahora sube: '),
+  );
+  ok(
+    'el archivo equivocado no lleva resumen',
+    !mensajes.find((m) => m.texto.startsWith('El archivo contrato.pdf'))!.texto.includes('Resumen'),
+  );
   ok(
     'avisa el archivo equivocado',
     textos.includes('El archivo contrato.pdf no corresponde a Contrato. Parece ser Ofertas.'),
@@ -659,6 +672,12 @@ async function main() {
     acciones: [{ accion: 'fijar_expediente', nombre: 'Cambiado' }],
   });
   respuesta = await servicio.enviarMensaje(id, '¿Por qué salió rojo el acta?', ejecutor);
+  const historialFinal = JSON.stringify(peticionesChat.at(-1)?.historial);
+  ok(
+    'el historial del agente va sin los resúmenes',
+    historialFinal.includes('Terminé de analizar acta.pdf') &&
+      !historialFinal.includes('Resumen de revisión'),
+  );
   ok(
     'cerrado sigue respondiendo dudas pero ignora acciones',
     respuesta.acciones.length === 0 && respuesta.expediente.nombre === 'Compra de mobiliario',

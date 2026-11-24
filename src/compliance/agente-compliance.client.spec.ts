@@ -85,6 +85,31 @@ describe('AgenteComplianceClient', () => {
     });
   });
 
+  it('bloquea Contratación Directa aunque el agente la dé por disponible', async () => {
+    const modalidad = (valor: string, estado: string) => ({
+      valor,
+      nombre: valor,
+      estado,
+      checklist: [],
+    });
+    http.get.mockResolvedValue({
+      data: {
+        modalidades: [
+          modalidad('CA_ACTO_UNICO_APERTURA_UNICA', 'disponible'),
+          modalidad('CONTRATACION_DIRECTA', 'disponible'),
+          modalidad('CONCURSO_CERRADO', 'sin_cuestionarios'),
+        ],
+        tipos_contratacion: [],
+      },
+    });
+    const { modalidades } = await cliente().obtenerCatalogo();
+    expect(modalidades.map((m) => m.estado)).toEqual([
+      'disponible',
+      'sin_validar',
+      'sin_cuestionarios',
+    ]);
+  });
+
   it('el catálogo se guarda en memoria', async () => {
     const agente = cliente();
     http.get.mockResolvedValueOnce({ data: { modalidades: [], tipos_contratacion: [] } });

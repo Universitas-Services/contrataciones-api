@@ -80,6 +80,14 @@ export function tieneResumen(informeMarkdown: string | null): informeMarkdown is
   return /^\s*#\s*Resumen de revisi[oó]n/i.test(informeMarkdown ?? '');
 }
 
+/**
+ * El mensaje de un análisis sin el resumen que lleva debajo. Así se envía en el historial:
+ * el agente ya recibe el `json_analista`, y repetir los resúmenes alargaría cada respuesta.
+ */
+export function sinResumen(texto: string): string {
+  return texto.replace(/\n\s*#\s*Resumen de revisi[oó]n[\s\S]*$/i, '').trimEnd();
+}
+
 const GRAVEDAD_SEMAFORO: Record<string, number> = { Verde: 0, Amarillo: 1, Rojo: 2 };
 
 /**
@@ -139,7 +147,7 @@ export function textoSaludo(nombreUsuario: string): string {
   return (
     `Hola, ${nombreUsuario}. Soy el Coordinador de Compliance de Contrataciones. ` +
     'Te acompaño a auditar un expediente documento por documento. ' +
-    'Para empezar, ¿cuál es la nomenclatura del expediente?'
+    'Para empezar, ¿cuál es el número del expediente?'
   );
 }
 
@@ -169,6 +177,7 @@ export function textoAnalizado(
   nombreTipo: string,
   jsonAnalista: unknown,
   estatusGlobal: string | null,
+  informeMarkdown: string | null = null,
 ): string {
   const resumen = (jsonAnalista as { resumen?: { evaluados?: number; hallazgos?: number } } | null)
     ?.resumen;
@@ -176,7 +185,8 @@ export function textoAnalizado(
     resumen?.evaluados != null && resumen?.hallazgos != null
       ? ` ${resumen.hallazgos} hallazgo(s) en ${resumen.evaluados} puntos revisados.`
       : '';
-  return `Terminé de analizar ${nombreArchivo} (${nombreTipo}). Semáforo: ${estatusGlobal ?? 'sin dato'}.${cifras}`;
+  const linea = `Terminé de analizar ${nombreArchivo} (${nombreTipo}). Semáforo: ${estatusGlobal ?? 'sin dato'}.${cifras}`;
+  return tieneResumen(informeMarkdown) ? `${linea}\n\n${informeMarkdown.trim()}` : linea;
 }
 
 export function textoTipoNoCoincide(
@@ -238,12 +248,12 @@ export function textoErrorDictamen(): string {
   return 'No pude terminar el dictamen. Puedes pedirlo de nuevo.';
 }
 
-/** Texto que propuso el equipo del agente para modalidades no disponibles. */
-export function textoModalidadNoDisponible(nombreModalidad: string): string {
+/** Aviso para las modalidades no disponibles. */
+export function textoModalidadNoDisponible(nombreModalidad: string, disponibles: string[]): string {
+  const lista = disponibles.join(', ').replace(/, ([^,]*)$/, ' y $1');
   return (
-    'Por ahora la auditoría automática está disponible solo para Concurso Abierto de acto único ' +
-    `con apertura única. La modalidad ${nombreModalidad} estará disponible cuando el equipo legal ` +
-    'termine de validar sus cuestionarios.'
+    (lista ? `Por ahora la auditoría automática está disponible solo para ${lista}. ` : '') +
+    `La modalidad ${nombreModalidad} estará disponible próximamente.`
   );
 }
 

@@ -228,7 +228,13 @@ export class ComplianceColaService {
             tx,
             expediente.id,
             coincide
-              ? textoAnalizado(nombre, nombreTipo(documento.tipoDocumento)!, json, estatus)
+              ? textoAnalizado(
+                  nombre,
+                  nombreTipo(documento.tipoDocumento)!,
+                  json,
+                  estatus,
+                  textoONull(datos.informe_markdown),
+                )
               : textoTipoNoCoincide(
                   nombre,
                   nombreTipo(documento.tipoDocumento)!,

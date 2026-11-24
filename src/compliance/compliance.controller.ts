@@ -50,7 +50,8 @@ export class ComplianceController {
   @Get('expedientes')
   @ApiOperation({
     summary: 'Expedientes del ente, paginados, con progreso, riesgo y estado',
-    description: 'Filtros: search (nomenclatura o nombre), estado y, para roles globales, enteId.',
+    description:
+      'Filtros: search (número de expediente o nombre), estado y, para roles globales, enteId.',
   })
   listar(@Query() query: ListarExpedientesComplianceQuery, @CurrentUser() user: UsuarioActual) {
     return this.compliance.listar(user, query);
@@ -71,7 +72,7 @@ export class ComplianceController {
 
   @Patch('expedientes/:id')
   @Roles(...ESCRITURA)
-  @ApiOperation({ summary: 'Fijar nomenclatura, nombre, modalidad o tipo (botones)' })
+  @ApiOperation({ summary: 'Fijar número de expediente, nombre, modalidad o tipo (botones)' })
   actualizar(
     @Param('id', uuid) id: string,
     @Body() dto: DatosExpedienteComplianceDto,

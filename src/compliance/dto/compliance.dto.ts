@@ -18,7 +18,10 @@ const recortar = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() : value;
 
 export class DatosExpedienteComplianceDto {
-  @ApiPropertyOptional({ example: 'CA-SDEDTEOEL-CA-002-2026' })
+  @ApiPropertyOptional({
+    example: 'CA-SDEDTEOEL-CA-002-2026',
+    description: 'Número del expediente',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -78,7 +81,9 @@ export class ListarExpedientesComplianceQuery {
   @Max(100)
   limit?: number = 10;
 
-  @ApiPropertyOptional({ description: 'Busca en nomenclatura o nombre, sin distinguir mayúsculas' })
+  @ApiPropertyOptional({
+    description: 'Busca en número de expediente o nombre, sin distinguir mayúsculas',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(100)
