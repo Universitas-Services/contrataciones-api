@@ -4,10 +4,11 @@
  */
 
 /**
- * Tipos que admiten varios archivos: una oferta o una notificación por oferente.
+ * Tipos que admiten varios archivos: una oferta, notificación o invitación por empresa.
  * Los demás solo se reemplazan.
  */
 export const TIPOS_MULTIPLES = new Set([
+  'INVITACIONES',
   'OFERTAS',
   'NOTIFICACION_ADJUDICADOS',
   'NOTIFICACION_NO_ADJUDICADOS',

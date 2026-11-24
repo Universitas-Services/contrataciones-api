@@ -85,6 +85,15 @@ describe('AgenteComplianceClient', () => {
     });
   });
 
+  it('el chat recibe solo las modalidades habilitadas', async () => {
+    http.post.mockResolvedValue({ data: { respuesta: 'Hola', acciones: [] } });
+    await cliente().conversar({ mensaje: 'hola' } as never);
+    expect(http.post.mock.calls[0][1]).toEqual({
+      mensaje: 'hola',
+      modalidades_habilitadas: ['CA_ACTO_UNICO_APERTURA_UNICA'],
+    });
+  });
+
   it('bloquea Contratación Directa aunque el agente la dé por disponible', async () => {
     const modalidad = (valor: string, estado: string) => ({
       valor,

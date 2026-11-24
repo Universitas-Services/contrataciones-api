@@ -283,7 +283,7 @@ Tarda de 5 a 15 s; el backend espera hasta 60 s. Muestra «escribiendo…» mien
 
 **Reemplazar o agregar:**
 
-- Tipos con `admiteVarios: true` (hoy `OFERTAS`, `NOTIFICACION_ADJUDICADOS` y `NOTIFICACION_NO_ADJUDICADOS`: una por oferente): muestra dos botones, «Agregar» (sin `reemplazaDocumentoId`) y «Reemplazar» (con él).
+- Tipos con `admiteVarios: true` (hoy `OFERTAS`, `NOTIFICACION_ADJUDICADOS` y `NOTIFICACION_NO_ADJUDICADOS`, una por oferente, e `INVITACIONES`, que no está en el checklist de las modalidades habilitadas): muestra dos botones, «Agregar» (sin `reemplazaDocumentoId`) y «Reemplazar» (con él).
 - Los demás: si ya tienen un documento, solo «Reemplazar», con confirmación. Agregar responde 409.
 - Al reemplazar, el anterior deja de contar para el progreso y el dictamen.
 

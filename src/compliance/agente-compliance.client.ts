@@ -52,6 +52,7 @@ const ESPERA_CHAT_MS = 60 * 1000;
 /**
  * Modalidades que la aplicación ya construyó. El agente puede tener otras disponibles
  * (Contratación Directa): se bloquean aquí hasta que existan en el backend y el frontend.
+ * También se envían al chat, para que no ofrezca las demás.
  */
 const MODALIDADES_HABILITADAS = new Set(['CA_ACTO_UNICO_APERTURA_UNICA']);
 
@@ -181,10 +182,11 @@ export class AgenteComplianceClient {
   async conversar(peticion: PeticionConversar): Promise<RespuestaConversar> {
     this.asegurarConfigurado();
     try {
-      const r = await axios.post<RespuestaConversar>(`${this.url}/api/conversar`, peticion, {
-        headers: this.headers,
-        timeout: ESPERA_CHAT_MS,
-      });
+      const r = await axios.post<RespuestaConversar>(
+        `${this.url}/api/conversar`,
+        { ...peticion, modalidades_habilitadas: [...MODALIDADES_HABILITADAS] },
+        { headers: this.headers, timeout: ESPERA_CHAT_MS },
+      );
       return {
         respuesta: typeof r.data?.respuesta === 'string' ? r.data.respuesta : '',
         acciones: Array.isArray(r.data?.acciones) ? r.data.acciones : [],
