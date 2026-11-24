@@ -50,6 +50,23 @@ const UNA_HORA = 60 * 60 * 1000;
 const ESPERA_CHAT_MS = 60 * 1000;
 
 /**
+ * Modalidades que la aplicación ya construyó. El agente puede tener otras disponibles
+ * (Contratación Directa): se bloquean aquí hasta que existan en el backend y el frontend.
+ */
+const MODALIDADES_HABILITADAS = new Set(['CA_ACTO_UNICO_APERTURA_UNICA']);
+
+function soloHabilitadas(catalogo: CatalogoAgente): CatalogoAgente {
+  return {
+    ...catalogo,
+    modalidades: catalogo.modalidades.map((m) =>
+      m.estado === 'disponible' && !MODALIDADES_HABILITADAS.has(m.valor)
+        ? { ...m, estado: 'sin_validar' }
+        : m,
+    ),
+  };
+}
+
+/**
  * Único punto de contacto con el agente. La clave sale de `COMPLIANCE_AGENT_KEY`
  * y va solo en el header: nunca se escribe en logs.
  */
@@ -93,8 +110,9 @@ export class AgenteComplianceClient {
         headers: this.headers,
         timeout: 30000,
       });
-      this.catalogo = { datos: r.data, leidoAt: Date.now() };
-      return r.data;
+      const datos = soloHabilitadas(r.data);
+      this.catalogo = { datos, leidoAt: Date.now() };
+      return datos;
     } catch (error) {
       // Si el agente no responde, sirve el último catálogo conocido.
       if (this.catalogo) return this.catalogo.datos;

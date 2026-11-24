@@ -30,6 +30,7 @@ import {
   progreso,
   riesgo,
   siguienteDocumento,
+  sinResumen,
   tieneResumen,
   textoSiguiente,
   textoAnalizando,
@@ -116,7 +117,7 @@ export class ComplianceService {
     this.assertNoCerrado(expediente);
     if (expediente.estado !== 'ACTIVA') {
       throw new BadRequestException(
-        'Primero registra la nomenclatura, la modalidad y el tipo de contratación.',
+        'Primero registra el número del expediente, la modalidad y el tipo de contratación.',
       );
     }
   }
@@ -366,7 +367,13 @@ export class ComplianceService {
       if (!modalidad) {
         avisos.push({ tipo: 'INVALIDO', texto: `La modalidad ${dto.modalidad} no existe.` });
       } else if (modalidad.estado !== 'disponible') {
-        avisos.push({ tipo: 'NO_DISPONIBLE', texto: textoModalidadNoDisponible(modalidad.nombre) });
+        avisos.push({
+          tipo: 'NO_DISPONIBLE',
+          texto: textoModalidadNoDisponible(
+            modalidad.nombre,
+            catalogo.modalidades.filter((m) => m.estado === 'disponible').map((m) => m.nombre),
+          ),
+        });
       } else {
         datos.modalidad = modalidad.valor;
       }
@@ -470,7 +477,11 @@ export class ComplianceService {
       },
       historial: historial
         .reverse()
-        .map((m) => ({ rol: m.rol === 'USUARIO' ? 'usuario' : 'agente', texto: m.texto })),
+        .map((m) =>
+          m.rol === 'USUARIO'
+            ? { rol: 'usuario', texto: m.texto }
+            : { rol: 'agente', texto: sinResumen(m.texto) },
+        ),
       mensaje,
     });
 

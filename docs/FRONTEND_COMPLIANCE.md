@@ -30,11 +30,11 @@ El backend habla con el agente; el frontend nunca lo llama ni ve su clave.
 
 | Estado         | Significado                                                             |
 | -------------- | ----------------------------------------------------------------------- |
-| `CONFIGURANDO` | Faltan nomenclatura, modalidad o tipo de contratación                   |
+| `CONFIGURANDO` | Faltan número del expediente, modalidad o tipo de contratación          |
 | `ACTIVA`       | Ya se pueden subir documentos y pedir dictámenes                        |
 | `CERRADA`      | Tiene un dictamen FINAL. No se reabre. El chat sigue respondiendo dudas |
 
-Pasa a `ACTIVA` solo, cuando están nomenclatura, modalidad y tipo (el nombre es opcional). Pasa a `CERRADA` solo, cuando termina un dictamen `FINAL`.
+Pasa a `ACTIVA` solo, cuando están número del expediente, modalidad y tipo (el nombre es opcional). Pasa a `CERRADA` solo, cuando termina un dictamen `FINAL`.
 
 **Documento:** `PENDIENTE` → `PROCESANDO` → `ANALIZADO`, o `RECHAZADO` (el archivo no sirve) o `ERROR` (se puede reintentar). Mientras esté en `PENDIENTE` o `PROCESANDO`, muestra «Analizando…».
 
@@ -45,8 +45,8 @@ Pasa a `ACTIVA` solo, cuando están nomenclatura, modalidad y tipo (el nombre es
 ## 3. Flujo de la pantalla
 
 1. **Lista:** `GET /expedientes`. Botón «Nuevo» → `POST /expedientes`.
-2. **Abrir:** `GET /expedientes/:id` y `GET /expedientes/:id/mensajes`. El primer mensaje ya es el saludo del Coordinador: pide la nomenclatura del expediente.
-3. **Registrar:** el usuario conversa (`POST /expedientes/:id/mensajes`). Mientras falten modalidad o tipo, puedes mostrar botones con `GET /catalogo` que llamen a `PATCH /expedientes/:id`.
+2. **Abrir:** `GET /expedientes/:id` y `GET /expedientes/:id/mensajes`. El primer mensaje ya es el saludo del Coordinador: pide el número del expediente. **En pantalla di siempre «número del expediente», nunca «nomenclatura»** (títulos, buscador, botones); el campo del API sigue siendo `nomenclatura`.
+3. **Registrar:** el usuario conversa (`POST /expedientes/:id/mensajes`). Mientras falten modalidad o tipo, muestra **siempre** los botones de `GET /catalogo` (solo modalidades `disponible`), que llaman a `PATCH /expedientes/:id`.
 4. **Subir:** con el expediente en `ACTIVA`, muestra el botón para `siguienteDocumento`. `POST /expedientes/:id/documentos` responde al instante.
 5. **Esperar el análisis:** consulta `GET /documentos/:documentoId` cada 5 s hasta que salga de `PENDIENTE`/`PROCESANDO`. Luego recarga mensajes y detalle: el resultado llega como mensaje del Coordinador.
 6. **Dictamen:** botón o chat. `POST /expedientes/:id/dictamenes` y consulta `GET /dictamenes/:dictamenId` cada 5 s hasta `LISTO` o `ERROR`.
@@ -57,21 +57,22 @@ Un análisis normal tarda cerca de 1 minuto; un PDF escaneado, hasta 9. El dicta
 
 ## 4. Endpoints
 
-| Método  | Ruta                                        | Rol de escritura | Para qué                                         |
-| ------- | ------------------------------------------- | :--------------: | ------------------------------------------------ |
-| `GET`   | `/catalogo`                                 |                  | Modalidades, tipos y checklist                   |
-| `GET`   | `/expedientes?page=&limit=&search=&estado=` |                  | Lista paginada con progreso y riesgo             |
-| `POST`  | `/expedientes`                              |        ✔         | Crear                                            |
-| `GET`   | `/expedientes/:id`                          |                  | Detalle completo                                 |
-| `PATCH` | `/expedientes/:id`                          |        ✔         | Botones de nomenclatura, nombre, modalidad, tipo |
-| `GET`   | `/expedientes/:id/mensajes`                 |                  | Historial del chat                               |
-| `POST`  | `/expedientes/:id/mensajes`                 |        ✔         | Enviar un mensaje                                |
-| `POST`  | `/expedientes/:id/documentos`               |        ✔         | Subir un documento (multipart)                   |
-| `GET`   | `/documentos/:documentoId`                  |                  | Estado de un documento                           |
-| `POST`  | `/documentos/:documentoId/reintentar`       |        ✔         | Reanalizar un documento en `ERROR`               |
-| `POST`  | `/expedientes/:id/dictamenes`               |        ✔         | Pedir dictamen                                   |
-| `GET`   | `/dictamenes/:dictamenId`                   |                  | Dictamen con su Markdown                         |
-| `GET`   | `/dictamenes/:dictamenId/pdf`               |                  | Descargar el PDF                                 |
+| Método  | Ruta                                        | Rol de escritura | Para qué                                   |
+| ------- | ------------------------------------------- | :--------------: | ------------------------------------------ |
+| `GET`   | `/catalogo`                                 |                  | Modalidades, tipos y checklist             |
+| `GET`   | `/expedientes?page=&limit=&search=&estado=` |                  | Lista paginada con progreso y riesgo       |
+| `POST`  | `/expedientes`                              |        ✔         | Crear                                      |
+| `GET`   | `/expedientes/:id`                          |                  | Detalle completo                           |
+| `PATCH` | `/expedientes/:id`                          |        ✔         | Botones de número, nombre, modalidad, tipo |
+| `GET`   | `/expedientes/:id/mensajes`                 |                  | Historial del chat                         |
+| `POST`  | `/expedientes/:id/mensajes`                 |        ✔         | Enviar un mensaje                          |
+| `POST`  | `/expedientes/:id/documentos`               |        ✔         | Subir un documento (multipart)             |
+| `GET`   | `/documentos/:documentoId`                  |                  | Estado de un documento                     |
+| `POST`  | `/documentos/:documentoId/reintentar`       |        ✔         | Reanalizar un documento en `ERROR`         |
+| `GET`   | `/documentos/:documentoId/resumen/pdf`      |                  | Descargar el resumen del análisis          |
+| `POST`  | `/expedientes/:id/dictamenes`               |        ✔         | Pedir dictamen                             |
+| `GET`   | `/dictamenes/:dictamenId`                   |                  | Dictamen con su Markdown                   |
+| `GET`   | `/dictamenes/:dictamenId/pdf`               |                  | Descargar el PDF                           |
 
 ### 4.1 `GET /catalogo`
 
@@ -89,19 +90,19 @@ Un análisis normal tarda cerca de 1 minuto; un PDF escaneado, hasta 9. El dicta
 }
 ```
 
-**Ofrece solo las modalidades con `estado: "disponible"`.** Hoy es una: Concurso Abierto Acto Único Apertura Única. Las demás responden 400.
+**Ofrece solo las modalidades con `estado: "disponible"`.** Hoy es una: Concurso Abierto Acto Único Apertura Única. **Contratación Directa va bloqueada** (botón deshabilitado): aún no está construida en la aplicación, aunque el agente ya la tenga; el backend la devuelve como `sin_validar`. Las demás responden 400.
 
 ### 4.2 `GET /expedientes`
 
 **Paginado.** La respuesta es `{ metadata, data }`, como los demás listados del sistema.
 
-| Parámetro | Uso                                                             |
-| --------- | --------------------------------------------------------------- |
-| `page`    | Página, desde 1. Por defecto 1                                  |
-| `limit`   | Registros por página. Por defecto 10, máximo 100                |
-| `search`  | Busca en nomenclatura o nombre, sin distinguir mayúsculas       |
-| `estado`  | `CONFIGURANDO`, `ACTIVA` o `CERRADA`                            |
-| `enteId`  | Solo para `UNIVERSITAS` y `SUPERVISOR`, que ven todos los entes |
+| Parámetro | Uso                                                               |
+| --------- | ----------------------------------------------------------------- |
+| `page`    | Página, desde 1. Por defecto 1                                    |
+| `limit`   | Registros por página. Por defecto 10, máximo 100                  |
+| `search`  | Busca en número de expediente o nombre, sin distinguir mayúsculas |
+| `estado`  | `CONFIGURANDO`, `ACTIVA` o `CERRADA`                              |
+| `enteId`  | Solo para `UNIVERSITAS` y `SUPERVISOR`, que ven todos los entes   |
 
 Los demás roles ven solo su ente. Orden: los que tuvieron actividad más reciente primero.
 
@@ -206,7 +207,7 @@ Responde el mismo objeto que `GET /expedientes/:id`.
 - **`siguienteDocumento`:** el tipo para el botón de subir: el primero del checklist sin cubrir. `null` si no está `ACTIVA` o ya está todo. El Coordinador guía en ese orden: al activarse el expediente y tras cada análisis correcto, el backend agrega al chat «Ahora sube: {tipo}.» Envía siempre el `tipoDocumento`; subir otro distinto no da error.
 - **`tieneResumen`** (en cada documento): si es `true`, muestra «Descargar resumen» → `GET /compliance/documentos/:documentoId/resumen/pdf` (PDF). Si es `false`, 409: los análisis anteriores al 12/11 no lo traen.
 - **`checklist[].documentos`:** solo los vigentes. Los reemplazados van en `documentosReemplazados`.
-- **No muestres** al usuario el informe técnico de cada documento: el backend no lo envía. Muestra el semáforo, el chat, el resumen en PDF y el dictamen.
+- **Resumen en el chat:** el mensaje «Terminé de analizar…» trae debajo el resumen completo en Markdown, dentro del mismo `texto`. Muéstralo entero o plegado con «Ver resumen completo» (empieza en `# Resumen de revisión`), además del botón de descarga. Los análisis anteriores conservan el mensaje de una línea. `json_analista` no se muestra: el backend no lo envía.
 
 ### 4.5 `PATCH /expedientes/:id`
 

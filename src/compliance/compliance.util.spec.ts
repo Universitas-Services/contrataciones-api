@@ -6,6 +6,8 @@ import {
   textoAnalizado,
   textoSaludo,
   textoSiguiente,
+  textoModalidadNoDisponible,
+  sinResumen,
   tieneResumen,
   textoDictamenListo,
   textoTipoNoCoincide,
@@ -62,11 +64,11 @@ describe('progreso y siguiente documento', () => {
     expect(textoSiguiente(null, [])).toBeNull();
   });
 
-  it('el saludo pide la nomenclatura', () => {
+  it('el saludo pide el número del expediente', () => {
     expect(textoSaludo('Ana Pérez')).toBe(
       'Hola, Ana Pérez. Soy el Coordinador de Compliance de Contrataciones. ' +
         'Te acompaño a auditar un expediente documento por documento. ' +
-        'Para empezar, ¿cuál es la nomenclatura del expediente?',
+        'Para empezar, ¿cuál es el número del expediente?',
     );
   });
 
@@ -130,6 +132,23 @@ describe('textos del chat', () => {
     expect(texto).toBe(
       'Terminé de analizar acta.pdf (Acta de Inicio). Semáforo: Rojo. 10 hallazgo(s) en 26 puntos revisados.',
     );
+  });
+
+  it('agrega el resumen completo debajo, y el historial del agente no lo lleva', () => {
+    const resumen = '# Resumen de revisión: Acta\n\n## Hallazgos\n- Uno';
+    const linea = textoAnalizado('a.pdf', 'Acta', {}, 'Rojo');
+    const texto = textoAnalizado('a.pdf', 'Acta', {}, 'Rojo', resumen);
+    expect(texto).toBe(`${linea}\n\n${resumen}`);
+    expect(sinResumen(texto)).toBe(linea);
+    expect(sinResumen('Ahora sube: Acta.')).toBe('Ahora sube: Acta.');
+    expect(textoAnalizado('a.pdf', 'Acta', {}, 'Rojo', 'He finalizado… P-01')).toBe(linea);
+  });
+
+  it('nombra las modalidades disponibles del catálogo', () => {
+    expect(textoModalidadNoDisponible('Consulta', ['Abierto', 'Directa'])).toContain(
+      'solo para Abierto y Directa. La modalidad Consulta',
+    );
+    expect(textoModalidadNoDisponible('Consulta', ['Abierto'])).toContain('solo para Abierto. ');
   });
 
   it('avisa cuando el archivo es de otro tipo', () => {

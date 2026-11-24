@@ -271,10 +271,10 @@ Cada dato marca solo los documentos que lo imprimen, y solo si cambió:
 | Qué                                   | Resultado                                                                                                  |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `tsc --noEmit`, ESLint y `nest build` | Sin errores                                                                                                |
-| Pruebas unitarias                     | **270**, todas pasan (81 nuevas)                                                                           |
+| Pruebas unitarias                     | **273**, todas pasan (84 nuevas)                                                                           |
 | Ciclo completo de Fase 4              | 89 comprobaciones correctas                                                                                |
 | API en local                          | Usuario con `#` y `.`, actores con EJECUTOR, cronograma con UNIVERSITAS, `paginaWeb` y orden de normativas |
 | Pliego generado en local              | Dos escenarios opuestos revisados: normativas, recaudos, moneda, idioma, página web y anexo                |
 | Anexo III                             | Sin modelos y con algunos: 0 páginas vacías (antes 20 y 14)                                                |
 | Modelo de Contrato en local           | El GET devuelve la cláusula con el objeto del expediente y lo guardado no cambia                           |
-| Ciclos completos                      | Fase 4: 89 comprobaciones; compliance: 72                                                                  |
+| Ciclos completos                      | Fase 4: 89 comprobaciones; compliance: 76                                                                  |
