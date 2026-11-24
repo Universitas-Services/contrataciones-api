@@ -440,3 +440,44 @@ describe('Logo del manual', () => {
     expect(logoComoPng('https://otro.com/logo.png')).toBe('https://otro.com/logo.png');
   });
 });
+
+describe('Estado de los documentos', () => {
+  const crear = (docs: object[]) => {
+    const updateMany = jest.fn();
+    const prisma = {
+      documentoGenerado: { findMany: jest.fn().mockResolvedValue(docs), updateMany },
+    };
+    const servicio = new GeneradorDocumentosService(prisma as never, {} as never, {} as never);
+    return { servicio, updateMany };
+  };
+
+  it('incluye Lista de Cotejo y Notificaciones; una desactualizada basta', async () => {
+    const doc = (tipoDocumento: string, estaDesactualizado: boolean) => ({
+      tipoDocumento,
+      estaDesactualizado,
+      urlArchivo: 'u',
+    });
+    const { servicio } = crear([
+      doc('LISTA_COTEJO', false),
+      doc('NOTIFICACION_NO_ADJUDICADO', true),
+      doc('NOTIFICACION_NO_ADJUDICADO', false),
+    ]);
+    const estado = await servicio.getStatusPorExpediente('e');
+    const de = (tipo: string) => estado.find((e) => e.tipo === tipo)!;
+    expect(de('LISTA_COTEJO')).toMatchObject({ generado: true, estaDesactualizado: false });
+    expect(de('NOTIFICACION_NO_ADJUDICADO')).toMatchObject({ estaDesactualizado: true });
+    expect(de('NOTIFICACION_ADJUDICADO')).toMatchObject({ generado: false });
+  });
+
+  it('al regenerar retira la notificación de otro tipo que tenía el oferente', async () => {
+    const { servicio, updateMany } = crear([]);
+    jest
+      .spyOn(servicio, 'getDatosNotificaciones')
+      .mockResolvedValue([
+        { tipoDocumento: 'NOTIFICACION_ADJUDICADO', evaluacionId: 'ev', tokens: {} },
+      ] as never);
+    jest.spyOn(servicio, 'generarDocumento').mockResolvedValue({ id: 'nuevo' } as never);
+    await servicio.generarNotificacionesFase4('e', 'u');
+    expect(updateMany.mock.calls[0][0].where.id).toEqual({ notIn: ['nuevo'] });
+  });
+});

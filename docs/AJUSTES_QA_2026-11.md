@@ -219,6 +219,8 @@ Cada dato marca solo los documentos que lo imprimen, y solo si cambió:
 | Datos básicos o actores del expediente   | Todos (salen en el membrete o en las firmas)                    |
 
 - Guardar el Modelo de Contrato sin editar ya no desactualiza el pliego (las píldoras resueltas contaban como cambio).
+- **`GET /generador-documentos/status-expediente/:id` ahora incluye** `LISTA_COTEJO`, `NOTIFICACION_ADJUDICADO` y `NOTIFICACION_NO_ADJUDICADO` (antes faltaban). Con ellos decide si el icono es «Generar» o «Regenerar»: hoy la Lista de Cotejo siempre muestra «Generar». Las notificaciones traen una por oferente en `documentos`.
+- `GET /generador-documentos/expedientes/:id/estado-notificaciones` respondía siempre `generadas: false`. Corregido, y agrega `estaDesactualizado`.
 - `regenerar` acepta Lista de Cotejo y Notificaciones. El orden es Informe → Acta → Notificaciones.
 - «Regenerar informe» debe llamar al endpoint directamente, sin pasar por la edición.
 
@@ -269,7 +271,7 @@ Cada dato marca solo los documentos que lo imprimen, y solo si cambió:
 | Qué                                   | Resultado                                                                                                  |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `tsc --noEmit`, ESLint y `nest build` | Sin errores                                                                                                |
-| Pruebas unitarias                     | **268**, todas pasan (79 nuevas)                                                                           |
+| Pruebas unitarias                     | **270**, todas pasan (81 nuevas)                                                                           |
 | Ciclo completo de Fase 4              | 89 comprobaciones correctas                                                                                |
 | API en local                          | Usuario con `#` y `.`, actores con EJECUTOR, cronograma con UNIVERSITAS, `paginaWeb` y orden de normativas |
 | Pliego generado en local              | Dos escenarios opuestos revisados: normativas, recaudos, moneda, idioma, página web y anexo                |

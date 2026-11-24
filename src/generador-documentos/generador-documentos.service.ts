@@ -1124,14 +1124,18 @@ export class GeneradorDocumentosService {
       { tipo: 'REGISTRO_ADQUIRENTES', label: 'Registro de Adquirentes del Pliego' },
       { tipo: 'ACTA_RECEPCION', label: 'Acta de Recepción de Sobres' },
       { tipo: 'ACTA_APERTURA', label: 'Acta de Apertura de Sobres' },
+      { tipo: 'LISTA_COTEJO', label: 'Lista de Cotejo' },
       { tipo: 'INFORME_RECOMENDACION', label: 'Informe de Recomendación' },
       { tipo: 'ACTA_ADJUDICACION', label: 'Acta de Adjudicación' },
+      { tipo: 'NOTIFICACION_ADJUDICADO', label: 'Notificación a Adjudicado' },
+      { tipo: 'NOTIFICACION_NO_ADJUDICADO', label: 'Notificación a No Adjudicado' },
       { tipo: 'CONTRATO', label: 'Contrato Formalizado' },
     ];
 
     // Buscamos los documentos ya generados para este expediente
     const documentosGenerados = await this.prisma.documentoGenerado.findMany({
       where: { expedienteId, deletedAt: null },
+      orderBy: { createdAt: 'asc' },
     });
 
     // Mapeamos los tipos soportados con la info del documento si existe
@@ -1149,14 +1153,12 @@ export class GeneradorDocumentosService {
         evaluacionId: doc.evaluacionId,
       }));
 
-      // Tomamos el último para compatibilidad con el frontend actual
-      const lastDoc = docs.length > 0 ? docs[docs.length - 1] : null;
-
       return {
         tipo: item.tipo,
         label: item.label,
         generado: docs.length > 0,
-        estaDesactualizado: lastDoc ? !!lastDoc.estaDesactualizado : false,
+        // Las notificaciones son una por oferente: basta con que una lo esté.
+        estaDesactualizado: docs.some((doc) => doc.estaDesactualizado),
         documento: documentosInfo.length > 0 ? documentosInfo[documentosInfo.length - 1] : null,
         documentos: documentosInfo, // Enviamos el array completo para que el front pueda listarlos todos
       };
@@ -2102,6 +2104,17 @@ export class GeneradorDocumentosService {
         ),
       );
     }
+    // Si el dictamen cambió, la notificación anterior del oferente era de otro tipo (o ya no
+    // le corresponde): sin esto seguiría vigente y desactualizada para siempre.
+    await this.prisma.documentoGenerado.updateMany({
+      where: {
+        expedienteId,
+        tipoDocumento: { in: ['NOTIFICACION_ADJUDICADO', 'NOTIFICACION_NO_ADJUDICADO'] },
+        deletedAt: null,
+        id: { notIn: documentosGenerados.map((d) => d.id) },
+      },
+      data: { deletedAt: new Date() },
+    });
     return documentosGenerados;
   }
 }
