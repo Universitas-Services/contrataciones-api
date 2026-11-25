@@ -125,6 +125,15 @@ El API ya dice Solvencia = Activo Circulante / Pasivo Circulante y Rotación = V
 
 Comprobar que la pantalla de evaluación lea `titulo`, `pregunta` y `aspectoHint` del API y no los de `src/lib/constants/calificacionFinancieraEvaluacion.ts`.
 
+### 1.7 Valor unitario del UCAU (segundo despliegue, migración `20261125_valor_ucau`)
+
+`valorUcauBase` es el **monto** convertido a UCAU. El dato nuevo `valorUcau` es lo que vale **1 UCAU en Bs.** (`valor` de `GET /api/v1/economia/ucauu` del API global).
+
+- Opcional, número positivo. Se acepta al crear (`POST /expedientes/borrador` y los de concurso cerrado, consulta de precios, contratación directa y modalidad excluida) y en `PATCH /expedientes/:id`. Antes de este despliegue, enviarlo da 400.
+- Enviarlo al crear, en `CrearExpedienteWizard.tsx` (ya está en el dictamen que arma `CalculoModalidadStep.tsx`), y al recalcular la tasa, en `MontoEstimadoCard.tsx`.
+- Si se editan los montos sin `valorUcau`, el guardado se descarta y se calcula con los montos.
+- Actividades Previas ya imprime el valor unitario, también en expedientes anteriores al regenerarla.
+
 ---
 
 ## 2. Lo que cambió sin trabajo en el frontend

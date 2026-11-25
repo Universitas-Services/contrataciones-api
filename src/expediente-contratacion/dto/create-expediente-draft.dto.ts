@@ -1,5 +1,5 @@
 import { IsEnum, IsNumber, IsPositive, IsString, IsOptional, IsDateString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TipoContratacion, ModalidadSeleccion } from '@prisma/client';
 
 export class CreateExpedienteDraftDto {
@@ -31,6 +31,12 @@ export class CreateExpedienteDraftDto {
   @IsNumber()
   @IsPositive()
   valorUcauBase: number;
+
+  @ApiPropertyOptional({ description: 'Lo que vale 1 UCAU en Bs.', example: 40 })
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  valorUcau?: number;
 
   @ApiProperty({
     enum: ModalidadSeleccion,

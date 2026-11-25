@@ -46,6 +46,12 @@ export class UpdateExpedienteGeneralDto {
   @IsOptional()
   valorUcauBase?: number;
 
+  @ApiPropertyOptional({ description: 'Lo que vale 1 UCAU en Bs.', example: 40 })
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  valorUcau?: number;
+
   @ApiPropertyOptional({
     enum: ModalidadSeleccion,
     description: 'Modalidad sugerida confirmada por el usuario',

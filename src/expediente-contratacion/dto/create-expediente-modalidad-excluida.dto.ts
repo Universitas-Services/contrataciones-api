@@ -1,5 +1,5 @@
 import { IsEnum, IsNumber, IsPositive, IsString, IsOptional, IsDateString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TipoContratacion } from '@prisma/client';
 
 export class CreateExpedienteModalidadExcluidaDto {
@@ -29,6 +29,12 @@ export class CreateExpedienteModalidadExcluidaDto {
   @IsNumber()
   @IsPositive()
   valorUcauBase: number;
+
+  @ApiPropertyOptional({ description: 'Lo que vale 1 UCAU en Bs.', example: 40 })
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  valorUcau?: number;
 
   @ApiProperty({ description: 'Tasa referencial del BCV', required: false })
   @IsOptional()
