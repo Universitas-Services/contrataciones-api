@@ -9,6 +9,7 @@ import { PrismaService } from '../database/prisma.service';
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
 import { alcanceDe, partidasDe } from './alcance-oferente.util';
 import { GuardarContratoDto } from './dto/contrato.dto';
+import { prelacionEfectiva } from '../evaluacion-fase3/gestion-adjudicacion/prelacion.util';
 import { compararPrelacion } from './prelacion-fase4.util';
 import { type CondicionesBloques, expandirBloques } from './bloques-contrato';
 import { fechaLarga, resolverTokens, unirPartidas } from './tokens-contrato.resolver';
@@ -148,6 +149,7 @@ export class FormalizacionFase4Service {
           rif: e.rifProveedorEvaluado,
           representanteLegal: e.nombreRepLegalEvaluado ?? null,
           posicionPrelacion: e.posicionPrelacion,
+          posicionPrelacionAdjudicacion: e.posicionPrelacionAdjudicacion,
           puntuacionFinal: num(e.totalEvaluacion),
           montoOfertaBs: num(e.oferta.montoOfertaBs),
           estatus,
@@ -168,7 +170,15 @@ export class FormalizacionFase4Service {
             : null,
         };
       })
-      .sort(compararPrelacion);
+      .sort(compararPrelacion)
+      // Se ordena por la evaluación; a la vista, el adjudicado lleva la opción de la Fase 3.
+      .map(({ posicionPrelacionAdjudicacion, ...o }) => ({
+        ...o,
+        posicionPrelacion:
+          caracter === 'PARCIAL'
+            ? prelacionEfectiva(o.posicionPrelacion, posicionPrelacionAdjudicacion)
+            : o.posicionPrelacion,
+      }));
 
     const faseHabilitada = !!caracter && calificados.some((e) => e.dictamenAdjudicacion);
     const hayAdjudicados = oferentes.some((o) => o.estatus === 'ADJUDICADO');

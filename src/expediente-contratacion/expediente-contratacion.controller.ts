@@ -150,9 +150,9 @@ export class ExpedienteContratacionController {
   updateCronograma(
     @Param('id') id: string,
     @Body() dto: UpdateCronogramaExpedienteDto,
-    @CurrentUser() user: { id: string; enteId: string },
+    @CurrentUser() user: { id: string; enteId: string; rol: RolUsuario },
   ) {
-    return this.expedienteService.updateCronograma(id, dto, user.id, user.enteId);
+    return this.expedienteService.updateCronograma(id, dto, user.id, user.enteId, user.rol);
   }
 
   // =====================================================================

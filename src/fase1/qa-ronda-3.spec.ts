@@ -359,6 +359,7 @@ describe('Revertir la declaratoria de desierto', () => {
       expedienteContratacion: { findFirst: jest.fn().mockResolvedValue(expediente), update },
       evaluacionResultados: { count: jest.fn().mockResolvedValue(evaluaciones) },
       cronogramaExpediente: { count: jest.fn().mockResolvedValue(cronogramas) },
+      informeRecomendacion: { count: jest.fn().mockResolvedValue(0) },
       documentoGenerado: { updateMany: jest.fn() },
       pliegoGenerado: { updateMany: jest.fn() },
     };

@@ -530,7 +530,6 @@ export class GeneradorDocumentosService {
     jsonData: any,
     evaluacionId?: string,
   ) {
-    // 1. Eliminar documento anterior si existe
     const docAnterior = await this.prisma.documentoGenerado.findFirst({
       where: {
         expedienteId,
@@ -540,20 +539,7 @@ export class GeneradorDocumentosService {
       },
     });
 
-    if (docAnterior) {
-      try {
-        const publicId = this.extractCloudinaryPublicId(docAnterior.urlArchivo);
-        if (publicId) await this.storage.deleteFile(publicId);
-      } catch {
-        console.warn('⚠️ No se pudo eliminar doc anterior de Cloudinary');
-      }
-
-      await this.prisma.documentoGenerado.delete({
-        where: { id: docAnterior.id },
-      });
-    }
-
-    // 2 a 4. Plantilla, render y subida
+    // Primero se genera y se sube: si falla, el documento anterior se conserva.
     const { fileUrl, fileName } = await this.renderizarYSubir(
       expedienteId,
       tipoDocumento,
@@ -561,17 +547,28 @@ export class GeneradorDocumentosService {
       jsonData,
     );
 
-    // 5. Guardar registro en Prisma
-    const newDoc = await this.prisma.documentoGenerado.create({
-      data: {
-        expedienteId,
-        tipoDocumento,
-        evaluacionId: evaluacionId || null,
-        urlArchivo: fileUrl,
-        versionDocumento: docAnterior ? docAnterior.versionDocumento + 1 : 1,
-        createdBy: userId,
-      },
+    const newDoc = await this.prisma.$transaction(async (tx) => {
+      if (docAnterior) await tx.documentoGenerado.deleteMany({ where: { id: docAnterior.id } });
+      return tx.documentoGenerado.create({
+        data: {
+          expedienteId,
+          tipoDocumento,
+          evaluacionId: evaluacionId || null,
+          urlArchivo: fileUrl,
+          versionDocumento: docAnterior ? docAnterior.versionDocumento + 1 : 1,
+          createdBy: userId,
+        },
+      });
     });
+
+    if (docAnterior) {
+      try {
+        const publicId = this.extractCloudinaryPublicId(docAnterior.urlArchivo);
+        if (publicId) await this.storage.deleteFile(publicId);
+      } catch {
+        console.warn('⚠️ No se pudo eliminar doc anterior de Cloudinary');
+      }
+    }
 
     return {
       id: newDoc.id,

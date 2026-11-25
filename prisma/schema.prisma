@@ -298,9 +298,9 @@ model Proveedor {
   datosRegistroMercantil             String?
   fechaUltimaAprobacion              DateTime?
   islrProveedor                      Boolean?             @default(false) @map("islr_proveedor")
-  cedulaNaturalProveedor             Int?                 @map("cedula_natural_proveedor")
+  cedulaNaturalProveedor             String?              @map("cedula_natural_proveedor") @db.VarChar(20)
   nombreAutoridadProveedor           String?              @map("nombre_autoridad_proveedor")
-  cedulaAutoridadProveedor           Int?                 @map("cedula_autoridad_proveedor")
+  cedulaAutoridadProveedor           String?              @map("cedula_autoridad_proveedor") @db.VarChar(20)
   datosDesignacionAutoridadProveedor String?              @map("datos_designacion_autoridad_proveedor")
   documentos                         DocumentoProveedor[]
   ofertas                            OfertaPresentada[]

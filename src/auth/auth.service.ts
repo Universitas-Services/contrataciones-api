@@ -10,6 +10,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangeUserPasswordDto } from './dto/change-user-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ALCANCE_SUBIDA, DURACION_TOKEN_SUBIDA_SEGUNDOS } from './token-subida';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,23 @@ export class AuthService {
     private emailService: EmailService,
     private configService: ConfigService,
   ) {}
+
+  /** Token corto que solo aceptan los endpoints de subida de archivos. */
+  tokenSubida(user: { id: string; email: string; rol: string; enteId?: string | null }) {
+    return {
+      token: this.jwtService.sign(
+        {
+          sub: user.id,
+          email: user.email,
+          rol: user.rol,
+          enteId: user.enteId,
+          alcance: ALCANCE_SUBIDA,
+        },
+        { expiresIn: DURACION_TOKEN_SUBIDA_SEGUNDOS },
+      ),
+      expiraEnSegundos: DURACION_TOKEN_SUBIDA_SEGUNDOS,
+    };
+  }
 
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
