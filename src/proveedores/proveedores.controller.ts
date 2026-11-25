@@ -126,9 +126,9 @@ export class ProveedoresController {
           example: 'MEDIA',
         },
         islrProveedor: { type: 'boolean', example: true },
-        cedulaNaturalProveedor: { type: 'integer', example: 12345678 },
+        cedulaNaturalProveedor: { type: 'string', example: 'V-12345678' },
         nombreAutoridadProveedor: { type: 'string', example: 'José Ramírez González Pérez' },
-        cedulaAutoridadProveedor: { type: 'integer', example: 87654321 },
+        cedulaAutoridadProveedor: { type: 'string', example: 'V-87654321' },
         datosDesignacionAutoridadProveedor: {
           type: 'string',
           example: 'Resolución N° 000/00 de fecha 00-00-0000',

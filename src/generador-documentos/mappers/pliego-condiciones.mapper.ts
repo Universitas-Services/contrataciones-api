@@ -4,11 +4,17 @@ import { renderizarPildoras } from '../../formalizacion-fase4/pildoras.util';
 import { resolverTokensFase1 } from '../../formalizacion-fase4/tokens-contrato.resolver';
 import { ordinalClausula } from '../../formalizacion-fase4/documentos-fase4.mapper';
 
-function stripHtml(html: string | null | undefined): string {
+export function stripHtml(html: string | null | undefined): string {
   if (!html) return '___';
   return (
     html
       .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&(?:#0?39|apos);/gi, "'")
+      .replace(/&amp;/gi, '&')
       .replace(/\s+/g, ' ')
       .trim() || '___'
   );

@@ -9,9 +9,11 @@ import {
   Min,
   IsNumber,
   IsDateString,
+  Matches,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
+import { FORMATO_CEDULA, normalizarCedula } from '../cedula-proveedor.util';
 
 export class CreateProveedorDto {
   @ApiProperty({
@@ -236,11 +238,14 @@ export class CreateProveedorDto {
   @IsBoolean()
   islrProveedor?: boolean;
 
-  @ApiPropertyOptional({ description: 'Cédula del Proveedor (Persona Natural)', example: 12345678 })
+  @ApiPropertyOptional({
+    description: 'Cédula del Proveedor (Persona Natural)',
+    example: 'V-12345678',
+  })
   @IsOptional()
-  @Transform(({ value }: { value: string }) => (value ? parseInt(value, 10) : undefined))
-  @IsInt()
-  cedulaNaturalProveedor?: number;
+  @Transform(({ value }: { value: unknown }) => normalizarCedula(value))
+  @Matches(FORMATO_CEDULA, { message: 'La cédula debe ser V-12345678, E-12345678 o solo números.' })
+  cedulaNaturalProveedor?: string;
 
   @ApiPropertyOptional({
     description: 'Nombre de la Máxima Autoridad del Órgano o Ente',
@@ -250,11 +255,11 @@ export class CreateProveedorDto {
   @IsString()
   nombreAutoridadProveedor?: string;
 
-  @ApiPropertyOptional({ description: 'Cédula de la Máxima Autoridad', example: 87654321 })
+  @ApiPropertyOptional({ description: 'Cédula de la Máxima Autoridad', example: 'V-87654321' })
   @IsOptional()
-  @Transform(({ value }: { value: string }) => (value ? parseInt(value, 10) : undefined))
-  @IsInt()
-  cedulaAutoridadProveedor?: number;
+  @Transform(({ value }: { value: unknown }) => normalizarCedula(value))
+  @Matches(FORMATO_CEDULA, { message: 'La cédula debe ser V-12345678, E-12345678 o solo números.' })
+  cedulaAutoridadProveedor?: string;
 
   @ApiPropertyOptional({
     description: 'Datos de la designación de la Máxima Autoridad',

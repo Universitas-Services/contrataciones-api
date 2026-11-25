@@ -38,7 +38,8 @@ export class UpdateCalificacionDto {
   indiceLiquidez?: number;
 
   @ApiPropertyOptional({
-    description: 'Índice de Solvencia (Pasivo Total / Activo Total) (indice_solvencia_au_au)',
+    description:
+      'Índice de Solvencia (Activo Circulante / Pasivo Circulante) (indice_solvencia_au_au)',
     example: 0.6,
   })
   @IsNumber()

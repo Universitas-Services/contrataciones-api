@@ -31,7 +31,10 @@ export class MaximaAutoridadService {
   }
 
   async create(createDto: CreateMaximaAutoridadDto, enteId: string, userId: string) {
-    assertCedulasSinRepetir([createDto.cedulaAutoridad, createDto.cedulaDelegado]);
+    assertCedulasSinRepetir([
+      createDto.cedulaAutoridad,
+      createDto.esDelegado === false ? null : createDto.cedulaDelegado,
+    ]);
 
     return this.prisma.maximaAutoridad.create({
       data: {
@@ -75,12 +78,20 @@ export class MaximaAutoridadService {
     // Verificar existencia y pertenencia
     const autoridad = await this.findOne(id, enteId);
 
-    const cedulas = [
-      updateDto.cedulaAutoridad ?? autoridad.cedulaAutoridad,
-      updateDto.cedulaDelegado !== undefined ? updateDto.cedulaDelegado : autoridad.cedulaDelegado,
-    ];
-    const nuevas = cedulasNuevas([autoridad.cedulaAutoridad, autoridad.cedulaDelegado], cedulas);
-    if (nuevas.length) assertCedulasSinRepetir(cedulas);
+    // Sin delegado, su cédula guardada no cuenta: los expedientes que firmó la conservan.
+    const conDelegado =
+      updateDto.esDelegado ?? (autoridad.esDelegado || updateDto.cedulaDelegado !== undefined);
+    const cedulaAutoridad = updateDto.cedulaAutoridad ?? autoridad.cedulaAutoridad;
+    const cedulaDelegado = conDelegado
+      ? updateDto.cedulaDelegado !== undefined
+        ? updateDto.cedulaDelegado
+        : autoridad.cedulaDelegado
+      : null;
+    const cambio =
+      cedulasNuevas([autoridad.cedulaAutoridad], [cedulaAutoridad]).length > 0 ||
+      cedulasNuevas([autoridad.esDelegado ? autoridad.cedulaDelegado : null], [cedulaDelegado])
+        .length > 0;
+    if (cambio) assertCedulasSinRepetir([cedulaAutoridad, cedulaDelegado]);
 
     let requiereInvalidacion = false;
     const criticos = [

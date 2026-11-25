@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
-import { SnapshotService } from './snapshot.service';
+import { conTextosVigentes, SnapshotService } from './snapshot.service';
 import { ScoringService } from './scoring.service';
 import { PrelacionService } from './prelacion.service';
 import type { UsuarioActual } from '../../common/types/usuario-actual.type';
@@ -82,7 +82,7 @@ export class HubService {
     expedienteId: string,
     guardado: unknown,
   ): Promise<PlantillasSnapshot> {
-    if (guardado) return guardado as PlantillasSnapshot;
+    if (guardado) return conTextosVigentes(guardado as PlantillasSnapshot);
 
     const plantillas = await this.snapshot.construir(expedienteId);
     await this.prisma.evaluacionResultados.update({

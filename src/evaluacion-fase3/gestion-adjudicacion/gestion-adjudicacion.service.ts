@@ -83,7 +83,7 @@ export class GestionAdjudicacionService {
       (d) => d.tipoDocumento === 'ACTA_ADJUDICACION' && !d.estaDesactualizado,
     );
     const notifDoc = expediente.documentosGenerados.find(
-      (d) => d.tipoDocumento === 'NOTIFICACION_ADJUDICADO',
+      (d) => d.tipoDocumento === 'NOTIFICACION_ADJUDICADO' && !d.estaDesactualizado,
     );
 
     const caracter = expediente.caracterAdjudicacion as 'TOTAL' | 'PARCIAL' | null;

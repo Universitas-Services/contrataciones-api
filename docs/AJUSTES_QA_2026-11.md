@@ -266,15 +266,52 @@ Cada dato marca solo los documentos que lo imprimen, y solo si cambió:
 
 ---
 
-## 5. Verificación
+## 5. Respuesta a los puntos 12 a 28 de Frank (25 de noviembre)
+
+Sin cambios en el texto de ninguna plantilla. Lleva la migración `20261125_qa_cedulas_proveedor`.
+
+### 5.1 Cambios que necesitan al frontend
+
+| #   | Backend                                                                                                                                                                                                                                                                                     | Frontend                                                                                                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 12  | `POST /auth/token-subida` (con la sesión) → `{ token, expiraEnSegundos: 120 }`. Solo sirve en `POST /proveedores`, `PATCH /proveedores/:id`, `POST /compliance/expedientes/:id/documentos`, `POST .../especificaciones-tecnicas` y `POST .../calificacion-legal/modelos`. En otra ruta: 401 | En `obtenerTokenDeSubida`, llamar a este endpoint en vez de entregar el token de sesión. Pedir uno nuevo en cada subida                                                  |
+| 19  | El feriado corre un día hábil las fechas iguales o posteriores **solo si cae dentro del cronograma** y era hábil. Nunca mueve fechas pasadas. Si el llamado ya salió (fecha de hoy o anterior) o está en evaluación, **solo avisa**                                                         | `conflictosDetectados[]` trae `soloAviso`, y cada campo `fechaAnterior` y `fechaNueva`. Con `soloAviso: true`, decir «revise el cronograma», no «se movieron las fechas» |
+| 20  | Solvencia = Activo Circulante / Pasivo Circulante; Rotación = Ventas / Cuentas por Cobrar. Las evaluaciones iniciadas muestran el texto nuevo; sus rangos no cambian                                                                                                                        | Nada si lee `titulo`, `pregunta` y `aspectoHint` del API                                                                                                                 |
+| 22  | Causal «Ninguna oferta…» con ofertas registradas: 400                                                                                                                                                                                                                                       | Mostrar el mensaje                                                                                                                                                       |
+| 24  | PDF inválido al crear o editar un proveedor: 400 con los nombres de los archivos. Se valida antes de guardar                                                                                                                                                                                | Mostrar el mensaje                                                                                                                                                       |
+| 25  | `cedulaNaturalProveedor` y `cedulaAutoridadProveedor` son **texto**. Aceptan `V-12345678`, `E-12345678` o solo números; se devuelven como se guardaron. Las anteriores no tienen letra                                                                                                      | Enviar la cédula con su letra. Si llega sin letra y es la misma, se conserva la letra guardada                                                                           |
+
+### 5.2 Sin cambios en el frontend
+
+- **14.** `PUT /expedientes/:id/cronograma` funciona con UNIVERSITAS y usa los feriados del ente del expediente.
+- **15.** El documento anterior se borra después de generar y subir el nuevo.
+- **16.** `gates.notificacionesGeneradas` ignora las desactualizadas.
+- **17.** El pliego decodifica `&amp;`, `&quot;`, `&lt;`, `&gt;`, `&nbsp;` y `&#39;`.
+- **18.** Sin delegado, su cédula anterior no cuenta como repetida. Con delegado, la regla no cambia.
+- **21.** Al revertir el desierto se retira su informe. Un informe de desierto que se desactualizó antes de revertir, en un expediente con informe de adjudicación ya cargado, sigue contando como desactualizado. Los revertidos antes de este cambio no se corrigen solos: se resuelve generando el informe.
+- **26.** En carácter PARCIAL, Fase 4 muestra la opción de la Fase 3. El orden de la lista no cambia.
+- **27.** La pregunta del recaudo personalizado conserva las mayúsculas, en evaluaciones nuevas.
+
+### 5.3 Fuera de este cambio
+
+- **13.** Espera la respuesta de QA.
+- **23.** Es texto de plantilla: lo decide documentación.
+- **27.** El punto decimal se queda. Falta el Word donde sale «REQUERIMIENTO DE FECHA:» vacío.
+- **28.** Se configura en el API global: `CORS_ALLOWED_ORIGINS` con el dominio de Netlify.
+- **Solo frontend:** pedir confirmación antes de «Generar contrato definitivo».
+
+---
+
+## 6. Verificación
 
 | Qué                                   | Resultado                                                                                                  |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `tsc --noEmit`, ESLint y `nest build` | Sin errores                                                                                                |
-| Pruebas unitarias                     | **273**, todas pasan (84 nuevas)                                                                           |
+| Pruebas unitarias                     | **294**, todas pasan (105 nuevas)                                                                          |
 | Ciclo completo de Fase 4              | 89 comprobaciones correctas                                                                                |
 | API en local                          | Usuario con `#` y `.`, actores con EJECUTOR, cronograma con UNIVERSITAS, `paginaWeb` y orden de normativas |
 | Pliego generado en local              | Dos escenarios opuestos revisados: normativas, recaudos, moneda, idioma, página web y anexo                |
 | Anexo III                             | Sin modelos y con algunos: 0 páginas vacías (antes 20 y 14)                                                |
 | Modelo de Contrato en local           | El GET devuelve la cláusula con el objeto del expediente y lo guardado no cambia                           |
 | Ciclos completos                      | Fase 4: 89 comprobaciones; compliance: 76                                                                  |
+| Puntos 12, 24 y 25 en el API local    | Token de subida aceptado en sus 5 rutas y rechazado en las demás; PDF inválido; cédula con letra           |

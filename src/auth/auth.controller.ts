@@ -72,6 +72,22 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @Post('token-subida')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Token corto para subir archivos',
+    description:
+      'Token de 2 minutos que solo sirve para registrar o actualizar proveedores, subir documentos ' +
+      'de compliance, especificaciones técnicas y modelos de recaudos. En otra ruta responde 401.',
+  })
+  @ApiResponse({ status: 200, schema: { example: { token: 'eyJ...', expiraEnSegundos: 120 } } })
+  tokenSubida(@CurrentUser() user: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return this.authService.tokenSubida(user);
+  }
+
   @Post('change-password')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth('JWT-auth')

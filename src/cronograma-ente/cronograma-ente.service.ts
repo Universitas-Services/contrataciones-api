@@ -5,6 +5,11 @@ import { CreateDiaNoLaborableBulkDto } from './dto/create-dia-no-laborable-bulk.
 import { UpdateDiaNoLaborableDto } from './dto/update-dia-no-laborable.dto';
 import { QueryDiaNoLaborableDto } from './dto/query-dia-no-laborable.dto';
 import { EstatusProceso } from '@prisma/client';
+import {
+  DOCUMENTOS_DEL_CRONOGRAMA,
+  marcarDesactualizados,
+} from '../common/utils/documentos-dependientes.util';
+import { FeriadoNuevo, hoyEnCaracas, ocurrenciasDelFeriado } from './feriados.util';
 
 const CAMPOS_CRONOGRAMA = [
   { campo: 'fechaLlamadoParticipar', etiqueta: 'Llamado a Participar' },
@@ -288,7 +293,7 @@ export class CronogramaEnteService {
     const current = new Date(desdeDate);
     while (current <= hastaDate) {
       const currentStr = current.toISOString().split('T')[0];
-      const day = current.getDay();
+      const day = current.getUTCDay();
 
       if (day === 0 || day === 6) {
         finesDeSemana.push(currentStr);
@@ -317,7 +322,7 @@ export class CronogramaEnteService {
         }
       }
 
-      current.setDate(current.getDate() + 1);
+      current.setUTCDate(current.getUTCDate() + 1);
     }
 
     const totalFinesDesemana = finesDeSemana.length;
@@ -392,94 +397,93 @@ export class CronogramaEnteService {
     return fecha;
   }
 
-  async detectarConflictos(enteId: string, diaNoLaborable: any) {
-    // 1. Obtener todos los expedientes del ente en estados activos
-    const expedientesActivos = await this.prisma.expedienteContratacion.findMany({
+  /**
+   * Un feriado nuevo corre las fechas de los cronogramas que lo contienen: las iguales o
+   * posteriores al feriado, un día hábil, para que los lapsos sigan sumando lo mismo. No toca
+   * los cronogramas que quedan antes o después del feriado. Si el llamado ya salió, solo avisa.
+   */
+  async detectarConflictos(enteId: string, diaNoLaborable: FeriadoNuevo) {
+    const expedientes = await this.prisma.expedienteContratacion.findMany({
       where: {
         enteId,
+        deletedAt: null,
         estatusProceso: { in: ESTATUS_ACTIVOS },
         cronograma: { isNot: null },
       },
-      include: {
-        cronograma: true,
-      },
+      include: { cronograma: true },
     });
 
     const festivos = await this.getDiasNoLaborablesParaCalculo(enteId);
-    const conflictosRealizados: any[] = [];
+    const hoy = hoyEnCaracas();
+    const conflictos: any[] = [];
 
-    for (const exp of expedientesActivos) {
+    for (const exp of expedientes) {
       const cronograma = exp.cronograma;
       if (!cronograma) continue;
 
-      const camposAfectados: any[] = [];
-      const datosActualizar: any = {};
+      const fechas = CAMPOS_CRONOGRAMA.map((c) => ({
+        ...c,
+        fecha: cronograma[c.campo as keyof typeof cronograma] as Date | null,
+      })).filter((c): c is typeof c & { fecha: Date } => !!c.fecha);
 
-      for (const mapping of CAMPOS_CRONOGRAMA) {
-        const fechaCampo = cronograma[mapping.campo] as Date;
-        if (!fechaCampo) continue;
+      const ocurrencias = ocurrenciasDelFeriado(
+        diaNoLaborable,
+        fechas.map((f) => f.fecha),
+        festivos,
+      );
+      const afectados = fechas
+        .map((f) => ({ ...f, dias: ocurrencias.filter((o) => o <= f.fecha).length }))
+        .filter((f) => f.dias > 0 && f.fecha >= hoy);
+      if (afectados.length === 0) continue;
 
-        let esAfectada = false;
-        const fechaCampoStr = fechaCampo.toISOString().split('T')[0];
+      const llamado = cronograma.fechaLlamadoParticipar;
+      const soloAviso =
+        exp.estatusProceso === 'PUBLICADO' ||
+        exp.estatusProceso === 'EN_EVALUACION' ||
+        (!!llamado && llamado <= hoy);
 
-        if (diaNoLaborable.esRecurrente) {
-          const thisYear = fechaCampo.getUTCFullYear();
-          // Construimos la fecha recurrente de este año para comparar
-          const recurringDateThisYear = new Date(
-            `${thisYear}-${diaNoLaborable.fechaRecurrente}T00:00:00Z`,
-          );
-          if (fechaCampo.getTime() >= recurringDateThisYear.getTime()) {
-            esAfectada = true;
-          }
-        } else {
-          if (fechaCampo.getTime() >= diaNoLaborable.fecha.getTime()) {
-            esAfectada = true;
-          }
-        }
+      const movimientos = await Promise.all(
+        afectados.map(async (f) => ({
+          ...f,
+          nueva: soloAviso ? f.fecha : await this.sumarDiasHabiles(f.fecha, f.dias, festivos),
+        })),
+      );
 
-        if (esAfectada) {
-          camposAfectados.push({
-            campo: mapping.campo,
-            etiqueta: mapping.etiqueta,
-            fechaAnterior: fechaCampoStr,
-          });
-
-          // Desplazar 1 día hábil
-          const nuevaFecha = await this.sumarDiasHabiles(fechaCampo, 1, festivos);
-          datosActualizar[mapping.campo] = nuevaFecha;
-
-          // Crear AlertaCronograma como aviso para regenerar documentos
-          await this.prisma.alertaCronograma.create({
-            data: {
-              cronogramaId: cronograma.id,
-              diaNoLaborableId: diaNoLaborable.id,
-              campoAfectado: mapping.campo,
-              fechaConflicto: fechaCampo,
-            },
-          });
-        }
-      }
-
-      if (camposAfectados.length > 0) {
-        // Marcar el cronograma con conflicto festivo activo (aviso de regenerar documentos)
-        datosActualizar.tieneConflictoFestivo = true;
-
-        await this.prisma.cronogramaExpediente.update({
+      await this.prisma.$transaction(async (tx) => {
+        await tx.alertaCronograma.createMany({
+          data: movimientos.map((m) => ({
+            cronogramaId: cronograma.id,
+            diaNoLaborableId: diaNoLaborable.id,
+            campoAfectado: m.campo,
+            fechaConflicto: m.fecha,
+          })),
+        });
+        await tx.cronogramaExpediente.update({
           where: { id: cronograma.id },
-          data: datosActualizar,
+          data: {
+            tieneConflictoFestivo: true,
+            ...(!soloAviso && Object.fromEntries(movimientos.map((m) => [m.campo, m.nueva]))),
+          },
         });
+        if (!soloAviso) await marcarDesactualizados(tx, exp.id, DOCUMENTOS_DEL_CRONOGRAMA);
+      });
 
-        conflictosRealizados.push({
-          expedienteId: exp.id,
-          codigoNomenclatura: exp.codigoNomenclatura,
-          descripcionObjeto: exp.descripcionObjeto,
-          estatusProceso: exp.estatusProceso,
-          camposAfectados,
-        });
-      }
+      conflictos.push({
+        expedienteId: exp.id,
+        codigoNomenclatura: exp.codigoNomenclatura,
+        descripcionObjeto: exp.descripcionObjeto,
+        estatusProceso: exp.estatusProceso,
+        soloAviso,
+        camposAfectados: movimientos.map((m) => ({
+          campo: m.campo,
+          etiqueta: m.etiqueta,
+          fechaAnterior: m.fecha.toISOString().split('T')[0],
+          fechaNueva: m.nueva.toISOString().split('T')[0],
+        })),
+      });
     }
 
-    return conflictosRealizados;
+    return conflictos;
   }
 
   // === Alertas ===

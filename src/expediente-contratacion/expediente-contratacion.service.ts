@@ -480,6 +480,15 @@ export class ExpedienteContratacionService {
       throw new BadRequestException('No se puede declarar desierto un expediente anulado');
     if (expediente.declaratoriaDesierto)
       throw new BadRequestException('El expediente ya fue declarado desierto');
+    if (/^\s*1\.|ninguna oferta haya sido presentada/i.test(dto.causalDeclaratoriaDesierto)) {
+      const ofertas = await this.prisma.ofertaPresentada.count({
+        where: { expedienteId: id, deletedAt: null },
+      });
+      if (ofertas > 0)
+        throw new BadRequestException(
+          `No puede usar la causal «Ninguna oferta haya sido presentada»: el expediente tiene ${ofertas} ${ofertas === 1 ? 'oferta registrada' : 'ofertas registradas'}.`,
+        );
+    }
 
     const result = await this.prisma.$transaction(async (tx) => {
       const actualizado = await tx.expedienteContratacion.update({
@@ -525,11 +534,29 @@ export class ExpedienteContratacionService {
           updatedBy: userId,
         },
       });
-      await marcarDesactualizados(tx, id, ['INFORME_RECOMENDACION']);
+      await this.retirarInformeDesierto(tx, id);
       return actualizado;
     });
 
     return { message: 'Declaratoria de desierto revertida exitosamente', data: result };
+  }
+
+  /**
+   * El informe de desierto comparte tipo con el de adjudicación. Al declarar se marcó
+   * desactualizado el que hubiera, así que uno vigente es el de desierto; y sin informe de
+   * adjudicación cargado, cualquiera lo es.
+   */
+  private async retirarInformeDesierto(tx: Prisma.TransactionClient, expedienteId: string) {
+    const informeAdjudicacion = await tx.informeRecomendacion.count({ where: { expedienteId } });
+    await tx.documentoGenerado.updateMany({
+      where: {
+        expedienteId,
+        tipoDocumento: 'INFORME_RECOMENDACION',
+        deletedAt: null,
+        ...(informeAdjudicacion > 0 && { estaDesactualizado: false }),
+      },
+      data: { deletedAt: new Date() },
+    });
   }
 
   private async cargarParaDesierto(id: string, enteId: string, rol: RolUsuario) {
@@ -613,6 +640,7 @@ export class ExpedienteContratacionService {
     dto: UpdateCronogramaExpedienteDto,
     userId: string,
     enteId: string,
+    rol: RolUsuario,
   ) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
       where: { id },
@@ -623,11 +651,13 @@ export class ExpedienteContratacionService {
     });
 
     if (!expediente) throw new NotFoundException('Expediente no encontrado');
-    if (expediente.enteId !== enteId)
+    if (rol !== 'UNIVERSITAS' && expediente.enteId !== enteId)
       throw new BadRequestException('No tiene permisos sobre este expediente');
 
-    // Obtener días no laborables dinámicos para este ente
-    const diasEnte = await this.cronogramaEnteService.getDiasNoLaborablesParaCalculo(enteId);
+    // Días no laborables del ente del expediente (UNIVERSITAS no tiene ente propio)
+    const diasEnte = await this.cronogramaEnteService.getDiasNoLaborablesParaCalculo(
+      expediente.enteId,
+    );
 
     // Validación cronológica básica (ej. Llamado <= Acto Recepción)
     const fechaLlamado = new Date(dto.fechaLlamadoParticipar);

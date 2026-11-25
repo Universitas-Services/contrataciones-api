@@ -4,10 +4,10 @@ import { GeneradorDocumentosService } from './generador-documentos.service';
 const PLANTILLA = 'acta-inicio-template.docx';
 
 function crear() {
-  const prisma = {
+  const prisma: Record<string, any> = {
     documentoGenerado: {
       findFirst: jest.fn().mockResolvedValue(null),
-      delete: jest.fn().mockResolvedValue({}),
+      deleteMany: jest.fn().mockResolvedValue({}),
       create: jest.fn().mockImplementation(({ data }) =>
         Promise.resolve({
           id: 'doc-nuevo',
@@ -16,6 +16,7 @@ function crear() {
         }),
       ),
     },
+    $transaction: (fn: (tx: unknown) => unknown) => fn(prisma),
   };
   const storage = {
     uploadFile: jest.fn().mockResolvedValue('https://archivo'),
@@ -42,7 +43,9 @@ describe('GeneradorDocumentosService.generarDocumento', () => {
       {},
     );
 
-    expect(prisma.documentoGenerado.delete).toHaveBeenCalledWith({ where: { id: 'doc-viejo' } });
+    expect(prisma.documentoGenerado.deleteMany).toHaveBeenCalledWith({
+      where: { id: 'doc-viejo' },
+    });
     expect(storage.uploadFile).toHaveBeenCalledTimes(1);
     expect(prisma.documentoGenerado.create.mock.calls[0][0].data).toMatchObject({
       expedienteId: 'exp-1',
@@ -77,7 +80,7 @@ describe('GeneradorDocumentosService.renderizarYSubir', () => {
     expect(fileName).toMatch(/^acta_inicio-exp-1-\d+\.docx$/);
     expect(storage.uploadFile.mock.calls[0][1]).toBe(`expedientes/exp-1/${fileName}`);
     expect(prisma.documentoGenerado.create).not.toHaveBeenCalled();
-    expect(prisma.documentoGenerado.delete).not.toHaveBeenCalled();
+    expect(prisma.documentoGenerado.deleteMany).not.toHaveBeenCalled();
   });
 });
 

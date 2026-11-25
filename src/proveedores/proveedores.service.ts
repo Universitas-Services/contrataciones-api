@@ -13,6 +13,8 @@ import { CreateProveedorDto } from './dto/create-proveedor.dto';
 import { UpdateProveedorDto } from './dto/update-proveedor.dto';
 import { QueryProveedoresDto } from './dto/query-proveedores.dto';
 import { RegistroRapidoProveedorDto } from './dto/registro-rapido-proveedor.dto';
+import { conservarLetra } from './cedula-proveedor.util';
+import { nombreArchivo, validarPdfs } from './validar-pdf.util';
 import type { IStorageService } from '../common/interfaces/storage-service.interface';
 
 // Mapeo de nombres de campo de archivo al enum TipoDocumentoProveedor
@@ -50,6 +52,18 @@ export class ProveedoresService {
     });
   }
 
+  /** Sube un documento; si el almacenamiento lo rechaza, dice cuál falló. */
+  private async subirArchivo(file: Express.Multer.File, folder: string, filename: string) {
+    try {
+      return await this.storageService.uploadFile(file.buffer, folder, filename);
+    } catch (error) {
+      console.error(`Error subiendo ${filename} de proveedor: ${error}`);
+      throw new BadRequestException(
+        `No se pudo guardar el archivo «${nombreArchivo(file)}». Verifique que sea un PDF válido y vuelva a intentarlo.`,
+      );
+    }
+  }
+
   /**
    * Crear proveedor con documentos PDF en una transacción
    */
@@ -60,6 +74,8 @@ export class ProveedoresService {
     userId: string,
     enteId: string,
   ) {
+    validarPdfs(files);
+
     // 1. Verificar que no exista un proveedor con el mismo RIF en el Ente
     const existente = await this.prisma.proveedor.findFirst({
       where: {
@@ -127,7 +143,7 @@ export class ProveedoresService {
           // Subir a Cloudinary: universitas/proveedores/{rif}/{tipo}.pdf
           const folder = `universitas/proveedores/${createDto.rif}`;
           const filename = tipoDocumento;
-          const secureUrl = await this.storageService.uploadFile(file.buffer, folder, filename);
+          const secureUrl = await this.subirArchivo(file, folder, filename);
 
           // Leer observación correspondiente (obs_doc_rif, obs_doc_acta_constitutiva, etc.)
           const obsKey = `obs_${fieldName}`;
@@ -442,7 +458,11 @@ export class ProveedoresService {
     updateDto: UpdateProveedorDto,
     files: Record<string, Express.Multer.File[]>,
   ) {
+    validarPdfs(files);
     const proveedor = await this.findOne(id, enteId);
+    for (const campo of ['cedulaNaturalProveedor', 'cedulaAutoridadProveedor'] as const) {
+      if (updateDto[campo]) updateDto[campo] = conservarLetra(updateDto[campo], proveedor[campo]);
+    }
 
     // 1. Verificar unicidad del RIF si se está intentando cambiar
     if (updateDto.rif && updateDto.rif !== proveedor.rif) {
@@ -529,6 +549,8 @@ export class ProveedoresService {
         const obsKey = `obs_${fieldName}`;
         const observacion = observaciones[obsKey] || null;
 
+        const secureUrl = await this.subirArchivo(file, folder, filename);
+
         // Buscar si ya existe un documento activo de este tipo
         const documentoExistente = proveedor.documentos.find(
           (doc) => doc.tipoDocumento === tipoDocumento && doc.deletedAt === null,
@@ -544,7 +566,8 @@ export class ProveedoresService {
               if (uploadIndex !== -1) {
                 const pathPart = urlParts.slice(uploadIndex + 2).join('/');
                 const publicId = pathPart.substring(0, pathPart.lastIndexOf('.'));
-                if (publicId) {
+                // Con el mismo nombre, la subida ya reemplazó el archivo.
+                if (publicId && decodeURIComponent(publicId) !== `${folder}/${filename}`) {
                   await this.storageService.deleteFile(publicId);
                 }
               }
@@ -564,8 +587,6 @@ export class ProveedoresService {
             });
           }
         }
-
-        const secureUrl = await this.storageService.uploadFile(file.buffer, folder, filename);
 
         // Crear el nuevo registro de documento
         const nuevoDocumento = await this.prisma.documentoProveedor.create({

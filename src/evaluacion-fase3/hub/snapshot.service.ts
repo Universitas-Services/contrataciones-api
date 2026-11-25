@@ -22,6 +22,27 @@ import type {
 type Datos = Record<string, any>;
 
 /**
+ * Los textos de los criterios financieros son fijos: en las evaluaciones ya iniciadas se
+ * toman los vigentes. Los rangos y los puntajes siguen congelados.
+ */
+export function conTextosVigentes(plantillas: PlantillasSnapshot): PlantillasSnapshot {
+  const criterios = plantillas.financiera?.criterios;
+  if (!criterios) return plantillas;
+  return {
+    ...plantillas,
+    financiera: {
+      ...plantillas.financiera,
+      criterios: criterios.map((c) => {
+        const meta = CRITERIOS_INDICE.find((m) => m.id === c.id);
+        if (!meta || c.kind !== 'indice') return c;
+        const { titulo, pregunta, aspectoHint } = meta;
+        return { ...c, titulo, pregunta, aspectoHint };
+      }),
+    },
+  };
+}
+
+/**
  * Construye el snapshot de plantillas del hub a partir de lo exigido en la
  * Fase 1 del expediente.
  *
@@ -75,7 +96,7 @@ export class SnapshotService {
       items.push({
         id: String(p?.id ?? `personalizado-${i + 1}`),
         sobre: p?.sobre === 2 ? 2 : 1,
-        pregunta: `¿Consignó ${descripcion.toLowerCase()}?`,
+        pregunta: `¿Consignó ${descripcion}?`,
         etiquetaCorta: descripcion,
         eliminatorio: p?.sobre !== 2,
         personalizado: true,
