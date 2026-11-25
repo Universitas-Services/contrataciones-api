@@ -12,6 +12,7 @@ import {
   formatToDDMMYYYY,
   formatCurrencyVE,
 } from '../common/utils/date-formatter.util';
+import { valorUnitarioUcau } from '../common/utils/valor-ucau.util';
 import { Prisma, TipoDocumento, EstadoMicromodulo } from '@prisma/client';
 import { MICROMODULO_KEYS, MICROMODULOS } from '../fase1/constants/micromodulos.constants';
 import { mapDatosPliegoCondiciones } from './mappers/pliego-condiciones.mapper';
@@ -378,6 +379,8 @@ export class GeneradorDocumentosService {
     const miembroTecnica = getMiembro('AREA_TECNICA');
     const miembroSecretaria = getMiembro('SECRETARIO_A');
 
+    const valorUcau = valorUnitarioUcau(expediente.modalidad);
+
     return {
       nom_ente_contratante: expediente.ente?.nombre || '___',
       nom_unidad_usuaria: expediente.unidadUsuaria?.nombreUnidadUsuaria || '___',
@@ -399,6 +402,7 @@ export class GeneradorDocumentosService {
       categorizacion_contratacion_au_au: categorizacion,
       proyecto_aprobado_au_au: siNo(f.proyectoAprobado),
       valor_ucau_base: formatCurrencyVE(Number(expediente.modalidad?.valorUcauBase)),
+      valor_ucau: valorUcau > 0 ? formatCurrencyVE(valorUcau) : '___',
       monto_estimado_bs: formatCurrencyVE(Number(expediente.modalidad?.montoEstimadoBs)),
       sub_total: formatCurrencyVE(subtotalNum),
       monto_total_renglon_au_au: formatCurrencyVE(subtotalNum + ivaNum),

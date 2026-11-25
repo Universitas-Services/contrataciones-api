@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { valorUnitarioUcau } from '../common/utils/valor-ucau.util';
 import { PrismaService } from '../database/prisma.service';
 import { SaveContratoDto } from './dto/save-contrato.dto';
 import { UpdateContratoDto } from './dto/update-contrato.dto';
@@ -40,8 +41,8 @@ export class ContratoFormalizadoService {
       throw new BadRequestException('El expediente no se encuentra en estado ADJUDICADO.');
     }
 
-    const valorUcauBase = Number(adjudicacion.expediente.modalidad.valorUcauBase) || 1;
-    const valorUcauContrato = dto.montoContratoBs / valorUcauBase;
+    const valorUcau = valorUnitarioUcau(adjudicacion.expediente.modalidad);
+    const valorUcauContrato = valorUcau > 0 ? dto.montoContratoBs / valorUcau : 0;
 
     const numeroContratoFisico = `CONT-${adjudicacion.expediente.codigoNomenclatura || adjudicacion.expedienteId.substring(0, 8)}`;
 
@@ -159,8 +160,8 @@ export class ContratoFormalizadoService {
     if (dto.montoContratoBs !== undefined) {
       data.montoContratoBs = dto.montoContratoBs;
       data.montoContratoBsLetras = toBolivares(dto.montoContratoBs);
-      const valorUcauBase = Number(adjudicacion.expediente.modalidad?.valorUcauBase) || 1;
-      data.valorUcauContrato = dto.montoContratoBs / valorUcauBase;
+      const valorUcau = valorUnitarioUcau(adjudicacion.expediente.modalidad);
+      data.valorUcauContrato = valorUcau > 0 ? dto.montoContratoBs / valorUcau : 0;
     }
 
     if (dto.plazoEjecucionDias !== undefined) data.plazoEjecucionDias = dto.plazoEjecucionDias;

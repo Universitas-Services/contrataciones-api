@@ -153,6 +153,7 @@ export class ExpedienteContratacionService {
             montoEstimadoBs: dto.montoEstimadoBs,
             montoEstimadoDolar: dto.montoEstimadoDolar,
             valorUcauBase: dto.valorUcauBase,
+            valorUcau: dto.valorUcau,
             modalidadSeleccion: dto.modalidadSeleccion,
             enteId: enteId,
             createdBy: userId,
@@ -216,6 +217,18 @@ export class ExpedienteContratacionService {
         if (dto.montoEstimadoDolar !== undefined)
           dataModalidad.montoEstimadoDolar = dto.montoEstimadoDolar;
         if (dto.valorUcauBase !== undefined) dataModalidad.valorUcauBase = dto.valorUcauBase;
+        if (dto.valorUcau !== undefined) {
+          dataModalidad.valorUcau = dto.valorUcau;
+        } else if (
+          expediente.modalidad &&
+          this.cambio(expediente.modalidad, {
+            ...(dto.montoEstimadoBs !== undefined && { montoEstimadoBs: dto.montoEstimadoBs }),
+            ...(dto.valorUcauBase !== undefined && { valorUcauBase: dto.valorUcauBase }),
+          })
+        ) {
+          // Cambiaron los montos sin decir con qué UCAU: el guardado ya no les corresponde.
+          dataModalidad.valorUcau = null;
+        }
         if (dto.modalidadSeleccion !== undefined)
           dataModalidad.modalidadSeleccion = dto.modalidadSeleccion;
 
@@ -795,6 +808,7 @@ export class ExpedienteContratacionService {
             montoEstimadoBs: dto.montoEstimadoBs,
             montoEstimadoDolar: dto.montoEstimadoDolar,
             valorUcauBase: dto.valorUcauBase,
+            valorUcau: dto.valorUcau,
             modalidadSeleccion: 'CONCURSO_CERRADO',
             enteId,
             createdBy: userId,
@@ -845,6 +859,7 @@ export class ExpedienteContratacionService {
             montoEstimadoBs: dto.montoEstimadoBs,
             montoEstimadoDolar: dto.montoEstimadoDolar,
             valorUcauBase: dto.valorUcauBase,
+            valorUcau: dto.valorUcau,
             modalidadSeleccion: 'CONSULTA_PRECIOS',
             enteId,
             createdBy: userId,
@@ -900,6 +915,7 @@ export class ExpedienteContratacionService {
             montoEstimadoBs: dto.montoEstimadoBs,
             montoEstimadoDolar: dto.montoEstimadoDolar,
             valorUcauBase: dto.valorUcauBase,
+            valorUcau: dto.valorUcau,
             modalidadSeleccion: 'ADJUDICACION_DIRECTA',
             enteId,
             createdBy: userId,
@@ -957,6 +973,7 @@ export class ExpedienteContratacionService {
             montoEstimadoBs: dto.montoEstimadoBs,
             montoEstimadoDolar: dto.montoEstimadoDolar,
             valorUcauBase: dto.valorUcauBase,
+            valorUcau: dto.valorUcau,
             modalidadSeleccion: 'MODALIDADES_EXCLUIDAS',
             enteId,
             createdBy: userId,

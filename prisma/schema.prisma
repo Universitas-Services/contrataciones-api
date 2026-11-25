@@ -332,7 +332,10 @@ model ModalidadContratacion {
   tipoContratacion   TipoContratacion         @map("tipo_contratacion")
   montoEstimadoBs    Decimal                  @map("monto_estimado_bs") @db.Decimal(18, 4)
   montoEstimadoDolar Decimal                  @map("monto_estimado_dolar") @db.Decimal(18, 4)
+  /// Monto de la contratación convertido a UCAU.
   valorUcauBase      Decimal                  @map("valor_ucau_base") @db.Decimal(18, 4)
+  /// Lo que valía 1 UCAU en Bs. al calcular. Los expedientes anteriores no lo tienen.
+  valorUcau          Decimal?                 @map("valor_ucau") @db.Decimal(18, 4)
   modalidadSeleccion ModalidadSeleccion       @map("modalidad_seleccion")
   createdAt          DateTime                 @default(now())
   updatedAt          DateTime                 @updatedAt
