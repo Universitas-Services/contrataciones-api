@@ -127,6 +127,32 @@ describe('AgenteComplianceClient', () => {
     expect(http.get).toHaveBeenCalledTimes(1);
   });
 
+  it('vencido, sirve el guardado y lo actualiza sin hacer esperar', async () => {
+    const agente = cliente();
+    http.get.mockResolvedValueOnce({ data: { modalidades: [], tipos_contratacion: [] } });
+    const viejo = await agente.obtenerCatalogo();
+    jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 2 * 60 * 60 * 1000);
+    let responder: (v: unknown) => void = () => undefined;
+    http.get.mockReturnValueOnce(new Promise((r) => (responder = r)));
+    expect(await agente.obtenerCatalogo()).toBe(viejo);
+    expect(await agente.obtenerCatalogo()).toBe(viejo);
+    expect(http.get).toHaveBeenCalledTimes(2);
+    responder({
+      data: { modalidades: [], tipos_contratacion: [{ valor: 'B', nombre: 'Bienes' }] },
+    });
+    await new Promise((r) => setImmediate(r));
+    expect((await agente.obtenerCatalogo()).tipos_contratacion).toHaveLength(1);
+    jest.restoreAllMocks();
+  });
+
+  it('al arrancar lee el catálogo, y sin clave no lo intenta', async () => {
+    http.get.mockResolvedValueOnce({ data: { modalidades: [], tipos_contratacion: [] } });
+    cliente().onApplicationBootstrap();
+    cliente({ COMPLIANCE_AGENT_KEY: '' }).onApplicationBootstrap();
+    await new Promise((r) => setImmediate(r));
+    expect(http.get).toHaveBeenCalledTimes(1);
+  });
+
   it('sin clave no llama al agente', async () => {
     await expect(cliente({ COMPLIANCE_AGENT_KEY: '' }).obtenerCatalogo()).rejects.toThrow(
       ServiceUnavailableException,

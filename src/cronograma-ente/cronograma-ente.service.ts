@@ -72,17 +72,27 @@ export class CronogramaEnteService {
       }
     }
 
-    // 2. Crear el día no laborable
-    const diaNoLaborable = await this.prisma.diaNoLaborableEnte.create({
-      data: {
-        enteId,
-        esRecurrente: dto.esRecurrente,
-        descripcion: dto.descripcion,
-        fecha: dto.fecha ? new Date(dto.fecha + 'T00:00:00Z') : null,
-        fechaRecurrente: dto.esRecurrente ? dto.fechaRecurrente : null,
-        createdBy: userId,
-      },
+    // 2. Crear el día no laborable. Si se había borrado, se reactiva: la fecha es única por ente.
+    const clave = dto.esRecurrente
+      ? { enteId, fechaRecurrente: dto.fechaRecurrente }
+      : { enteId, fecha: new Date(dto.fecha + 'T00:00:00Z') };
+    const borrado = await this.prisma.diaNoLaborableEnte.findFirst({
+      where: { ...clave, deletedAt: { not: null } },
     });
+    const datos = {
+      esRecurrente: dto.esRecurrente,
+      descripcion: dto.descripcion,
+      fecha: dto.fecha && !dto.esRecurrente ? new Date(dto.fecha + 'T00:00:00Z') : null,
+      fechaRecurrente: dto.esRecurrente ? dto.fechaRecurrente : null,
+    };
+    const diaNoLaborable = borrado
+      ? await this.prisma.diaNoLaborableEnte.update({
+          where: { id: borrado.id },
+          data: { ...datos, activo: true, deletedAt: null, updatedBy: userId },
+        })
+      : await this.prisma.diaNoLaborableEnte.create({
+          data: { ...datos, enteId, createdBy: userId },
+        });
 
     // 3. Detectar conflictos en cronogramas activos
     const conflictosDetectados = await this.detectarConflictos(enteId, diaNoLaborable);
@@ -226,6 +236,8 @@ export class CronogramaEnteService {
       }
     }
 
+    await this.liberarFechaBorrada(id, enteId, dto, dia);
+
     const actualizado = await this.prisma.diaNoLaborableEnte.update({
       where: { id },
       data: {
@@ -245,6 +257,24 @@ export class CronogramaEnteService {
     // Solo la creación de nuevos días lanza detección automática.
 
     return actualizado;
+  }
+
+  /** Un feriado borrado conserva su fecha única: si otro la toma, se le quita al borrado. */
+  private async liberarFechaBorrada(
+    id: string,
+    enteId: string,
+    dto: UpdateDiaNoLaborableDto,
+    dia: { esRecurrente: boolean },
+  ) {
+    const recurrente = dto.esRecurrente ?? dia.esRecurrente;
+    const clave = recurrente
+      ? dto.fechaRecurrente && { fechaRecurrente: dto.fechaRecurrente }
+      : dto.fecha && { fecha: new Date(dto.fecha + 'T00:00:00Z') };
+    if (!clave) return;
+    await this.prisma.diaNoLaborableEnte.updateMany({
+      where: { ...clave, enteId, deletedAt: { not: null }, id: { not: id } },
+      data: recurrente ? { fechaRecurrente: null } : { fecha: null },
+    });
   }
 
   async remove(id: string, userId: string, enteId: string) {

@@ -351,6 +351,14 @@ async function main() {
   detalle = await servicio.actualizar(id, { modalidad: 'CA_ACTO_UNICO_APERTURA_UNICA' }, ejecutor);
   ok('con nomenclatura, modalidad y tipo pasa a ACTIVA', detalle.estado === 'ACTIVA');
   ok('pide el primer documento del checklist', detalle.siguienteDocumento === 'ACTA_INICIO');
+  const chatBoton = (await servicio.mensajes(id, ejecutor)).slice(-2);
+  ok(
+    'el botón deja la elección del usuario antes de «Ahora sube»',
+    chatBoton[0].rol === 'USUARIO' &&
+      chatBoton[0].texto.startsWith('Modalidad: ') &&
+      chatBoton[1].texto.startsWith('Ahora sube: '),
+    chatBoton,
+  );
 
   respuestasChat.push({
     respuesta: 'Sube las ofertas.',
@@ -436,6 +444,12 @@ async function main() {
     { tipoDocumento: 'OFERTAS' },
     archivo('oferta-2.pdf'),
     ejecutor,
+  );
+  await rechaza(
+    'reintentar el mismo archivo no lo duplica',
+    () =>
+      servicio.subirDocumento(id, { tipoDocumento: 'OFERTAS' }, archivo('oferta-2.pdf'), ejecutor),
+    'ya está cargado',
   );
   await servicio.subirDocumento(
     id,

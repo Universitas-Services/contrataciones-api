@@ -199,3 +199,8 @@ tmp/
 local.json
 config.local.js
 .env.render.bak
+
+# Copias del .env (pueden tener claves reales)
+.env.bak*
+.env.*.bak
+*.env.bak
