@@ -31,7 +31,7 @@ describe('Token de subida', () => {
   });
 
   it('la estrategia lo rechaza fuera de ellas', () => {
-    const estrategia = new JwtStrategy({} as never);
+    const estrategia = new JwtStrategy({} as never, { getOrThrow: () => 'clave' } as never);
     const req = (method: string, path: string) => ({ method, route: { path } }) as never;
     const payload = { sub: 'u', rol: 'EJECUTOR', alcance: 'subida' };
     expect(() => estrategia.validate(req('GET', '/entes'), payload)).toThrow(/subir archivos/);
@@ -343,5 +343,40 @@ describe('Proveedores', () => {
         doc_rnc: archivo('rnc.pdf', 'hola'),
       }),
     ).toThrow('Este archivo no es un PDF válido: «rnc.pdf».');
+  });
+});
+
+describe('Feriado borrado (29)', () => {
+  function servicio(borrado: object | null) {
+    const llamadas: string[] = [];
+    const dia = { id: 'f', enteId: 'e', esRecurrente: false, fecha: fecha('2026-12-24') };
+    const prisma = {
+      diaNoLaborableEnte: {
+        findFirst: jest.fn(({ where }: { where: { deletedAt: unknown } }) =>
+          where.deletedAt === null ? null : borrado,
+        ),
+        create: jest.fn(() => (llamadas.push('create'), dia)),
+        update: jest.fn((a: { data: { deletedAt: unknown } }) => {
+          llamadas.push(`update:${String(a.data.deletedAt)}`);
+          return dia;
+        }),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
+      expedienteContratacion: { findMany: jest.fn().mockResolvedValue([]) },
+    };
+    return { s: new CronogramaEnteService(prisma as never), llamadas };
+  }
+  const dto = { esRecurrente: false, fecha: '2026-12-24', descripcion: 'Nochebuena' };
+
+  it('registrar otra vez una fecha borrada la reactiva', async () => {
+    const { s, llamadas } = servicio({ id: 'f' });
+    await s.create(dto as never, 'u', 'e');
+    expect(llamadas).toEqual(['update:null']);
+  });
+
+  it('sin borrado previo la crea', async () => {
+    const { s, llamadas } = servicio(null);
+    await s.create(dto as never, 'u', 'e');
+    expect(llamadas).toEqual(['create']);
   });
 });

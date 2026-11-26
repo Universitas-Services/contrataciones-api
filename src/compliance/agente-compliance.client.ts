@@ -1,4 +1,9 @@
-import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosResponse } from 'axios';
 import type { ResultadoLlamada } from './reintentos.util';
@@ -72,11 +77,17 @@ function soloHabilitadas(catalogo: CatalogoAgente): CatalogoAgente {
  * y va solo en el header: nunca se escribe en logs.
  */
 @Injectable()
-export class AgenteComplianceClient {
+export class AgenteComplianceClient implements OnApplicationBootstrap {
   private readonly logger = new Logger(AgenteComplianceClient.name);
   private catalogo: { datos: CatalogoAgente; leidoAt: number } | null = null;
+  private leyendo: Promise<CatalogoAgente> | null = null;
 
   constructor(private readonly config: ConfigService) {}
+
+  /** Lee el catálogo al arrancar, para que la primera subida no espere al agente. */
+  onApplicationBootstrap() {
+    if (this.configurado) void this.obtenerCatalogo().catch(() => undefined);
+  }
 
   get configurado(): boolean {
     return !!this.url && !!this.clave;
@@ -100,11 +111,29 @@ export class AgenteComplianceClient {
     }
   }
 
-  /** Catálogo en memoria por una hora: modalidades, tipos y checklist. */
+  /**
+   * Catálogo en memoria. Pasada una hora se sigue sirviendo el guardado y se actualiza en
+   * segundo plano: una petición solo espera al agente si nunca se leyó.
+   */
   async obtenerCatalogo(): Promise<CatalogoAgente> {
-    if (this.catalogo && Date.now() - this.catalogo.leidoAt < UNA_HORA) {
+    if (this.catalogo) {
+      if (Date.now() - this.catalogo.leidoAt >= UNA_HORA) {
+        void this.leerCatalogo().catch(() => undefined);
+      }
       return this.catalogo.datos;
     }
+    return this.leerCatalogo();
+  }
+
+  /** Una sola lectura a la vez, aunque la pidan varias peticiones. */
+  private leerCatalogo(): Promise<CatalogoAgente> {
+    this.leyendo ??= this.pedirCatalogo().finally(() => {
+      this.leyendo = null;
+    });
+    return this.leyendo;
+  }
+
+  private async pedirCatalogo(): Promise<CatalogoAgente> {
     this.asegurarConfigurado();
     try {
       const r = await axios.get<CatalogoAgente>(`${this.url}/api/catalogo`, {

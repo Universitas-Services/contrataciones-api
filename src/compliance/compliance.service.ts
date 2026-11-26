@@ -311,9 +311,21 @@ export class ComplianceService {
     this.assertNoCerrado(expediente);
     const documentos = await this.prisma.documentoCompliance.count({ where: { expedienteId: id } });
 
-    const { datos, avisos } = await this.validarDatos(dto, expediente, documentos);
+    const { datos, avisos, elegidos } = await this.validarDatos(dto, expediente, documentos);
     const primero = avisos[0];
     if (primero) throw this.excepcionDeAviso(primero);
+
+    // Lo elegido con los botones queda en el chat como mensaje del usuario, sin llamar al agente.
+    const nuevos = (
+      [
+        ['Número del expediente', datos.nomenclatura, expediente.nomenclatura],
+        ['Nombre', datos.nombre, expediente.nombre],
+      ] as const
+    )
+      .filter(([, nuevo, actual]) => nuevo && nuevo !== actual)
+      .map(([etiqueta, nuevo]) => `${etiqueta}: ${nuevo}`)
+      .concat(elegidos)
+      .map((texto): MensajeNuevo => ({ rol: 'USUARIO', texto, usuarioId: user.id }));
 
     await this.prisma.$transaction(async (tx) => {
       await tx.expedienteCompliance.update({
@@ -321,7 +333,8 @@ export class ComplianceService {
         data: { ...datos, updatedBy: user.id },
       });
       const guia = await this.actualizarEstado(tx, id);
-      if (guia) await this.registrarMensajes(tx, id, [guia]);
+      const mensajes = guia ? [...nuevos, guia] : nuevos;
+      if (mensajes.length) await this.registrarMensajes(tx, id, mensajes);
     });
     return this.detalle(id, user);
   }
@@ -342,6 +355,7 @@ export class ComplianceService {
       tipoContratacion?: string;
     } = {};
     const avisos: Aviso[] = [];
+    const elegidos: string[] = [];
 
     if (dto.nomenclatura?.trim()) datos.nomenclatura = dto.nomenclatura.trim().slice(0, 100);
     if (dto.nombre?.trim()) datos.nombre = dto.nombre.trim().slice(0, 255);
@@ -349,7 +363,7 @@ export class ComplianceService {
     const cambiaModalidad = dto.modalidad != null && dto.modalidad !== actual?.modalidad;
     const cambiaTipo =
       dto.tipoContratacion != null && dto.tipoContratacion !== actual?.tipoContratacion;
-    if (!cambiaModalidad && !cambiaTipo) return { datos, avisos };
+    if (!cambiaModalidad && !cambiaTipo) return { datos, avisos, elegidos };
 
     // Con documentos cargados, cambiar modalidad o tipo invalidaría los análisis.
     if (documentosCargados > 0) {
@@ -358,7 +372,7 @@ export class ComplianceService {
         texto:
           'La modalidad y el tipo de contratación no se pueden cambiar porque el expediente ya tiene documentos.',
       });
-      return { datos, avisos };
+      return { datos, avisos, elegidos };
     }
 
     const catalogo = await this.agente.obtenerCatalogo();
@@ -376,6 +390,7 @@ export class ComplianceService {
         });
       } else {
         datos.modalidad = modalidad.valor;
+        elegidos.push(`Modalidad: ${modalidad.nombre}`);
       }
     }
     if (cambiaTipo) {
@@ -387,9 +402,10 @@ export class ComplianceService {
         });
       } else {
         datos.tipoContratacion = tipo.valor;
+        elegidos.push(`Tipo de contratación: ${tipo.nombre}`);
       }
     }
-    return { datos, avisos };
+    return { datos, avisos, elegidos };
   }
 
   private excepcionDeAviso(aviso: Aviso): HttpException {
@@ -674,7 +690,7 @@ export class ComplianceService {
 
     const vigentesDelTipo = await this.prisma.documentoCompliance.findMany({
       where: { expedienteId: id, tipoDocumento: tipo.tipo_documento, vigente: true },
-      select: { id: true, nombreArchivo: true },
+      select: { id: true, nombreArchivo: true, tamanoBytes: true },
     });
     let reemplazado: { id: string; nombreArchivo: string } | undefined;
     if (datos.reemplazaDocumentoId) {
@@ -688,6 +704,13 @@ export class ComplianceService {
       throw new ConflictException(
         `${tipo.nombre} ya tiene un documento. Para subir otro, reemplácelo (reemplazaDocumentoId).`,
       );
+    } else if (
+      vigentesDelTipo.some(
+        (d) => d.nombreArchivo === nombreArchivo.slice(0, 255) && d.tamanoBytes === archivo.size,
+      )
+    ) {
+      // Un reintento tras un corte de red no debe contar el mismo archivo dos veces.
+      throw new ConflictException(`El archivo ${nombreArchivo} ya está cargado en ${tipo.nombre}.`);
     }
 
     const documentoId = randomUUID();
