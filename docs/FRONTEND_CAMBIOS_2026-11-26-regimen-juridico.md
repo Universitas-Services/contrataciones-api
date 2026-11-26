@@ -26,3 +26,17 @@ Aspectos Generales del Pliego, paso 1. Decisión de Edward: el pop-up de las nor
 - [ ] Generar el Pliego: salen solo las 2 marcadas, en el orden de la documentación, y después las adicionales.
 - [ ] Agregar una adicional y guardar: aparece en `GET /entes/:enteId/normativa`.
 - [ ] En otro expediente del mismo ente: la adicional aparece para elegirla.
+
+## Porcentajes en el borrador (tu punto 4)
+
+Hecho como lo pediste. El borrador (`PUT`) ya no aplica los rangos legales a estos 3 campos. Solo exige que el valor sea un porcentaje válido, de 0 a 100:
+
+| Campo                             | Módulo              | Rango legal, solo en `completar` |
+| --------------------------------- | ------------------- | -------------------------------- |
+| `porcentajeFielCumplimiento`      | Aspectos Generales  | 20 a 100                         |
+| `porcentajeResponsabilidadSocial` | Aspectos Generales  | 0 a 3                            |
+| `porcentajeGarantiaLaboral`       | Actividades Previas | 0 a 10                           |
+
+- Un 0,21 a medio escribir ya no bloquea el borrador ni la navegación.
+- Al completar, el error llega en `errores`, por ejemplo: «El porcentaje de fiel cumplimiento debe estar entre 20 y 100.»
+- Los decimales del campo («21» que queda «0,21») se corrigen de tu lado.

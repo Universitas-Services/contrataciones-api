@@ -86,8 +86,9 @@ export class AspectosGeneralesDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
-  @Min(0, { message: 'El porcentaje de CRS no puede ser menor a 0' })
-  @Max(3, { message: 'El porcentaje de CRS no puede superar 3 (Art. 31 LCP)' })
+  // El borrador acepta de 0 a 100: el rango legal se valida al completar (QA 26/11).
+  @Min(0, { message: 'El porcentaje de CRS debe estar entre 0 y 100' })
+  @Max(100, { message: 'El porcentaje de CRS debe estar entre 0 y 100' })
   porcentajeResponsabilidadSocial?: number;
 
   @ApiPropertyOptional()
@@ -119,8 +120,9 @@ export class AspectosGeneralesDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
-  @Min(20, { message: 'El porcentaje de fiel cumplimiento no puede ser menor a 20 (Art. 123 LCP)' })
-  @Max(100, { message: 'El porcentaje de fiel cumplimiento no puede superar 100' })
+  // El borrador acepta de 0 a 100: el rango legal se valida al completar (QA 26/11).
+  @Min(0, { message: 'El porcentaje de fiel cumplimiento debe estar entre 0 y 100' })
+  @Max(100, { message: 'El porcentaje de fiel cumplimiento debe estar entre 0 y 100' })
   porcentajeFielCumplimiento?: number;
 
   @ApiPropertyOptional()
