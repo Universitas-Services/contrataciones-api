@@ -287,7 +287,10 @@ describe('Documentos desactualizados', () => {
       },
       dictamenAdjudicacion: { upsert: jest.fn().mockResolvedValue({}) },
     };
-    const servicio = new GestionAdjudicacionService(prisma as never);
+    const servicio = new GestionAdjudicacionService(
+      prisma as never,
+      { sincronizarEstatus: jest.fn() } as never,
+    );
     const user = { id: 'u', enteId: 'e', rol: 'EJECUTOR' } as never;
     await servicio.upsertDictamenNoAdjudicado('x', 'ev', { causaNoAdjudicadoAuAu: 'Precio' }, user);
     expect(prisma.documentoGenerado.updateMany).not.toHaveBeenCalled();

@@ -336,6 +336,9 @@ export class EntesService {
 
     if (updateDto.password) {
       dataToUpdate.passwordHash = await bcrypt.hash(updateDto.password, 10);
+      // La pone el admin: el usuario debe cambiarla al entrar, como en change-user-password.
+      dataToUpdate.cambioPasswordDefault = true;
+      dataToUpdate.passwordPerdido = true;
       delete (dataToUpdate as any).password;
     }
 

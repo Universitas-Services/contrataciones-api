@@ -298,6 +298,7 @@ describe('DecaimientoService: notificaciones de cierre', () => {
       cargarExpediente: jest.fn().mockResolvedValue({ selladoFase4At: null }),
       assertNoSellado: jest.fn(),
       getEstado: jest.fn().mockResolvedValue({ oferentes: [] }),
+      sincronizarEstatus: jest.fn(),
     };
     const documentos = { completarPendientes: jest.fn().mockResolvedValue({}) };
     const servicio = new DecaimientoService(prisma as never, fase4 as never, documentos as never);

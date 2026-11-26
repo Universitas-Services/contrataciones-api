@@ -19,10 +19,14 @@ import {
 } from '../../common/utils/documentos-dependientes.util';
 import { huboCambios } from '../../fase1/invalidacion-documentos.util';
 import { unirPartidas } from '../../formalizacion-fase4/tokens-contrato.resolver';
+import { FormalizacionFase4Service } from '../../formalizacion-fase4/formalizacion-fase4.service';
 
 @Injectable()
 export class GestionAdjudicacionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly fase4: FormalizacionFase4Service,
+  ) {}
 
   private async cargarExpediente(expedienteId: string, user: UsuarioActual) {
     const expediente = await this.prisma.expedienteContratacion.findFirst({
@@ -294,6 +298,7 @@ export class GestionAdjudicacionService {
       expediente.dictamenesAdjudicacion.find((d) => d.evaluacionId === evaluacionId),
       data,
     );
+    await this.fase4.sincronizarEstatus(expedienteId, user);
     return dictamen;
   }
 
@@ -351,6 +356,7 @@ export class GestionAdjudicacionService {
       expediente.dictamenesAdjudicacion.find((d) => d.evaluacionId === evaluacionId),
       data,
     );
+    await this.fase4.sincronizarEstatus(expedienteId, user);
     return dictamen;
   }
 
@@ -445,6 +451,7 @@ export class GestionAdjudicacionService {
       expediente.dictamenesAdjudicacion.find((d) => d.evaluacionId === evaluacionId),
       data,
     );
+    await this.fase4.sincronizarEstatus(expedienteId, user);
     return dictamen;
   }
 }

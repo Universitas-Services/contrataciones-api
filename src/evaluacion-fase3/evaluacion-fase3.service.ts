@@ -4,6 +4,7 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import type { EstatusProceso } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { CreateEvaluacionDto } from './dto/create-evaluacion.dto';
 import { UpdateSobre1Dto } from './dto/update-sobre1.dto';
@@ -16,6 +17,14 @@ import {
   marcarDesactualizados,
 } from '../common/utils/documentos-dependientes.util';
 import { huboCambios } from '../fase1/invalidacion-documentos.util';
+
+/** Solo estos pasan a EN_EVALUACION al evaluar; uno adjudicado, desierto o anulado se queda. */
+const ANTES_DE_EVALUAR: EstatusProceso[] = [
+  'BORRADOR',
+  'EN_PREPARACION',
+  'PUBLICADO',
+  'EN_EVALUACION',
+];
 
 @Injectable()
 export class EvaluacionFase3Service {
@@ -150,8 +159,8 @@ export class EvaluacionFase3Service {
     });
 
     // Actualizar estado del expediente a EN_EVALUACION
-    await this.prisma.expedienteContratacion.update({
-      where: { id: oferta.expedienteId },
+    await this.prisma.expedienteContratacion.updateMany({
+      where: { id: oferta.expedienteId, estatusProceso: { in: ANTES_DE_EVALUAR } },
       data: { estatusProceso: 'EN_EVALUACION', updatedBy: userId },
     });
 
@@ -380,8 +389,8 @@ export class EvaluacionFase3Service {
     await this.invalidarDocumentos(evaluacion.oferta.expedienteId);
 
     // Actualizar estado del expediente a EN_EVALUACION
-    await this.prisma.expedienteContratacion.update({
-      where: { id: evaluacion.oferta.expedienteId },
+    await this.prisma.expedienteContratacion.updateMany({
+      where: { id: evaluacion.oferta.expedienteId, estatusProceso: { in: ANTES_DE_EVALUAR } },
       data: { estatusProceso: 'EN_EVALUACION', updatedBy: userId },
     });
 
@@ -478,8 +487,8 @@ export class EvaluacionFase3Service {
     await this.invalidarDocumentos(evaluacion.oferta.expedienteId);
 
     // Actualizar estado del expediente a EN_EVALUACION
-    await this.prisma.expedienteContratacion.update({
-      where: { id: evaluacion.oferta.expedienteId },
+    await this.prisma.expedienteContratacion.updateMany({
+      where: { id: evaluacion.oferta.expedienteId, estatusProceso: { in: ANTES_DE_EVALUAR } },
       data: { estatusProceso: 'EN_EVALUACION', updatedBy: userId },
     });
 
