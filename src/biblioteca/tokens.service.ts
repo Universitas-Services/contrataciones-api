@@ -52,6 +52,8 @@ export class TokensService {
         descripcion: t.descripcion,
         disponibleDesde: t.disponibleDesde,
         fuente: t.fuente,
+        /** Bloque de garantías: en los documentos vale un párrafo entero. */
+        bloque: t.bloque === true,
       })),
       meta: { total: TOKENS_CONTRATO.length },
     };

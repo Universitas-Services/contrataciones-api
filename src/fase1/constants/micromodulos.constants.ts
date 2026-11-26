@@ -86,6 +86,7 @@ const ASPECTOS_GENERALES_CAMPOS = [
   'diasValidezOferta',
   'autoridadAclaratorias',
   'normativaLegal',
+  'normativasGeneralesIds',
   'diasVigenciaGarantiaExtension',
   'monedaDiferente',
   'nomMonedaExtranjera',

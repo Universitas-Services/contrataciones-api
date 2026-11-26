@@ -6,6 +6,8 @@ export interface ContextoValidacion {
   tipoContratacion: string;
   /** Cantidad de ítems de presupuesto vigentes. */
   totalItemsPresupuesto: number;
+  /** Ids de la normativa general activa, para validar la selección del pliego. */
+  idsNormativaGeneral?: ReadonlySet<string>;
 }
 
 type Datos = Record<string, any>;
@@ -188,13 +190,23 @@ function validarLlamado(datos: Datos): string[] {
 // ---------------------------------------------------------------------------
 // Aspectos Generales del Pliego
 // ---------------------------------------------------------------------------
-function validarAspectosGenerales(datos: Datos): string[] {
+function validarAspectosGenerales(datos: Datos, ctx?: ContextoValidacion): string[] {
   const e: string[] = [];
 
   // Paso 1 — Régimen legal
   requerir(e, datos, 'datosActoAutorizacionInicio', 'Los datos del acto de autorización de inicio');
   requerir(e, datos, 'autoridadAclaratorias', 'La autoridad que atiende aclaratorias');
-  // Las normativas generales van completas al pliego; las adicionales son opcionales.
+  // El usuario elige qué normativas generales van al pliego (al menos una);
+  // las adicionales son opcionales.
+  const elegidas: unknown[] = Array.isArray(datos.normativasGeneralesIds)
+    ? (datos.normativasGeneralesIds as unknown[])
+    : [];
+  const vigentes = ctx?.idsNormativaGeneral
+    ? elegidas.filter((id) => typeof id === 'string' && ctx.idsNormativaGeneral!.has(id))
+    : elegidas;
+  if (vigentes.length === 0) {
+    e.push('Debe seleccionar al menos una normativa general del Régimen Jurídico.');
+  }
 
   // Paso 2 — Condiciones de oferta
   const dias = Number(datos.diasValidezOferta);
@@ -570,7 +582,7 @@ export function validarCompletar(
     case 'llamado':
       return validarLlamado(datos);
     case 'aspectos-generales':
-      return validarAspectosGenerales(datos);
+      return validarAspectosGenerales(datos, ctx);
     case 'modelo-contrato':
       return validarModeloContrato(datos);
     case 'calificacion-legal':

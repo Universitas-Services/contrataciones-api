@@ -13,7 +13,12 @@ import { alcanceDe, partidasDe } from './alcance-oferente.util';
 import { GuardarContratoDto } from './dto/contrato.dto';
 import { prelacionEfectiva } from '../evaluacion-fase3/gestion-adjudicacion/prelacion.util';
 import { compararPrelacion } from './prelacion-fase4.util';
-import { type CondicionesBloques, expandirBloques } from './bloques-contrato';
+import {
+  type CondicionesBloques,
+  SELECT_CONDICIONES,
+  condicionesDe,
+  expandirBloques,
+} from './bloques-contrato';
 import { fechaLarga, resolverTokens, unirPartidas } from './tokens-contrato.resolver';
 import { DocumentosFase4Service } from './documentos-fase4.service';
 import { renderizarPildoras } from './pildoras.util';
@@ -682,21 +687,9 @@ export class FormalizacionFase4Service {
   private async condicionesBloques(expedienteId: string): Promise<CondicionesBloques> {
     const fase = await this.prisma.fasePreparatoria.findUnique({
       where: { expedienteId },
-      select: {
-        retencionFielCumplimiento: true,
-        anticipoContrato: true,
-        requiereGarantiaLaboral: true,
-        retencionFianzaLaboral: true,
-        polizaResponsabilidadCivil: true,
-      },
+      select: SELECT_CONDICIONES,
     });
-    return {
-      retencionFielCumplimiento: fase?.retencionFielCumplimiento === true,
-      anticipoContrato: fase?.anticipoContrato === true,
-      requiereGarantiaLaboral: fase?.requiereGarantiaLaboral === true,
-      retencionFianzaLaboral: fase?.retencionFianzaLaboral === true,
-      polizaResponsabilidadCivil: fase?.polizaResponsabilidadCivil === true,
-    };
+    return condicionesDe(fase);
   }
 
   /**

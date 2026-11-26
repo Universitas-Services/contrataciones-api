@@ -457,10 +457,17 @@ export class GeneradorDocumentosService {
     };
   }
 
-  /** Normativa global activa, en el orden de la documentación: va completa al pliego. */
-  private async normativasGenerales(): Promise<string[]> {
+  /**
+   * Normativa general del pliego, en el orden de la documentación: solo la que
+   * eligió el usuario. Un expediente anterior a la selección (null) lleva toda
+   * la activa, como antes.
+   */
+  private async normativasGenerales(elegidas: unknown): Promise<string[]> {
+    const ids = Array.isArray(elegidas)
+      ? elegidas.filter((id): id is string => typeof id === 'string')
+      : null;
     const normativas = await this.prisma.normativaGlobal.findMany({
-      where: { deletedAt: null, indActivo: true },
+      where: { deletedAt: null, indActivo: true, ...(ids && { id: { in: ids } }) },
       orderBy: [{ orden: { sort: 'asc', nulls: 'last' } }, { fecCreacion: 'asc' }],
       select: { textoNormativaCompleto: true },
     });
@@ -493,7 +500,10 @@ export class GeneradorDocumentosService {
 
     await this.assertPliegoReady(expedienteId, expediente.fasePreparatoria);
 
-    return mapDatosPliegoCondiciones(expediente, await this.normativasGenerales());
+    return mapDatosPliegoCondiciones(
+      expediente,
+      await this.normativasGenerales(expediente.fasePreparatoria.normativasGeneralesIds),
+    );
   }
 
   /** Gate alineado a fase1.service: 8 micromódulos + especificaciones + >=1 ítem. */

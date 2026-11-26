@@ -38,6 +38,8 @@ export interface TokenContrato {
    * corchete crudo por una palabra de diferencia.
    */
   alias?: string[];
+  /** Bloque de garantías: vale un párrafo entero, no un dato. */
+  bloque?: boolean;
 }
 
 export const TOKENS_CONTRATO: TokenContrato[] = [
@@ -381,6 +383,43 @@ export const TOKENS_CONTRATO: TokenContrato[] = [
     descripcion: 'Monto de la fianza laboral, en letras',
     disponibleDesde: 'ADJUDICACION',
     fuente: 'mano de obra ofertada × porcentaje_garantia_laboral_au_au',
+  },
+
+  // ─── Bloques de garantías (tarjeta 8 de la Fase 1) ───────────────────────
+  // No valen un dato sino un párrafo legal, que va o no según lo marcado en la
+  // tarjeta 8. En el editor se ven con su título; en el Pliego y en el
+  // contrato se convierten en el párrafo. Ver `bloques-contrato.ts`.
+  {
+    id: 'retencion_fiel_cumplimiento_au_au',
+    etiqueta: 'RETENCIÓN DE FIEL CUMPLIMIENTO',
+    descripcion: 'Bloque: alternativa de retención del 10% a la fianza de fiel cumplimiento',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'tb_fase_preparatoria.retencion_fiel_cumplimiento_au_au',
+    bloque: true,
+  },
+  {
+    id: 'modelo_anticipo_contrato_au_au',
+    etiqueta: 'GARANTÍA DE ANTICIPO',
+    descripcion: 'Bloque: párrafo de la garantía de anticipo',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'tb_fase_preparatoria.anticipo_contrato_au_au',
+    bloque: true,
+  },
+  {
+    id: 'modelo_garantia_laboral_au_au',
+    etiqueta: 'GARANTÍA LABORAL',
+    descripcion: 'Bloque: párrafo de la garantía laboral, con su retención si aplica',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'tb_fase_preparatoria.requiere_garantia_laboral_au_au',
+    bloque: true,
+  },
+  {
+    id: 'modelo_poliza_responsabilidad_civil_au_au',
+    etiqueta: 'PÓLIZA DE RESPONSABILIDAD CIVIL',
+    descripcion: 'Bloque: párrafo de la póliza de responsabilidad civil',
+    disponibleDesde: 'EXPEDIENTE',
+    fuente: 'tb_fase_preparatoria.poliza_responsabilidad_civil_au_au',
+    bloque: true,
   },
 ];
 
