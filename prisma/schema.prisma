@@ -420,6 +420,8 @@ model FasePreparatoria {
   diasValidezOferta                  Int?      @map("dias_validez_oferta")
   autoridadAclaratorias              String?   @map("autoridad_aclaratorias") @db.VarChar(255)
   normativaLegal                     String?   @map("normativa_legal")
+  /// Ids de tb_normativa_global elegidos para el pliego. Null = expediente anterior: van todas.
+  normativasGeneralesIds             Json?     @map("normativas_generales_ids")
   diasVigenciaGarantiaExtension      Int?      @map("dias_vigencia_garantia_ext")
   objetivosEspecificos1              String?   @map("objetivos_especificos_1")
   objetivosEspecificos2              String?   @map("objetivos_especificos_2")

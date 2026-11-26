@@ -33,6 +33,19 @@ export class AspectosGeneralesDto {
   @IsString({ each: true })
   normativaLegal?: string[];
 
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'Ids de la normativa general (GET /biblioteca/normativa-global) elegidos para el pliego, ' +
+      'en cualquier orden: el pliego las imprime en el orden de la documentación. ' +
+      'Para completar el módulo hace falta al menos una.',
+    example: ['3f0c6a1e-…'],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  normativasGeneralesIds?: string[];
+
   // --- Paso 2: Condiciones de oferta ---
   @ApiPropertyOptional({ example: 30 })
   @IsOptional()

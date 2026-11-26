@@ -12,6 +12,8 @@ import {
 } from './invalidacion-documentos.util';
 import { renderizarPildoras } from '../formalizacion-fase4/pildoras.util';
 import { resolverTokensFase1 } from '../formalizacion-fase4/tokens-contrato.resolver';
+import { normativasAdicionales } from '../generador-documentos/mappers/pliego-condiciones.mapper';
+import { normalizarEtiqueta } from '../biblioteca/constants/tokens-contrato.constants';
 import {
   SELECT_CONDICIONES,
   condicionesDe,
@@ -134,6 +136,12 @@ export class Fase1Service {
       if (campo === 'normativaLegal' && Array.isArray(valor)) {
         valor = valor.length > 0 ? JSON.stringify(valor) : null;
       }
+      // Las normativas generales elegidas: ids sin repetir. Null las borra.
+      if (campo === 'normativasGeneralesIds') {
+        valor = Array.isArray(valor)
+          ? [...new Set(valor.filter((id): id is string => typeof id === 'string' && !!id))]
+          : Prisma.DbNull;
+      }
       if (campo === 'fecEstudioMercado' && valor) {
         valor = new Date(valor);
       }
@@ -152,10 +160,15 @@ export class Fase1Service {
     const totalItemsPresupuesto = await this.prisma.presupuestoItem.count({
       where: { expedienteId, deletedAt: null },
     });
+    const normativaGeneral = await this.prisma.normativaGlobal.findMany({
+      where: { deletedAt: null, indActivo: true },
+      select: { id: true },
+    });
 
     return {
       tipoContratacion: expediente?.modalidad?.tipoContratacion ?? '',
       totalItemsPresupuesto,
+      idsNormativaGeneral: new Set(normativaGeneral.map((n) => n.id)),
     };
   }
 
@@ -285,12 +298,58 @@ export class Fase1Service {
     ) {
       await this.invalidarDocumentos(expedienteId, config.key);
     }
+    if (config.key === 'aspectos-generales') {
+      await this.registrarNormativasEnte(expedienteId, fase.normativaLegal, user);
+    }
 
     return {
       modulo: config.key,
       estado: (fase as Record<string, any>)[config.estadoField] as EstadoMicromodulo,
       datos: this.extraerDatos(fase as Record<string, any>, config.key),
     };
+  }
+
+  /**
+   * Las normativas adicionales del Régimen Jurídico quedan en la biblioteca del
+   * ente, para reutilizarlas en sus próximos procedimientos (QA 26/11). Se
+   * registran siempre, sea cual sea el rol, y sin repetir las que ya tiene.
+   */
+  private async registrarNormativasEnte(
+    expedienteId: string,
+    normativaLegal: string | null,
+    user: UsuarioActual,
+  ) {
+    const textos = normativasAdicionales(normativaLegal).map((t) => t.replace(/\s+/g, ' '));
+    if (textos.length === 0) return;
+
+    const expediente = await this.prisma.expedienteContratacion.findUnique({
+      where: { id: expedienteId },
+      select: { enteId: true },
+    });
+    if (!expediente?.enteId) return;
+
+    const existentes = await this.prisma.normativaEnte.findMany({
+      where: { enteId: expediente.enteId, deletedAt: null },
+      select: { textoNormativaCompleto: true },
+    });
+    const vistas = new Set(existentes.map((n) => claveNormativa(n.textoNormativaCompleto)));
+    const nuevas: string[] = [];
+    for (const texto of textos) {
+      const clave = claveNormativa(texto);
+      if (vistas.has(clave)) continue;
+      vistas.add(clave);
+      nuevas.push(texto);
+    }
+    if (nuevas.length === 0) return;
+
+    await this.prisma.normativaEnte.createMany({
+      data: nuevas.map((texto) => ({
+        enteId: expediente.enteId,
+        textoNormativaCompleto: texto,
+        createdBy: user.id,
+        updatedBy: user.id,
+      })),
+    });
   }
 
   private async estadoDe(expedienteId: string, estadoField: string): Promise<EstadoMicromodulo> {
@@ -367,6 +426,9 @@ export class Fase1Service {
       )
     ) {
       await this.invalidarDocumentos(expedienteId, config.key);
+    }
+    if (config.key === 'aspectos-generales') {
+      await this.registrarNormativasEnte(expedienteId, fase.normativaLegal, user);
     }
     await this.recalcularPhaseComplete(expedienteId);
 
@@ -527,4 +589,9 @@ export class Fase1Service {
     await this.getOrCreateFase(expedienteId, user.id);
     return this.calcularProgreso(expedienteId);
   }
+}
+
+/** Para comparar normativas sin que cuenten mayúsculas, acentos ni espacios. */
+function claveNormativa(texto: string): string {
+  return normalizarEtiqueta(texto).replace(/[.\s]+$/, '');
 }

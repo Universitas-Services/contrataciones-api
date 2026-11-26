@@ -117,7 +117,12 @@ describe('QA 5 y 9 — validaciones que ya no aplican', () => {
   });
 
   it('las normativas adicionales son opcionales', () => {
-    const errores = validarCompletar('aspectos-generales', { normativaLegal: [] }, ctx);
+    // Las generales sí se eligen (QA 26/11); las adicionales siguen siendo opcionales.
+    const errores = validarCompletar(
+      'aspectos-generales',
+      { normativaLegal: [], normativasGeneralesIds: ['g1'] },
+      ctx,
+    );
     expect(errores.join(' ')).not.toMatch(/normativa/i);
   });
 });
