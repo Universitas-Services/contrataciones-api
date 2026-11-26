@@ -2,6 +2,7 @@ import { formatToDDMMYYYY, formatCurrencyVE } from '../../common/utils/date-form
 import { textosRecaudosConSustituto } from './recaudos-legales.textos';
 import { renderizarPildoras } from '../../formalizacion-fase4/pildoras.util';
 import { resolverTokensFase1 } from '../../formalizacion-fase4/tokens-contrato.resolver';
+import { condicionesDe, expandirBloques } from '../../formalizacion-fase4/bloques-contrato';
 import { ordinalClausula } from '../../formalizacion-fase4/documentos-fase4.mapper';
 
 export function stripHtml(html: string | null | undefined): string {
@@ -259,8 +260,10 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
   const modelo = asRecord(f.modeloContratoData);
   const clauses = Array.isArray(modelo.clauses) ? modelo.clauses : [];
   // Las marcas {…} y las píldoras salen con el dato de Fase 1; lo que aún no
-  // existe (contratista, monto) queda como línea para llenar a mano.
+  // existe (contratista, monto) queda como línea para llenar a mano. Los bloques
+  // de garantías se convierten antes en su párrafo, o desaparecen, según la tarjeta 8.
   const valoresFase1 = resolverTokensFase1(e);
+  const bloques = condicionesDe(f);
   const clausulasCustom = clauses.map((clRaw: unknown, idx: number) => {
     const cl = asRecord(clRaw);
     const cuerpoHtml = typeof cl.cuerpoHtml === 'string' ? cl.cuerpoHtml : undefined;
@@ -269,7 +272,9 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
       num_clausula_custom_au_au: numeroClausula(cl.order, idx),
       titulo_clausula_custom_au_au: titulo ? titulo.toLocaleUpperCase('es') : '___',
       cuerpo_clausula_custom_au_au: stripHtml(
-        cuerpoHtml ? renderizarPildoras(cuerpoHtml, valoresFase1, 'VALOR') : cuerpoHtml,
+        cuerpoHtml
+          ? renderizarPildoras(expandirBloques(cuerpoHtml, bloques), valoresFase1, 'VALOR')
+          : cuerpoHtml,
       ),
     };
   });

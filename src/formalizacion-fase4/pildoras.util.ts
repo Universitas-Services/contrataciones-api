@@ -68,6 +68,11 @@ const LLAVES_A_TOKEN: Record<string, string> = {
   monto_responsabilidad_civil_bs_au_au: 'monto_responsabilidad_civil_bs_au_au',
   modalidad_crs_au_au: 'modalidad_crs_au_au',
   unidad_resp_cumplimiento_crs_au_au: 'unidad_resp_cumplimiento_crs_au_au',
+  // Bloques de garantías: la marca y la píldora comparten el id.
+  retencion_fiel_cumplimiento_au_au: 'retencion_fiel_cumplimiento_au_au',
+  modelo_anticipo_contrato_au_au: 'modelo_anticipo_contrato_au_au',
+  modelo_garantia_laboral_au_au: 'modelo_garantia_laboral_au_au',
+  modelo_poliza_responsabilidad_civil_au_au: 'modelo_poliza_responsabilidad_civil_au_au',
 };
 
 /** Una marca con llaves y el `%` que algunas cláusulas escriben después. */
@@ -128,6 +133,21 @@ export function pildorasAMarcas(html: string): string {
     const token = TOKENS_POR_ID.get(tokenId);
     return token ? `[${token.etiqueta}]` : completo;
   });
+}
+
+/**
+ * Reemplaza las píldoras cuyo id esté en `ids` por lo que devuelva `fn`. Las
+ * demás quedan intactas. Se identifica solo por `data-token-id`: el editor
+ * puede reordenar o perder los otros atributos.
+ */
+export function reemplazarPildoras(
+  html: string,
+  ids: ReadonlySet<string>,
+  fn: (tokenId: string) => string,
+): string {
+  return html.replace(RE_PILDORA, (completo, _atributos: string, tokenId: string) =>
+    ids.has(tokenId) ? fn(tokenId) : completo,
+  );
 }
 
 /** Quita etiquetas HTML de un fragmento, para obtener su texto. */

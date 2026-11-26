@@ -12,6 +12,11 @@ import {
 } from './invalidacion-documentos.util';
 import { renderizarPildoras } from '../formalizacion-fase4/pildoras.util';
 import { resolverTokensFase1 } from '../formalizacion-fase4/tokens-contrato.resolver';
+import {
+  SELECT_CONDICIONES,
+  condicionesDe,
+  titulosBloques,
+} from '../formalizacion-fase4/bloques-contrato';
 import { marcarDesactualizados } from '../common/utils/documentos-dependientes.util';
 
 export type { UsuarioActual } from '../common/types/usuario-actual.type';
@@ -177,7 +182,10 @@ export class Fase1Service {
   // Modelo de contrato: marcas con el dato del expediente
   // ---------------------------------------------------------------------------
 
-  /** Valor de cada variable que ya existe en la Fase 1. */
+  /**
+   * Valor de cada variable que ya existe en la Fase 1. Los bloques de garantías
+   * llevan su título, o «No aplica: …», según la tarjeta 8.
+   */
   private async valoresFase1(expedienteId: string) {
     const expediente = await this.prisma.expedienteContratacion.findUnique({
       where: { id: expedienteId },
@@ -198,11 +206,16 @@ export class Fase1Service {
             montoResponsabilidadCivilBs: true,
             modalidadCrs: true,
             unidadRespCumplimientoCrs: true,
+            ...SELECT_CONDICIONES,
           },
         },
       },
     });
-    return expediente ? resolverTokensFase1(expediente) : {};
+    if (!expediente) return {};
+    return {
+      ...resolverTokensFase1(expediente),
+      ...titulosBloques(condicionesDe(expediente.fasePreparatoria)),
+    };
   }
 
   /**
