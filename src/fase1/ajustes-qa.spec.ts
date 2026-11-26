@@ -54,24 +54,25 @@ describe('QA 3 — justificaciones de hasta 4000 caracteres', () => {
 });
 
 describe('QA 4 — porcentajes con límites legales', () => {
-  it('garantía laboral de 0 a 10 en el DTO', async () => {
-    expect(await erroresDe(ActividadesPreviasDto, { porcentajeGarantiaLaboral: 10 })).toEqual([]);
-    expect(await erroresDe(ActividadesPreviasDto, { porcentajeGarantiaLaboral: 11 })).toEqual([
-      'porcentajeGarantiaLaboral',
-    ]);
-  });
-
-  it('CRS de 0 a 3 y fiel cumplimiento de 20 a 100 en el DTO', async () => {
-    expect(
-      await erroresDe(AspectosGeneralesDto, {
-        porcentajeResponsabilidadSocial: 3,
-        porcentajeFielCumplimiento: 20,
-      }),
-    ).toEqual([]);
+  // Desde QA 26/11 el borrador solo exige de 0 a 100: el rango legal va al completar.
+  it('el DTO del borrador acepta valores fuera del rango legal', async () => {
+    expect(await erroresDe(ActividadesPreviasDto, { porcentajeGarantiaLaboral: 11 })).toEqual([]);
     expect(
       await erroresDe(AspectosGeneralesDto, {
         porcentajeResponsabilidadSocial: 4,
         porcentajeFielCumplimiento: 19,
+      }),
+    ).toEqual([]);
+  });
+
+  it('el DTO del borrador rechaza lo que no cabe como porcentaje', async () => {
+    expect(await erroresDe(ActividadesPreviasDto, { porcentajeGarantiaLaboral: 101 })).toEqual([
+      'porcentajeGarantiaLaboral',
+    ]);
+    expect(
+      await erroresDe(AspectosGeneralesDto, {
+        porcentajeResponsabilidadSocial: -1,
+        porcentajeFielCumplimiento: 101,
       }),
     ).toEqual(['porcentajeResponsabilidadSocial', 'porcentajeFielCumplimiento']);
   });

@@ -174,8 +174,9 @@ export class ActividadesPreviasDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
-  @Min(0, { message: 'El porcentaje de garantía laboral no puede ser menor a 0' })
-  @Max(10, { message: 'El porcentaje de garantía laboral no puede superar 10 (Art. 124 LCP)' })
+  // El borrador acepta de 0 a 100: el rango legal se valida al completar (QA 26/11).
+  @Min(0, { message: 'El porcentaje de garantía laboral debe estar entre 0 y 100' })
+  @Max(100, { message: 'El porcentaje de garantía laboral debe estar entre 0 y 100' })
   porcentajeGarantiaLaboral?: number;
 
   @ApiPropertyOptional()
