@@ -363,7 +363,9 @@ export class AuthService {
         passwordHash: newPasswordHash,
         resetPasswordToken: null,
         resetPasswordExpires: null,
+        // La eligió el propio usuario: ya no hay contraseña temporal que cambiar.
         cambioPasswordDefault: true,
+        passwordPerdido: false,
       },
     });
 

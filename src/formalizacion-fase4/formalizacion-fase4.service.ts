@@ -4,7 +4,9 @@ import {
   ForbiddenException,
   ConflictException,
   BadRequestException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
+import type { EstatusProceso } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import type { UsuarioActual } from '../common/types/usuario-actual.type';
 import { alcanceDe, partidasDe } from './alcance-oferente.util';
@@ -21,6 +23,13 @@ import type {
   EstatusOferenteFase4,
   OferenteFase4,
 } from './types/fase4.types';
+
+/** Estatus que la adjudicación puede mover. Los demás (anulado, desierto…) no se tocan. */
+const ESTATUS_POR_ADJUDICACION = new Set<EstatusProceso>([
+  'EN_EVALUACION',
+  'ADJUDICADO',
+  'CONTRATADO',
+]);
 
 /** Número decimal o null, sin arrastrar el `Decimal` de Prisma a la respuesta. */
 function num(valor: unknown): number | null {
@@ -113,6 +122,38 @@ export class FormalizacionFase4Service {
       },
       orderBy: { numeroCiclo: 'asc' },
     });
+  }
+
+  /**
+   * Pone el estatus del expediente según la adjudicación: ADJUDICADO si hay adjudicados
+   * (o un decaimiento en curso), CONTRATADO si todos tienen su contrato generado, y
+   * EN_EVALUACION si ya no queda ninguno. No toca un expediente sellado, desierto o anulado.
+   */
+  async sincronizarEstatus(expedienteId: string, user: UsuarioActual) {
+    const expediente = await this.cargarExpediente(expedienteId, user);
+    if (expediente.selladoFase4At || !ESTATUS_POR_ADJUDICACION.has(expediente.estatusProceso)) {
+      return;
+    }
+    const estado = await this.getEstado(expedienteId, user);
+    // Sin dictamen de la Fase 3 no es el flujo nuevo: se deja como está.
+    if (!estado.gates.faseHabilitada) return;
+
+    const adjudicados = estado.oferentes.filter((o) => o.estatus === 'ADJUDICADO');
+    let estatus: EstatusProceso;
+    if (estado.cicloActivo) estatus = 'ADJUDICADO';
+    else if (!adjudicados.length) estatus = 'EN_EVALUACION';
+    else if (
+      adjudicados.every((o) => o.contrato?.estado === 'GENERADO' && o.contrato.documentoId)
+    ) {
+      estatus = 'CONTRATADO';
+    } else estatus = 'ADJUDICADO';
+
+    if (estatus !== expediente.estatusProceso) {
+      await this.prisma.expedienteContratacion.update({
+        where: { id: expedienteId },
+        data: { estatusProceso: estatus, updatedBy: user.id },
+      });
+    }
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -526,7 +567,7 @@ export class FormalizacionFase4Service {
       update: datos,
     });
 
-    await this.documentos.emitirContrato({
+    const documentoId = await this.documentos.emitirContrato({
       contratoId: contrato.id,
       expedienteId,
       evaluacionId,
@@ -537,6 +578,14 @@ export class FormalizacionFase4Service {
       fechaFirma: await this.fechaFirma(expedienteId, evaluacionId, datos.generadoAt),
       userId: user.id,
     });
+    await this.sincronizarEstatus(expedienteId, user);
+
+    // El contrato queda guardado; sin el Word el usuario debe saberlo para reintentar.
+    if (!documentoId) {
+      throw new ServiceUnavailableException(
+        'El contrato se guardó, pero no se pudo generar el documento. Intente generarlo de nuevo.',
+      );
+    }
 
     return this.getContrato(expedienteId, evaluacionId, user);
   }
@@ -582,6 +631,7 @@ export class FormalizacionFase4Service {
       else contratosPendientes += 1;
     }
 
+    if (contratosGenerados) await this.sincronizarEstatus(expedienteId, user);
     return { ...ciclo, contratosGenerados, contratosPendientes };
   }
 

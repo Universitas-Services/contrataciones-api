@@ -55,6 +55,8 @@ async function main() {
   await prisma.contratoFormalizado.deleteMany();
   await prisma.adjudicacion.deleteMany();
   // Sobre2 y Sobre1 se eliminan en cascada con EvaluacionResultados
+  // El decaimiento apunta a evaluacionResultados: se borra antes.
+  await prisma.decaimientoFase4.deleteMany();
   await prisma.evaluacionResultados.deleteMany();
   await prisma.ofertaPresentada.deleteMany();
   await prisma.adquirentePliego.deleteMany();
@@ -201,6 +203,21 @@ async function main() {
       apellido: 'Pérez',
       rol: RolUsuario.EJECUTOR,
       activo: true,
+      // Ya cambiada: así las pruebas E2E no se topan con la pantalla de contraseña temporal.
+      cambioPasswordDefault: true,
+    },
+  });
+
+  await prisma.usuario.create({
+    data: {
+      enteId: enteMiranda.id,
+      email: 'visualizador@miranda.gob.ve',
+      passwordHash: await bcrypt.hash('miranda123', 10),
+      nombre: 'Laura',
+      apellido: 'Gómez',
+      rol: RolUsuario.VISUALIZADOR,
+      activo: true,
+      cambioPasswordDefault: true,
     },
   });
 

@@ -118,6 +118,7 @@ export class DecaimientoService {
       },
     });
 
+    await this.fase4.sincronizarEstatus(expedienteId, user);
     return this.fase4.getEstado(expedienteId, user);
   }
 
@@ -138,6 +139,7 @@ export class DecaimientoService {
       data: { deletedAt: new Date(), updatedBy: user.id },
     });
 
+    await this.fase4.sincronizarEstatus(expedienteId, user);
     return this.fase4.getEstado(expedienteId, user);
   }
 
@@ -521,6 +523,7 @@ export class DecaimientoService {
       await this.desactualizarContratoDe(tx, ciclo.infractorEvaluacionId, user.id);
     });
 
+    await this.fase4.sincronizarEstatus(expedienteId, user);
     return this.fase4.getEstado(expedienteId, user);
   }
 
@@ -594,6 +597,7 @@ export class DecaimientoService {
     // Fuera de la transacción: un fallo del archivo no revierte el paso legal.
     await this.documentos.completarPendientes(expedienteId);
 
+    await this.fase4.sincronizarEstatus(expedienteId, user);
     return this.fase4.getEstado(expedienteId, user);
   }
 
@@ -648,6 +652,7 @@ export class DecaimientoService {
       }
     });
 
+    await this.fase4.sincronizarEstatus(expedienteId, user);
     return this.fase4.getEstado(expedienteId, user);
   }
 

@@ -31,6 +31,8 @@ const ESTATUS_ACTIVOS: EstatusProceso[] = [
   'EN_PREPARACION',
   'PUBLICADO',
   'EN_EVALUACION',
+  // Adjudicado: aún vencen garantías y firma del contrato.
+  'ADJUDICADO',
 ];
 
 @Injectable()
@@ -470,6 +472,7 @@ export class CronogramaEnteService {
       const soloAviso =
         exp.estatusProceso === 'PUBLICADO' ||
         exp.estatusProceso === 'EN_EVALUACION' ||
+        exp.estatusProceso === 'ADJUDICADO' ||
         (!!llamado && llamado <= hoy);
 
       const movimientos = await Promise.all(

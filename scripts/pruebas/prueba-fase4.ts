@@ -188,8 +188,15 @@ async function main() {
   assertBaseLocal();
 
   const prismaService = prisma as unknown as PrismaService;
-  // Sin plantillas todavía: el generador nunca llega a usar correo ni almacenamiento.
-  const generador = new GeneradorDocumentosService(prismaService, {} as never, {} as never);
+  // Almacenamiento falso: no sube nada a Cloudinary. `falla` simula que no se pudo subir.
+  const almacen = { falla: true };
+  const storage = {
+    uploadFile: async (_: Buffer, ruta: string) => {
+      if (almacen.falla) throw new Error('sin conexión');
+      return `local://${ruta}`;
+    },
+  };
+  const generador = new GeneradorDocumentosService(prismaService, {} as never, storage as never);
   const documentos = new DocumentosFase4Service(prismaService, generador);
   const fase4 = new FormalizacionFase4Service(prismaService, documentos);
   const decaimiento = new DecaimientoService(prismaService, fase4, documentos);
@@ -211,6 +218,42 @@ async function main() {
   ok('se puede declarar decaimiento', estado.gates.puedeDeclararDecaimiento);
   ok('no hay contratos bloqueados todavía', !estado.gates.contratosBloqueados);
 
+  // -- 41: estatus del expediente -------------------------------------
+  const estatus = async (id = total.expedienteId) =>
+    (await prisma.expedienteContratacion.findUnique({ where: { id } }))?.estatusProceso;
+  await prisma.expedienteContratacion.update({
+    where: { id: total.expedienteId },
+    data: { estatusProceso: 'EN_EVALUACION' },
+  });
+  await fase4.sincronizarEstatus(total.expedienteId, user);
+  ok(
+    'con el dictamen guardado, el expediente pasa a ADJUDICADO',
+    (await estatus()) === 'ADJUDICADO',
+  );
+
+  await rechaza(
+    '40: si no se genera el Word, el contrato avisa',
+    () =>
+      fase4.generarContrato(
+        total.expedienteId,
+        primero,
+        { clauses: [{ order: 1, titulo: 'OBJETO', cuerpoHtml: '<p>Objeto</p>' }] },
+        user,
+      ),
+    'no se pudo generar el documento',
+  );
+  const sinWord = await fase4.getContrato(total.expedienteId, primero, user);
+  ok('40: el contrato queda guardado como GENERADO', sinWord.estado === 'GENERADO');
+  ok('40: sin Word el expediente sigue ADJUDICADO', (await estatus()) === 'ADJUDICADO');
+  almacen.falla = false;
+  const pendientes = await fase4.regenerarPendientes(total.expedienteId, user);
+  almacen.falla = true;
+  ok('40: regenerar pendientes genera el Word', pendientes.contratosGenerados === 1, pendientes);
+  ok(
+    'con el contrato generado, el expediente pasa a CONTRATADO',
+    (await estatus()) === 'CONTRATADO',
+  );
+
   // -- Orden obligatorio: no se puede saltar al certificado ----------
   await rechaza(
     'sin ciclo abierto, el certificado se rechaza',
@@ -228,10 +271,21 @@ async function main() {
   );
 
   // -- Declarar ------------------------------------------------------
+  await decaimiento.declarar(total.expedienteId, { infractorEvaluacionId: primero }, user);
+  ok(
+    'declarar decaimiento devuelve el expediente a ADJUDICADO',
+    (await estatus()) === 'ADJUDICADO',
+  );
+  await decaimiento.deshacer(total.expedienteId, user);
+  ok('deshacer el decaimiento lo vuelve a CONTRATADO', (await estatus()) === 'CONTRATADO');
+
   estado = await decaimiento.declarar(total.expedienteId, { infractorEvaluacionId: primero }, user);
   ok('el infractor pasa a EN_DECAIMIENTO', estado.oferentes[0].estatus === 'EN_DECAIMIENTO');
   ok('en TOTAL se bloquean todos los contratos', estado.gates.contratosBloqueados);
-  ok('el ciclo activo es el número 1', estado.cicloActivo?.numeroCiclo === 1);
+  ok(
+    'el ciclo activo es el número 2: el deshecho también cuenta',
+    estado.cicloActivo?.numeroCiclo === 2,
+  );
   ok(
     'el backend ya sabe que hay siguiente opción',
     estado.cicloActivo?.existeOpcionSubsiguiente === true,
@@ -465,6 +519,10 @@ async function main() {
   ok('el subsiguiente pasa a ADJUDICADO', nuevo?.estatus === 'ADJUDICADO');
   ok('el nuevo adjudicado asume el monto readjudicado', nuevo?.montoContratoBs === 300000);
   ok('el ciclo pasó al historial', estado.ciclosCerrados.length === 1 && !estado.cicloActivo);
+  ok(
+    'sin contrato del subsiguiente, el expediente queda ADJUDICADO',
+    (await estatus()) === 'ADJUDICADO',
+  );
   ok('los contratos se desbloquean', !estado.gates.contratosBloqueados);
   ok('el switch vuelve a estar disponible', estado.gates.puedeDeclararDecaimiento);
   ok(
@@ -502,6 +560,7 @@ async function main() {
     contrato.tokens.monto_garantia_fiel_cumplimiento_numeros_au_au !== undefined,
   );
 
+  almacen.falla = false;
   const generado = await fase4.generarContrato(
     total.expedienteId,
     segundo,
@@ -509,6 +568,8 @@ async function main() {
     user,
   );
   ok('el contrato queda GENERADO', generado.estado === 'GENERADO');
+  almacen.falla = true;
+  ok('con el contrato del subsiguiente, vuelve a CONTRATADO', (await estatus()) === 'CONTRATADO');
 
   await rechaza(
     'no se genera contrato para un decaído',
@@ -795,6 +856,10 @@ async function main() {
   estado = await decaimiento.desellar(ultimo.expedienteId, user);
   ok('el desellado devuelve el expediente a edición', !estado.sellado);
   ok('el desellado reabre el ciclo que lo cerró', estado.cicloActivo?.numeroCiclo === 1);
+  ok(
+    'el desellado deja el expediente ADJUDICADO',
+    (await estatus(ultimo.expedienteId)) === 'ADJUDICADO',
+  );
 
   // ══════════════════════════════════════════════════════════════════
   console.log('\n▸ Vencimientos con feriados del ente');

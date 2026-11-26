@@ -9,9 +9,10 @@ import { PrelacionService } from './hub/prelacion.service';
 import { GestionAdjudicacionController } from './gestion-adjudicacion/gestion-adjudicacion.controller';
 import { GestionAdjudicacionService } from './gestion-adjudicacion/gestion-adjudicacion.service';
 import { PrismaModule } from '../database/prisma.module';
+import { FormalizacionFase4Module } from '../formalizacion-fase4/formalizacion-fase4.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, FormalizacionFase4Module],
   controllers: [EvaluacionFase3Controller, HubController, GestionAdjudicacionController],
   providers: [
     EvaluacionFase3Service,
