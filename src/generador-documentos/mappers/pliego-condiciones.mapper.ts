@@ -3,7 +3,10 @@ import { textosRecaudosConSustituto } from './recaudos-legales.textos';
 import { renderizarPildoras } from '../../formalizacion-fase4/pildoras.util';
 import { resolverTokensFase1 } from '../../formalizacion-fase4/tokens-contrato.resolver';
 import { condicionesDe, expandirBloques } from '../../formalizacion-fase4/bloques-contrato';
-import { ordinalClausula } from '../../formalizacion-fase4/documentos-fase4.mapper';
+import {
+  ordenarClausulas,
+  ordinalClausula,
+} from '../../formalizacion-fase4/documentos-fase4.mapper';
 
 export function stripHtml(html: string | null | undefined): string {
   if (!html) return '___';
@@ -63,13 +66,11 @@ function numOrDash(v: unknown): string {
 }
 
 /**
- * Número de la cláusula en ordinal y mayúscula: 1 → PRIMERA. Si el frontend
- * ya guardó la palabra ("primera"), se respeta y se pasa a mayúscula.
+ * Número de la cláusula en ordinal y mayúscula, según su posición ya ordenada:
+ * 0 → PRIMERA. Una cláusula agregada como "21A" sale como VIGÉSIMA PRIMERA si es
+ * la vigésima primera de la lista (QA 27/11).
  */
-export function numeroClausula(orden: unknown, posicion: number): string {
-  const n = typeof orden === 'number' ? orden : Number(orden);
-  if (Number.isInteger(n) && n > 0) return ordinalClausula(n);
-  if (typeof orden === 'string' && orden.trim()) return orden.trim().toLocaleUpperCase('es');
+export function numeroClausula(posicion: number): string {
   return ordinalClausula(posicion + 1);
 }
 
@@ -264,12 +265,12 @@ La póliza deberá ser emitida por una empresa de seguros de reconocida solvenci
   // de garantías se convierten antes en su párrafo, o desaparecen, según la tarjeta 8.
   const valoresFase1 = resolverTokensFase1(e);
   const bloques = condicionesDe(f);
-  const clausulasCustom = clauses.map((clRaw: unknown, idx: number) => {
+  const clausulasCustom = ordenarClausulas(clauses).map((clRaw: unknown, idx: number) => {
     const cl = asRecord(clRaw);
     const cuerpoHtml = typeof cl.cuerpoHtml === 'string' ? cl.cuerpoHtml : undefined;
     const titulo = typeof cl.titulo === 'string' ? cl.titulo.trim() : '';
     return {
-      num_clausula_custom_au_au: numeroClausula(cl.order, idx),
+      num_clausula_custom_au_au: numeroClausula(idx),
       titulo_clausula_custom_au_au: titulo ? titulo.toLocaleUpperCase('es') : '___',
       cuerpo_clausula_custom_au_au: stripHtml(
         cuerpoHtml

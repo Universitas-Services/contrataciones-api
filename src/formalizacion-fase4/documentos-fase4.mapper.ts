@@ -253,6 +253,31 @@ export function ordinalClausula(numero: number): string {
   return [decena, UNIDADES[numero % 10]].filter(Boolean).join(' ');
 }
 
+/**
+ * Ordena las cláusulas por su `order`. El frontend numera las cláusulas que se
+ * agregan entre dos con letra ("21A" va después de la 21 y antes de la 22), así
+ * que el orden no siempre es un número. Lo que no trae número conserva su lugar.
+ * La numeración que se imprime sale después de la posición: PRIMERA, SEGUNDA…
+ */
+export function ordenarClausulas<T>(clausulas: readonly T[]): T[] {
+  const clave = (c: T, indice: number): [number, string, number] => {
+    const orden = (c as { order?: unknown })?.order;
+    const texto = typeof orden === 'number' || typeof orden === 'string' ? `${orden}` : '';
+    const m = /^\s*(\d+)\s*([a-z]*)\s*$/i.exec(texto);
+    return m ? [Number(m[1]), m[2].toUpperCase(), indice] : [indice + 1, '', indice];
+  };
+  return clausulas
+    .map((c, indice) => ({ c, k: clave(c, indice) }))
+    .sort(
+      (a, b) =>
+        a.k[0] - b.k[0] ||
+        a.k[1].length - b.k[1].length ||
+        a.k[1].localeCompare(b.k[1]) ||
+        a.k[2] - b.k[2],
+    )
+    .map((x) => x.c);
+}
+
 /** Lo que el contrato necesita además de las variables de las cláusulas. */
 export interface DatosDocumentoContrato {
   bloques: CondicionesBloques;
@@ -286,14 +311,12 @@ export function mapDatosContrato(
     nombre_rep_legal_evaluado_au_au: texto(tokens.representante_contratista_au_au),
     cedula_rep_legal_evaluado_au_au: texto(tokens.cedula_representante_au_au),
 
-    clausulas_custom_au_au: [...clausulas]
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-      .map((clausula, indice) => ({
-        num_clausula_custom_au_au: ordinalClausula(indice + 1),
-        titulo_clausula_custom_au_au: clausula.titulo ?? '',
-        cuerpo_clausula_custom_au_au: aTextoPlano(
-          renderizarPildoras(expandirBloques(clausula.cuerpoHtml ?? '', bloques), tokens, 'VALOR'),
-        ),
-      })),
+    clausulas_custom_au_au: ordenarClausulas(clausulas).map((clausula, indice) => ({
+      num_clausula_custom_au_au: ordinalClausula(indice + 1),
+      titulo_clausula_custom_au_au: clausula.titulo ?? '',
+      cuerpo_clausula_custom_au_au: aTextoPlano(
+        renderizarPildoras(expandirBloques(clausula.cuerpoHtml ?? '', bloques), tokens, 'VALOR'),
+      ),
+    })),
   };
 }
