@@ -85,11 +85,11 @@ function paginasVacias(xml: string, desde: string): number {
 }
 
 describe('numeroClausula', () => {
-  it('convierte el número en ordinal y respeta la palabra si ya viene escrita', () => {
-    expect(numeroClausula(1, 0)).toBe('PRIMERA');
-    expect(numeroClausula('12', 0)).toBe('DÉCIMA SEGUNDA');
-    expect(numeroClausula('segunda', 0)).toBe('SEGUNDA');
-    expect(numeroClausula(undefined, 2)).toBe('TERCERA');
+  // QA 27/11: se numera por posición, ya no por lo que trae `order`.
+  it('convierte la posición en ordinal', () => {
+    expect(numeroClausula(0)).toBe('PRIMERA');
+    expect(numeroClausula(11)).toBe('DÉCIMA SEGUNDA');
+    expect(numeroClausula(20)).toBe('VIGÉSIMA PRIMERA');
   });
 });
 
